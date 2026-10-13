@@ -1,17 +1,18 @@
 # Getting started
 
-How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on your machine; no Docker or servers are needed.
+How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on your machine: one API process and the web dev server, with no Docker.
 
 ## What there is to run
 
 | Part | Status | How to run |
 |---|---|---|
 | Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available | `uv run plg ask "..."` / `uv run plg serve` |
-| Frontend: web app (TypeScript, Next.js) | Not built yet (issue #3) | — |
+| Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in and Ask screen | `cd web && npm run dev` |
 
 ## 1. Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) 0.8 or later. It installs Python 3.12 for you (pinned in `.python-version`).
+- Node.js 22 or later and npm, for the web app.
 - An Anthropic API key, for live answers. Tests don't need one.
 
 ## 2. Install
@@ -23,6 +24,12 @@ uv sync
 ```
 
 This creates `.venv/` with the `plg` package (editable) and the dev tools (pytest, mypy).
+
+Then install the web app's dependencies:
+
+```bash
+cd web && npm ci
+```
 
 ## 3. Environment variables
 
@@ -49,6 +56,13 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_HEARTBEAT_SECONDS` | `15` | Interval between SSE heartbeat comments |
 | `PLG_API_HOST` | `127.0.0.1` | `plg-api` bind address |
 | `PLG_API_PORT` | `8000` | `plg-api` port |
+| `PLG_RECORDS_DB` | `poc-data/plg_records.db` | PLG Records SQLite database (read-only; source of the staff personas) |
+
+The web app reads one server-only variable (set it in `web/.env.local` if you need to change it). It is never sent to the browser:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PLG_API_URL` | `http://127.0.0.1:8000` | Where the BFF reaches `plg-api` |
 
 ## 4. Run the backend
 
@@ -69,15 +83,23 @@ uv run plg serve        # or: uv run plg-api
 Then, in another terminal:
 
 ```bash
-# Create a thread
-curl -s -X POST http://127.0.0.1:8000/threads
+# List the staff personas
+curl -s http://127.0.0.1:8000/personas
+
+# Create a thread, as staff member S05 (the BFF sends this header for the signed-in persona)
+curl -s -X POST http://127.0.0.1:8000/threads -H 'X-PLG-User: S05'
 # → {"thread_id":"<id>"}
 
 # Ask a question; the answer streams back as Server-Sent Events
 curl -N -X POST http://127.0.0.1:8000/threads/<id>/runs \
+  -H 'X-PLG-User: S05' \
   -H 'content-type: application/json' \
   -d '{"message":"hello"}'
 ```
+
+Every endpoint except `/personas` needs an `X-PLG-User` header with a known staff ID (`S01`–`S12`), or it returns 401. `GET /me` shows the user, including the role, that `plg-api` builds from that header.
+
+This is POC identity: `plg-api` trusts the header because only the BFF calls it, over loopback. Keep `PLG_API_HOST` at `127.0.0.1`. Binding it to a network address would let anyone on the network claim to be any staff member.
 
 Each SSE event has a sequence number (`id:`) and a JSON payload of type `node`, `token`, `done` (with `run_id`) or `error`. Heartbeat comments (lines starting with `:`) keep long runs alive. Interactive API docs are at http://127.0.0.1:8000/docs.
 
@@ -85,7 +107,18 @@ Threads are held in memory for now, so they are lost when the server restarts.
 
 ## 5. Run the frontend
 
-Not available yet. The web app (Ask screen with mock persona sign-in) is issue #3; this section will be filled in when it lands.
+Start `plg-api` first (section 4), then in another terminal:
+
+```bash
+cd web
+npm run dev        # http://localhost:3000
+```
+
+Open http://localhost:3000. You're sent to the sign-in page. Pick any staff persona (mock sign-in: the persona is kept in an httpOnly cookie). Then ask a question on the Ask screen. The answer streams in, with the graph nodes it passes through shown as it runs. If the run fails partway, an alert says the answer is incomplete and offers a Retry.
+
+The browser only talks to the Next.js BFF (`/api/...`). The BFF forwards your persona to `plg-api` as `X-PLG-User`. No API keys ever reach the browser.
+
+For a production build: `npm run build && npm run start`.
 
 ## 6. Tests and typecheck
 
@@ -96,3 +129,16 @@ uv run mypy                            # strict typecheck
 ```
 
 Tests drive the API in-process with a scripted `LLMClient`, so they are deterministic and never call Claude.
+
+Web app (from `web/`):
+
+```bash
+npm test               # Vitest + React Testing Library + MSW; no back end needed
+npm run typecheck
+npm run lint
+npm run gen:api        # regenerate openapi.json and TypeScript types from plg-api
+```
+
+The web tests replay SSE streams recorded from the real API. After changing the API's models, run `npm run gen:api` and commit the result (CI fails if the generated types drift). If the stream changed, re-record the fixtures with `uv run python scripts/record_sse_fixtures.py`.
+
+CI (`.github/workflows/ci.yml`) runs the API checks and the web checks, including the OpenAPI drift check and a scan of the client bundle for credentials.

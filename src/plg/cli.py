@@ -11,7 +11,7 @@ from dotenv import find_dotenv, load_dotenv
 from plg.config import Settings
 from plg.events import ErrorEvent, TokenEvent
 from plg.graph.build import build_graph
-from plg.llm import AnthropicLLMClient, LLMClient
+from plg.llm import AnthropicLLMClient, LLMClient, ScriptedLLMClient
 from plg.runs import stream_run
 
 app = typer.Typer(help="PLG Super-Librarian", no_args_is_help=True)
@@ -52,3 +52,15 @@ def serve() -> None:
     from plg.api.app import serve as serve_api
 
     serve_api()
+
+
+@app.command()
+def openapi() -> None:
+    """Print plg-api's OpenAPI document. The web app generates its types from it."""
+    import json
+
+    from plg.api.app import create_app
+
+    # The contract doesn't depend on the model, so no API key is needed to print it.
+    api = create_app(Settings.from_env(), llm=ScriptedLLMClient())
+    typer.echo(json.dumps(api.openapi(), indent=2))

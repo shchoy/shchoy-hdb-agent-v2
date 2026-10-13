@@ -1,0 +1,32 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"merge","status":"started"}
+
+id: 2
+event: token
+data: {"type":"token","seq":2,"node":"merge","text":"Under"}
+
+id: 3
+event: token
+data: {"type":"token","seq":3,"node":"merge","text":" POL-003"}
+
+id: 4
+event: token
+data: {"type":"token","seq":4,"node":"merge","text":" v2.0,"}
+
+id: 5
+event: token
+data: {"type":"token","seq":5,"node":"merge","text":" a"}
+
+id: 6
+event: token
+data: {"type":"token","seq":6,"node":"merge","text":" letter"}
+
+id: 7
+event: token
+data: {"type":"token","seq":7,"node":"merge","text":" of"}
+
+id: 8
+event: error
+data: {"type":"error","seq":8,"run_id":"6a0861f0-406c-4ee9-ad8f-0c70481a29eb","message":"The run failed before the answer was complete. Please retry."}
+

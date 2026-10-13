@@ -1,0 +1,85 @@
+.ask {
+  display: grid;
+  gap: 1rem;
+}
+
+.form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.form textarea {
+  font: inherit;
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.form button {
+  justify-self: start;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.question {
+  margin: 0;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.trajectory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trajectory li {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.125rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.trajectory li[data-finished="true"] {
+  border-color: var(--ok);
+}
+
+.trajectory li + li::before {
+  content: "→ ";
+}
+
+.answer h2 {
+  font-size: 1.125rem;
+  margin: 0 0 0.5rem;
+}
+
+.alert {
+  border: 2px solid var(--danger);
+  background: var(--danger-bg);
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+}
+
+.alert p {
+  margin: 0 0 0.5rem;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

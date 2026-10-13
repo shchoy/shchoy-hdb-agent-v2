@@ -11,7 +11,7 @@ from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
 
 from plg.graph.state import PLGGraph, PLGState
-from plg.llm import LLMClient
+from plg.llm import LLMClient, Message
 
 MERGE = "merge"
 MERGE_SYSTEM = (
@@ -23,14 +23,18 @@ MERGE_SYSTEM = (
 def build_graph(llm: LLMClient) -> PLGGraph:
     async def merge(state: PLGState) -> PLGState:
         write = get_stream_writer()
+        question: Message = {"role": "user", "content": state["question"]}
         parts: list[str] = []
         async for text in llm.stream_text(
-            node=MERGE, tier="sonnet", system=MERGE_SYSTEM, messages=state["messages"]
+            node=MERGE,
+            tier="sonnet",
+            system=MERGE_SYSTEM,
+            messages=[*state.get("messages", []), question],
         ):
             parts.append(text)
             write({"node": MERGE, "token": text})
         answer = "".join(parts)
-        return {"answer": answer, "messages": [{"role": "assistant", "content": answer}]}
+        return {"answer": answer, "messages": [question, {"role": "assistant", "content": answer}]}
 
     graph = StateGraph(PLGState)
     graph.add_node(MERGE, merge)

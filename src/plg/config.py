@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
 
 Tier = Literal["haiku", "sonnet", "opus"]
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseModel):
@@ -20,6 +23,8 @@ class Settings(BaseModel):
     heartbeat_seconds: float = 15.0
     api_host: str = "127.0.0.1"
     api_port: int = 8000
+    # PLG Records (SQLite). Read-only; the source of staff personas for mock sign-in.
+    records_db: Path = REPO_ROOT / "poc-data" / "plg_records.db"
 
     def model_for(self, tier: Tier) -> str:
         return {"haiku": self.model_haiku, "sonnet": self.model_sonnet, "opus": self.model_opus}[tier]

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 from typer.testing import CliRunner
 
@@ -38,3 +40,16 @@ def test_ask_reports_a_failure_mid_answer_and_exits_non_zero(llm: ScriptedLLMCli
     assert result.exit_code == 1
     assert "The letter of" in result.stdout
     assert "failed" in result.stderr
+
+
+def test_openapi_prints_the_api_contract_without_an_api_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    result = CliRunner().invoke(cli.app, ["openapi"])
+
+    assert result.exit_code == 0
+    doc = json.loads(result.stdout)
+    assert doc["openapi"].startswith("3.1")
+    assert "RunEvent" in doc["components"]["schemas"]

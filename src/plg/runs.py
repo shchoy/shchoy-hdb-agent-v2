@@ -10,17 +10,21 @@ from typing import Any, cast
 from langchain_core.runnables import RunnableConfig
 
 from plg.events import DoneEvent, ErrorEvent, NodeEvent, RunEvent, TokenEvent
-from plg.graph.state import PLGGraph
+from plg.graph.state import PLGGraph, PLGState
+from plg.identity import UserCtx
 
 logger = logging.getLogger(__name__)
 
 
 async def stream_run(
-    graph: PLGGraph, thread_id: str, message: str
+    graph: PLGGraph, thread_id: str, message: str, user: UserCtx | None = None
 ) -> AsyncIterator[RunEvent]:
     run_id = uuid.uuid4()
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}, "run_id": run_id}
     seq = 0
+    inputs: PLGState = {"question": message}
+    if user is not None:
+        inputs["user"] = user
 
     def next_seq() -> int:
         nonlocal seq
@@ -29,7 +33,7 @@ async def stream_run(
 
     try:
         async for mode, chunk in graph.astream(
-            {"messages": [{"role": "user", "content": message}]},
+            inputs,
             config,
             stream_mode=["tasks", "custom"],
         ):

@@ -46,17 +46,23 @@ def parse_sse(body: str) -> SseStream:
     return stream
 
 
+USER = {"X-PLG-User": "S05"}
+"""A signed-in leasing officer, as forwarded by the BFF."""
+
+
 @dataclass
 class Api:
     client: TestClient
 
     def create_thread(self) -> str:
-        response = self.client.post("/threads")
+        response = self.client.post("/threads", headers=USER)
         assert response.status_code == 201
         return str(response.json()["thread_id"])
 
     def run(self, thread_id: str, message: str) -> SseStream:
-        with self.client.stream("POST", f"/threads/{thread_id}/runs", json={"message": message}) as r:
+        with self.client.stream(
+            "POST", f"/threads/{thread_id}/runs", json={"message": message}, headers=USER
+        ) as r:
             assert r.status_code == 200
             assert r.headers["content-type"].startswith("text/event-stream")
             return parse_sse(r.read().decode())

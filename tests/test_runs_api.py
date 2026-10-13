@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from plg.llm import ScriptedLLMClient
-from tests.conftest import Api
+from tests.conftest import USER, Api
 
 
 def test_question_streams_answer_tokens_and_finishes_with_run_id(
@@ -52,7 +52,9 @@ def test_slow_run_sends_heartbeat_comments(
 
 
 def test_run_on_unknown_thread_is_not_found(api: Api) -> None:
-    response = api.client.post("/threads/no-such-thread/runs", json={"message": "hello"})
+    response = api.client.post(
+        "/threads/no-such-thread/runs", json={"message": "hello"}, headers=USER
+    )
 
     assert response.status_code == 404
 
@@ -79,4 +81,35 @@ def test_node_events_bracket_the_streamed_answer(api: Api, llm: ScriptedLLMClien
         *tokens,
         ("node", "merge", "finished"),
         ("done", None, None),
+    ]
+
+
+def test_retrying_a_failed_question_asks_claude_it_only_once(
+    api: Api, llm: ScriptedLLMClient
+) -> None:
+    llm.script("merge", "hello", "Hi", error=ConnectionError("Claude unavailable"))
+    thread_id = api.create_thread()
+    api.run(thread_id, "hello")
+    llm.script("merge", "hello", "Hi there, officer.")
+
+    retried = api.run(thread_id, "hello")
+
+    assert retried.text == "Hi there, officer."
+    assert llm.sent[-1] == [{"role": "user", "content": "hello"}]
+
+
+def test_follow_up_question_carries_the_earlier_exchange(
+    api: Api, llm: ScriptedLLMClient
+) -> None:
+    llm.script("merge", "hello", "Hi there, officer.")
+    llm.script("merge", "and?", "That's all.")
+    thread_id = api.create_thread()
+    api.run(thread_id, "hello")
+
+    api.run(thread_id, "and?")
+
+    assert llm.sent[-1] == [
+        {"role": "user", "content": "hello"},
+        {"role": "assistant", "content": "Hi there, officer."},
+        {"role": "user", "content": "and?"},
     ]

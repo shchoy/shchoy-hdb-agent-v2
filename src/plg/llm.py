@@ -77,6 +77,8 @@ class ScriptedLLMClient:
     """Deterministic `LLMClient` for tests, keyed by node and the latest user message."""
 
     replies: dict[tuple[str, str], ScriptedReply] = field(default_factory=dict)
+    # The messages sent on each call, in order: what Claude would have been asked.
+    sent: list[list[Message]] = field(default_factory=list)
 
     def script(
         self,
@@ -93,6 +95,7 @@ class ScriptedLLMClient:
     async def stream_text(
         self, *, node: str, tier: Tier, system: str, messages: list[Message]
     ) -> AsyncIterator[str]:
+        self.sent.append(list(messages))
         user_input = next(m["content"] for m in reversed(messages) if m["role"] == "user")
         try:
             reply = self.replies[(node, user_input)]

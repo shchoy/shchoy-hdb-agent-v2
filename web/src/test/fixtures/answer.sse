@@ -1,0 +1,68 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"merge","status":"started"}
+
+id: 2
+event: token
+data: {"type":"token","seq":2,"node":"merge","text":"Under"}
+
+id: 3
+event: token
+data: {"type":"token","seq":3,"node":"merge","text":" **POL-003"}
+
+id: 4
+event: token
+data: {"type":"token","seq":4,"node":"merge","text":" v2.0**,"}
+
+id: 5
+event: token
+data: {"type":"token","seq":5,"node":"merge","text":" a"}
+
+id: 6
+event: token
+data: {"type":"token","seq":6,"node":"merge","text":" letter"}
+
+id: 7
+event: token
+data: {"type":"token","seq":7,"node":"merge","text":" of"}
+
+id: 8
+event: token
+data: {"type":"token","seq":8,"node":"merge","text":" demand"}
+
+id: 9
+event: token
+data: {"type":"token","seq":9,"node":"merge","text":" is"}
+
+id: 10
+event: token
+data: {"type":"token","seq":10,"node":"merge","text":" issued"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":" once"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" arrears"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" reach"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" 60"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" days."}
+
+id: 16
+event: node
+data: {"type":"node","seq":16,"node":"merge","status":"finished"}
+
+id: 17
+event: done
+data: {"type":"done","seq":17,"run_id":"e8a2b8fb-a9b3-4a0a-9d21-ebd0732911b0"}
+

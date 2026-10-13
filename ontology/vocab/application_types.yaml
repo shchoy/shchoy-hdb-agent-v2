@@ -1,0 +1,124 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:application_types
+concept_class: ApplicationType
+title: Tenant application types and their checklists
+concepts:
+- id: plg:app_type/NEW_TENANCY
+  notation: NEW_TENANCY
+  pref_label: New tenancy
+  alt_labels:
+  - new lease
+  - new tenancy application
+  required_documents:
+  - document_type: LOA
+    description: Signed acceptance of Letter of Offer
+    mandatory: true
+  - document_type: BIZ
+    description: Business profile (company registry extract, < 3 months old)
+    mandatory: true
+  - document_type: NRIC
+    description: Identity document of sole proprietor / director (masked copy)
+    mandatory: true
+  - document_type: DEP
+    description: Proof of security deposit payment (3 months' rent)
+    mandatory: true
+  - document_type: GIRO
+    description: GIRO authorisation form for monthly rent
+    mandatory: true
+  - document_type: INS
+    description: Public liability insurance certificate (min S$1,000,000)
+    mandatory: true
+  - document_type: LIC
+    description: Trade licence or licence application (food, healthcare, childcare trades)
+    mandatory: false
+- id: plg:app_type/RENEWAL
+  notation: RENEWAL
+  pref_label: Renewal
+  alt_labels:
+  - tenancy renewal
+  - renewal application
+  required_documents:
+  - document_type: REN
+    description: Tenancy renewal application form
+    mandatory: true
+  - document_type: BIZ
+    description: Business profile (company registry extract, < 3 months old)
+    mandatory: true
+  - document_type: INS
+    description: Valid public liability insurance certificate covering the new term
+    mandatory: true
+  - document_type: GIRO
+    description: GIRO authorisation form (only if bank account changed)
+    mandatory: false
+- id: plg:app_type/ASSIGNMENT
+  notation: ASSIGNMENT
+  pref_label: Assignment
+  alt_labels:
+  - assignment of tenancy
+  - transfer of tenancy
+  required_documents:
+  - document_type: ASG
+    description: Application for assignment of tenancy
+    mandatory: true
+  - document_type: BIZ
+    description: Business profile of assignor
+    mandatory: true
+  - document_type: BIZ2
+    description: Business profile of assignee
+    mandatory: true
+  - document_type: NRIC
+    description: Identity document of assignee director (masked copy)
+    mandatory: true
+  - document_type: FEE
+    description: Proof of assignment fee payment
+    mandatory: true
+  - document_type: INS
+    description: Assignee public liability insurance certificate
+    mandatory: true
+- id: plg:app_type/CHANGE_OF_TRADE
+  notation: CHANGE_OF_TRADE
+  pref_label: Change of trade
+  alt_labels:
+  - COT
+  - addition of trade
+  - trade change
+  required_documents:
+  - document_type: COT
+    description: Application for change / addition of trade
+    mandatory: true
+  - document_type: PLAN
+    description: Business plan for proposed trade
+    mandatory: true
+  - document_type: LAYOUT
+    description: Proposed floor layout plan
+    mandatory: true
+  - document_type: LIC
+    description: Trade licence application or approval (if regulated trade)
+    mandatory: false
+- id: plg:app_type/ALTERATION
+  notation: ALTERATION
+  pref_label: Alteration & addition
+  alt_labels:
+  - A&A
+  - A&A works
+  - alteration and addition
+  - renovation
+  required_documents:
+  - document_type: AA
+    description: Application for alteration & addition (A&A) works
+    mandatory: true
+  - document_type: DWG
+    description: Layout and elevation drawings
+    mandatory: true
+  - document_type: CON
+    description: Contractor's registration certificate
+    mandatory: true
+  - document_type: PE
+    description: Professional Engineer endorsement (structural works only)
+    mandatory: false
+  - document_type: MS
+    description: Method statement and work schedule
+    mandatory: true
+  - document_type: INS
+    description: Contractor's all-risk insurance certificate
+    mandatory: true

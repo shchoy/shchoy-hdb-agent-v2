@@ -1,0 +1,31 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:unit_statuses
+concept_class: UnitStatus
+title: Unit status (snapshot as at 2026-09-30)
+concepts:
+- id: plg:unit_status/not-lettable
+  notation: Not Lettable
+  pref_label: Not Lettable
+  alt_labels:
+  - unlettable
+  - earmarked for upgrading
+- id: plg:unit_status/tenanted
+  notation: Tenanted
+  pref_label: Tenanted
+  alt_labels:
+  - occupied
+  - let
+- id: plg:unit_status/under-tender
+  notation: Under Tender
+  pref_label: Under Tender
+  alt_labels:
+  - on tender
+  - out for tender
+  - tendered
+- id: plg:unit_status/vacant
+  notation: Vacant
+  pref_label: Vacant
+  alt_labels:
+  - empty
+  - unoccupied
+  - unlet

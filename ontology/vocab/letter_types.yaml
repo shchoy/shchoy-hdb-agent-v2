@@ -1,0 +1,43 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:letter_types
+concept_class: LetterType
+title: Outgoing letter types
+concepts:
+- id: plg:letter_type/arrears-reminder-1st
+  notation: Arrears Reminder (1st)
+  pref_label: Arrears Reminder (1st)
+  alt_labels:
+  - first reminder
+  - 1st reminder
+  - arrears reminder
+  template_id: TPL-REM-01
+- id: plg:letter_type/arrears-reminder-2nd
+  notation: Arrears Reminder (2nd)
+  pref_label: Arrears Reminder (2nd)
+  alt_labels:
+  - second reminder
+  - 2nd reminder
+  - second notice
+  template_id: TPL-REM-01
+- id: plg:letter_type/feedback-update
+  notation: Feedback Update
+  pref_label: Feedback Update
+  alt_labels:
+  - feedback reply
+  - reply to feedback provider
+  template_id: TPL-FBK-03
+- id: plg:letter_type/letter-of-demand
+  notation: Letter of Demand
+  pref_label: Letter of Demand
+  alt_labels:
+  - LOD
+  - letter-of-demand
+  - demand letter
+  template_id: TPL-LOD-01
+- id: plg:letter_type/missing-documents-notice
+  notation: Missing Documents Notice
+  pref_label: Missing Documents Notice
+  alt_labels:
+  - missing documents letter
+  - incomplete application notice
+  template_id: TPL-DOC-02

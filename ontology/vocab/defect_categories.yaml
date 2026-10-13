@@ -1,0 +1,163 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:defect_categories
+concept_class: DefectCategory
+title: Public feedback and defect categories (i-EMS routing)
+concepts:
+- id: plg:category/STR
+  notation: STR
+  pref_label: Structural
+  alt_labels:
+  - structural
+  - structural defect
+  - spalling
+  - spalling concrete
+  - crack
+  - cracks
+  - falling plaster
+  examples: spalling concrete, cracks in beams/columns/walls, falling plaster
+  iems: true
+  default_severity: High
+  handled_by: plg:team/civil-structural
+  default_vendor: plg:vendor/kemas-building-works-pte-ltd
+- id: plg:category/SEP
+  notation: SEP
+  pref_label: Water Seepage / Leak
+  alt_labels:
+  - seepage
+  - water seepage
+  - leak
+  - water leak
+  - ceiling leak
+  - wall seepage
+  - leaking roof
+  - leaking roof slab
+  - dripping ceiling
+  examples: ceiling leak, wall seepage, leaking roof slab
+  iems: true
+  default_severity: Medium
+  handled_by: plg:team/civil-structural
+  default_vendor: plg:vendor/kemas-building-works-pte-ltd
+- id: plg:category/PLB
+  notation: PLB
+  pref_label: Plumbing & Sanitary
+  alt_labels:
+  - plumbing
+  - sanitary
+  - choked floor trap
+  - choked drain
+  - burst pipe
+  - grease interceptor
+  examples: choked floor trap, burst pipe, overflowing grease interceptor (common)
+  iems: true
+  default_severity: Medium
+  handled_by: plg:team/m-e
+  default_vendor: plg:vendor/sunrise-m-e-services-pte-ltd
+- id: plg:category/ELE
+  notation: ELE
+  pref_label: Electrical
+  alt_labels:
+  - electrical fault
+  - power trip
+  - tripping
+  - exposed wiring
+  - no power
+  examples: power trip, exposed wiring, faulty common corridor lighting at shopfront
+  iems: true
+  default_severity: High
+  handled_by: plg:team/m-e
+  default_vendor: plg:vendor/sunrise-m-e-services-pte-ltd
+- id: plg:category/FIR
+  notation: FIR
+  pref_label: Fire Safety
+  alt_labels:
+  - fire
+  - fire safety
+  - blocked fire exit
+  - fire exit
+  - hose reel
+  - fire incident
+  examples: blocked fire exit, fire incident, missing hose reel cover
+  iems: true
+  default_severity: Critical
+  handled_by: plg:team/estate-compliance
+- id: plg:category/PST
+  notation: PST
+  pref_label: Pest
+  alt_labels:
+  - pests
+  - pest infestation
+  - rats
+  - rodents
+  - cockroaches
+  - termites
+  examples: rats, cockroach infestation, termites
+  iems: true
+  default_severity: Medium
+  handled_by: plg:team/pest-control
+  default_vendor: plg:vendor/pestaway-solutions
+- id: plg:category/HYG
+  notation: HYG
+  pref_label: Hygiene (Tenant)
+  alt_labels:
+  - hygiene
+  - grease smell
+  - bad smell
+  - refuse
+  - dirty shopfront
+  examples: grease smell, refuse left outside shop, dirty shopfront
+  iems: false
+  default_severity: Low
+  handled_by: plg:team/estate-compliance
+- id: plg:category/ENC
+  notation: ENC
+  pref_label: Obstruction / Encroachment
+  alt_labels:
+  - encroachment
+  - obstruction
+  - display encroachment
+  - goods outside shop
+  - tables blocking walkway
+  examples: goods displayed beyond permitted area, tables blocking walkway
+  iems: false
+  default_severity: Low
+  handled_by: plg:team/estate-compliance
+- id: plg:category/NOI
+  notation: NOI
+  pref_label: Noise / Nuisance
+  alt_labels:
+  - noise
+  - nuisance
+  - loud music
+  - karaoke
+  - late-night operations
+  examples: late-night operations, loud music, karaoke
+  iems: false
+  default_severity: Low
+  handled_by: plg:team/estate-compliance
+- id: plg:category/CMN
+  notation: CMN
+  pref_label: Common Area (Town Council)
+  alt_labels:
+  - common area
+  - town council matter
+  - corridor lighting
+  - lift lobby
+  - common area cleanliness
+  examples: corridor lighting, common area cleanliness, lift lobby
+  iems: false
+  default_severity: Low
+  handled_by: plg:team/town-council-liaison
+- id: plg:category/OTH
+  notation: OTH
+  pref_label: General Enquiry / Non-defect
+  alt_labels:
+  - general enquiry
+  - enquiry
+  - non-defect
+  - compliment
+  - rental enquiry
+  - tender enquiry
+  examples: rental enquiry, compliment, tender enquiry
+  iems: false
+  default_severity: Low
+  handled_by: plg:team/customer-relations

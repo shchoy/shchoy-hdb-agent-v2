@@ -1,0 +1,34 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:teams
+concept_class: Team
+title: i-EMS routing teams
+concepts:
+- id: plg:team/civil-structural
+  notation: civil-structural
+  pref_label: Civil & Structural
+  alt_labels:
+  - C&S
+  - civil and structural
+- id: plg:team/customer-relations
+  notation: customer-relations
+  pref_label: Customer Relations
+- id: plg:team/estate-compliance
+  notation: estate-compliance
+  pref_label: Estate Compliance
+- id: plg:team/m-e
+  notation: m-e
+  pref_label: M&E
+  alt_labels:
+  - mechanical and electrical
+  - M and E
+- id: plg:team/pest-control
+  notation: pest-control
+  pref_label: Pest Control
+  alt_labels:
+  - pest team
+- id: plg:team/town-council-liaison
+  notation: town-council-liaison
+  pref_label: Town Council Liaison
+  alt_labels:
+  - town council
+  - TC

@@ -1,0 +1,1007 @@
+[
+  {
+    "application_id": "APP-2026-0256",
+    "app_type": "CHANGE_OF_TRADE",
+    "tenant_id": "T-11274",
+    "unit_id": "U-PI627-01-08",
+    "submitted_date": "2026-08-24",
+    "expected": [
+      "COT",
+      "PLAN",
+      "LAYOUT"
+    ],
+    "optional": [
+      "LIC"
+    ],
+    "present": [
+      "COT",
+      "PLAN",
+      "LIC"
+    ],
+    "missing_mandatory": [
+      "LAYOUT"
+    ],
+    "problems": {},
+    "scenario": "missing1",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0256/COT_1.pdf",
+        "doc_code": "COT",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0256/plan.pdf",
+        "doc_code": "PLAN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0256/licence.pdf",
+        "doc_code": "LIC",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0293",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-10288",
+    "unit_id": "U-KR305-01-12",
+    "submitted_date": "2026-09-21",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "missing_mandatory": [],
+    "problems": {
+      "INS": "expired"
+    },
+    "scenario": "expired",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0293/REN_1.pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0293/scan_0063.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0293/insurance cert.pdf",
+        "doc_code": "INS",
+        "problem": "expired"
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0228",
+    "app_type": "NEW_TENANCY",
+    "tenant_id": "T-13732",
+    "unit_id": "U-ST512-01-33",
+    "submitted_date": "2026-08-03",
+    "expected": [
+      "LOA",
+      "BIZ",
+      "NRIC",
+      "DEP",
+      "GIRO",
+      "INS"
+    ],
+    "optional": [
+      "LIC"
+    ],
+    "present": [
+      "LOA",
+      "BIZ",
+      "NRIC",
+      "DEP",
+      "LIC"
+    ],
+    "missing_mandatory": [
+      "INS",
+      "GIRO"
+    ],
+    "problems": {},
+    "scenario": "missing2",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0228/scan_0006.pdf",
+        "doc_code": "LOA",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0228/biz.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0228/nric.pdf",
+        "doc_code": "NRIC",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0228/deposit payment.pdf",
+        "doc_code": "DEP",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0228/LIC_5.pdf",
+        "doc_code": "LIC",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0279",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-11361",
+    "unit_id": "U-RH482-01-05",
+    "submitted_date": "2026-09-09",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ"
+    ],
+    "missing_mandatory": [
+      "INS"
+    ],
+    "problems": {},
+    "scenario": "missing1",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0279/Document (1).pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0279/biz.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0272",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-12774",
+    "unit_id": "U-BV215-01-11",
+    "submitted_date": "2026-09-03",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ",
+      "INS",
+      "GIRO"
+    ],
+    "missing_mandatory": [],
+    "problems": {
+      "INS": "expired"
+    },
+    "scenario": "expired",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0272/Renewal form.pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0272/BizProfile.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0272/INS_3.pdf",
+        "doc_code": "INS",
+        "problem": "expired"
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0272/GIRO form.pdf",
+        "doc_code": "GIRO",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0278",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-12622",
+    "unit_id": "U-PI651-01-04",
+    "submitted_date": "2026-09-08",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "missing_mandatory": [],
+    "problems": {},
+    "scenario": "complete",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0278/Document (1).pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0278/BIZ_2.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0278/insurance cert.pdf",
+        "doc_code": "INS",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0299",
+    "app_type": "ASSIGNMENT",
+    "tenant_id": "T-10005",
+    "unit_id": "U-BV214-01-29",
+    "submitted_date": "2026-09-25",
+    "expected": [
+      "ASG",
+      "BIZ",
+      "BIZ2",
+      "NRIC",
+      "FEE",
+      "INS"
+    ],
+    "optional": [],
+    "present": [
+      "ASG",
+      "BIZ",
+      "BIZ2",
+      "NRIC",
+      "FEE",
+      "INS"
+    ],
+    "missing_mandatory": [],
+    "problems": {
+      "ASG": "wrong_unit"
+    },
+    "scenario": "wrong_unit",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0299/assignment form.pdf",
+        "doc_code": "ASG",
+        "problem": "wrong_unit"
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0299/biz.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0299/scan_0062.pdf",
+        "doc_code": "BIZ2",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0299/IC copy.pdf",
+        "doc_code": "NRIC",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0299/scan_0040.pdf",
+        "doc_code": "FEE",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0299/scan_0073.pdf",
+        "doc_code": "INS",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0280",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-11459",
+    "unit_id": "U-PI696-01-03",
+    "submitted_date": "2026-09-11",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ"
+    ],
+    "missing_mandatory": [
+      "INS"
+    ],
+    "problems": {},
+    "scenario": "missing1",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0280/REN_1.pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0280/BizProfile.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0288",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-10005",
+    "unit_id": "U-PI667-01-02",
+    "submitted_date": "2026-09-16",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ",
+      "INS",
+      "GIRO"
+    ],
+    "missing_mandatory": [],
+    "problems": {
+      "GIRO": "illegible_scan"
+    },
+    "scenario": "illegible",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0288/REN_1.pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0288/BIZ_2.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0288/scan_0023.pdf",
+        "doc_code": "INS",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0288/IMG_5846.pdf",
+        "doc_code": "GIRO",
+        "problem": "illegible_scan"
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0233",
+    "app_type": "ALTERATION",
+    "tenant_id": "T-10695",
+    "unit_id": "U-BV229-01-08",
+    "submitted_date": "2026-08-06",
+    "expected": [
+      "AA",
+      "DWG",
+      "CON",
+      "MS",
+      "INS"
+    ],
+    "optional": [
+      "PE"
+    ],
+    "present": [
+      "AA",
+      "DWG",
+      "CON",
+      "PE",
+      "MS",
+      "INS"
+    ],
+    "missing_mandatory": [],
+    "problems": {},
+    "scenario": "complete",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0233/AA form.pdf",
+        "doc_code": "AA",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0233/Document (2).pdf",
+        "doc_code": "DWG",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0233/contractor cert.pdf",
+        "doc_code": "CON",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0233/PE letter.pdf",
+        "doc_code": "PE",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0233/MS_5.pdf",
+        "doc_code": "MS",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0233/IMG_2458.pdf",
+        "doc_code": "INS",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0294",
+    "app_type": "ALTERATION",
+    "tenant_id": "T-12618",
+    "unit_id": "U-PI642-01-01",
+    "submitted_date": "2026-09-22",
+    "expected": [
+      "AA",
+      "DWG",
+      "CON",
+      "MS",
+      "INS"
+    ],
+    "optional": [
+      "PE"
+    ],
+    "present": [
+      "AA",
+      "DWG",
+      "CON"
+    ],
+    "missing_mandatory": [
+      "MS",
+      "INS"
+    ],
+    "problems": {},
+    "scenario": "missing2",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0294/AA form.pdf",
+        "doc_code": "AA",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0294/drawings.pdf",
+        "doc_code": "DWG",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0294/con.pdf",
+        "doc_code": "CON",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0260",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-12413",
+    "unit_id": "U-PI605-02-04",
+    "submitted_date": "2026-08-26",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ"
+    ],
+    "missing_mandatory": [
+      "INS"
+    ],
+    "problems": {},
+    "scenario": "missing1",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0260/Renewal form.pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0260/BizProfile.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0234",
+    "app_type": "NEW_TENANCY",
+    "tenant_id": "T-12741",
+    "unit_id": "U-PI668-01-01",
+    "submitted_date": "2026-08-07",
+    "expected": [
+      "LOA",
+      "BIZ",
+      "NRIC",
+      "DEP",
+      "GIRO",
+      "INS"
+    ],
+    "optional": [
+      "LIC"
+    ],
+    "present": [
+      "LOA",
+      "BIZ",
+      "NRIC",
+      "DEP",
+      "GIRO",
+      "INS",
+      "LIC"
+    ],
+    "missing_mandatory": [],
+    "problems": {},
+    "scenario": "complete",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0234/LOA signed.pdf",
+        "doc_code": "LOA",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0234/BizProfile.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0234/Document (3).pdf",
+        "doc_code": "NRIC",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0234/DEP_4.pdf",
+        "doc_code": "DEP",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0234/GIRO form.pdf",
+        "doc_code": "GIRO",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0234/scan_0004.pdf",
+        "doc_code": "INS",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0234/lic.pdf",
+        "doc_code": "LIC",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0283",
+    "app_type": "NEW_TENANCY",
+    "tenant_id": "T-10327",
+    "unit_id": "U-PI627-01-13",
+    "submitted_date": "2026-09-11",
+    "expected": [
+      "LOA",
+      "BIZ",
+      "NRIC",
+      "DEP",
+      "GIRO",
+      "INS"
+    ],
+    "optional": [
+      "LIC"
+    ],
+    "present": [
+      "LOA",
+      "NRIC",
+      "DEP",
+      "GIRO",
+      "INS",
+      "LIC"
+    ],
+    "missing_mandatory": [
+      "BIZ"
+    ],
+    "problems": {},
+    "scenario": "missing1",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0283/LOA signed.pdf",
+        "doc_code": "LOA",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0283/IMG_9849.pdf",
+        "doc_code": "NRIC",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0283/deposit payment.pdf",
+        "doc_code": "DEP",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0283/GIRO_4.pdf",
+        "doc_code": "GIRO",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0283/IMG_7886.pdf",
+        "doc_code": "INS",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0283/licence.pdf",
+        "doc_code": "LIC",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0289",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-12360",
+    "unit_id": "U-ST513-01-09",
+    "submitted_date": "2026-09-16",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ",
+      "INS",
+      "GIRO"
+    ],
+    "missing_mandatory": [],
+    "problems": {
+      "INS": "expired"
+    },
+    "scenario": "expired",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0289/Renewal form.pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0289/Document (2).pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0289/insurance cert.pdf",
+        "doc_code": "INS",
+        "problem": "expired"
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0289/GIRO form.pdf",
+        "doc_code": "GIRO",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0268",
+    "app_type": "RENEWAL",
+    "tenant_id": "T-11381",
+    "unit_id": "U-BV214-01-16",
+    "submitted_date": "2026-08-29",
+    "expected": [
+      "REN",
+      "BIZ",
+      "INS"
+    ],
+    "optional": [
+      "GIRO"
+    ],
+    "present": [
+      "REN",
+      "BIZ",
+      "INS",
+      "GIRO"
+    ],
+    "missing_mandatory": [],
+    "problems": {},
+    "scenario": "complete",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0268/Renewal form.pdf",
+        "doc_code": "REN",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0268/BIZ_2.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0268/insurance cert.pdf",
+        "doc_code": "INS",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0268/GIRO form.pdf",
+        "doc_code": "GIRO",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0284",
+    "app_type": "ASSIGNMENT",
+    "tenant_id": "T-10727",
+    "unit_id": "U-CD131-02-08",
+    "submitted_date": "2026-09-12",
+    "expected": [
+      "ASG",
+      "BIZ",
+      "BIZ2",
+      "NRIC",
+      "FEE",
+      "INS"
+    ],
+    "optional": [],
+    "present": [
+      "ASG",
+      "BIZ",
+      "BIZ2",
+      "NRIC",
+      "FEE"
+    ],
+    "missing_mandatory": [
+      "INS"
+    ],
+    "problems": {},
+    "scenario": "missing1",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0284/Document (1).pdf",
+        "doc_code": "ASG",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0284/BizProfile.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0284/assignee bizprofile.pdf",
+        "doc_code": "BIZ2",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0284/scan_0097.pdf",
+        "doc_code": "NRIC",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0284/IMG_5032.pdf",
+        "doc_code": "FEE",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0238",
+    "app_type": "ALTERATION",
+    "tenant_id": "T-10115",
+    "unit_id": "U-KR330-02-06",
+    "submitted_date": "2026-08-10",
+    "expected": [
+      "AA",
+      "DWG",
+      "CON",
+      "MS",
+      "INS"
+    ],
+    "optional": [
+      "PE"
+    ],
+    "present": [
+      "AA",
+      "DWG",
+      "CON",
+      "PE",
+      "MS",
+      "INS"
+    ],
+    "missing_mandatory": [],
+    "problems": {
+      "AA": "wrong_unit"
+    },
+    "scenario": "wrong_unit",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0238/AA form.pdf",
+        "doc_code": "AA",
+        "problem": "wrong_unit"
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0238/drawings.pdf",
+        "doc_code": "DWG",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0238/Document (3).pdf",
+        "doc_code": "CON",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0238/pe.pdf",
+        "doc_code": "PE",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0238/Document (5).pdf",
+        "doc_code": "MS",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0238/Document (6).pdf",
+        "doc_code": "INS",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0244",
+    "app_type": "ALTERATION",
+    "tenant_id": "T-11370",
+    "unit_id": "U-ST556-01-02",
+    "submitted_date": "2026-08-15",
+    "expected": [
+      "AA",
+      "DWG",
+      "CON",
+      "MS",
+      "INS"
+    ],
+    "optional": [
+      "PE"
+    ],
+    "present": [
+      "AA",
+      "DWG",
+      "PE",
+      "INS"
+    ],
+    "missing_mandatory": [
+      "MS",
+      "CON"
+    ],
+    "problems": {},
+    "scenario": "missing2",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0244/scan_0046.pdf",
+        "doc_code": "AA",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0244/Document (2).pdf",
+        "doc_code": "DWG",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0244/PE letter.pdf",
+        "doc_code": "PE",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0244/scan_0085.pdf",
+        "doc_code": "INS",
+        "problem": null
+      }
+    ]
+  },
+  {
+    "application_id": "APP-2026-0252",
+    "app_type": "NEW_TENANCY",
+    "tenant_id": "T-11089",
+    "unit_id": "U-RH482-02-06",
+    "submitted_date": "2026-08-20",
+    "expected": [
+      "LOA",
+      "BIZ",
+      "NRIC",
+      "DEP",
+      "GIRO",
+      "INS"
+    ],
+    "optional": [
+      "LIC"
+    ],
+    "present": [
+      "LOA",
+      "BIZ",
+      "NRIC",
+      "DEP",
+      "GIRO",
+      "INS"
+    ],
+    "missing_mandatory": [],
+    "problems": {},
+    "scenario": "complete",
+    "files": [
+      {
+        "file": "pdfs/submissions/APP-2026-0252/loa.pdf",
+        "doc_code": "LOA",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0252/BizProfile.pdf",
+        "doc_code": "BIZ",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0252/Document (3).pdf",
+        "doc_code": "NRIC",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0252/deposit payment.pdf",
+        "doc_code": "DEP",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0252/IMG_4244.pdf",
+        "doc_code": "GIRO",
+        "problem": null
+      },
+      {
+        "file": "pdfs/submissions/APP-2026-0252/insurance cert.pdf",
+        "doc_code": "INS",
+        "problem": null
+      }
+    ]
+  }
+]

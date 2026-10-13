@@ -1,0 +1,111 @@
+{
+  "version": "SOP-020 v2.0",
+  "categories": [
+    {
+      "code": "STR",
+      "category": "Structural",
+      "examples": "spalling concrete, cracks in beams/columns/walls, falling plaster",
+      "team": "Civil & Structural",
+      "vendor": "Kemas Building Works Pte Ltd",
+      "default_severity": "High",
+      "iems": true
+    },
+    {
+      "code": "SEP",
+      "category": "Water Seepage / Leak",
+      "examples": "ceiling leak, wall seepage, leaking roof slab",
+      "team": "Civil & Structural",
+      "vendor": "Kemas Building Works Pte Ltd",
+      "default_severity": "Medium",
+      "iems": true
+    },
+    {
+      "code": "PLB",
+      "category": "Plumbing & Sanitary",
+      "examples": "choked floor trap, burst pipe, overflowing grease interceptor (common)",
+      "team": "M&E",
+      "vendor": "Sunrise M&E Services Pte Ltd",
+      "default_severity": "Medium",
+      "iems": true
+    },
+    {
+      "code": "ELE",
+      "category": "Electrical",
+      "examples": "power trip, exposed wiring, faulty common corridor lighting at shopfront",
+      "team": "M&E",
+      "vendor": "Sunrise M&E Services Pte Ltd",
+      "default_severity": "High",
+      "iems": true
+    },
+    {
+      "code": "FIR",
+      "category": "Fire Safety",
+      "examples": "blocked fire exit, fire incident, missing hose reel cover",
+      "team": "Estate Compliance",
+      "vendor": "",
+      "default_severity": "Critical",
+      "iems": true
+    },
+    {
+      "code": "PST",
+      "category": "Pest",
+      "examples": "rats, cockroach infestation, termites",
+      "team": "Pest Control",
+      "vendor": "PestAway Solutions",
+      "default_severity": "Medium",
+      "iems": true
+    },
+    {
+      "code": "HYG",
+      "category": "Hygiene (Tenant)",
+      "examples": "grease smell, refuse left outside shop, dirty shopfront",
+      "team": "Estate Compliance",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    },
+    {
+      "code": "ENC",
+      "category": "Obstruction / Encroachment",
+      "examples": "goods displayed beyond permitted area, tables blocking walkway",
+      "team": "Estate Compliance",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    },
+    {
+      "code": "NOI",
+      "category": "Noise / Nuisance",
+      "examples": "late-night operations, loud music, karaoke",
+      "team": "Estate Compliance",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    },
+    {
+      "code": "CMN",
+      "category": "Common Area (Town Council)",
+      "examples": "corridor lighting, common area cleanliness, lift lobby",
+      "team": "Town Council Liaison",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    },
+    {
+      "code": "OTH",
+      "category": "General Enquiry / Non-defect",
+      "examples": "rental enquiry, compliment, tender enquiry",
+      "team": "Customer Relations",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    }
+  ],
+  "severity_sla_days": {
+    "Critical": 1,
+    "High": 3,
+    "Medium": 7,
+    "Low": 14
+  },
+  "guidance": "Choose one primary category; if multiple issues, choose the highest severity; flag ambiguous cases for officer review."
+}

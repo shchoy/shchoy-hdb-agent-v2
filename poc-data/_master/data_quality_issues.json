@@ -1,0 +1,24 @@
+{
+  "null_floor_area": [
+    "U-BV283-01-02",
+    "U-KR345-01-09",
+    "U-RH463-01-02",
+    "U-ST512-01-18",
+    "U-PI642-01-01"
+  ],
+  "duplicate_tenant": {
+    "original": "T-10514",
+    "duplicate": "T-19807",
+    "brn": "201754388R"
+  },
+  "outlier_rent": {
+    "tenancy_id": "TA-2022-00400",
+    "monthly_rent": 63100
+  },
+  "impossible_date": {
+    "inspection_id": "INSP-2025-0125",
+    "date": "2099-10-18"
+  },
+  "duplicate_payment": "PAY-00001235",
+  "null_tenant_emails": 71
+}

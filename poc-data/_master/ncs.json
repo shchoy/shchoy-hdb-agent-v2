@@ -1,0 +1,92 @@
+[
+  {
+    "nc_id": "NC-BV-1",
+    "town": "BV",
+    "name": "Bayshore Vale Central NC"
+  },
+  {
+    "nc_id": "NC-BV-2",
+    "town": "BV",
+    "name": "Bayshore Vale North NC"
+  },
+  {
+    "nc_id": "NC-BV-3",
+    "town": "BV",
+    "name": "Vale Point NC"
+  },
+  {
+    "nc_id": "NC-CD-1",
+    "town": "CD",
+    "name": "Cendana Central NC"
+  },
+  {
+    "nc_id": "NC-CD-2",
+    "town": "CD",
+    "name": "Cendana Gardens NC"
+  },
+  {
+    "nc_id": "NC-CD-3",
+    "town": "CD",
+    "name": "Cendana Lake NC"
+  },
+  {
+    "nc_id": "NC-KR-1",
+    "town": "KR",
+    "name": "Kebun Raya Central NC"
+  },
+  {
+    "nc_id": "NC-KR-2",
+    "town": "KR",
+    "name": "Raya Hill NC"
+  },
+  {
+    "nc_id": "NC-KR-3",
+    "town": "KR",
+    "name": "Kebun Raya West NC"
+  },
+  {
+    "nc_id": "NC-RH-1",
+    "town": "RH",
+    "name": "Rimba Heights NC"
+  },
+  {
+    "nc_id": "NC-RH-2",
+    "town": "RH",
+    "name": "Rimba Green NC"
+  },
+  {
+    "nc_id": "NC-RH-3",
+    "town": "RH",
+    "name": "Rimba Park NC"
+  },
+  {
+    "nc_id": "NC-ST-1",
+    "town": "ST",
+    "name": "Sungai Tinggi Central NC"
+  },
+  {
+    "nc_id": "NC-ST-2",
+    "town": "ST",
+    "name": "Tinggi Vista NC"
+  },
+  {
+    "nc_id": "NC-ST-3",
+    "town": "ST",
+    "name": "Sungai Tinggi East NC"
+  },
+  {
+    "nc_id": "NC-PI-1",
+    "town": "PI",
+    "name": "Pasir Indah Central NC"
+  },
+  {
+    "nc_id": "NC-PI-2",
+    "town": "PI",
+    "name": "Indah Bay NC"
+  },
+  {
+    "nc_id": "NC-PI-3",
+    "town": "PI",
+    "name": "Pasir Indah South NC"
+  }
+]

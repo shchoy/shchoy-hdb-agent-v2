@@ -1,0 +1,528 @@
+task_id,task_type,title,related_id,assignee_id,assignee_name,created_date,due_date,status,safety_flag,revenue_at_risk,tenants_affected
+TSK-2025-0006,Inspection Follow-up,Follow up Unapproved Aa at U-BV290-01-05,INSP-2025-0032,S06,Daniel Ong,2025-10-06,2025-10-20,Overdue,False,0,1
+TSK-2025-0034,Inspection Follow-up,Follow up Unauth Trade at U-RH401-02-11,INSP-2025-0129,S12,Benjamin Ho,2025-10-19,2025-10-26,Overdue,False,0,1
+TSK-2025-0051,Inspection Follow-up,Follow up Display Encroach at U-RH471-01-05,INSP-2025-0175,S12,Benjamin Ho,2025-10-26,2025-11-09,Overdue,False,0,1
+TSK-2025-0057,Inspection Follow-up,Follow up Fire Safety at U-CD190-01-02,INSP-2025-0185,S06,Daniel Ong,2025-10-27,2025-11-03,Overdue,True,0,1
+TSK-2025-0059,Inspection Follow-up,Follow up Unapproved Aa at U-CD118-01-07,INSP-2025-0189,S06,Daniel Ong,2025-10-27,2025-11-10,Overdue,False,0,1
+TSK-2025-0066,Inspection Follow-up,Follow up Unauth Trade at U-RH420-01-01,INSP-2025-0206,S12,Benjamin Ho,2025-10-30,2025-11-06,Overdue,False,0,1
+TSK-2025-0073,Inspection Follow-up,Follow up Display Encroach at U-KR379-01-02,INSP-2025-0225,S12,Benjamin Ho,2025-11-01,2025-11-15,Overdue,False,0,1
+TSK-2025-0082,Inspection Follow-up,Follow up Display Encroach at U-RH464-01-03,INSP-2025-0264,S06,Daniel Ong,2025-11-05,2025-11-19,Overdue,False,0,1
+TSK-2025-0090,Inspection Follow-up,Follow up Display Encroach at U-KR369-01-06,INSP-2025-0300,S06,Daniel Ong,2025-11-11,2025-11-25,Overdue,False,0,1
+TSK-2025-0106,Inspection Follow-up,Follow up Hygiene at U-RH455-01-06,INSP-2025-0343,S06,Daniel Ong,2025-11-18,2025-12-02,Overdue,False,0,1
+TSK-2025-0109,Inspection Follow-up,Follow up Hygiene at U-BV214-01-32,INSP-2025-0360,S06,Daniel Ong,2025-11-20,2025-12-04,Overdue,False,0,1
+TSK-2025-0113,Inspection Follow-up,Follow up Unapproved Aa at U-BV231-01-08,INSP-2025-0367,S06,Daniel Ong,2025-11-21,2025-12-05,Overdue,False,0,1
+TSK-2025-0123,Inspection Follow-up,Follow up Display Encroach at U-PI634-01-08,INSP-2025-0397,S06,Daniel Ong,2025-11-25,2025-12-09,Overdue,False,0,1
+TSK-2025-0124,Inspection Follow-up,Follow up Fire Safety at U-KR305-01-29,INSP-2025-0403,S06,Daniel Ong,2025-11-26,2025-12-03,Overdue,True,0,1
+TSK-2025-0130,Inspection Follow-up,Follow up Display Encroach at U-KR341-01-11,INSP-2025-0444,S06,Daniel Ong,2025-12-02,2025-12-16,Overdue,False,0,1
+TSK-2025-0134,Inspection Follow-up,Follow up Hygiene at U-BV271-01-08,INSP-2025-0462,S04,Marcus Lim,2025-12-04,2025-12-18,Overdue,False,0,1
+TSK-2025-0144,Inspection Follow-up,Follow up Unauth Trade at U-CD160-01-13,INSP-2025-0500,S06,Daniel Ong,2025-12-09,2025-12-16,Overdue,False,0,1
+TSK-2025-0160,Inspection Follow-up,Follow up Fire Safety at U-RH466-01-01,INSP-2025-0541,S12,Benjamin Ho,2025-12-14,2025-12-21,Overdue,True,0,1
+TSK-2025-0169,Inspection Follow-up,Follow up Unapproved Aa at U-BV231-01-01,INSP-2025-0568,S04,Marcus Lim,2025-12-17,2025-12-31,Overdue,False,0,1
+TSK-2025-0173,Inspection Follow-up,Follow up Display Encroach at U-BV227-02-05,INSP-2025-0577,S06,Daniel Ong,2025-12-19,2026-01-02,Overdue,False,0,1
+TSK-2025-0178,Inspection Follow-up,Follow up Unauth Trade at U-BV214-01-25,INSP-2025-0590,S04,Marcus Lim,2025-12-20,2025-12-27,Overdue,False,0,1
+TSK-2026-0011,Inspection Follow-up,Follow up Unauth Trade at U-CD153-01-04,INSP-2026-0050,S06,Daniel Ong,2026-01-08,2026-01-15,Overdue,False,0,1
+TSK-2026-0012,Inspection Follow-up,Follow up Display Encroach at U-KR368-01-06,INSP-2026-0052,S06,Daniel Ong,2026-01-08,2026-01-22,Overdue,False,0,1
+TSK-2026-0017,Inspection Follow-up,Follow up Display Encroach at U-RH434-01-01,INSP-2026-0070,S06,Daniel Ong,2026-01-11,2026-01-25,Overdue,False,0,1
+TSK-2026-0025,Inspection Follow-up,Follow up Unapproved Aa at U-KR345-01-08,INSP-2026-0092,S06,Daniel Ong,2026-01-13,2026-01-27,Overdue,False,0,1
+TSK-2026-0034,Inspection Follow-up,Follow up Unauth Trade at U-PI627-01-21,INSP-2026-0126,S06,Daniel Ong,2026-01-17,2026-01-24,Overdue,False,0,1
+TSK-2026-0038,Inspection Follow-up,Follow up Unapproved Aa at U-PI609-01-03,INSP-2026-0147,S04,Marcus Lim,2026-01-22,2026-02-05,Overdue,False,0,1
+TSK-2026-0042,Inspection Follow-up,Follow up Display Encroach at U-CD129-01-06,INSP-2026-0161,S06,Daniel Ong,2026-01-24,2026-02-07,Overdue,False,0,1
+TSK-2026-0050,Inspection Follow-up,Follow up Hygiene at U-KR362-01-06,INSP-2026-0181,S06,Daniel Ong,2026-01-27,2026-02-10,Overdue,False,0,1
+TSK-2026-0051,Inspection Follow-up,Follow up Unapproved Aa at U-CD185-01-07,INSP-2026-0184,S06,Daniel Ong,2026-01-28,2026-02-11,Overdue,False,0,1
+TSK-2026-0055,Inspection Follow-up,Follow up Hygiene at U-PI696-01-01,INSP-2026-0198,S06,Daniel Ong,2026-01-29,2026-02-12,Overdue,False,0,1
+TSK-2026-0064,Inspection Follow-up,Follow up Unauth Sublet at U-KR329-01-08,INSP-2026-0220,S12,Benjamin Ho,2026-02-01,2026-02-08,Overdue,False,0,1
+TSK-2026-0085,Inspection Follow-up,Follow up Unauth Sublet at U-CD173-01-03,INSP-2026-0310,S04,Marcus Lim,2026-02-16,2026-02-23,Overdue,False,0,1
+TSK-2026-0093,Inspection Follow-up,Follow up Unapproved Aa at U-ST501-01-06,INSP-2026-0338,S06,Daniel Ong,2026-02-22,2026-03-08,Overdue,False,0,1
+TSK-2026-0101,Inspection Follow-up,Follow up Fire Safety at U-CD119-01-06,INSP-2026-0358,S06,Daniel Ong,2026-02-24,2026-03-03,Overdue,True,0,1
+TSK-2026-0116,Inspection Follow-up,Follow up Display Encroach at U-CD165-01-08,INSP-2026-0416,S04,Marcus Lim,2026-03-03,2026-03-17,Overdue,False,0,1
+TSK-2026-0118,Inspection Follow-up,Follow up Display Encroach at U-BV288-01-03,INSP-2026-0431,S04,Marcus Lim,2026-03-06,2026-03-20,Overdue,False,0,1
+TSK-2026-0129,Inspection Follow-up,Follow up Hygiene at U-CD174-01-05,INSP-2026-0465,S06,Daniel Ong,2026-03-12,2026-03-26,Overdue,False,0,1
+TSK-2026-0149,Inspection Follow-up,Follow up Display Encroach at U-ST513-01-09,INSP-2026-0537,S06,Daniel Ong,2026-03-23,2026-04-06,Overdue,False,0,1
+TSK-2026-0160,Inspection Follow-up,Follow up Display Encroach at U-BV205-01-07,INSP-2026-0573,S06,Daniel Ong,2026-03-29,2026-04-12,Overdue,False,0,1
+TSK-2026-0183,Renewal,Renewal due: TA-2023-00016 expires 30 Sep 2026,TA-2023-00016,S05,Siti Aishah Yusof,2026-04-03,2026-06-02,Overdue,False,53520,1
+TSK-2026-0194,Renewal,Renewal due: TA-2023-00032 expires 30 Sep 2026,TA-2023-00032,S05,Siti Aishah Yusof,2026-04-03,2026-06-02,Overdue,False,26400,1
+TSK-2026-0220,Inspection Follow-up,Follow up Hygiene at U-ST501-01-11,INSP-2026-0675,S06,Daniel Ong,2026-04-14,2026-04-28,Overdue,False,0,1
+TSK-2026-0247,Inspection Follow-up,Follow up Hygiene at U-KR341-01-06,INSP-2026-0795,S06,Daniel Ong,2026-05-01,2026-05-15,Overdue,False,0,1
+TSK-2026-0248,Inspection Follow-up,Follow up Display Encroach at U-RH463-01-01,INSP-2026-0802,S06,Daniel Ong,2026-05-02,2026-05-16,Overdue,False,0,1
+TSK-2026-0252,Renewal,Renewal due: TA-2023-00054 expires 31 Oct 2026,TA-2023-00054,S05,Siti Aishah Yusof,2026-05-04,2026-07-03,Overdue,False,34560,1
+TSK-2026-0266,Renewal,Renewal due: TA-2023-00072 expires 31 Oct 2026,TA-2023-00072,S05,Siti Aishah Yusof,2026-05-04,2026-07-03,Overdue,False,33360,1
+TSK-2026-0267,Renewal,Renewal due: TA-2023-00073 expires 31 Oct 2026,TA-2023-00073,S05,Siti Aishah Yusof,2026-05-04,2026-07-03,Overdue,False,47280,1
+TSK-2026-0280,Renewal,Renewal due: TA-2023-00094 expires 31 Oct 2026,TA-2023-00094,S05,Siti Aishah Yusof,2026-05-04,2026-07-03,Overdue,False,26400,1
+TSK-2026-0285,Renewal,Renewal due: TA-2023-00101 expires 31 Oct 2026,TA-2023-00101,S05,Siti Aishah Yusof,2026-05-04,2026-07-03,Overdue,False,24480,1
+TSK-2026-0311,Inspection Follow-up,Follow up Hygiene at U-ST566-02-01,INSP-2026-0848,S06,Daniel Ong,2026-05-09,2026-05-23,Overdue,False,0,1
+TSK-2026-0326,Inspection Follow-up,Follow up Unapproved Aa at U-BV279-01-07,INSP-2026-0895,S06,Daniel Ong,2026-05-15,2026-05-29,Overdue,False,0,1
+TSK-2026-0327,Inspection Follow-up,Follow up Hygiene at U-CD142-01-06,INSP-2026-0897,S04,Marcus Lim,2026-05-15,2026-05-29,Overdue,False,0,1
+TSK-2026-0340,Inspection Follow-up,Follow up Display Encroach at U-RH485-01-09,INSP-2026-0913,S06,Daniel Ong,2026-05-16,2026-05-30,Overdue,False,0,1
+TSK-2026-0342,Inspection Follow-up,Follow up Unauth Trade at U-PI678-01-10,INSP-2026-0916,S04,Marcus Lim,2026-05-17,2026-05-24,Overdue,False,0,1
+TSK-2026-0345,Inspection Follow-up,Follow up Unauth Trade at U-RH455-01-01,INSP-2026-0928,S06,Daniel Ong,2026-05-18,2026-05-25,Overdue,False,0,1
+TSK-2026-0360,Inspection Follow-up,Follow up Unauth Trade at U-KR318-01-01,INSP-2026-0981,S06,Daniel Ong,2026-05-28,2026-06-04,Overdue,False,0,1
+TSK-2026-0366,Inspection Follow-up,Follow up Hygiene at U-RH476-01-05,INSP-2026-0994,S06,Daniel Ong,2026-05-30,2026-06-13,Overdue,False,0,1
+TSK-2026-0367,Inspection Follow-up,Follow up Hygiene at U-BV273-02-06,INSP-2026-1003,S04,Marcus Lim,2026-05-31,2026-06-14,Overdue,False,0,1
+TSK-2026-0374,Renewal,Renewal due: TA-2023-00124 expires 30 Nov 2026,TA-2023-00124,S05,Siti Aishah Yusof,2026-06-03,2026-08-02,Overdue,False,58680,1
+TSK-2026-0406,Renewal,Renewal due: TA-2023-00177 expires 30 Nov 2026,TA-2023-00177,S05,Siti Aishah Yusof,2026-06-03,2026-08-02,Overdue,False,42720,1
+TSK-2026-0412,Renewal,Renewal due: TA-2023-00184 expires 30 Nov 2026,TA-2023-00184,S05,Siti Aishah Yusof,2026-06-03,2026-08-02,Overdue,False,30960,1
+TSK-2026-0423,Inspection Follow-up,Follow up Display Encroach at U-BV279-01-04,INSP-2026-1064,S04,Marcus Lim,2026-06-07,2026-06-21,Overdue,False,0,1
+TSK-2026-0448,Arrears Follow-up,"Arrears S$12,556.80 (121 days) - TA-2025-00047",TA-2025-00047,S07,Priya Menon,2026-06-15,2026-07-31,Overdue,False,12556.8,1
+TSK-2026-0452,Inspection Follow-up,Follow up Unauth Sublet at U-RH455-01-20,INSP-2026-1119,S06,Daniel Ong,2026-06-16,2026-06-30,Overdue,False,0,1
+TSK-2026-0459,Inspection Follow-up,Follow up Structural Defect at U-KR372-01-08,INSP-2026-1151,S06,Daniel Ong,2026-06-20,2026-06-27,Overdue,True,0,1
+TSK-2026-0460,Inspection Follow-up,Follow up Display Encroach at U-RH491-01-07,INSP-2026-1156,S12,Benjamin Ho,2026-06-21,2026-07-05,Overdue,False,0,1
+TSK-2026-0462,Inspection Follow-up,Follow up Hygiene at U-BV215-01-12,INSP-2026-1159,S04,Marcus Lim,2026-06-22,2026-07-06,Overdue,False,0,1
+TSK-2026-0468,Inspection Follow-up,Follow up Hygiene at U-ST535-01-06,INSP-2026-1182,S06,Daniel Ong,2026-06-25,2026-07-09,Overdue,False,0,1
+TSK-2026-0470,Inspection Follow-up,Follow up Fire Safety at U-RH455-01-03,INSP-2026-1191,S12,Benjamin Ho,2026-06-26,2026-07-03,Overdue,True,0,1
+TSK-2026-0492,Renewal,Renewal due: TA-2024-00008 expires 31 Dec 2026,TA-2024-00008,S05,Siti Aishah Yusof,2026-07-04,2026-09-02,Overdue,False,37440,1
+TSK-2026-0501,Renewal,Renewal due: TA-2024-00019 expires 31 Dec 2026,TA-2024-00019,S05,Siti Aishah Yusof,2026-07-04,2026-09-02,Overdue,False,71400,1
+TSK-2026-0505,Renewal,Renewal due: TA-2024-00025 expires 31 Dec 2026,TA-2024-00025,S05,Siti Aishah Yusof,2026-07-04,2026-09-02,Overdue,False,38880,1
+TSK-2026-0516,Renewal,Renewal due: TA-2024-00043 expires 31 Dec 2026,TA-2024-00043,S05,Siti Aishah Yusof,2026-07-04,2026-09-02,Overdue,False,29040,1
+TSK-2026-0538,Renewal,Renewal due: TA-2024-00079 expires 31 Dec 2026,TA-2024-00079,S05,Siti Aishah Yusof,2026-07-04,2026-09-02,Overdue,False,31320,1
+TSK-2026-0541,Renewal,Renewal due: TA-2024-00083 expires 31 Dec 2026,TA-2024-00083,S05,Siti Aishah Yusof,2026-07-04,2026-09-02,Overdue,False,51360,1
+TSK-2026-0557,Inspection Follow-up,Follow up Display Encroach at U-KR345-01-14,INSP-2026-1304,S06,Daniel Ong,2026-07-13,2026-07-27,Overdue,False,0,1
+TSK-2026-0560,Inspection Follow-up,Follow up Hygiene at U-KR305-01-34,INSP-2026-1310,S06,Daniel Ong,2026-07-14,2026-07-28,Overdue,False,0,1
+TSK-2026-0579,Inspection Follow-up,Follow up Hygiene at U-KR345-01-04,INSP-2026-1356,S06,Daniel Ong,2026-07-22,2026-08-05,Overdue,False,0,1
+TSK-2026-0580,Inspection Follow-up,Follow up Unapproved Aa at U-ST545-01-02,INSP-2026-1358,S06,Daniel Ong,2026-07-22,2026-08-05,Overdue,False,0,1
+TSK-2026-0586,Inspection Follow-up,Follow up Display Encroach at U-CD129-01-03,INSP-2026-1372,S06,Daniel Ong,2026-07-24,2026-08-07,Overdue,False,0,1
+TSK-2026-0590,Inspection Follow-up,Follow up Display Encroach at U-PI634-01-02,INSP-2026-1396,S04,Marcus Lim,2026-07-27,2026-08-10,Overdue,False,0,1
+TSK-2026-0606,Renewal,Renewal due: TA-2024-00090 expires 31 Jan 2027,TA-2024-00090,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,16080,1
+TSK-2026-0607,Renewal,Renewal due: TA-2024-00092 expires 31 Jan 2027,TA-2024-00092,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,63600,1
+TSK-2026-0608,Renewal,Renewal due: TA-2024-00093 expires 31 Jan 2027,TA-2024-00093,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,35520,1
+TSK-2026-0609,Renewal,Renewal due: TA-2024-00095 expires 31 Jan 2027,TA-2024-00095,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,69120,1
+TSK-2026-0610,Renewal,Renewal due: TA-2024-00097 expires 31 Jan 2027,TA-2024-00097,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,30840,1
+TSK-2026-0611,Renewal,Renewal due: TA-2024-00099 expires 31 Jan 2027,TA-2024-00099,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,81840,1
+TSK-2026-0612,Renewal,Renewal due: TA-2024-00100 expires 31 Jan 2027,TA-2024-00100,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,39840,1
+TSK-2026-0613,Renewal,Renewal due: TA-2024-00101 expires 31 Jan 2027,TA-2024-00101,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,57720,1
+TSK-2026-0614,Renewal,Renewal due: TA-2024-00102 expires 31 Jan 2027,TA-2024-00102,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,54120,1
+TSK-2026-0615,Renewal,Renewal due: TA-2024-00104 expires 31 Jan 2027,TA-2024-00104,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,14520,1
+TSK-2026-0616,Renewal,Renewal due: TA-2024-00106 expires 31 Jan 2027,TA-2024-00106,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,76440,1
+TSK-2026-0617,Renewal,Renewal due: TA-2024-00107 expires 31 Jan 2027,TA-2024-00107,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,62280,1
+TSK-2026-0618,Renewal,Renewal due: TA-2024-00108 expires 31 Jan 2027,TA-2024-00108,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,67800,1
+TSK-2026-0619,Renewal,Renewal due: TA-2024-00109 expires 31 Jan 2027,TA-2024-00109,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,29280,1
+TSK-2026-0620,Renewal,Renewal due: TA-2024-00110 expires 31 Jan 2027,TA-2024-00110,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,75000,1
+TSK-2026-0621,Renewal,Renewal due: TA-2024-00111 expires 31 Jan 2027,TA-2024-00111,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,41640,1
+TSK-2026-0622,Renewal,Renewal due: TA-2024-00113 expires 31 Jan 2027,TA-2024-00113,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,41400,1
+TSK-2026-0623,Renewal,Renewal due: TA-2024-00114 expires 31 Jan 2027,TA-2024-00114,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,24840,1
+TSK-2026-0624,Renewal,Renewal due: TA-2024-00115 expires 31 Jan 2027,TA-2024-00115,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,30840,1
+TSK-2026-0625,Renewal,Renewal due: TA-2024-00116 expires 31 Jan 2027,TA-2024-00116,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,61320,1
+TSK-2026-0626,Renewal,Renewal due: TA-2024-00117 expires 31 Jan 2027,TA-2024-00117,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,14880,1
+TSK-2026-0627,Renewal,Renewal due: TA-2024-00119 expires 31 Jan 2027,TA-2024-00119,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,32520,1
+TSK-2026-0628,Renewal,Renewal due: TA-2024-00120 expires 31 Jan 2027,TA-2024-00120,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,63480,1
+TSK-2026-0629,Renewal,Renewal due: TA-2024-00122 expires 31 Jan 2027,TA-2024-00122,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,48720,1
+TSK-2026-0630,Renewal,Renewal due: TA-2024-00123 expires 31 Jan 2027,TA-2024-00123,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,33240,1
+TSK-2026-0631,Renewal,Renewal due: TA-2024-00125 expires 31 Jan 2027,TA-2024-00125,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,31440,1
+TSK-2026-0632,Renewal,Renewal due: TA-2024-00127 expires 31 Jan 2027,TA-2024-00127,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,10800,1
+TSK-2026-0633,Renewal,Renewal due: TA-2024-00129 expires 31 Jan 2027,TA-2024-00129,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,29880,1
+TSK-2026-0634,Renewal,Renewal due: TA-2024-00131 expires 31 Jan 2027,TA-2024-00131,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,47280,1
+TSK-2026-0635,Renewal,Renewal due: TA-2024-00132 expires 31 Jan 2027,TA-2024-00132,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,27840,1
+TSK-2026-0636,Renewal,Renewal due: TA-2024-00133 expires 31 Jan 2027,TA-2024-00133,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,41760,1
+TSK-2026-0637,Renewal,Renewal due: TA-2024-00134 expires 31 Jan 2027,TA-2024-00134,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,29280,1
+TSK-2026-0638,Renewal,Renewal due: TA-2024-00135 expires 31 Jan 2027,TA-2024-00135,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,10800,1
+TSK-2026-0639,Renewal,Renewal due: TA-2024-00137 expires 31 Jan 2027,TA-2024-00137,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,43920,1
+TSK-2026-0640,Renewal,Renewal due: TA-2024-00138 expires 31 Jan 2027,TA-2024-00138,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,14160,1
+TSK-2026-0641,Renewal,Renewal due: TA-2024-00140 expires 31 Jan 2027,TA-2024-00140,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,52560,1
+TSK-2026-0642,Renewal,Renewal due: TA-2024-00142 expires 31 Jan 2027,TA-2024-00142,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,84840,1
+TSK-2026-0643,Renewal,Renewal due: TA-2024-00143 expires 31 Jan 2027,TA-2024-00143,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,48960,1
+TSK-2026-0644,Renewal,Renewal due: TA-2024-00145 expires 31 Jan 2027,TA-2024-00145,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,23760,1
+TSK-2026-0645,Renewal,Renewal due: TA-2024-00147 expires 31 Jan 2027,TA-2024-00147,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,56880,1
+TSK-2026-0646,Renewal,Renewal due: TA-2024-00148 expires 31 Jan 2027,TA-2024-00148,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,16440,1
+TSK-2026-0647,Renewal,Renewal due: TA-2024-00150 expires 31 Jan 2027,TA-2024-00150,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,35640,1
+TSK-2026-0648,Renewal,Renewal due: TA-2024-00152 expires 31 Jan 2027,TA-2024-00152,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,43680,1
+TSK-2026-0649,Renewal,Renewal due: TA-2024-00153 expires 31 Jan 2027,TA-2024-00153,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,26640,1
+TSK-2026-0650,Renewal,Renewal due: TA-2024-00155 expires 31 Jan 2027,TA-2024-00155,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,In Progress,False,48120,1
+TSK-2026-0651,Renewal,Renewal due: TA-2024-00156 expires 31 Jan 2027,TA-2024-00156,S05,Siti Aishah Yusof,2026-08-04,2026-10-03,Open,False,24840,1
+TSK-2026-0658,Inspection Follow-up,Follow up Unauth Trade at U-BV237-01-03,INSP-2026-1465,S06,Daniel Ong,2026-08-07,2026-08-14,Overdue,False,0,1
+TSK-2026-0664,Inspection Follow-up,Follow up Display Encroach at U-KR310-01-05,INSP-2026-1478,S06,Daniel Ong,2026-08-09,2026-08-23,Overdue,False,0,1
+TSK-2026-0667,Inspection Follow-up,Follow up Hygiene at U-ST544-01-06,INSP-2026-1483,S12,Benjamin Ho,2026-08-10,2026-08-24,Overdue,False,0,1
+TSK-2026-0678,Application Review,Review Tenancy Renewal APP-2026-0241,APP-2026-0241,S05,Siti Aishah Yusof,2026-08-14,2026-08-28,Overdue,False,0,1
+TSK-2026-0685,Inspection Follow-up,Follow up Display Encroach at U-CD173-01-01,INSP-2026-1533,S04,Marcus Lim,2026-08-15,2026-08-29,Overdue,False,0,1
+TSK-2026-0688,Arrears Follow-up,"Arrears S$4,665.20 (60 days) - TA-2023-00034",TA-2023-00034,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,4665.2,1
+TSK-2026-0689,Arrears Follow-up,"Arrears S$13,712.20 (60 days) - TA-2023-00135",TA-2023-00135,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,13712.2,1
+TSK-2026-0690,Arrears Follow-up,"Arrears S$1,962.00 (60 days) - TA-2024-00070",TA-2024-00070,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,1962.0,1
+TSK-2026-0691,Arrears Follow-up,"Arrears S$5,689.80 (60 days) - TA-2024-00079",TA-2024-00079,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,5689.8,1
+TSK-2026-0692,Arrears Follow-up,"Arrears S$9,875.40 (60 days) - TA-2024-00217",TA-2024-00217,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,9875.4,1
+TSK-2026-0693,Arrears Follow-up,"Arrears S$13,734.00 (60 days) - TA-2024-00280",TA-2024-00280,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,13734.0,1
+TSK-2026-0694,Arrears Follow-up,"Arrears S$9,657.40 (60 days) - TA-2024-00314",TA-2024-00314,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,9657.4,1
+TSK-2026-0695,Arrears Follow-up,"Arrears S$6,649.00 (60 days) - TA-2024-00364",TA-2024-00364,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,6649.0,1
+TSK-2026-0696,Arrears Follow-up,"Arrears S$7,172.20 (60 days) - TA-2024-00477",TA-2024-00477,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,7172.2,1
+TSK-2026-0697,Arrears Follow-up,"Arrears S$8,000.60 (60 days) - TA-2024-00516",TA-2024-00516,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,8000.6,1
+TSK-2026-0698,Arrears Follow-up,"Arrears S$6,431.00 (60 days) - TA-2024-00551",TA-2024-00551,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,6431.0,1
+TSK-2026-0699,Arrears Follow-up,"Arrears S$9,504.80 (60 days) - TA-2024-00570",TA-2024-00570,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,9504.8,1
+TSK-2026-0700,Arrears Follow-up,"Arrears S$4,403.60 (60 days) - TA-2024-00587",TA-2024-00587,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,4403.6,1
+TSK-2026-0701,Arrears Follow-up,"Arrears S$8,698.20 (60 days) - TA-2025-00120",TA-2025-00120,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,8698.2,1
+TSK-2026-0702,Arrears Follow-up,"Arrears S$5,144.80 (60 days) - TA-2025-00185",TA-2025-00185,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,5144.8,1
+TSK-2026-0703,Arrears Follow-up,"Arrears S$4,556.20 (60 days) - TA-2025-00231",TA-2025-00231,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,4556.2,1
+TSK-2026-0704,Arrears Follow-up,"Arrears S$8,611.00 (60 days) - TA-2025-00298",TA-2025-00298,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,8611.0,1
+TSK-2026-0705,Arrears Follow-up,"Arrears S$8,175.00 (60 days) - TA-2025-00335",TA-2025-00335,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,8175.0,1
+TSK-2026-0706,Arrears Follow-up,"Arrears S$9,831.80 (60 days) - TA-2025-00340",TA-2025-00340,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,9831.8,1
+TSK-2026-0707,Arrears Follow-up,"Arrears S$9,679.20 (60 days) - TA-2025-00380",TA-2025-00380,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,9679.2,1
+TSK-2026-0708,Arrears Follow-up,"Arrears S$7,346.60 (60 days) - TA-2025-00483",TA-2025-00483,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,7346.6,1
+TSK-2026-0709,Arrears Follow-up,"Arrears S$11,314.20 (60 days) - TA-2025-00619",TA-2025-00619,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,11314.2,1
+TSK-2026-0710,Arrears Follow-up,"Arrears S$9,635.60 (60 days) - TA-2025-00673",TA-2025-00673,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,9635.6,1
+TSK-2026-0711,Arrears Follow-up,"Arrears S$9,701.00 (60 days) - TA-2025-00677",TA-2025-00677,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,9701.0,1
+TSK-2026-0712,Arrears Follow-up,"Arrears S$8,502.00 (60 days) - TA-2025-00697",TA-2025-00697,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,8502.0,1
+TSK-2026-0713,Arrears Follow-up,"Arrears S$4,708.80 (60 days) - TA-2025-00737",TA-2025-00737,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,4708.8,1
+TSK-2026-0714,Arrears Follow-up,"Arrears S$8,022.40 (60 days) - TA-2026-00011",TA-2026-00011,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,8022.4,1
+TSK-2026-0715,Arrears Follow-up,"Arrears S$10,311.40 (60 days) - TA-2026-00016",TA-2026-00016,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,10311.4,1
+TSK-2026-0716,Arrears Follow-up,"Arrears S$7,303.00 (60 days) - TA-2026-00024",TA-2026-00024,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,7303.0,1
+TSK-2026-0717,Arrears Follow-up,"Arrears S$9,330.40 (60 days) - TA-2026-00036",TA-2026-00036,S07,Priya Menon,2026-08-15,2026-09-30,In Progress,False,9330.4,1
+TSK-2026-0718,Arrears Follow-up,"Arrears S$6,627.20 (60 days) - TA-2026-00146",TA-2026-00146,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,6627.2,1
+TSK-2026-0719,Arrears Follow-up,"Arrears S$6,867.00 (60 days) - TA-2026-00242",TA-2026-00242,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,6867.0,1
+TSK-2026-0720,Arrears Follow-up,"Arrears S$12,208.00 (60 days) - TA-2026-00302",TA-2026-00302,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,12208.0,1
+TSK-2026-0721,Arrears Follow-up,"Arrears S$5,144.80 (60 days) - TA-2026-00373",TA-2026-00373,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,5144.8,1
+TSK-2026-0722,Arrears Follow-up,"Arrears S$4,120.20 (60 days) - TA-2026-00492",TA-2026-00492,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,4120.2,1
+TSK-2026-0723,Arrears Follow-up,"Arrears S$10,442.20 (60 days) - TA-2026-00546",TA-2026-00546,S07,Priya Menon,2026-08-15,2026-09-30,Open,False,10442.2,1
+TSK-2026-0727,Inspection Follow-up,Follow up Unapproved Aa at U-RH455-01-20,INSP-2026-1547,S06,Daniel Ong,2026-08-16,2026-08-30,Overdue,False,0,1
+TSK-2026-0734,Inspection Follow-up,Follow up Hygiene at U-KR371-01-12,INSP-2026-1566,S06,Daniel Ong,2026-08-18,2026-09-01,Overdue,False,0,1
+TSK-2026-0740,Inspection Follow-up,Follow up Unauth Sublet at U-PI678-01-03,INSP-2026-1578,S06,Daniel Ong,2026-08-21,2026-08-28,Overdue,False,0,1
+TSK-2026-0751,Inspection Follow-up,Follow up Display Encroach at U-BV271-02-01,INSP-2026-1610,S04,Marcus Lim,2026-08-27,2026-09-10,Overdue,False,0,1
+TSK-2026-0752,Inspection Follow-up,Follow up Display Encroach at U-KR327-01-01,INSP-2026-1611,S06,Daniel Ong,2026-08-27,2026-09-10,Overdue,False,0,1
+TSK-2026-0753,Inspection Follow-up,Follow up Display Encroach at U-PI648-01-08,INSP-2026-1613,S04,Marcus Lim,2026-08-27,2026-09-10,Overdue,False,0,1
+TSK-2026-0754,Application Review,Review Assignment of Tenancy APP-2026-0266,APP-2026-0266,S05,Siti Aishah Yusof,2026-08-28,2026-09-11,Overdue,False,0,1
+TSK-2026-0756,Application Review,Review Tenancy Renewal APP-2026-0268,APP-2026-0268,S03,Nurul Huda Rahman,2026-08-29,2026-09-12,Overdue,False,0,1
+TSK-2026-0760,Inspection Follow-up,Follow up Hygiene at U-BV214-01-25,INSP-2026-1633,S06,Daniel Ong,2026-08-30,2026-09-13,Overdue,False,0,1
+TSK-2026-0762,Inspection Follow-up,Follow up Unapproved Aa at U-RH484-01-06,INSP-2026-1639,S06,Daniel Ong,2026-08-30,2026-09-13,Overdue,False,0,1
+TSK-2026-0764,Inspection Follow-up,Follow up Hygiene at U-BV283-01-08,INSP-2026-1643,S04,Marcus Lim,2026-08-31,2026-09-14,Overdue,False,0,1
+TSK-2026-0766,Inspection Follow-up,Follow up Display Encroach at U-CD185-01-02,INSP-2026-1647,S06,Daniel Ong,2026-08-31,2026-09-14,Overdue,False,0,1
+TSK-2026-0769,Renewal,Renewal due: TA-2024-00157 expires 28 Feb 2027,TA-2024-00157,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,170880,1
+TSK-2026-0770,Renewal,Renewal due: TA-2024-00159 expires 28 Feb 2027,TA-2024-00159,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,49200,1
+TSK-2026-0771,Renewal,Renewal due: TA-2024-00160 expires 28 Feb 2027,TA-2024-00160,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,52440,1
+TSK-2026-0772,Renewal,Renewal due: TA-2024-00162 expires 28 Feb 2027,TA-2024-00162,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,59400,1
+TSK-2026-0773,Renewal,Renewal due: TA-2024-00164 expires 28 Feb 2027,TA-2024-00164,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,41400,1
+TSK-2026-0774,Renewal,Renewal due: TA-2024-00166 expires 28 Feb 2027,TA-2024-00166,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,38400,1
+TSK-2026-0775,Renewal,Renewal due: TA-2024-00168 expires 28 Feb 2027,TA-2024-00168,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,11400,1
+TSK-2026-0776,Renewal,Renewal due: TA-2024-00170 expires 28 Feb 2027,TA-2024-00170,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,71400,1
+TSK-2026-0777,Renewal,Renewal due: TA-2024-00172 expires 28 Feb 2027,TA-2024-00172,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,78720,1
+TSK-2026-0778,Renewal,Renewal due: TA-2024-00173 expires 28 Feb 2027,TA-2024-00173,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,51120,1
+TSK-2026-0779,Renewal,Renewal due: TA-2024-00175 expires 28 Feb 2027,TA-2024-00175,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,37440,1
+TSK-2026-0780,Renewal,Renewal due: TA-2024-00176 expires 28 Feb 2027,TA-2024-00176,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,20160,1
+TSK-2026-0781,Renewal,Renewal due: TA-2024-00177 expires 28 Feb 2027,TA-2024-00177,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,40440,1
+TSK-2026-0782,Renewal,Renewal due: TA-2024-00178 expires 28 Feb 2027,TA-2024-00178,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,66600,1
+TSK-2026-0783,Renewal,Renewal due: TA-2024-00179 expires 28 Feb 2027,TA-2024-00179,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,10800,1
+TSK-2026-0784,Renewal,Renewal due: TA-2024-00180 expires 28 Feb 2027,TA-2024-00180,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,50880,1
+TSK-2026-0785,Renewal,Renewal due: TA-2024-00182 expires 28 Feb 2027,TA-2024-00182,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,147240,1
+TSK-2026-0786,Renewal,Renewal due: TA-2024-00183 expires 28 Feb 2027,TA-2024-00183,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,50640,1
+TSK-2026-0787,Renewal,Renewal due: TA-2024-00185 expires 28 Feb 2027,TA-2024-00185,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,40200,1
+TSK-2026-0788,Renewal,Renewal due: TA-2024-00186 expires 28 Feb 2027,TA-2024-00186,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,31680,1
+TSK-2026-0789,Renewal,Renewal due: TA-2024-00187 expires 28 Feb 2027,TA-2024-00187,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,55080,1
+TSK-2026-0790,Renewal,Renewal due: TA-2024-00188 expires 28 Feb 2027,TA-2024-00188,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,32640,1
+TSK-2026-0791,Renewal,Renewal due: TA-2024-00189 expires 28 Feb 2027,TA-2024-00189,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,30840,1
+TSK-2026-0792,Renewal,Renewal due: TA-2024-00190 expires 28 Feb 2027,TA-2024-00190,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,132000,1
+TSK-2026-0793,Renewal,Renewal due: TA-2024-00191 expires 28 Feb 2027,TA-2024-00191,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,55320,1
+TSK-2026-0794,Renewal,Renewal due: TA-2024-00192 expires 28 Feb 2027,TA-2024-00192,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,38280,1
+TSK-2026-0795,Renewal,Renewal due: TA-2024-00194 expires 28 Feb 2027,TA-2024-00194,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,42720,1
+TSK-2026-0796,Renewal,Renewal due: TA-2024-00196 expires 28 Feb 2027,TA-2024-00196,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,52440,1
+TSK-2026-0797,Renewal,Renewal due: TA-2024-00198 expires 28 Feb 2027,TA-2024-00198,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,21720,1
+TSK-2026-0798,Renewal,Renewal due: TA-2024-00199 expires 28 Feb 2027,TA-2024-00199,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,42240,1
+TSK-2026-0799,Renewal,Renewal due: TA-2024-00200 expires 28 Feb 2027,TA-2024-00200,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,19080,1
+TSK-2026-0800,Renewal,Renewal due: TA-2024-00202 expires 28 Feb 2027,TA-2024-00202,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,35400,1
+TSK-2026-0801,Renewal,Renewal due: TA-2024-00204 expires 28 Feb 2027,TA-2024-00204,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,42480,1
+TSK-2026-0802,Renewal,Renewal due: TA-2024-00205 expires 28 Feb 2027,TA-2024-00205,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,In Progress,False,50160,1
+TSK-2026-0803,Renewal,Renewal due: TA-2024-00206 expires 28 Feb 2027,TA-2024-00206,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,37560,1
+TSK-2026-0804,Renewal,Renewal due: TA-2024-00208 expires 28 Feb 2027,TA-2024-00208,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,31200,1
+TSK-2026-0805,Renewal,Renewal due: TA-2024-00209 expires 28 Feb 2027,TA-2024-00209,S05,Siti Aishah Yusof,2026-09-01,2026-10-31,Open,False,12360,1
+TSK-2026-0806,Application Review,Review Tenancy Renewal APP-2026-0272,APP-2026-0272,S03,Nurul Huda Rahman,2026-09-03,2026-09-17,Overdue,False,0,1
+TSK-2026-0807,Inspection Follow-up,Follow up Unapproved Aa at U-ST593-01-05,INSP-2026-1667,S06,Daniel Ong,2026-09-04,2026-09-18,Overdue,False,0,1
+TSK-2026-0808,Inspection Follow-up,Follow up Hygiene at U-CD152-01-01,INSP-2026-1670,S06,Daniel Ong,2026-09-04,2026-09-18,Overdue,False,0,1
+TSK-2026-0809,Application Review,Review Alteration & Addition Works APP-2026-0273,APP-2026-0273,S03,Nurul Huda Rahman,2026-09-05,2026-09-19,Overdue,False,0,1
+TSK-2026-0810,Inspection Follow-up,Follow up Display Encroach at U-BV215-01-02,INSP-2026-1676,S06,Daniel Ong,2026-09-05,2026-09-19,Overdue,False,0,1
+TSK-2026-0811,Inspection Follow-up,Follow up Display Encroach at U-RH407-01-01,INSP-2026-1689,S06,Daniel Ong,2026-09-06,2026-09-20,Overdue,False,0,1
+TSK-2026-0812,Application Review,Review New Tenancy APP-2026-0277,APP-2026-0277,S03,Nurul Huda Rahman,2026-09-07,2026-09-21,Overdue,False,0,1
+TSK-2026-0813,Inspection Follow-up,Follow up Unauth Sublet at U-RH463-01-05,INSP-2026-1694,S12,Benjamin Ho,2026-09-07,2026-09-14,Overdue,False,0,1
+TSK-2026-0814,Application Review,Review Tenancy Renewal APP-2026-0278,APP-2026-0278,S12,Benjamin Ho,2026-09-08,2026-09-22,Overdue,False,0,1
+TSK-2026-0815,Inspection Follow-up,Follow up Hygiene at U-BV231-01-03,INSP-2026-1696,S04,Marcus Lim,2026-09-08,2026-09-22,Overdue,False,0,1
+TSK-2026-0816,Inspection Follow-up,Follow up Display Encroach at U-KR323-01-08,INSP-2026-1699,S12,Benjamin Ho,2026-09-08,2026-09-22,Overdue,False,0,1
+TSK-2026-0817,Application Review,Review Tenancy Renewal APP-2026-0279,APP-2026-0279,S04,Marcus Lim,2026-09-09,2026-09-23,Overdue,False,0,1
+TSK-2026-0818,Inspection Follow-up,Follow up Hygiene at U-PI614-01-02,INSP-2026-1700,S06,Daniel Ong,2026-09-09,2026-09-23,Overdue,False,0,1
+TSK-2026-0819,Inspection Follow-up,Follow up Unauth Trade at U-KR358-01-05,INSP-2026-1701,S06,Daniel Ong,2026-09-09,2026-09-16,Overdue,False,0,1
+TSK-2026-0820,Inspection Follow-up,Follow up Display Encroach at U-KR372-01-11,INSP-2026-1702,S06,Daniel Ong,2026-09-09,2026-09-23,Overdue,False,0,1
+TSK-2026-0821,Inspection Follow-up,Follow up Hygiene at U-BV229-01-12,INSP-2026-1703,S06,Daniel Ong,2026-09-09,2026-09-23,Overdue,False,0,1
+TSK-2026-0822,Inspection Follow-up,Follow up Unauth Trade at U-PI634-01-12,INSP-2026-1706,S06,Daniel Ong,2026-09-10,2026-09-17,Overdue,False,0,1
+TSK-2026-0823,Inspection Follow-up,Follow up Hygiene at U-BV214-01-10,INSP-2026-1707,S06,Daniel Ong,2026-09-10,2026-09-24,Overdue,False,0,1
+TSK-2026-0824,Application Review,Review Tenancy Renewal APP-2026-0280,APP-2026-0280,S12,Benjamin Ho,2026-09-11,2026-09-25,Overdue,False,0,1
+TSK-2026-0825,Application Review,Review Tenancy Renewal APP-2026-0281,APP-2026-0281,S12,Benjamin Ho,2026-09-11,2026-09-25,Overdue,False,0,1
+TSK-2026-0826,Application Review,Review Alteration & Addition Works APP-2026-0282,APP-2026-0282,S04,Marcus Lim,2026-09-11,2026-09-25,Overdue,False,0,1
+TSK-2026-0827,Application Review,Review New Tenancy APP-2026-0283,APP-2026-0283,S05,Siti Aishah Yusof,2026-09-11,2026-09-25,Overdue,False,0,1
+TSK-2026-0828,Defect Follow-up,Chase IEMS-2609-0016 (Fire Safety),IEMS-2609-0016,S10,Ahmad Faizal Ismail,2026-09-11,2026-09-25,Overdue,True,0,11
+TSK-2026-0829,Inspection Follow-up,Follow up Unapproved Aa at U-RH473-01-04,INSP-2026-1709,S12,Benjamin Ho,2026-09-11,2026-09-25,Overdue,False,0,1
+TSK-2026-0830,Inspection Follow-up,Follow up Fire Safety at U-BV204-01-03,INSP-2026-1712,S04,Marcus Lim,2026-09-11,2026-09-18,Overdue,True,0,1
+TSK-2026-0831,Application Review,Review Assignment of Tenancy APP-2026-0284,APP-2026-0284,S12,Benjamin Ho,2026-09-12,2026-09-26,Overdue,False,0,1
+TSK-2026-0832,Inspection Follow-up,Follow up Unauth Sublet at U-PI684-01-04,INSP-2026-1716,S04,Marcus Lim,2026-09-12,2026-09-19,Overdue,False,0,1
+TSK-2026-0833,Inspection Follow-up,Follow up Display Encroach at U-CD133-01-10,INSP-2026-1718,S04,Marcus Lim,2026-09-12,2026-09-26,Overdue,False,0,1
+TSK-2026-0834,Application Review,Review Tenancy Renewal APP-2026-0285,APP-2026-0285,S03,Nurul Huda Rahman,2026-09-13,2026-09-27,Overdue,False,0,1
+TSK-2026-0835,Inspection Follow-up,Follow up Hygiene at U-RH466-01-03,INSP-2026-1720,S12,Benjamin Ho,2026-09-13,2026-09-27,Overdue,False,0,1
+TSK-2026-0836,Inspection Follow-up,Follow up Display Encroach at U-BV229-01-13,INSP-2026-1721,S04,Marcus Lim,2026-09-13,2026-09-27,Overdue,False,0,1
+TSK-2026-0837,Inspection Follow-up,Follow up Unauth Trade at U-KR305-01-10,INSP-2026-1724,S06,Daniel Ong,2026-09-13,2026-09-20,Overdue,False,0,1
+TSK-2026-0838,Inspection Follow-up,Follow up Display Encroach at U-KR341-01-09,INSP-2026-1726,S12,Benjamin Ho,2026-09-13,2026-09-27,Overdue,False,0,1
+TSK-2026-0839,Inspection Follow-up,Follow up Fire Safety at U-PI667-01-14,INSP-2026-1733,S06,Daniel Ong,2026-09-14,2026-09-21,Overdue,True,0,1
+TSK-2026-0840,Inspection Follow-up,Follow up Hygiene at U-KR333-01-05,INSP-2026-1739,S12,Benjamin Ho,2026-09-14,2026-09-28,Overdue,False,0,1
+TSK-2026-0841,Application Review,Review New Tenancy APP-2026-0286,APP-2026-0286,S04,Marcus Lim,2026-09-15,2026-09-29,Overdue,False,0,1
+TSK-2026-0842,Application Review,Review Alteration & Addition Works APP-2026-0287,APP-2026-0287,S05,Siti Aishah Yusof,2026-09-15,2026-09-29,Overdue,False,0,1
+TSK-2026-0843,Inspection Follow-up,Follow up Display Encroach at U-KR386-01-05,INSP-2026-1746,S12,Benjamin Ho,2026-09-15,2026-09-29,Overdue,False,0,1
+TSK-2026-0844,Arrears Follow-up,"Arrears S$3,924.00 (29 days) - TA-2023-00093",TA-2023-00093,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3924.0,1
+TSK-2026-0845,Arrears Follow-up,Arrears S$981.00 (29 days) - TA-2023-00106,TA-2023-00106,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,981.0,1
+TSK-2026-0846,Arrears Follow-up,"Arrears S$3,117.40 (29 days) - TA-2023-00153",TA-2023-00153,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3117.4,1
+TSK-2026-0847,Arrears Follow-up,"Arrears S$2,812.20 (29 days) - TA-2023-00184",TA-2023-00184,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,2812.2,1
+TSK-2026-0848,Arrears Follow-up,"Arrears S$4,370.90 (29 days) - TA-2024-00003",TA-2024-00003,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4370.9,1
+TSK-2026-0849,Arrears Follow-up,"Arrears S$1,417.00 (29 days) - TA-2024-00018",TA-2024-00018,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,1417.0,1
+TSK-2026-0850,Arrears Follow-up,"Arrears S$1,853.00 (29 days) - TA-2024-00064",TA-2024-00064,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,1853.0,1
+TSK-2026-0851,Arrears Follow-up,"Arrears S$5,362.80 (29 days) - TA-2024-00081",TA-2024-00081,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,5362.8,1
+TSK-2026-0852,Arrears Follow-up,"Arrears S$4,621.60 (29 days) - TA-2024-00180",TA-2024-00180,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4621.6,1
+TSK-2026-0853,Arrears Follow-up,"Arrears S$13,374.30 (29 days) - TA-2024-00182",TA-2024-00182,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,13374.3,1
+TSK-2026-0854,Arrears Follow-up,"Arrears S$3,477.10 (29 days) - TA-2024-00192",TA-2024-00192,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3477.1,1
+TSK-2026-0855,Arrears Follow-up,"Arrears S$3,858.60 (29 days) - TA-2024-00204",TA-2024-00204,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3858.6,1
+TSK-2026-0856,Arrears Follow-up,"Arrears S$7,564.60 (29 days) - TA-2024-00221",TA-2024-00221,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,7564.6,1
+TSK-2026-0857,Arrears Follow-up,"Arrears S$2,964.80 (29 days) - TA-2024-00258",TA-2024-00258,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,2964.8,1
+TSK-2026-0858,Arrears Follow-up,"Arrears S$3,509.80 (29 days) - TA-2024-00268",TA-2024-00268,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3509.8,1
+TSK-2026-0859,Arrears Follow-up,"Arrears S$5,177.50 (29 days) - TA-2024-00276",TA-2024-00276,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5177.5,1
+TSK-2026-0860,Arrears Follow-up,"Arrears S$5,646.20 (29 days) - TA-2024-00425",TA-2024-00425,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5646.2,1
+TSK-2026-0861,Arrears Follow-up,"Arrears S$1,863.90 (29 days) - TA-2024-00436",TA-2024-00436,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,1863.9,1
+TSK-2026-0862,Arrears Follow-up,"Arrears S$2,768.60 (29 days) - TA-2024-00457",TA-2024-00457,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,2768.6,1
+TSK-2026-0863,Arrears Follow-up,"Arrears S$1,504.20 (29 days) - TA-2024-00499",TA-2024-00499,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,1504.2,1
+TSK-2026-0864,Arrears Follow-up,"Arrears S$6,049.50 (29 days) - TA-2024-00554",TA-2024-00554,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,6049.5,1
+TSK-2026-0865,Arrears Follow-up,"Arrears S$2,866.70 (29 days) - TA-2024-00559",TA-2024-00559,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,2866.7,1
+TSK-2026-0866,Arrears Follow-up,"Arrears S$5,624.40 (29 days) - TA-2024-00633",TA-2024-00633,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5624.4,1
+TSK-2026-0867,Arrears Follow-up,"Arrears S$2,038.30 (29 days) - TA-2024-00676",TA-2024-00676,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,2038.3,1
+TSK-2026-0868,Arrears Follow-up,"Arrears S$5,471.80 (29 days) - TA-2024-00728",TA-2024-00728,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,5471.8,1
+TSK-2026-0869,Arrears Follow-up,"Arrears S$5,875.10 (29 days) - TA-2024-00750",TA-2024-00750,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,5875.1,1
+TSK-2026-0870,Arrears Follow-up,"Arrears S$5,308.30 (29 days) - TA-2024-00762",TA-2024-00762,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5308.3,1
+TSK-2026-0871,Arrears Follow-up,"Arrears S$3,902.20 (29 days) - TA-2024-00786",TA-2024-00786,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,3902.2,1
+TSK-2026-0872,Arrears Follow-up,"Arrears S$3,913.10 (29 days) - TA-2025-00032",TA-2025-00032,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,3913.1,1
+TSK-2026-0873,Arrears Follow-up,"Arrears S$4,131.10 (29 days) - TA-2025-00053",TA-2025-00053,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,4131.1,1
+TSK-2026-0874,Arrears Follow-up,"Arrears S$2,964.80 (29 days) - TA-2025-00075",TA-2025-00075,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,2964.8,1
+TSK-2026-0875,Arrears Follow-up,"Arrears S$4,708.80 (29 days) - TA-2025-00080",TA-2025-00080,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4708.8,1
+TSK-2026-0876,Arrears Follow-up,"Arrears S$4,152.90 (29 days) - TA-2025-00092",TA-2025-00092,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4152.9,1
+TSK-2026-0877,Arrears Follow-up,"Arrears S$1,863.90 (29 days) - TA-2025-00131",TA-2025-00131,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,1863.9,1
+TSK-2026-0878,Arrears Follow-up,"Arrears S$2,332.60 (29 days) - TA-2025-00247",TA-2025-00247,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,2332.6,1
+TSK-2026-0879,Arrears Follow-up,"Arrears S$4,665.20 (29 days) - TA-2025-00255",TA-2025-00255,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,4665.2,1
+TSK-2026-0880,Arrears Follow-up,"Arrears S$3,008.40 (29 days) - TA-2025-00288",TA-2025-00288,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3008.4,1
+TSK-2026-0881,Arrears Follow-up,"Arrears S$3,084.70 (29 days) - TA-2025-00301",TA-2025-00301,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3084.7,1
+TSK-2026-0882,Arrears Follow-up,"Arrears S$6,703.50 (29 days) - TA-2025-00323",TA-2025-00323,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,6703.5,1
+TSK-2026-0883,Arrears Follow-up,"Arrears S$5,766.10 (29 days) - TA-2025-00329",TA-2025-00329,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5766.1,1
+TSK-2026-0884,Arrears Follow-up,"Arrears S$1,765.80 (29 days) - TA-2025-00344",TA-2025-00344,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,1765.8,1
+TSK-2026-0885,Arrears Follow-up,"Arrears S$4,512.60 (29 days) - TA-2025-00360",TA-2025-00360,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4512.6,1
+TSK-2026-0886,Arrears Follow-up,Arrears S$981.00 (29 days) - TA-2025-00375,TA-2025-00375,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,981.0,1
+TSK-2026-0887,Arrears Follow-up,"Arrears S$3,793.20 (29 days) - TA-2025-00386",TA-2025-00386,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,3793.2,1
+TSK-2026-0888,Arrears Follow-up,"Arrears S$4,894.10 (29 days) - TA-2025-00413",TA-2025-00413,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4894.1,1
+TSK-2026-0889,Arrears Follow-up,"Arrears S$3,695.10 (29 days) - TA-2025-00453",TA-2025-00453,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3695.1,1
+TSK-2026-0890,Arrears Follow-up,"Arrears S$4,621.60 (29 days) - TA-2025-00454",TA-2025-00454,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4621.6,1
+TSK-2026-0891,Arrears Follow-up,"Arrears S$2,855.80 (29 days) - TA-2025-00469",TA-2025-00469,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,2855.8,1
+TSK-2026-0892,Arrears Follow-up,"Arrears S$5,559.00 (29 days) - TA-2025-00596",TA-2025-00596,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5559.0,1
+TSK-2026-0893,Arrears Follow-up,"Arrears S$3,924.00 (29 days) - TA-2025-00701",TA-2025-00701,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3924.0,1
+TSK-2026-0894,Arrears Follow-up,"Arrears S$4,512.60 (29 days) - TA-2025-00715",TA-2025-00715,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4512.6,1
+TSK-2026-0895,Arrears Follow-up,"Arrears S$5,166.60 (29 days) - TA-2025-00725",TA-2025-00725,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5166.6,1
+TSK-2026-0896,Arrears Follow-up,"Arrears S$2,779.50 (29 days) - TA-2025-00731",TA-2025-00731,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,2779.5,1
+TSK-2026-0897,Arrears Follow-up,"Arrears S$2,866.70 (29 days) - TA-2026-00022",TA-2026-00022,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,2866.7,1
+TSK-2026-0898,Arrears Follow-up,Arrears S$981.00 (29 days) - TA-2026-00044,TA-2026-00044,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,981.0,1
+TSK-2026-0899,Arrears Follow-up,"Arrears S$3,836.80 (29 days) - TA-2026-00056",TA-2026-00056,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3836.8,1
+TSK-2026-0900,Arrears Follow-up,"Arrears S$5,308.30 (29 days) - TA-2026-00073",TA-2026-00073,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5308.3,1
+TSK-2026-0901,Arrears Follow-up,"Arrears S$3,193.70 (29 days) - TA-2026-00096",TA-2026-00096,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3193.7,1
+TSK-2026-0902,Arrears Follow-up,"Arrears S$4,294.60 (29 days) - TA-2026-00135",TA-2026-00135,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,4294.6,1
+TSK-2026-0903,Arrears Follow-up,"Arrears S$3,673.30 (29 days) - TA-2026-00192",TA-2026-00192,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3673.3,1
+TSK-2026-0904,Arrears Follow-up,"Arrears S$1,831.20 (29 days) - TA-2026-00204",TA-2026-00204,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,1831.2,1
+TSK-2026-0905,Arrears Follow-up,"Arrears S$2,768.60 (29 days) - TA-2026-00374",TA-2026-00374,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,2768.6,1
+TSK-2026-0906,Arrears Follow-up,"Arrears S$3,564.30 (29 days) - TA-2026-00456",TA-2026-00456,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,3564.3,1
+TSK-2026-0907,Arrears Follow-up,"Arrears S$3,215.50 (29 days) - TA-2026-00475",TA-2026-00475,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,3215.5,1
+TSK-2026-0908,Arrears Follow-up,"Arrears S$6,997.80 (29 days) - TA-2026-00507",TA-2026-00507,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,6997.8,1
+TSK-2026-0909,Arrears Follow-up,"Arrears S$3,106.50 (29 days) - TA-2026-00535",TA-2026-00535,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3106.5,1
+TSK-2026-0910,Arrears Follow-up,"Arrears S$3,280.90 (29 days) - TA-2026-00537",TA-2026-00537,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,3280.9,1
+TSK-2026-0911,Arrears Follow-up,"Arrears S$2,583.30 (29 days) - TA-2026-00538",TA-2026-00538,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,2583.3,1
+TSK-2026-0912,Arrears Follow-up,"Arrears S$5,232.00 (29 days) - TA-2026-00571",TA-2026-00571,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,5232.0,1
+TSK-2026-0913,Arrears Follow-up,"Arrears S$5,439.10 (29 days) - TA-2026-00592",TA-2026-00592,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,5439.1,1
+TSK-2026-0914,Arrears Follow-up,"Arrears S$3,052.00 (29 days) - TA-2026-00605",TA-2026-00605,S07,Priya Menon,2026-09-15,2026-10-31,In Progress,False,3052.0,1
+TSK-2026-0915,Arrears Follow-up,Arrears S$981.00 (29 days) - TA-2026-00608,TA-2026-00608,S07,Priya Menon,2026-09-15,2026-10-31,Open,False,981.0,1
+TSK-2026-0916,Application Review,Review Tenancy Renewal APP-2026-0288,APP-2026-0288,S03,Nurul Huda Rahman,2026-09-16,2026-09-30,In Progress,False,0,1
+TSK-2026-0917,Application Review,Review Tenancy Renewal APP-2026-0289,APP-2026-0289,S03,Nurul Huda Rahman,2026-09-16,2026-09-30,In Progress,False,0,1
+TSK-2026-0918,Inspection Follow-up,Follow up Hygiene at U-RH491-01-05,INSP-2026-1751,S06,Daniel Ong,2026-09-16,2026-09-30,Open,False,0,1
+TSK-2026-0919,Inspection Follow-up,Follow up Unauth Sublet at U-KR305-01-24,INSP-2026-1752,S06,Daniel Ong,2026-09-16,2026-09-23,Overdue,False,0,1
+TSK-2026-0920,Inspection Follow-up,Follow up Hygiene at U-BV256-01-09,INSP-2026-1755,S06,Daniel Ong,2026-09-17,2026-10-01,In Progress,False,0,1
+TSK-2026-0921,Inspection Follow-up,Follow up Hygiene at U-PI605-01-03,INSP-2026-1763,S06,Daniel Ong,2026-09-18,2026-10-02,Open,False,0,1
+TSK-2026-0922,Inspection Follow-up,Follow up Display Encroach at U-CD153-01-06,INSP-2026-1767,S06,Daniel Ong,2026-09-18,2026-10-02,Open,False,0,1
+TSK-2026-0923,Inspection Follow-up,Follow up Display Encroach at U-CD160-01-01,INSP-2026-1768,S04,Marcus Lim,2026-09-18,2026-10-02,Open,False,0,1
+TSK-2026-0924,Inspection Follow-up,Follow up Unauth Trade at U-CD174-01-03,INSP-2026-1769,S06,Daniel Ong,2026-09-18,2026-09-25,Overdue,False,0,1
+TSK-2026-0925,Inspection Follow-up,Follow up Fire Safety at U-KR359-01-08,INSP-2026-1770,S06,Daniel Ong,2026-09-18,2026-09-25,Overdue,True,0,1
+TSK-2026-0926,Application Review,Review Assignment of Tenancy APP-2026-0290,APP-2026-0290,S04,Marcus Lim,2026-09-19,2026-10-03,Open,False,0,1
+TSK-2026-0927,Application Review,Review Change of Trade APP-2026-0291,APP-2026-0291,S04,Marcus Lim,2026-09-19,2026-10-03,Open,False,0,1
+TSK-2026-0928,Defect Follow-up,Chase IEMS-2609-0035 (Pest),IEMS-2609-0035,S10,Ahmad Faizal Ismail,2026-09-19,2026-09-26,Overdue,False,0,1
+TSK-2026-0929,Inspection Follow-up,Follow up Unauth Trade at U-BV233-01-02,INSP-2026-1772,S04,Marcus Lim,2026-09-19,2026-09-26,Overdue,False,0,1
+TSK-2026-0930,Inspection Follow-up,Follow up Hygiene at U-KR345-01-05,INSP-2026-1775,S12,Benjamin Ho,2026-09-19,2026-10-03,Open,False,0,1
+TSK-2026-0931,Inspection Follow-up,Follow up Hygiene at U-BV214-01-08,INSP-2026-1776,S06,Daniel Ong,2026-09-19,2026-10-03,Open,False,0,1
+TSK-2026-0932,Inspection Follow-up,Follow up Unapproved Aa at U-CD120-01-06,INSP-2026-1777,S04,Marcus Lim,2026-09-19,2026-10-03,Open,False,0,1
+TSK-2026-0933,Inspection Follow-up,Follow up Structural Defect at U-KR371-01-03,INSP-2026-1778,S06,Daniel Ong,2026-09-19,2026-09-26,Overdue,True,0,1
+TSK-2026-0934,Application Review,Review Alteration & Addition Works APP-2026-0292,APP-2026-0292,S05,Siti Aishah Yusof,2026-09-20,2026-10-04,In Progress,False,0,1
+TSK-2026-0935,Defect Follow-up,Chase IEMS-2609-0034 (Pest),IEMS-2609-0034,S10,Ahmad Faizal Ismail,2026-09-20,2026-10-04,In Progress,False,0,10
+TSK-2026-0936,Inspection Follow-up,Follow up Unapproved Aa at U-ST545-01-07,INSP-2026-1781,S06,Daniel Ong,2026-09-20,2026-10-04,Open,False,0,1
+TSK-2026-0937,Inspection Follow-up,Follow up Display Encroach at U-PI657-01-06,INSP-2026-1784,S06,Daniel Ong,2026-09-20,2026-10-04,Open,False,0,1
+TSK-2026-0938,Inspection Follow-up,Follow up Fire Safety at U-RH491-01-02,INSP-2026-1786,S12,Benjamin Ho,2026-09-20,2026-09-27,Overdue,True,0,1
+TSK-2026-0939,Application Review,Review Tenancy Renewal APP-2026-0293,APP-2026-0293,S05,Siti Aishah Yusof,2026-09-21,2026-10-05,In Progress,False,0,1
+TSK-2026-0940,Defect Follow-up,Chase IEMS-2609-0038 (Pest),IEMS-2609-0038,S10,Ahmad Faizal Ismail,2026-09-21,2026-10-05,In Progress,False,0,3
+TSK-2026-0941,Inspection Follow-up,Follow up Unapproved Aa at U-CD133-01-08,INSP-2026-1788,S06,Daniel Ong,2026-09-21,2026-10-05,Open,False,0,1
+TSK-2026-0942,Inspection Follow-up,Follow up Hygiene at U-KR345-01-05,INSP-2026-1794,S12,Benjamin Ho,2026-09-21,2026-10-05,Open,False,0,1
+TSK-2026-0943,Inspection Follow-up,Follow up Unauth Trade at U-RH476-01-07,INSP-2026-1798,S06,Daniel Ong,2026-09-21,2026-09-28,Overdue,False,0,1
+TSK-2026-0944,Application Review,Review Alteration & Addition Works APP-2026-0294,APP-2026-0294,S03,Nurul Huda Rahman,2026-09-22,2026-10-06,Open,False,0,1
+TSK-2026-0945,Application Review,Review Tenancy Renewal APP-2026-0295,APP-2026-0295,S12,Benjamin Ho,2026-09-22,2026-10-06,In Progress,False,0,1
+TSK-2026-0946,Defect Follow-up,Chase IEMS-2609-0039 (Pest),IEMS-2609-0039,S10,Ahmad Faizal Ismail,2026-09-22,2026-09-29,Overdue,False,0,1
+TSK-2026-0947,Inspection Follow-up,Follow up Display Encroach at U-CD105-01-12,INSP-2026-1801,S06,Daniel Ong,2026-09-22,2026-10-06,Open,False,0,1
+TSK-2026-0948,Inspection Follow-up,Follow up Structural Defect at U-RH437-01-06,INSP-2026-1802,S06,Daniel Ong,2026-09-22,2026-09-29,Overdue,True,0,1
+TSK-2026-0949,Inspection Follow-up,Follow up Display Encroach at U-PI605-01-05,INSP-2026-1804,S06,Daniel Ong,2026-09-22,2026-10-06,Open,False,0,1
+TSK-2026-0950,Inspection Follow-up,Follow up Unapproved Aa at U-CD153-01-06,INSP-2026-1806,S04,Marcus Lim,2026-09-22,2026-10-06,Open,False,0,1
+TSK-2026-0951,Defect Follow-up,Chase IEMS-2609-0040 (Water Seepage / Leak),IEMS-2609-0040,S10,Ahmad Faizal Ismail,2026-09-23,2026-09-30,In Progress,False,0,1
+TSK-2026-0952,Inspection Follow-up,Follow up Display Encroach at U-KR372-01-11,INSP-2026-1810,S12,Benjamin Ho,2026-09-23,2026-10-07,In Progress,False,0,1
+TSK-2026-0953,Inspection Follow-up,Follow up Fire Safety at U-BV266-01-08,INSP-2026-1811,S06,Daniel Ong,2026-09-23,2026-09-30,In Progress,True,0,1
+TSK-2026-0954,Application Review,Review New Tenancy APP-2026-0296,APP-2026-0296,S05,Siti Aishah Yusof,2026-09-24,2026-10-08,Open,False,0,1
+TSK-2026-0955,Application Review,Review Tenancy Renewal APP-2026-0297,APP-2026-0297,S12,Benjamin Ho,2026-09-24,2026-10-08,In Progress,False,0,1
+TSK-2026-0956,Application Review,Review Assignment of Tenancy APP-2026-0298,APP-2026-0298,S03,Nurul Huda Rahman,2026-09-24,2026-10-08,Open,False,0,1
+TSK-2026-0957,Defect Follow-up,Chase IEMS-2609-0048 (Plumbing & Sanitary),IEMS-2609-0048,S10,Ahmad Faizal Ismail,2026-09-24,2026-10-01,In Progress,False,0,6
+TSK-2026-0958,Inspection Follow-up,Follow up Unauth Trade at U-RH428-01-08,INSP-2026-1815,S12,Benjamin Ho,2026-09-24,2026-10-01,Open,False,0,1
+TSK-2026-0959,Inspection Follow-up,Follow up Display Encroach at U-PI627-01-14,INSP-2026-1817,S06,Daniel Ong,2026-09-24,2026-10-08,Open,False,0,1
+TSK-2026-0960,Application Review,Review Assignment of Tenancy APP-2026-0299,APP-2026-0299,S05,Siti Aishah Yusof,2026-09-25,2026-10-09,Open,False,0,1
+TSK-2026-0961,Inspection Follow-up,Follow up Hygiene at U-CD108-01-01,INSP-2026-1821,S06,Daniel Ong,2026-09-25,2026-10-09,Open,False,0,1
+TSK-2026-0962,Defect Follow-up,Chase IEMS-2609-0049 (Pest),IEMS-2609-0049,S10,Ahmad Faizal Ismail,2026-09-26,2026-10-03,Open,False,0,4
+TSK-2026-0963,Inspection Follow-up,Follow up Display Encroach at U-PI642-01-09,INSP-2026-1834,S06,Daniel Ong,2026-09-26,2026-10-10,Open,False,0,1
+TSK-2026-0964,Defect Follow-up,Chase IEMS-2609-0052 (Plumbing & Sanitary),IEMS-2609-0052,S10,Ahmad Faizal Ismail,2026-09-27,2026-09-30,In Progress,False,0,4
+TSK-2026-0965,Defect Follow-up,Chase IEMS-2609-0053 (Plumbing & Sanitary),IEMS-2609-0053,S10,Ahmad Faizal Ismail,2026-09-27,2026-10-04,Open,False,0,2
+TSK-2026-0966,Defect Follow-up,Chase IEMS-2609-0054 (Structural),IEMS-2609-0054,S10,Ahmad Faizal Ismail,2026-09-27,2026-09-30,In Progress,True,0,7
+TSK-2026-0967,Inspection Follow-up,Follow up Display Encroach at U-RH484-01-07,INSP-2026-1839,S06,Daniel Ong,2026-09-27,2026-10-11,Open,False,0,1
+TSK-2026-0968,Inspection Follow-up,Follow up Structural Defect at U-CD143-01-01,INSP-2026-1840,S04,Marcus Lim,2026-09-27,2026-10-04,In Progress,True,0,1
+TSK-2026-0969,Application Review,Review Assignment of Tenancy APP-2026-0300,APP-2026-0300,S05,Siti Aishah Yusof,2026-09-28,2026-10-12,In Progress,False,0,1
+TSK-2026-0970,Inspection Follow-up,Follow up Display Encroach at U-BV215-01-08,INSP-2026-1844,S04,Marcus Lim,2026-09-28,2026-10-12,Open,False,0,1
+TSK-2026-0971,Inspection Follow-up,Follow up Hygiene at U-PI648-02-04,INSP-2026-1846,S06,Daniel Ong,2026-09-28,2026-10-12,In Progress,False,0,1
+TSK-2026-0972,Application Review,Review New Tenancy APP-2026-0301,APP-2026-0301,S04,Marcus Lim,2026-09-29,2026-10-13,In Progress,False,0,1
+TSK-2026-0973,Defect Follow-up,Chase IEMS-2609-0055 (Water Seepage / Leak),IEMS-2609-0055,S10,Ahmad Faizal Ismail,2026-09-29,2026-10-06,Open,False,0,5
+TSK-2026-0974,Defect Follow-up,Chase IEMS-2609-0060 (Pest),IEMS-2609-0060,S10,Ahmad Faizal Ismail,2026-09-29,2026-10-06,Open,False,0,8
+TSK-2026-0975,Inspection Follow-up,Follow up Display Encroach at U-CD190-01-03,INSP-2026-1858,S06,Daniel Ong,2026-09-29,2026-10-13,In Progress,False,0,1
+TSK-2026-0976,Defect Follow-up,Chase IEMS-2609-0056 (Electrical),IEMS-2609-0056,S10,Ahmad Faizal Ismail,2026-09-30,2026-10-03,Open,True,0,1
+TSK-2026-0977,Defect Follow-up,Chase IEMS-2609-0057 (Water Seepage / Leak),IEMS-2609-0057,S10,Ahmad Faizal Ismail,2026-09-30,2026-10-07,Open,False,0,12
+TSK-2026-0978,Defect Follow-up,Chase IEMS-2609-0058 (Pest),IEMS-2609-0058,S10,Ahmad Faizal Ismail,2026-09-30,2026-10-07,Open,False,0,1
+TSK-2026-0979,Inspection Follow-up,Follow up Display Encroach at U-BV227-01-01,INSP-2026-1859,S04,Marcus Lim,2026-09-30,2026-10-14,Open,False,0,1
+TSK-2026-0980,Inspection Follow-up,Follow up Display Encroach at U-PI644-01-11,INSP-2026-1860,S06,Daniel Ong,2026-09-30,2026-10-14,Open,False,0,1
+TSK-2026-0981,Defect Follow-up,Chase IEMS-2610-0001 (Water Seepage / Leak),IEMS-2610-0001,S10,Ahmad Faizal Ismail,2026-10-01,2026-10-08,Open,False,0,10
+TSK-2026-0982,Renewal,Renewal due: TA-2024-00210 expires 31 Mar 2027,TA-2024-00210,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,32400,1
+TSK-2026-0983,Renewal,Renewal due: TA-2024-00211 expires 31 Mar 2027,TA-2024-00211,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,45720,1
+TSK-2026-0984,Renewal,Renewal due: TA-2024-00212 expires 31 Mar 2027,TA-2024-00212,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,54360,1
+TSK-2026-0985,Renewal,Renewal due: TA-2024-00214 expires 31 Mar 2027,TA-2024-00214,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,18600,1
+TSK-2026-0986,Renewal,Renewal due: TA-2024-00215 expires 31 Mar 2027,TA-2024-00215,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,49560,1
+TSK-2026-0987,Renewal,Renewal due: TA-2024-00217 expires 31 Mar 2027,TA-2024-00217,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,54360,1
+TSK-2026-0988,Renewal,Renewal due: TA-2024-00219 expires 31 Mar 2027,TA-2024-00219,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,51600,1
+TSK-2026-0989,Renewal,Renewal due: TA-2024-00221 expires 31 Mar 2027,TA-2024-00221,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,83280,1
+TSK-2026-0990,Renewal,Renewal due: TA-2024-00223 expires 31 Mar 2027,TA-2024-00223,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,41160,1
+TSK-2026-0991,Renewal,Renewal due: TA-2024-00224 expires 31 Mar 2027,TA-2024-00224,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,141600,1
+TSK-2026-0992,Renewal,Renewal due: TA-2024-00225 expires 31 Mar 2027,TA-2024-00225,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,51000,1
+TSK-2026-0993,Renewal,Renewal due: TA-2024-00227 expires 31 Mar 2027,TA-2024-00227,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,35160,1
+TSK-2026-0994,Renewal,Renewal due: TA-2024-00228 expires 31 Mar 2027,TA-2024-00228,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,31680,1
+TSK-2026-0995,Renewal,Renewal due: TA-2024-00230 expires 31 Mar 2027,TA-2024-00230,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,23040,1
+TSK-2026-0996,Renewal,Renewal due: TA-2024-00231 expires 31 Mar 2027,TA-2024-00231,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,45840,1
+TSK-2026-0997,Renewal,Renewal due: TA-2024-00232 expires 31 Mar 2027,TA-2024-00232,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,44880,1
+TSK-2026-0998,Renewal,Renewal due: TA-2024-00233 expires 31 Mar 2027,TA-2024-00233,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,70920,1
+TSK-2026-0999,Renewal,Renewal due: TA-2024-00235 expires 31 Mar 2027,TA-2024-00235,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,29520,1
+TSK-2026-1000,Renewal,Renewal due: TA-2024-00236 expires 31 Mar 2027,TA-2024-00236,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,37800,1
+TSK-2026-1001,Renewal,Renewal due: TA-2024-00238 expires 31 Mar 2027,TA-2024-00238,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,39240,1
+TSK-2026-1002,Renewal,Renewal due: TA-2024-00239 expires 31 Mar 2027,TA-2024-00239,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,68520,1
+TSK-2026-1003,Renewal,Renewal due: TA-2024-00240 expires 31 Mar 2027,TA-2024-00240,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,18480,1
+TSK-2026-1004,Renewal,Renewal due: TA-2024-00242 expires 31 Mar 2027,TA-2024-00242,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,34440,1
+TSK-2026-1005,Renewal,Renewal due: TA-2024-00243 expires 31 Mar 2027,TA-2024-00243,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,54120,1
+TSK-2026-1006,Renewal,Renewal due: TA-2024-00244 expires 31 Mar 2027,TA-2024-00244,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,35880,1
+TSK-2026-1007,Renewal,Renewal due: TA-2024-00246 expires 31 Mar 2027,TA-2024-00246,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,52080,1
+TSK-2026-1008,Renewal,Renewal due: TA-2024-00247 expires 31 Mar 2027,TA-2024-00247,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,17280,1
+TSK-2026-1009,Renewal,Renewal due: TA-2024-00249 expires 31 Mar 2027,TA-2024-00249,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,61440,1
+TSK-2026-1010,Renewal,Renewal due: TA-2024-00251 expires 31 Mar 2027,TA-2024-00251,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,50520,1
+TSK-2026-1011,Renewal,Renewal due: TA-2024-00252 expires 31 Mar 2027,TA-2024-00252,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,35520,1
+TSK-2026-1012,Renewal,Renewal due: TA-2024-00253 expires 31 Mar 2027,TA-2024-00253,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,43440,1
+TSK-2026-1013,Renewal,Renewal due: TA-2024-00255 expires 31 Mar 2027,TA-2024-00255,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,26520,1
+TSK-2026-1014,Renewal,Renewal due: TA-2024-00256 expires 31 Mar 2027,TA-2024-00256,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,41280,1
+TSK-2026-1015,Renewal,Renewal due: TA-2024-00258 expires 31 Mar 2027,TA-2024-00258,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,32640,1
+TSK-2026-1016,Renewal,Renewal due: TA-2024-00259 expires 31 Mar 2027,TA-2024-00259,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,32400,1
+TSK-2026-1017,Renewal,Renewal due: TA-2024-00260 expires 31 Mar 2027,TA-2024-00260,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,37320,1
+TSK-2026-1018,Renewal,Renewal due: TA-2024-00262 expires 31 Mar 2027,TA-2024-00262,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,63960,1
+TSK-2026-1019,Renewal,Renewal due: TA-2024-00264 expires 31 Mar 2027,TA-2024-00264,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,31440,1
+TSK-2026-1020,Renewal,Renewal due: TA-2024-00265 expires 31 Mar 2027,TA-2024-00265,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,66360,1
+TSK-2026-1021,Renewal,Renewal due: TA-2024-00266 expires 31 Mar 2027,TA-2024-00266,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,46560,1
+TSK-2026-1022,Renewal,Renewal due: TA-2024-00267 expires 31 Mar 2027,TA-2024-00267,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,19800,1
+TSK-2026-1023,Renewal,Renewal due: TA-2024-00268 expires 31 Mar 2027,TA-2024-00268,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,In Progress,False,38640,1
+TSK-2026-1024,Renewal,Renewal due: TA-2024-00269 expires 31 Mar 2027,TA-2024-00269,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,21600,1
+TSK-2026-1025,Renewal,Renewal due: TA-2024-00270 expires 31 Mar 2027,TA-2024-00270,S05,Siti Aishah Yusof,2026-10-02,2026-12-01,Open,False,42960,1
+TSK-2026-1026,Renewal,Renewal due: TA-2024-00272 expires 30 Apr 2027,TA-2024-00272,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,35160,1
+TSK-2026-1027,Renewal,Renewal due: TA-2024-00274 expires 30 Apr 2027,TA-2024-00274,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,42960,1
+TSK-2026-1028,Renewal,Renewal due: TA-2024-00276 expires 30 Apr 2027,TA-2024-00276,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,57000,1
+TSK-2026-1029,Renewal,Renewal due: TA-2024-00278 expires 30 Apr 2027,TA-2024-00278,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,67560,1
+TSK-2026-1030,Renewal,Renewal due: TA-2024-00279 expires 30 Apr 2027,TA-2024-00279,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,71160,1
+TSK-2026-1031,Renewal,Renewal due: TA-2024-00280 expires 30 Apr 2027,TA-2024-00280,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,75600,1
+TSK-2026-1032,Renewal,Renewal due: TA-2024-00282 expires 30 Apr 2027,TA-2024-00282,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,35040,1
+TSK-2026-1033,Renewal,Renewal due: TA-2024-00284 expires 30 Apr 2027,TA-2024-00284,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,49440,1
+TSK-2026-1034,Renewal,Renewal due: TA-2024-00285 expires 30 Apr 2027,TA-2024-00285,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,38520,1
+TSK-2026-1035,Renewal,Renewal due: TA-2024-00286 expires 30 Apr 2027,TA-2024-00286,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,79200,1
+TSK-2026-1036,Renewal,Renewal due: TA-2024-00287 expires 30 Apr 2027,TA-2024-00287,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,23040,1
+TSK-2026-1037,Renewal,Renewal due: TA-2024-00289 expires 30 Apr 2027,TA-2024-00289,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,72480,1
+TSK-2026-1038,Renewal,Renewal due: TA-2024-00290 expires 30 Apr 2027,TA-2024-00290,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,26400,1
+TSK-2026-1039,Renewal,Renewal due: TA-2024-00292 expires 30 Apr 2027,TA-2024-00292,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,21720,1
+TSK-2026-1040,Renewal,Renewal due: TA-2024-00294 expires 30 Apr 2027,TA-2024-00294,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,36000,1
+TSK-2026-1041,Renewal,Renewal due: TA-2024-00296 expires 30 Apr 2027,TA-2024-00296,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,47280,1
+TSK-2026-1042,Renewal,Renewal due: TA-2024-00297 expires 30 Apr 2027,TA-2024-00297,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,40800,1
+TSK-2026-1043,Renewal,Renewal due: TA-2024-00299 expires 30 Apr 2027,TA-2024-00299,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,46440,1
+TSK-2026-1044,Renewal,Renewal due: TA-2024-00300 expires 30 Apr 2027,TA-2024-00300,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,39720,1
+TSK-2026-1045,Renewal,Renewal due: TA-2024-00301 expires 30 Apr 2027,TA-2024-00301,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,41640,1
+TSK-2026-1046,Renewal,Renewal due: TA-2024-00302 expires 30 Apr 2027,TA-2024-00302,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,28080,1
+TSK-2026-1047,Renewal,Renewal due: TA-2024-00303 expires 30 Apr 2027,TA-2024-00303,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,70920,1
+TSK-2026-1048,Renewal,Renewal due: TA-2024-00304 expires 30 Apr 2027,TA-2024-00304,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,56280,1
+TSK-2026-1049,Renewal,Renewal due: TA-2024-00305 expires 30 Apr 2027,TA-2024-00305,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,21240,1
+TSK-2026-1050,Renewal,Renewal due: TA-2024-00307 expires 30 Apr 2027,TA-2024-00307,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,68280,1
+TSK-2026-1051,Renewal,Renewal due: TA-2024-00309 expires 30 Apr 2027,TA-2024-00309,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,37800,1
+TSK-2026-1052,Renewal,Renewal due: TA-2024-00310 expires 30 Apr 2027,TA-2024-00310,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,40200,1
+TSK-2026-1053,Renewal,Renewal due: TA-2024-00311 expires 30 Apr 2027,TA-2024-00311,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,21480,1
+TSK-2026-1054,Renewal,Renewal due: TA-2024-00313 expires 30 Apr 2027,TA-2024-00313,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,53280,1
+TSK-2026-1055,Renewal,Renewal due: TA-2024-00314 expires 30 Apr 2027,TA-2024-00314,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,53160,1
+TSK-2026-1056,Renewal,Renewal due: TA-2024-00316 expires 30 Apr 2027,TA-2024-00316,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,42960,1
+TSK-2026-1057,Renewal,Renewal due: TA-2024-00318 expires 30 Apr 2027,TA-2024-00318,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,40680,1
+TSK-2026-1058,Renewal,Renewal due: TA-2024-00319 expires 30 Apr 2027,TA-2024-00319,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,51960,1
+TSK-2026-1059,Renewal,Renewal due: TA-2024-00320 expires 30 Apr 2027,TA-2024-00320,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,60720,1
+TSK-2026-1060,Renewal,Renewal due: TA-2024-00322 expires 30 Apr 2027,TA-2024-00322,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,52440,1
+TSK-2026-1061,Renewal,Renewal due: TA-2024-00324 expires 30 Apr 2027,TA-2024-00324,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,34440,1
+TSK-2026-1062,Renewal,Renewal due: TA-2024-00326 expires 30 Apr 2027,TA-2024-00326,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,54840,1
+TSK-2026-1063,Renewal,Renewal due: TA-2024-00327 expires 30 Apr 2027,TA-2024-00327,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,13920,1
+TSK-2026-1064,Renewal,Renewal due: TA-2024-00329 expires 30 Apr 2027,TA-2024-00329,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,58320,1
+TSK-2026-1065,Renewal,Renewal due: TA-2024-00331 expires 30 Apr 2027,TA-2024-00331,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,30480,1
+TSK-2026-1066,Renewal,Renewal due: TA-2024-00332 expires 30 Apr 2027,TA-2024-00332,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,36360,1
+TSK-2026-1067,Renewal,Renewal due: TA-2024-00333 expires 30 Apr 2027,TA-2024-00333,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,40440,1
+TSK-2026-1068,Renewal,Renewal due: TA-2024-00335 expires 30 Apr 2027,TA-2024-00335,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,21960,1
+TSK-2026-1069,Renewal,Renewal due: TA-2024-00337 expires 30 Apr 2027,TA-2024-00337,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,39480,1
+TSK-2026-1070,Renewal,Renewal due: TA-2024-00338 expires 30 Apr 2027,TA-2024-00338,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,14160,1
+TSK-2026-1071,Renewal,Renewal due: TA-2024-00340 expires 30 Apr 2027,TA-2024-00340,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,27960,1
+TSK-2026-1072,Renewal,Renewal due: TA-2024-00342 expires 30 Apr 2027,TA-2024-00342,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,27600,1
+TSK-2026-1073,Renewal,Renewal due: TA-2024-00344 expires 30 Apr 2027,TA-2024-00344,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,27600,1
+TSK-2026-1074,Renewal,Renewal due: TA-2024-00345 expires 30 Apr 2027,TA-2024-00345,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,34200,1
+TSK-2026-1075,Renewal,Renewal due: TA-2024-00347 expires 30 Apr 2027,TA-2024-00347,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,28200,1
+TSK-2026-1076,Renewal,Renewal due: TA-2024-00348 expires 30 Apr 2027,TA-2024-00348,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,Open,False,21960,1
+TSK-2026-1077,Renewal,Renewal due: TA-2024-00350 expires 30 Apr 2027,TA-2024-00350,S05,Siti Aishah Yusof,2026-11-01,2026-12-31,In Progress,False,39000,1
+TSK-2026-1078,Renewal,Renewal due: TA-2024-00352 expires 31 May 2027,TA-2024-00352,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,63360,1
+TSK-2026-1079,Renewal,Renewal due: TA-2024-00353 expires 31 May 2027,TA-2024-00353,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,32280,1
+TSK-2026-1080,Renewal,Renewal due: TA-2024-00354 expires 31 May 2027,TA-2024-00354,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,11640,1
+TSK-2026-1081,Renewal,Renewal due: TA-2024-00356 expires 31 May 2027,TA-2024-00356,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,58560,1
+TSK-2026-1082,Renewal,Renewal due: TA-2024-00357 expires 31 May 2027,TA-2024-00357,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,47880,1
+TSK-2026-1083,Renewal,Renewal due: TA-2024-00359 expires 31 May 2027,TA-2024-00359,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,41640,1
+TSK-2026-1084,Renewal,Renewal due: TA-2024-00360 expires 31 May 2027,TA-2024-00360,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,32640,1
+TSK-2026-1085,Renewal,Renewal due: TA-2024-00362 expires 31 May 2027,TA-2024-00362,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,57720,1
+TSK-2026-1086,Renewal,Renewal due: TA-2024-00364 expires 31 May 2027,TA-2024-00364,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,36600,1
+TSK-2026-1087,Renewal,Renewal due: TA-2024-00365 expires 31 May 2027,TA-2024-00365,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,23160,1
+TSK-2026-1088,Renewal,Renewal due: TA-2024-00366 expires 31 May 2027,TA-2024-00366,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,28920,1
+TSK-2026-1089,Renewal,Renewal due: TA-2024-00368 expires 31 May 2027,TA-2024-00368,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,54360,1
+TSK-2026-1090,Renewal,Renewal due: TA-2024-00369 expires 31 May 2027,TA-2024-00369,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,63720,1
+TSK-2026-1091,Renewal,Renewal due: TA-2024-00370 expires 31 May 2027,TA-2024-00370,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,73080,1
+TSK-2026-1092,Renewal,Renewal due: TA-2024-00371 expires 31 May 2027,TA-2024-00371,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,52560,1
+TSK-2026-1093,Renewal,Renewal due: TA-2024-00372 expires 31 May 2027,TA-2024-00372,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,40560,1
+TSK-2026-1094,Renewal,Renewal due: TA-2024-00374 expires 31 May 2027,TA-2024-00374,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,26880,1
+TSK-2026-1095,Renewal,Renewal due: TA-2024-00375 expires 31 May 2027,TA-2024-00375,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,47280,1
+TSK-2026-1096,Renewal,Renewal due: TA-2024-00377 expires 31 May 2027,TA-2024-00377,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,62880,1
+TSK-2026-1097,Renewal,Renewal due: TA-2024-00379 expires 31 May 2027,TA-2024-00379,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,34560,1
+TSK-2026-1098,Renewal,Renewal due: TA-2024-00380 expires 31 May 2027,TA-2024-00380,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,27720,1
+TSK-2026-1099,Renewal,Renewal due: TA-2024-00381 expires 31 May 2027,TA-2024-00381,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,48240,1
+TSK-2026-1100,Renewal,Renewal due: TA-2024-00383 expires 31 May 2027,TA-2024-00383,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,39840,1
+TSK-2026-1101,Renewal,Renewal due: TA-2024-00385 expires 31 May 2027,TA-2024-00385,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,65880,1
+TSK-2026-1102,Renewal,Renewal due: TA-2024-00386 expires 31 May 2027,TA-2024-00386,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,64560,1
+TSK-2026-1103,Renewal,Renewal due: TA-2024-00388 expires 31 May 2027,TA-2024-00388,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,43440,1
+TSK-2026-1104,Renewal,Renewal due: TA-2024-00389 expires 31 May 2027,TA-2024-00389,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,42120,1
+TSK-2026-1105,Renewal,Renewal due: TA-2024-00391 expires 31 May 2027,TA-2024-00391,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,39600,1
+TSK-2026-1106,Renewal,Renewal due: TA-2024-00393 expires 31 May 2027,TA-2024-00393,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,25920,1
+TSK-2026-1107,Renewal,Renewal due: TA-2024-00395 expires 31 May 2027,TA-2024-00395,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,36360,1
+TSK-2026-1108,Renewal,Renewal due: TA-2024-00397 expires 31 May 2027,TA-2024-00397,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,57120,1
+TSK-2026-1109,Renewal,Renewal due: TA-2024-00398 expires 31 May 2027,TA-2024-00398,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,28800,1
+TSK-2026-1110,Renewal,Renewal due: TA-2024-00399 expires 31 May 2027,TA-2024-00399,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,In Progress,False,13680,1
+TSK-2026-1111,Renewal,Renewal due: TA-2024-00400 expires 31 May 2027,TA-2024-00400,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,37080,1
+TSK-2026-1112,Renewal,Renewal due: TA-2024-00402 expires 31 May 2027,TA-2024-00402,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,36840,1
+TSK-2026-1113,Renewal,Renewal due: TA-2024-00403 expires 31 May 2027,TA-2024-00403,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,48720,1
+TSK-2026-1114,Renewal,Renewal due: TA-2024-00405 expires 31 May 2027,TA-2024-00405,S05,Siti Aishah Yusof,2026-12-02,2027-01-31,Open,False,10920,1

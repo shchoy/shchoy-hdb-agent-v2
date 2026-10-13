@@ -1,0 +1,1529 @@
+crm_contact_id,tenant_id,business_name,contact_person,email,phone,preferred_channel
+C70021,T-10003,Nanyang Mart,Devi Nair,admin@nanyangmart.example.com,+65 9391 3713,Post
+C70035,T-10005,PRIMEVALUE MART PTE LTD,Nur Aisyah binte Kamal,admin@primevaluemart.example.com,+65 9244 2572,Email
+C70056,T-10008,Hometown Minimart Pte Ltd,Devi Nair,admin@hometownminimart.example.com,+65 9684 7987,Email
+C70063,T-10009,Barakah Tuition Centre,Ong Jun Jie,admin@barakahtuitioncent.example.com,+65 9462 2295,Email
+C70084,T-10012,Amanah Fruit Trading,Lee Shu Fen,admin@amanahfruittrading.example.com,+65 9543 2645,Email
+C70105,T-10015,MUTIARA CLINIC & SURGERY,Yeo Pei Shan,admin@mutiaraclinicsurge.example.com,+65 9300 5346,Email
+C70119,T-10017,Tian Fu Learning Centre,Meena Pillai,admin@tianfulearningcent.example.com,+65 9168 9039,SMS
+C70140,T-10020,Little Sprouts Kopitiam Pte Ltd,Ang Bee Choo,admin@littlesproutskopit.example.com,+65 9284 5916,Post
+C70154,T-10022,Old Town Mart Pte Ltd,Koh Ah Hock,admin@oldtownmart.example.com,+65 9353 7960,Email
+C70168,T-10024,EVERBRIGHT BOOKSTORE,Kavitha Raj,admin@everbrightbookstor.example.com,+65 9803 4847,Post
+C70182,T-10026,Evergreen Cake House,Iskandar bin Yusof,admin@evergreencakehouse.example.com,+65 9535 7531,Post
+C70189,T-10027,Peng Kee Tuition Centre Pte Ltd,Vijay Menon,admin@pengkeetuitioncent.example.com,+65 9212 6401,Email
+C70196,T-10028,Amanah Trading,Lim Chee Keong,admin@amanahtrading.example.com,+65 9648 4251,Email
+C70203,T-10029,Red Lantern Tuition Centre Pte Ltd,Ahmad bin Hassan,admin@redlanterntuitionc.example.com,+65 9873 9627,SMS
+C70217,T-10031,Joo Chiat Hair Studio Pte Ltd,Ahmad bin Hassan,admin@joochiathairstudio.example.com,+65 9226 7190,SMS
+C70224,T-10032,Kim Hiap Store,Ahmad bin Hassan,admin@kimhiapstore.example.com,+65 9950 9875,SMS
+C70238,T-10034,Swee Heng Mart,Ho Mei Fen,admin@sweehengmart.example.com,+65 9771 8723,Post
+C70259,T-10037,Happy Paws Dental Surgery Pte Ltd,Chua Ah Hock,admin@happypawsdentalsur.example.com,+65 9845 7449,Email
+C70280,T-10040,Ah Seng Tuition Centre,Chong Hui Ling,admin@ahsengtuitioncentr.example.com,+65 9440 3355,Email
+C70294,T-10042,TAN BROTHERS HAIR STUDIO PTE LTD,Farah binte Ismail,admin@tanbrothershairstu.example.com,+65 9959 4808,Post
+C70308,T-10044,Harmony Learning Centre Pte Ltd,Tan Jun Jie,admin@harmonylearningcen.example.com,+65 9913 9007,Post
+C70329,T-10047,Brilliant Optical,Iskandar bin Yusof,admin@brilliantoptical.example.com,+65 9265 9518,Post
+C70336,T-10048,Mutiara Trading,Kavitha Raj,admin@mutiaratrading.example.com,+65 9995 9963,Email
+C70350,T-10050,Wisdom Store Pte Ltd,Wong Kok Leong,admin@wisdomstore.example.com,+65 9801 4349,Email
+C70357,T-10051,Amanah Education Hub,Arun Kumar,admin@amanaheducationhub.example.com,+65 9949 8763,Email
+C70364,T-10052,Peng Kee Florist Pte Ltd,Teo Hui Ling,admin@pengkeeflorist.example.com,+65 9579 3563,Post
+C70371,T-10053,Teck Guan Medical Hall Pte Ltd,Anand Subramaniam,admin@teckguanmedicalhal.example.com,+65 9739 7607,SMS
+C70378,T-10054,Hock Lee Fruits Pte Ltd,Ong Kim Seng,admin@hockleefruits.example.com,+65 9760 7274,Email
+C70399,T-10057,Siva Education Hub,Chua Mei Fen,admin@sivaeducationhub.example.com,+65 9250 3348,Post
+C70406,T-10058,Bright Path Beauty & Hair,Zainab binte Ali,admin@brightpathbeautyha.example.com,+65 9878 2921,Email
+C70420,T-10060,Peng Kee Fruit Trading,Nur Aisyah binte Kamal,admin@pengkeefruittradin.example.com,+65 9953 5550,SMS
+C70434,T-10062,Barakah Dental Surgery,Ang Pei Shan,admin@barakahdentalsurge.example.com,+65 9454 7948,SMS
+C70441,T-10063,Sin Hock Learning Centre Pte Ltd,Chong Jun Jie,admin@sinhocklearningcen.example.com,+65 9477 5157,SMS
+C70462,T-10066,Brilliant Tuition Centre Pte Ltd,Rahim bin Osman,admin@brillianttuitionce.example.com,+65 9685 1498,Email
+C70476,T-10068,Old Town Pharmacy Pte Ltd,Muhammad Firdaus,admin@oldtownpharmacy.example.com,+65 9184 7874,Email
+C70497,T-10071,Happy Paws TCM Clinic,Teo Teck Soon,admin@happypawstcmclinic.example.com,+65 9839 7000,Post
+C70518,T-10074,EVERGREEN TCM CLINIC PTE LTD,Chan Hui Ling,admin@evergreentcmclinic.example.com,+65 9145 5514,Email
+C70539,T-10077,Heng Ann Tuition Centre Pte Ltd,Ho Li Ting,admin@henganntuitioncent.example.com,+65 9574 2444,Email
+C70560,T-10080,Golden Leaf Key & Shoe Service,Farah binte Ismail,admin@goldenleafkeyshoes.example.com,+65 9352 6042,Email
+C70581,T-10083,Tian Fu Flowers & Gifts Pte Ltd,Chan Kok Leong,admin@tianfuflowersgifts.example.com,+65 9523 4702,SMS
+C70595,T-10085,Little Sprouts Minimart,Toh Bee Choo,admin@littlesproutsminim.example.com,+65 9951 3793,Email
+C70602,T-10086,Nur Trading,Nur Aisyah binte Kamal,admin@nurtrading.example.com,+65 9615 5406,Email
+C70616,T-10088,Mutiara Dental Care,Ong Bee Choo,admin@mutiaradentalcare.example.com,+65 9481 7191,Email
+C70637,T-10091,Lakshmi Pharmacy Pte. Ltd.,Ng Kok Leong,admin@lakshmipharmacy.example.com,+65 9266 8648,Email
+C70651,T-10093,Tan Brothers Medical Hall,Ravi Shankar,admin@tanbrothersmedical.example.com,+65 9445 8906,SMS
+C70672,T-10096,Hock Lee Medical Clinic Pte Ltd,Ganesh Murugan,admin@hockleemedicalclin.example.com,+65 9267 9391,SMS
+C70693,T-10099,Bright Path Eating House,Lakshmi d/o Krishnan,admin@brightpatheatingho.example.com,+65 9920 6670,Email
+C70700,T-10100,Lotus Hardware & Electrical Pte Ltd,Goh Ah Hock,admin@lotushardwareelect.example.com,+65 9350 3525,Email
+C70707,T-10101,Ananda Family Clinic,Goh Teck Soon,admin@anandafamilyclinic.example.com,+65 9485 8593,SMS
+C70721,T-10103,Bright Path Medical Clinic,Tay Li Ting,admin@brightpathmedicalc.example.com,+65 9173 6683,Email
+C70742,T-10106,Lotus Family Clinic Pte Ltd,Tan Li Ting,admin@lotusfamilyclinic.example.com,+65 9179 4769,SMS
+C70749,T-10107,Sejahtera Flowers & Gifts,Koh Ah Hock,admin@sejahteraflowersgi.example.com,+65 9135 5276,Post
+C70756,T-10108,Ananda Cake House,Suresh s/o Ramasamy,admin@anandacakehouse.example.com,+65 9231 9306,Post
+C70777,T-10111,Kian Huat Telecom,Ng Li Ting,admin@kianhuattelecom.example.com,+65 9481 8758,Email
+C70784,T-10112,Harmony Restaurant Pte Ltd,Rahim bin Osman,admin@harmonyrestaurant.example.com,+65 9932 8454,Email
+C70798,T-10114,Kumar Medical Supplies Pte Ltd,Rahim bin Osman,admin@kumarmedicalsuppli.example.com,+65 9791 5852,Email
+C70805,T-10115,Raja Dental Surgery Pte Ltd,Ang Shu Fen,admin@rajadentalsurgery.example.com,+65 9856 7491,SMS
+C70826,T-10118,Silver Moon Supermarket,Lee Siew Lan,admin@silvermoonsupermar.example.com,+65 9250 2656,SMS
+C70847,T-10121,Joo Chiat Medical Supplies Pte Ltd,Ravi Shankar,admin@joochiatmedicalsup.example.com,+65 9181 8101,SMS
+C70868,T-10124,Daily Fresh Laundry,Low Mei Fen,admin@dailyfreshlaundry.example.com,+65 9864 4042,SMS
+C70889,T-10127,FRESH VALLEY HAIR SALON PTE LTD,Tay Boon Huat,admin@freshvalleyhairsal.example.com,+65 9373 8576,SMS
+C70896,T-10128,Golden Leaf Hardware & Electrical Pte Ltd,Chia Pei Shan,admin@goldenleafhardware.example.com,+65 9530 6386,Email
+C70910,T-10130,Ananda Medical Hall Pte Ltd,Nur Aisyah binte Kamal,admin@anandamedicalhall.example.com,+65 9274 7390,Email
+C70931,T-10133,Ananda Family Clinic Pte Ltd,Koh Kim Seng,admin@anandafamilyclinic.example.com,+65 9790 8657,Post
+C70952,T-10136,Nur Tuition Centre,Rahim bin Osman,,+65 9602 4845,Email
+C70959,T-10137,Bayu Tea House,Ganesh Murugan,admin@bayuteahouse.example.com,+65 9460 4567,Email
+C70980,T-10140,Hup Seng Clinic & Surgery,Yeo Bee Choo,,+65 9945 8363,Post
+C70994,T-10142,Suria Clinic & Surgery Pte Ltd,Chong Boon Huat,admin@suriaclinicsurgery.example.com,+65 9520 4094,Email
+C71015,T-10145,Wellcare Education Hub,Devi Nair,admin@wellcareeducationh.example.com,+65 9270 8731,Post
+C71036,T-10148,Starlight TCM Clinic,Chua Kok Leong,admin@starlighttcmclinic.example.com,+65 9304 6287,Post
+C71050,T-10150,Kumar Hair Studio,Arun Kumar,admin@kumarhairstudio.example.com,+65 9756 2821,Post
+C71071,T-10153,Seri Murni Restaurant,Hafiz bin Rahman,admin@serimurnirestauran.example.com,+65 9172 7833,Email
+C71092,T-10156,Evergreen Kueh Corner,Suresh s/o Ramasamy,admin@evergreenkuehcorne.example.com,+65 9833 9381,Post
+C71106,T-10158,Lim's Hair Studio,Teo Kok Leong,,+65 9315 5333,SMS
+C71113,T-10159,Little Sprouts Mart Pte Ltd,Ho Shu Fen,admin@littlesproutsmart.example.com,+65 9381 1585,SMS
+C71127,T-10161,Treasure Confectionery,Arun Kumar,admin@treasureconfection.example.com,+65 9412 8787,SMS
+C71148,T-10164,Tian Fu Mobile,Chua Wei Ming,admin@tianfumobile.example.com,+65 9410 3430,SMS
+C71155,T-10165,Ananda Beauty & Hair Pte Ltd,Toh Siew Lan,admin@anandabeautyhair.example.com,+65 9763 3770,Post
+C71162,T-10166,Sejahtera Eating House Pte Ltd,Chia Kim Seng,admin@sejahteraeatinghou.example.com,+65 9301 6840,Email
+C71183,T-10169,Murugan Education Hub Pte Ltd,Ng Siew Lan,admin@muruganeducationhu.example.com,+65 9377 9761,Email
+C71204,T-10172,Silver Moon Family Clinic Pte Ltd,Chua Mei Fen,admin@silvermoonfamilycl.example.com,+65 9141 5354,Email
+C71211,T-10173,Tian Fu Eating Place Pte Ltd,Chong Kim Seng,admin@tianfueatingplace.example.com,+65 9575 2610,Post
+C71218,T-10174,Al-Ameen TCM Clinic,Goh Li Ting,admin@alameentcmclinic.example.com,+65 9682 1157,Post
+C71239,T-10177,Teck Guan Supermarket,Ahmad bin Hassan,admin@teckguansupermarke.example.com,+65 9715 5435,Post
+C71260,T-10180,Joo Chiat Kitchen,Sim Chee Keong,admin@joochiatkitchen.example.com,+65 9550 2826,Email
+C71274,T-10182,SEJAHTERA BOBA BAR,Ng Kim Seng,admin@sejahterabobabar.example.com,+65 9414 9221,Email
+C71288,T-10184,Siva Family Clinic,Goh Kim Seng,admin@sivafamilyclinic.example.com,+65 9972 3587,Email
+C71302,T-10186,Wisdom Learning Centre,Ravi Shankar,admin@wisdomlearningcent.example.com,+65 9413 6467,SMS
+C71316,T-10188,Treasure Kitchen,Iskandar bin Yusof,admin@treasurekitchen.example.com,+65 9462 3292,SMS
+C71337,T-10191,Blue Pearl Medical Clinic,Yeo Siew Lan,admin@bluepearlmedicalcl.example.com,+65 9856 4267,Post
+C71344,T-10192,Kampung Hair Salon,Farah binte Ismail,admin@kampunghairsalon.example.com,+65 9499 8979,Post
+C71351,T-10193,Sejahtera Eye Centre,Lakshmi d/o Krishnan,admin@sejahteraeyecentre.example.com,+65 9867 2212,Email
+C71372,T-10196,Chop Wah Supermarket Pte Ltd,Sim Kim Seng,admin@chopwahsupermarket.example.com,+65 9670 9700,Email
+C71393,T-10199,Hup Seng Dry Cleaners,Nur Aisyah binte Kamal,admin@hupsengdrycleaners.example.com,+65 9579 4730,Email
+C71414,T-10202,Golden Leaf Provision Shop Pte Ltd,Low Kim Seng,admin@goldenleafprovisio.example.com,+65 9161 9392,Email
+C71428,T-10204,Hometown Agency Pte Ltd,Siti Rohani binte Salleh,admin@hometownagency.example.com,+65 9671 2840,Post
+C71442,T-10206,Siva Boba Bar,Tay Pei Shan,admin@sivabobabar.example.com,+65 9562 3493,Email
+C71463,T-10209,Nur Tea House Pte Ltd,Yeo Wei Ming,admin@nurteahouse.example.com,+65 9430 7998,SMS
+C71484,T-10212,Chop Wah Medical Hall,Arun Kumar,admin@chopwahmedicalhall.example.com,+65 9311 6054,Email
+C71505,T-10215,Ananda Bookstore Pte Ltd,Meena Pillai,,+65 9267 7951,Post
+C71512,T-10216,Bright Path Confectionery Pte. Ltd.,Ho Pei Shan,admin@brightpathconfecti.example.com,+65 9150 8320,SMS
+C71519,T-10217,Sunflower Tea House,Siti Rohani binte Salleh,admin@sunflowerteahouse.example.com,+65 9223 9013,Email
+C71526,T-10218,Sunflower Dental Surgery,Ho Wei Ming,admin@sunflowerdentalsur.example.com,+65 9922 7881,SMS
+C71533,T-10219,Nur Boba Bar Pte Ltd,Yeo Teck Soon,admin@nurbobabar.example.com,+65 9381 6296,Email
+C71547,T-10221,Kampung Tuition Centre Pte Ltd,Ong Shu Fen,admin@kampungtuitioncent.example.com,+65 9473 2792,Email
+C71561,T-10223,Little Sprouts Education Hub Pte Ltd,Tan Teck Soon,,+65 9852 3364,Post
+C71568,T-10224,Ananda Remittance Pte Ltd,Low Bee Choo,admin@anandaremittance.example.com,+65 9550 3202,SMS
+C71582,T-10226,Tian Fu Flowers & Gifts,Lakshmi d/o Krishnan,admin@tianfuflowersgifts.example.com,+65 9866 4215,SMS
+C71603,T-10229,Hock Lee Learning Centre Pte Ltd,Rahim bin Osman,admin@hockleelearningcen.example.com,+65 9573 9518,Email
+C71610,T-10230,Swee Heng Hardware & Electrical Pte Ltd,Lim Shu Fen,admin@sweehenghardwareel.example.com,+65 9149 4242,Post
+C71617,T-10231,Kampung Medical Clinic Pte Ltd,Ang Mei Fen,admin@kampungmedicalclin.example.com,+65 9515 8407,Email
+C71631,T-10233,Daily Fresh Tuition Centre Pte Ltd,Teo Kim Seng,admin@dailyfreshtuitionc.example.com,+65 9567 2581,Email
+C71645,T-10235,Mei Ling Mobile,Ho Pei Shan,admin@meilingmobile.example.com,+65 9663 5844,Email
+C71652,T-10236,Cosy Florist Pte Ltd,Vijay Menon,admin@cosyflorist.example.com,+65 9960 4634,SMS
+C71659,T-10237,Treasure Remittance,Toh Kok Leong,admin@treasureremittance.example.com,+65 9202 3713,Post
+C71680,T-10240,Harmony Aquarium & Pets,Yeo Jun Jie,admin@harmonyaquariumpet.example.com,+65 9531 8807,SMS
+C71694,T-10242,Ever Joy Telecom Pte Ltd,Siti Rohani binte Salleh,admin@everjoytelecom.example.com,+65 9243 3355,Email
+C71701,T-10243,Soon Hin Flowers & Gifts,Lakshmi d/o Krishnan,admin@soonhinflowersgift.example.com,+65 9243 7577,Post
+C71708,T-10244,Happy Paws Hardware & Electrical Pte Ltd,Toh Hui Ling,admin@happypawshardwaree.example.com,+65 9582 4804,Email
+C71729,T-10247,Kumar Fruits Pte. Ltd.,Devi Nair,admin@kumarfruits.example.com,+65 9490 5185,Email
+C71750,T-10250,Smart Kids Hardware & Electrical Pte Ltd,Chia Li Ting,admin@smartkidshardwaree.example.com,+65 9990 9102,SMS
+C71764,T-10252,Happy Paws Dental Surgery,Chan Siew Lan,admin@happypawsdentalsur.example.com,+65 9203 8955,Email
+C71785,T-10255,Smart Kids Clinic & Surgery,Toh Pei Shan,admin@smartkidsclinicsur.example.com,+65 9143 2766,Post
+C71792,T-10256,Green Leaf Education Hub,Iskandar bin Yusof,admin@greenleafeducation.example.com,+65 9762 8212,Email
+C71799,T-10257,Ah Seng Stationery Pte Ltd,Tan Shu Fen,admin@ahsengstationery.example.com,+65 9467 6636,Post
+C71820,T-10260,LITTLE SPROUTS PROVISION SHOP PTE LTD,Devi Nair,admin@littlesproutsprovi.example.com,+65 9899 3818,SMS
+C71841,T-10263,Sunflower Telecom Pte Ltd,Iskandar bin Yusof,admin@sunflowertelecom.example.com,+65 9976 8953,Email
+C71855,T-10265,Peng Kee Store,Sim Chee Keong,admin@pengkeestore.example.com,+65 9733 2244,Email
+C71862,T-10266,Al-Ameen TCM Clinic Pte Ltd,Rahim bin Osman,admin@alameentcmclinic.example.com,+65 9329 4587,SMS
+C71869,T-10267,Golden Leaf Medical Hall,Chong Mei Fen,admin@goldenleafmedicalh.example.com,+65 9968 9496,SMS
+C71890,T-10270,Green Leaf Tuition Centre Pte Ltd,Meena Pillai,admin@greenleaftuitionce.example.com,+65 9465 2262,Post
+C71911,T-10273,TIAN FU PROVISION SHOP,Kavitha Raj,admin@tianfuprovisionsho.example.com,+65 9207 4732,Email
+C71932,T-10276,Prima Locksmith,Lee Kok Leong,admin@primalocksmith.example.com,+65 9559 1942,Post
+C71960,T-10280,Tan Brothers Medical Clinic,Ang Li Ting,admin@tanbrothersmedical.example.com,+65 9728 2042,Email
+C71967,T-10281,Phoenix Provision Shop,Zainab binte Ali,admin@phoenixprovisionsh.example.com,+65 9513 7347,SMS
+C71981,T-10283,Sunflower Restaurant Pte. Ltd.,Lee Siew Lan,admin@sunflowerrestauran.example.com,+65 9636 5223,Email
+C72002,T-10286,Bloom Dental Care,Ong Li Ting,admin@bloomdentalcare.example.com,+65 9281 8220,Email
+C72016,T-10288,Wellcare Family Clinic,Dr Lim Kok Leong,admin@wellcareclinic.example.com,+65 9630 3742,Email
+C72051,T-10293,TAN BROTHERS RESTAURANT,Zainab binte Ali,admin@tanbrothersrestaur.example.com,+65 9688 9715,Email
+C72065,T-10295,Chop Wah Trading,Yeo Hui Ling,admin@chopwahtrading.example.com,+65 9603 2709,Email
+C72072,T-10296,Teck Guan Pharmacy Pte Ltd,Norhayati binte Said,admin@teckguanpharmacy.example.com,+65 9756 6138,SMS
+C72079,T-10297,Daily Fresh Mart,Lakshmi d/o Krishnan,admin@dailyfreshmart.example.com,+65 9326 6247,SMS
+C72107,T-10301,Little Sprouts Confectionery,Ravi Shankar,admin@littlesproutsconfe.example.com,+65 9854 5466,Post
+C72121,T-10303,Blue Pearl Supermarket Pte Ltd,Ho Kok Leong,admin@bluepearlsupermark.example.com,+65 9328 2155,Email
+C72142,T-10306,Swee Heng Hair Studio,Ganesh Murugan,admin@sweehenghairstudio.example.com,+65 9393 5664,SMS
+C72163,T-10309,Wong's Provision Shop,Nur Aisyah binte Kamal,admin@wongsprovisionshop.example.com,+65 9425 1716,Email
+C72177,T-10311,Ong & Sons Store Pte Ltd,Teo Wei Ming,admin@ongsonsstore.example.com,+65 9166 7716,SMS
+C72184,T-10312,Hock Lee Clinic & Surgery Pte Ltd,Lim Pei Shan,admin@hockleeclinicsurge.example.com,+65 9222 4678,SMS
+C72219,T-10317,Lotus Trading,Tan Ah Hock,admin@lotustrading.example.com,+65 9143 8535,Post
+C72240,T-10320,Lakshmi Bookstore,Kavitha Raj,admin@lakshmibookstore.example.com,+65 9497 8594,SMS
+C72268,T-10324,Chin Lee Hardware Pte Ltd,Wong Boon Huat,admin@chinleehardware.example.com,+65 9542 3954,Post
+C72289,T-10327,Wellcare Provision Shop Pte Ltd,Devi Nair,admin@wellcareprovisions.example.com,+65 9465 4326,Post
+C72310,T-10330,Lotus Hair Salon Pte Ltd,Ong Kok Leong,admin@lotushairsalon.example.com,+65 9645 7712,Post
+C72338,T-10334,Smart Kids Telecom,Lakshmi d/o Krishnan,admin@smartkidstelecom.example.com,+65 9739 5916,Email
+C72366,T-10338,Smart Kids Mart,Rahim bin Osman,admin@smartkidsmart.example.com,+65 9543 6529,SMS
+C72380,T-10340,New Life Hardware Pte Ltd,Norhayati binte Said,admin@newlifehardware.example.com,+65 9489 4270,Post
+C72394,T-10342,Green Leaf Kindergarten Pte Ltd,Ang Shu Fen,admin@greenleafkindergar.example.com,+65 9297 9008,Email
+C72429,T-10347,Hassan Learning Centre Pte Ltd,Kavitha Raj,admin@hassanlearningcent.example.com,+65 9904 2733,SMS
+C72443,T-10349,Pinnacle Telecom,Suresh s/o Ramasamy,admin@pinnacletelecom.example.com,+65 9619 1103,Post
+C72485,T-10355,Blue Pearl Hardware & Electrical,Low Siew Lan,admin@bluepearlhardwaree.example.com,+65 9873 8046,Email
+C72506,T-10358,SUNFLOWER MEDICAL CLINIC,Anand Subramaniam,admin@sunflowermedicalcl.example.com,+65 9682 5299,Email
+C72541,T-10363,Starlight Kitchen,Teo Ah Hock,admin@starlightkitchen.example.com,+65 9509 6991,Email
+C72548,T-10364,Bayu Remittance Pte Ltd,Teo Mei Fen,admin@bayuremittance.example.com,+65 9501 3593,SMS
+C72569,T-10367,Evergreen Eye Centre,Kavitha Raj,admin@evergreeneyecentre.example.com,+65 9244 4852,SMS
+C72583,T-10369,Siva Florist,Ang Kim Seng,admin@sivaflorist.example.com,+65 9678 8758,Post
+C72597,T-10371,Happy Paws Medical Hall,Muhammad Firdaus,admin@happypawsmedicalha.example.com,+65 9686 4750,SMS
+C72604,T-10372,Hup Seng Supermarket,Norhayati binte Said,admin@hupsengsupermarket.example.com,+65 9641 9043,Post
+C72618,T-10374,Teck Guan Hair Salon,Suresh s/o Ramasamy,admin@teckguanhairsalon.example.com,+65 9328 1050,Email
+C72639,T-10377,Thye Hin Supermarket Pte. Ltd.,Toh Jun Jie,admin@thyehinsupermarket.example.com,+65 9533 1178,SMS
+C72646,T-10378,Raja Store Pte Ltd,Teo Hui Ling,admin@rajastore.example.com,+65 9382 4240,Post
+C72660,T-10380,Rainbow Flowers & Gifts,Tay Boon Huat,admin@rainbowflowersgift.example.com,+65 9282 6351,Post
+C72681,T-10383,Lucky Star Eating Place Pte Ltd,Farah binte Ismail,admin@luckystareatingpla.example.com,+65 9243 3483,Email
+C72695,T-10385,Sejahtera Fruits Pte Ltd,Yeo Chee Keong,admin@sejahterafruits.example.com,+65 9526 7487,SMS
+C72716,T-10388,Ah Seng Provision Shop,Lim Wei Ming,admin@ahsengprovisionsho.example.com,+65 9256 3255,Post
+C72730,T-10390,Bloom Mobile,Lee Wei Ming,admin@bloommobile.example.com,+65 9136 4421,Email
+C72751,T-10393,Hassan Kitchen Pte Ltd,Wong Pei Shan,admin@hassankitchen.example.com,+65 9362 6480,SMS
+C72786,T-10398,BAYU LOCKSMITH PTE LTD,Nur Aisyah binte Kamal,admin@bayulocksmith.example.com,+65 9322 9373,Email
+C72800,T-10400,Ong & Sons Minimart,Koh Kim Seng,admin@ongsonsminimart.example.com,+65 9179 2757,Post
+C72807,T-10401,Jade Garden TCM Clinic Pte Ltd,Tay Shu Fen,admin@jadegardentcmclini.example.com,+65 9386 7840,Post
+C72828,T-10404,Ah Seng Flowers & Gifts Pte. Ltd.,Chua Bee Choo,,+65 9670 5475,SMS
+C72849,T-10407,Ah Seng Aquarium & Pets,Ho Kim Seng,admin@ahsengaquariumpets.example.com,+65 9145 8132,Email
+C72870,T-10410,Thye Hin Bakery,Vijay Menon,admin@thyehinbakery.example.com,+65 9542 2416,Email
+C72891,T-10413,Rainbow Eating Place Pte Ltd,Arun Kumar,admin@rainboweatingplace.example.com,+65 9935 4372,Post
+C72912,T-10416,Orchid Eating Place Pte Ltd,Farah binte Ismail,admin@orchideatingplace.example.com,+65 9849 7116,SMS
+C72933,T-10419,Kumar Hardware,Ahmad bin Hassan,admin@kumarhardware.example.com,+65 9607 3365,Email
+C72940,T-10420,THYE HIN SNACKS PTE LTD,Siti Rohani binte Salleh,admin@thyehinsnacks.example.com,+65 9563 2948,Email
+C72961,T-10423,Siva Supermarket Pte Ltd,Kavitha Raj,admin@sivasupermarket.example.com,+65 9131 5190,Post
+C72975,T-10425,Mutiara Tuition Centre,Sim Hui Ling,admin@mutiaratuitioncent.example.com,+65 9841 2540,Email
+C73003,T-10429,Treasure Hair Salon,Ahmad bin Hassan,admin@treasurehairsalon.example.com,+65 9220 9466,Post
+C73010,T-10430,Sejahtera Beauty & Hair,Ho Kim Seng,admin@sejahterabeautyhai.example.com,+65 9268 3280,SMS
+C73024,T-10432,Nur Family Clinic,Hafiz bin Rahman,admin@nurfamilyclinic.example.com,+65 9585 1549,Email
+C73031,T-10433,Barakah Pharmacy Pte Ltd,Goh Bee Choo,admin@barakahpharmacy.example.com,+65 9482 5309,Post
+C73038,T-10434,Murugan Remittance Pte Ltd,Iskandar bin Yusof,admin@muruganremittance.example.com,+65 9161 9359,Email
+C73045,T-10435,Teck Guan Fruit Trading,Yeo Chee Keong,admin@teckguanfruittradi.example.com,+65 9654 2161,Email
+C73066,T-10438,Everbright Medical Supplies,Ong Bee Choo,admin@everbrightmedicals.example.com,+65 9516 3576,SMS
+C73073,T-10439,Lucky Star Telecom Pte Ltd,Teo Jun Jie,admin@luckystartelecom.example.com,+65 9434 6048,Email
+C73080,T-10440,Smart Kids Trading,Rahim bin Osman,admin@smartkidstrading.example.com,+65 9377 5734,SMS
+C73101,T-10443,Teck Guan Bubble Tea,Vijay Menon,admin@teckguanbubbletea.example.com,+65 9385 5323,Email
+C73129,T-10447,Sejahtera Tea House,Chua Ah Hock,admin@sejahterateahouse.example.com,+65 9377 8521,Email
+C73143,T-10449,New Life Tuition Centre Pte Ltd,Ravi Shankar,admin@newlifetuitioncent.example.com,+65 9663 5539,Email
+C73185,T-10455,Mei Ling Mobile Pte Ltd,Tan Hui Ling,admin@meilingmobile.example.com,+65 9836 5541,Post
+C73206,T-10458,Jade Garden Snacks,Chia Kok Leong,admin@jadegardensnacks.example.com,+65 9386 2759,Email
+C73241,T-10463,Siva Medical Hall,Ong Shu Fen,admin@sivamedicalhall.example.com,+65 9957 7187,SMS
+C73255,T-10465,AH SENG FLORIST,Tan Ah Hock,admin@ahsengflorist.example.com,+65 9468 7241,Email
+C73262,T-10466,Orchid Minimart,Toh Kim Seng,admin@orchidminimart.example.com,+65 9490 6973,Email
+C73283,T-10469,NEW LIFE LAUNDRY PTE LTD,Kavitha Raj,admin@newlifelaundry.example.com,+65 9245 8141,Post
+C73304,T-10472,Lotus Mart,Wong Mei Fen,admin@lotusmart.example.com,+65 9717 2262,Email
+C73318,T-10474,New Life Kueh Corner,Wong Mei Fen,admin@newlifekuehcorner.example.com,+65 9975 3814,Email
+C73346,T-10478,Bright Path Bakery Pte Ltd,Iskandar bin Yusof,admin@brightpathbakery.example.com,+65 9843 7617,Email
+C73367,T-10481,Kian Huat Bubble Tea,Low Kok Leong,admin@kianhuatbubbletea.example.com,+65 9175 7021,Email
+C73388,T-10484,Rainbow Bubble Tea,Muhammad Firdaus,admin@rainbowbubbletea.example.com,+65 9505 5005,Email
+C73402,T-10486,SURIA COFFEESHOP,Lim Mei Fen,admin@suriacoffeeshop.example.com,+65 9203 5840,Post
+C73416,T-10488,Lakshmi Eating Place,Kavitha Raj,admin@lakshmieatingplace.example.com,+65 9439 4169,Email
+C73437,T-10491,WISDOM PROVISION SHOP PTE LTD,Zainab binte Ali,admin@wisdomprovisionsho.example.com,+65 9513 6472,Email
+C73458,T-10494,Mutiara Eating Place,Hafiz bin Rahman,admin@mutiaraeatingplace.example.com,+65 9944 7191,Post
+C73465,T-10495,Sunflower Consultancy Pte Ltd,Lim Jun Jie,admin@sunflowerconsultan.example.com,+65 9299 7854,Post
+C73486,T-10498,Blue Pearl Provision Shop Pte Ltd,Lim Jun Jie,admin@bluepearlprovision.example.com,+65 9324 8672,Email
+C73507,T-10501,Amanah Medical Supplies,Norhayati binte Said,admin@amanahmedicalsuppl.example.com,+65 9385 5018,Email
+C73528,T-10504,Joo Chiat Hair Salon Pte Ltd,Chua Teck Soon,admin@joochiathairsalon.example.com,+65 9256 2615,Email
+C73549,T-10507,Seri Murni Hair Salon,Tay Kok Leong,admin@serimurnihairsalon.example.com,+65 9131 6468,Post
+C73570,T-10510,Lotus Learning Centre Pte Ltd,Ang Boon Huat,admin@lotuslearningcentr.example.com,+65 9141 3706,Email
+C73591,T-10513,Heng Ann Eating House,Low Hui Ling,admin@henganneatinghouse.example.com,+65 9398 9619,Email
+C73598,T-10514,Kim Hiap Trading,Yeo Pei Shan,admin@kimhiaptrading.example.com,+65 9266 8744,Post
+C73619,T-10517,Fortune Bubble Tea,Ong Shu Fen,admin@fortunebubbletea.example.com,+65 9181 1962,SMS
+C73626,T-10518,Fresh Valley Dental Surgery,Low Ah Hock,admin@freshvalleydentals.example.com,+65 9759 5956,Post
+C73654,T-10522,Amanah Optical Pte Ltd,Chia Bee Choo,admin@amanahoptical.example.com,+65 9838 3957,Email
+C73668,T-10524,Sejahtera Mobile Pte Ltd,Vijay Menon,admin@sejahteramobile.example.com,+65 9251 6447,Email
+C73689,T-10527,Tan Brothers Pharmacy Pte Ltd,Ahmad bin Hassan,admin@tanbrotherspharmac.example.com,+65 9705 9964,Post
+C73710,T-10530,Gold Coin Bookstore,Ho Jun Jie,admin@goldcoinbookstore.example.com,+65 9972 1634,SMS
+C73717,T-10531,Nur Hardware,Vijay Menon,admin@nurhardware.example.com,+65 9116 9220,Post
+C73738,T-10534,Bayu Dental Surgery,Yeo Chee Keong,admin@bayudentalsurgery.example.com,+65 9658 4281,SMS
+C73752,T-10536,Blue Pearl Flowers & Gifts Pte Ltd,Wong Siew Lan,admin@bluepearlflowersgi.example.com,+65 9416 9885,Email
+C73766,T-10538,Lotus Dental Care,Sim Bee Choo,admin@lotusdentalcare.example.com,+65 9592 5559,SMS
+C73773,T-10539,Rainbow Confectionery Pte Ltd,Nur Aisyah binte Kamal,admin@rainbowconfectione.example.com,+65 9459 1488,Email
+C73787,T-10541,Bayu Key & Shoe Service Pte Ltd,Chong Shu Fen,admin@bayukeyshoeservice.example.com,+65 9332 9099,Post
+C73794,T-10542,Red Lantern Store Pte Ltd,Devi Nair,admin@redlanternstore.example.com,+65 9237 2572,Email
+C73815,T-10545,Hup Seng Eating House Pte Ltd,Lim Pei Shan,admin@hupsengeatinghouse.example.com,+65 9407 3243,Post
+C73829,T-10547,Kim Hiap Eating Place Pte Ltd,Koh Ah Hock,admin@kimhiapeatingplace.example.com,+65 9391 6369,SMS
+C73843,T-10549,Hup Seng Learning Centre Pte Ltd,Lee Mei Fen,admin@hupsenglearningcen.example.com,+65 9418 9868,SMS
+C73864,T-10552,Joo Chiat Learning Centre,Ravi Shankar,admin@joochiatlearningce.example.com,+65 9773 6460,Post
+C73892,T-10556,Pinnacle Provision Shop,Toh Mei Fen,admin@pinnacleprovisions.example.com,+65 9797 9568,Email
+C73899,T-10557,Evergreen Medical Hall Pte Ltd,Toh Jun Jie,admin@evergreenmedicalha.example.com,+65 9514 7742,Email
+C73913,T-10559,Ong & Sons Fruit Trading Pte Ltd,Goh Shu Fen,admin@ongsonsfruittradin.example.com,+65 9231 4020,Post
+C73920,T-10560,SILVER MOON KOPITIAM PTE LTD,Muhammad Firdaus,admin@silvermoonkopitiam.example.com,+65 9215 1046,SMS
+C73934,T-10562,Nanyang Medical Hall Pte Ltd,Siti Rohani binte Salleh,admin@nanyangmedicalhall.example.com,+65 9520 7205,Email
+C73955,T-10565,Silver Moon Money Changer,Chan Wei Ming,admin@silvermoonmoneycha.example.com,+65 9262 2006,Email
+C73962,T-10566,Pinnacle Beauty & Hair Pte Ltd,Chua Bee Choo,admin@pinnaclebeautyhair.example.com,+65 9984 5515,SMS
+C73983,T-10569,Daily Fresh Fruits Pte Ltd,Chan Shu Fen,admin@dailyfreshfruits.example.com,+65 9982 9462,Email
+C74011,T-10573,Soon Hin Medical Hall Pte Ltd,Koh Shu Fen,admin@soonhinmedicalhall.example.com,+65 9812 5455,SMS
+C74025,T-10575,Hassan Tea House,Teo Siew Lan,admin@hassanteahouse.example.com,+65 9645 6462,SMS
+C74032,T-10576,Murugan Kitchen,Sim Shu Fen,admin@murugankitchen.example.com,+65 9797 9987,Email
+C74039,T-10577,Blue Pearl Family Clinic,Chan Boon Huat,admin@bluepearlfamilycli.example.com,+65 9314 2531,Post
+C74060,T-10580,Heng Ann Hair Salon,Zainab binte Ali,admin@hengannhairsalon.example.com,+65 9615 4757,Post
+C74081,T-10583,Orchid Learning Centre,Chan Mei Fen,admin@orchidlearningcent.example.com,+65 9339 1740,Post
+C74102,T-10586,Nanyang Confectionery,Iskandar bin Yusof,admin@nanyangconfectione.example.com,+65 9164 3606,Email
+C74130,T-10590,Ong & Sons Remittance,Ahmad bin Hassan,admin@ongsonsremittance.example.com,+65 9402 7152,Post
+C74137,T-10591,Prima Hair Studio,Lakshmi d/o Krishnan,admin@primahairstudio.example.com,+65 9504 3215,Email
+C74144,T-10592,DAILY FRESH EDUCATION HUB,Sim Hui Ling,admin@dailyfresheducatio.example.com,+65 9650 2532,Post
+C74151,T-10593,Value Family Clinic,Sim Hui Ling,admin@valuefamilyclinic.example.com,+65 9268 5527,Email
+C74158,T-10594,Lim's Fruits Pte Ltd,Ng Bee Choo,admin@limsfruits.example.com,+65 9480 1937,Email
+C74165,T-10595,Old Town Minimart,Koh Bee Choo,admin@oldtownminimart.example.com,+65 9254 3879,SMS
+C74172,T-10596,LITTLE SPROUTS DENTAL CARE PTE LTD,Ang Shu Fen,admin@littlesproutsdenta.example.com,+65 9642 3456,Email
+C74186,T-10598,Peng Kee Family Clinic,Hafiz bin Rahman,admin@pengkeefamilyclini.example.com,+65 9581 1868,SMS
+C74193,T-10599,Hassan Beauty & Hair,Arun Kumar,admin@hassanbeautyhair.example.com,+65 9162 5387,Email
+C74214,T-10602,Lotus Beauty & Hair,Meena Pillai,admin@lotusbeautyhair.example.com,+65 9487 4075,SMS
+C74235,T-10605,Sin Hock Eating House,Teo Ah Hock,sinhock.eatinghouse@example.com,+65 9262 1339,Post
+C74256,T-10608,Kopi Corner Hair Salon Pte Ltd,Ravi Shankar,admin@kopicornerhairsalo.example.com,+65 9994 1668,SMS
+C74270,T-10610,Thye Hin Laundry Pte Ltd,Ang Siew Lan,admin@thyehinlaundry.example.com,+65 9291 5814,Email
+C74291,T-10613,Cosy Hair Studio,Chua Chee Keong,,+65 9282 5512,Email
+C74305,T-10615,Jade Garden Money Changer,Lakshmi d/o Krishnan,admin@jadegardenmoneycha.example.com,+65 9721 4254,Email
+C74319,T-10617,Swee Heng Family Clinic Pte Ltd,Lakshmi d/o Krishnan,admin@sweehengfamilyclin.example.com,+65 9879 9272,Email
+C74340,T-10620,Chin Lee Pet Shop Pte Ltd,Tan Kim Seng,admin@chinleepetshop.example.com,+65 9209 6481,Email
+C74354,T-10622,Amanah Dental Surgery,Koh Pei Shan,admin@amanahdentalsurger.example.com,+65 9842 7807,SMS
+C74382,T-10626,Teck Guan Minimart,Anand Subramaniam,admin@teckguanminimart.example.com,+65 9251 2204,Email
+C74403,T-10629,Chin Lee Beauty & Hair Pte Ltd,Zainab binte Ali,admin@chinleebeautyhair.example.com,+65 9504 8023,Email
+C74410,T-10630,Evergreen Beauty & Hair,Chia Hui Ling,admin@evergreenbeautyhai.example.com,+65 9257 8465,Email
+C74424,T-10632,Sri Ganesh Bakery Pte Ltd,Toh Bee Choo,admin@sriganeshbakery.example.com,+65 9405 4889,SMS
+C74431,T-10633,Murugan Fruit Trading,Ang Bee Choo,admin@muruganfruittradin.example.com,+65 9941 1778,Email
+C74445,T-10635,Gold Coin Hair Studio,Ravi Shankar,admin@goldcoinhairstudio.example.com,+65 9512 7893,Post
+C74466,T-10638,Kumar Minimart,Ang Li Ting,admin@kumarminimart.example.com,+65 9682 5066,Post
+C74501,T-10643,Golden Leaf Clinic & Surgery,Farah binte Ismail,admin@goldenleafclinicsu.example.com,+65 9757 8241,SMS
+C74508,T-10644,Swee Heng Medical Hall,Arun Kumar,admin@sweehengmedicalhal.example.com,+65 9875 1286,Post
+C74529,T-10647,Rainbow Medical Clinic,Ong Ah Hock,admin@rainbowmedicalclin.example.com,+65 9195 7265,Email
+C74543,T-10649,Jade Garden Supermarket,Goh Kim Seng,admin@jadegardensupermar.example.com,+65 9685 6518,Email
+C74550,T-10650,Tan Brothers Hardware & Electrical,Ahmad bin Hassan,admin@tanbrothershardwar.example.com,+65 9589 4665,Post
+C74585,T-10655,Ong & Sons TCM Clinic,Tay Kim Seng,admin@ongsonstcmclinic.example.com,+65 9634 4209,Email
+C74592,T-10656,HAPPY PAWS TRADING PTE LTD,Chia Jun Jie,admin@happypawstrading.example.com,+65 9159 8356,SMS
+C74606,T-10658,Golden Leaf Store,Kavitha Raj,admin@goldenleafstore.example.com,+65 9264 2094,Email
+C74613,T-10659,Hup Seng Hardware & Electrical,Yeo Hui Ling,admin@hupsenghardwareele.example.com,+65 9181 8606,Post
+C74620,T-10660,Ong & Sons Hardware Pte Ltd,Tay Mei Fen,admin@ongsonshardware.example.com,+65 9425 3168,Email
+C74627,T-10661,Raja Provision Shop,Chan Li Ting,admin@rajaprovisionshop.example.com,+65 9272 6292,Post
+C74634,T-10662,Blue Pearl Optical Pte Ltd,Ong Teck Soon,admin@bluepearloptical.example.com,+65 9909 9186,Email
+C74641,T-10663,Little Sprouts Fruit Trading Pte Ltd,Low Kim Seng,admin@littlesproutsfruit.example.com,+65 9339 7979,SMS
+C74655,T-10665,Tan Brothers Medical Hall Pte Ltd,Kavitha Raj,admin@tanbrothersmedical.example.com,+65 9162 7597,SMS
+C74676,T-10668,Treasure Family Clinic,Muhammad Firdaus,admin@treasurefamilyclin.example.com,+65 9242 6363,Post
+C74697,T-10671,Wisdom Hardware Pte Ltd,Sim Pei Shan,admin@wisdomhardware.example.com,+65 9229 1619,Email
+C74718,T-10674,Wong's Supermarket,Arun Kumar,admin@wongssupermarket.example.com,+65 9445 9391,SMS
+C74732,T-10676,Fortune Clinic & Surgery Pte Ltd,Sim Kim Seng,admin@fortuneclinicsurge.example.com,+65 9126 8405,Email
+C74753,T-10679,Suria Bubble Tea,Ong Pei Shan,admin@suriabubbletea.example.com,+65 9546 9287,Post
+C74774,T-10682,Chop Wah Hardware & Electrical,Hafiz bin Rahman,admin@chopwahhardwareele.example.com,+65 9636 1010,Email
+C74795,T-10685,Wisdom Bookstore,Yeo Ah Hock,admin@wisdombookstore.example.com,+65 9802 8481,SMS
+C74816,T-10688,Everbright Medical Hall,Chia Jun Jie,admin@everbrightmedicalh.example.com,+65 9352 3180,Email
+C74823,T-10689,Teck Guan Store,Ng Siew Lan,admin@teckguanstore.example.com,+65 9366 2304,Post
+C74865,T-10695,Swee Heng Telecom,Meena Pillai,admin@sweehengtelecom.example.com,+65 9413 2965,Email
+C74886,T-10698,Hock Lee Minimart,Nur Aisyah binte Kamal,admin@hockleeminimart.example.com,+65 9845 9593,Email
+C74907,T-10701,Hock Lee Money Changer,Ang Kok Leong,admin@hockleemoneychange.example.com,+65 9730 9670,Email
+C74914,T-10702,Fortune Dental Surgery Pte Ltd,Teo Chee Keong,admin@fortunedentalsurge.example.com,+65 9159 6315,SMS
+C74921,T-10703,Bright Path Stationery,Chan Chee Keong,admin@brightpathstatione.example.com,+65 9850 7913,Post
+C74928,T-10704,Joo Chiat Store,Tay Siew Lan,admin@joochiatstore.example.com,+65 9971 1102,SMS
+C74963,T-10709,Joo Chiat Hardware & Electrical,Iskandar bin Yusof,admin@joochiathardwareel.example.com,+65 9833 9038,Post
+C74984,T-10712,Al-Ameen Education Hub,Tan Kok Leong,admin@alameeneducationhu.example.com,+65 9856 3747,SMS
+C74991,T-10713,OLD TOWN HAIR STUDIO,Arun Kumar,admin@oldtownhairstudio.example.com,+65 9246 1116,SMS
+C75012,T-10716,Little Sprouts Clinic & Surgery,Farah binte Ismail,admin@littlesproutsclini.example.com,+65 9258 1535,Email
+C75054,T-10722,Bayu Consultancy,Tan Siew Lan,admin@bayuconsultancy.example.com,+65 9258 4507,SMS
+C75075,T-10725,Fortune Beauty & Hair,Devi Nair,,+65 9819 5006,SMS
+C75089,T-10727,Cahaya TCM Clinic,Tan Li Ting,admin@cahayatcmclinic.example.com,+65 9986 5159,Post
+C75110,T-10730,Sri Ganesh Hardware,Arun Kumar,admin@sriganeshhardware.example.com,+65 9631 4981,Post
+C75131,T-10733,Prima Supermarket Pte Ltd,Ravi Shankar,admin@primasupermarket.example.com,+65 9721 8628,Email
+C75152,T-10736,Red Lantern Cake House,Sim Ah Hock,admin@redlanterncakehous.example.com,+65 9306 1284,SMS
+C75159,T-10737,Nanyang Clinic & Surgery,Suresh s/o Ramasamy,admin@nanyangclinicsurge.example.com,+65 9691 3743,Email
+C75173,T-10739,Happy Paws Dental Care Pte Ltd,Tan Li Ting,admin@happypawsdentalcar.example.com,+65 9184 4447,Post
+C75180,T-10740,Harmony Beauty & Hair Pte Ltd,Ho Ah Hock,admin@harmonybeautyhair.example.com,+65 9242 1876,Email
+C75194,T-10742,Hock Lee Hair Studio,Lim Bee Choo,admin@hockleehairstudio.example.com,+65 9451 9669,Email
+C75215,T-10745,Teck Guan Medical Supplies Pte Ltd,Wong Bee Choo,admin@teckguanmedicalsup.example.com,+65 9930 5939,Post
+C75229,T-10747,Golden Leaf Beauty & Hair,Teo Pei Shan,admin@goldenleafbeautyha.example.com,+65 9780 6351,Post
+C75243,T-10749,Unity Laundry,Nur Aisyah binte Kamal,admin@unitylaundry.example.com,+65 9710 6656,Email
+C75264,T-10752,Swee Heng Supermarket Pte Ltd,Muhammad Firdaus,admin@sweehengsupermarke.example.com,+65 9365 2227,Email
+C75285,T-10755,BLOOM TUITION CENTRE PTE LTD,Farah binte Ismail,admin@bloomtuitioncentre.example.com,+65 9536 1366,SMS
+C75299,T-10757,Kampung Optical Pte Ltd,Suresh s/o Ramasamy,admin@kampungoptical.example.com,+65 9227 1276,Email
+C75313,T-10759,Al-Ameen Clinic & Surgery,Tay Pei Shan,admin@alameenclinicsurge.example.com,+65 9357 8857,Email
+C75320,T-10760,Raja Hair Salon Pte Ltd,Wong Ah Hock,admin@rajahairsalon.example.com,+65 9657 1215,SMS
+C75341,T-10763,Hock Lee Mart,Toh Wei Ming,admin@hockleemart.example.com,+65 9204 5038,Email
+C75362,T-10766,Barakah Boba Bar Pte Ltd,Meena Pillai,admin@barakahbobabar.example.com,+65 9260 8200,Email
+C75376,T-10768,Raja Medical Supplies,Suresh s/o Ramasamy,admin@rajamedicalsupplie.example.com,+65 9770 5303,Email
+C75397,T-10771,WISDOM SUPERMARKET PTE LTD,Siti Rohani binte Salleh,admin@wisdomsupermarket.example.com,+65 9143 5186,Email
+C75418,T-10774,Kopi Corner Medical Clinic,Ho Li Ting,admin@kopicornermedicalc.example.com,+65 9223 7792,Email
+C75425,T-10775,Smart Kids Medical Clinic,Wong Kim Seng,admin@smartkidsmedicalcl.example.com,+65 9287 4455,Email
+C75432,T-10776,SIVA LOCKSMITH,Rahim bin Osman,admin@sivalocksmith.example.com,+65 9968 3286,Post
+C75467,T-10781,Golden Leaf Boba Bar,Rahim bin Osman,admin@goldenleafbobabar.example.com,+65 9131 2156,SMS
+C75488,T-10784,Murugan Dry Cleaners,Tan Chee Keong,admin@murugandrycleaners.example.com,+65 9931 1420,Email
+C75502,T-10786,Wong's Dry Cleaners Pte Ltd,Muhammad Firdaus,admin@wongsdrycleaners.example.com,+65 9790 5430,Post
+C75516,T-10788,Lim's Education Hub,Ahmad bin Hassan,admin@limseducationhub.example.com,+65 9702 6810,SMS
+C75530,T-10790,Mei Ling Minimart,Muhammad Firdaus,admin@meilingminimart.example.com,+65 9790 4672,Email
+C75558,T-10794,Seri Murni Trading Pte Ltd,Yeo Kok Leong,,+65 9693 4983,Email
+C75579,T-10797,Murugan Remittance,Ganesh Murugan,admin@muruganremittance.example.com,+65 9870 9637,Email
+C75593,T-10799,Lucky Star Eye Centre Pte. Ltd.,Teo Kim Seng,admin@luckystareyecentre.example.com,+65 9468 5561,Post
+C75607,T-10801,KIAN HUAT MINIMART,Lee Kim Seng,admin@kianhuatminimart.example.com,+65 9816 5238,Post
+C75614,T-10802,Jade Garden Aquarium & Pets Pte Ltd,Ng Kim Seng,admin@jadegardenaquarium.example.com,+65 9737 4026,Post
+C75635,T-10805,Al-Ameen Hardware & Electrical,Lee Siew Lan,admin@alameenhardwareele.example.com,+65 9367 6137,Post
+C75656,T-10808,Brilliant Hair Salon Pte Ltd,Lim Siew Lan,admin@brillianthairsalon.example.com,+65 9585 2287,Email
+C75677,T-10811,Tian Fu Fruits,Chia Wei Ming,admin@tianfufruits.example.com,+65 9107 1805,Email
+C75691,T-10813,Lotus Minimart Pte Ltd,Ravi Shankar,admin@lotusminimart.example.com,+65 9545 8067,SMS
+C75705,T-10815,HUP SENG CONFECTIONERY,Zainab binte Ali,admin@hupsengconfectione.example.com,+65 9684 8382,Email
+C75733,T-10819,Sin Hock Supermarket,Wong Hui Ling,admin@sinhocksupermarket.example.com,+65 9401 3966,Email
+C75768,T-10824,Everbright Kueh Corner,Lee Kok Leong,admin@everbrightkuehcorn.example.com,+65 9466 8275,SMS
+C75796,T-10828,Orchid Confectionery,Koh Kok Leong,admin@orchidconfectioner.example.com,+65 9670 4810,Post
+C75831,T-10833,SIVA EATING PLACE,Norhayati binte Said,admin@sivaeatingplace.example.com,+65 9548 7523,Email
+C75838,T-10834,Teck Guan Education Hub,Lee Teck Soon,admin@teckguaneducationh.example.com,+65 9831 1206,Post
+C75845,T-10835,Blue Pearl Bubble Tea,Chia Kim Seng,admin@bluepearlbubbletea.example.com,+65 9836 9934,SMS
+C75852,T-10836,Peng Kee Learning Centre Pte Ltd,Lakshmi d/o Krishnan,admin@pengkeelearningcen.example.com,+65 9832 7493,SMS
+C75866,T-10838,Hometown Minimart,Lee Bee Choo,admin@hometownminimart.example.com,+65 9322 8378,SMS
+C75901,T-10843,Brilliant Beauty & Hair,Chan Pei Shan,admin@brilliantbeautyhai.example.com,+65 9240 5158,Email
+C75929,T-10847,New Life Fruit Trading Pte Ltd,Anand Subramaniam,admin@newlifefruittradin.example.com,+65 9629 9432,SMS
+C75936,T-10848,Lotus Bakery Pte Ltd,Ho Ah Hock,admin@lotusbakery.example.com,+65 9146 1488,Email
+C75943,T-10849,Sin Hock Beauty & Hair Pte. Ltd.,Yeo Kim Seng,admin@sinhockbeautyhair.example.com,+65 9163 4854,Post
+C75950,T-10850,Brilliant Medical Hall Pte Ltd,Hafiz bin Rahman,admin@brilliantmedicalha.example.com,+65 9299 6158,SMS
+C75957,T-10851,Golden Leaf Tuition Centre,Suresh s/o Ramasamy,admin@goldenleaftuitionc.example.com,+65 9437 7212,SMS
+C75992,T-10856,Swee Heng Florist Pte. Ltd.,Anand Subramaniam,,+65 9580 1687,Post
+C76006,T-10858,New Life Minimart Pte Ltd,Chia Ah Hock,admin@newlifeminimart.example.com,+65 9721 8522,Post
+C76013,T-10859,GREEN LEAF PROVISION SHOP PTE LTD,Ang Bee Choo,admin@greenleafprovision.example.com,+65 9565 7177,SMS
+C76041,T-10863,Hup Seng Minimart,Lee Boon Huat,admin@hupsengminimart.example.com,+65 9403 7309,SMS
+C76069,T-10867,HOCK LEE DRY CLEANERS,Lim Siew Lan,admin@hockleedrycleaners.example.com,+65 9229 1047,Post
+C76090,T-10870,Gold Coin Provision Shop,Yeo Mei Fen,admin@goldcoinprovisions.example.com,+65 9381 1865,Email
+C76111,T-10873,Starlight Supermarket,Ahmad bin Hassan,admin@starlightsupermark.example.com,+65 9160 6757,Email
+C76125,T-10875,Heng Ann TCM Clinic,Lakshmi d/o Krishnan,admin@henganntcmclinic.example.com,+65 9537 2324,SMS
+C76160,T-10880,Gold Coin Optical,Chia Jun Jie,,+65 9884 2893,SMS
+C76174,T-10882,Ever Joy Clinic & Surgery,Siti Rohani binte Salleh,admin@everjoyclinicsurge.example.com,+65 9318 6897,SMS
+C76181,T-10883,Soon Hin Mobile Pte Ltd,Ganesh Murugan,admin@soonhinmobile.example.com,+65 9539 8336,Post
+C76202,T-10886,Lotus Hair Salon,Ravi Shankar,admin@lotushairsalon.example.com,+65 9653 1777,Post
+C76216,T-10888,Green Leaf Medical Clinic,Yeo Kok Leong,admin@greenleafmedicalcl.example.com,+65 9287 1159,Post
+C76237,T-10891,Wellcare Store Pte Ltd,Arun Kumar,admin@wellcarestore.example.com,+65 9421 6854,Post
+C76265,T-10895,Teck Guan Snacks,Ang Shu Fen,admin@teckguansnacks.example.com,+65 9474 1459,Email
+C76272,T-10896,Heng Ann Mart Pte Ltd,Goh Ah Hock,admin@hengannmart.example.com,+65 9726 5656,Post
+C76286,T-10898,Siva Supermarket,Ang Kim Seng,,+65 9802 6578,Email
+C76307,T-10901,Evergreen Family Clinic,Chan Wei Ming,admin@evergreenfamilycli.example.com,+65 9612 5375,Email
+C76328,T-10904,Fresh Valley Bubble Tea,Meena Pillai,admin@freshvalleybubblet.example.com,+65 9502 9040,SMS
+C76335,T-10905,Kampung Cake House Pte Ltd,Goh Ah Hock,admin@kampungcakehouse.example.com,+65 9233 7408,SMS
+C76342,T-10906,Peng Kee Tuition Centre,Lim Li Ting,,+65 9531 1760,Email
+C76349,T-10907,Sin Hock Learning Centre,Yeo Bee Choo,admin@sinhocklearningcen.example.com,+65 9731 1106,Email
+C76370,T-10910,Ever Joy Supermarket,Wong Hui Ling,admin@everjoysupermarket.example.com,+65 9854 7938,Email
+C76391,T-10913,New Life Family Clinic Pte Ltd,Muhammad Firdaus,admin@newlifefamilyclini.example.com,+65 9914 3800,SMS
+C76405,T-10915,Hock Lee Laundry,Teo Chee Keong,admin@hockleelaundry.example.com,+65 9847 6127,Email
+C76412,T-10916,Unity Florist,Devi Nair,admin@unityflorist.example.com,+65 9647 4538,Email
+C76433,T-10919,Brilliant Bookstore,Koh Pei Shan,admin@brilliantbookstore.example.com,+65 9198 9419,Email
+C76440,T-10920,Bright Path Hardware Pte Ltd,Low Jun Jie,admin@brightpathhardware.example.com,+65 9848 3157,Email
+C76461,T-10923,Tian Fu Clinic & Surgery,Goh Wei Ming,admin@tianfuclinicsurger.example.com,+65 9812 3445,Email
+C76468,T-10924,Hock Lee Tea House Pte Ltd,Ong Chee Keong,admin@hockleeteahouse.example.com,+65 9443 1770,SMS
+C76482,T-10926,Soon Hin Eating Place,Lakshmi d/o Krishnan,admin@soonhineatingplace.example.com,+65 9487 1669,Email
+C76489,T-10927,Harmony Supermarket Pte Ltd,Ng Ah Hock,admin@harmonysupermarket.example.com,+65 9613 1915,Email
+C76510,T-10930,Al-Ameen Medical Hall Pte Ltd,Norhayati binte Said,admin@alameenmedicalhall.example.com,+65 9330 7829,Email
+C76517,T-10931,Orchid Hardware & Electrical Pte Ltd,Lakshmi d/o Krishnan,admin@orchidhardwareelec.example.com,+65 9361 4546,Post
+C76538,T-10934,Swee Heng Trading,Hafiz bin Rahman,admin@sweehengtrading.example.com,+65 9646 9077,Post
+C76545,T-10935,PENG KEE EDUCATION HUB PTE LTD,Yeo Jun Jie,admin@pengkeeeducationhu.example.com,+65 9673 6551,Email
+C76552,T-10936,Green Leaf Boba Bar Pte Ltd,Chua Jun Jie,admin@greenleafbobabar.example.com,+65 9928 4946,SMS
+C76594,T-10942,Wong's TCM Clinic Pte Ltd,Yeo Ah Hock,admin@wongstcmclinic.example.com,+65 9286 2848,Email
+C76615,T-10945,Barakah Mart Pte Ltd,Ravi Shankar,admin@barakahmart.example.com,+65 9371 9920,Email
+C76629,T-10947,Hup Seng Medical Clinic Pte Ltd,Chong Ah Hock,admin@hupsengmedicalclin.example.com,+65 9888 8502,Email
+C76650,T-10950,Barakah Flowers & Gifts,Wong Kok Leong,admin@barakahflowersgift.example.com,+65 9477 9994,Email
+C76664,T-10952,HAPPY PAWS MOBILE PTE LTD,Ho Jun Jie,admin@happypawsmobile.example.com,+65 9766 9160,SMS
+C76685,T-10955,Ah Seng Eating Place,Ong Mei Fen,admin@ahsengeatingplace.example.com,+65 9563 3163,SMS
+C76692,T-10956,LAKSHMI PET SHOP,Tan Teck Soon,admin@lakshmipetshop.example.com,+65 9764 9505,SMS
+C76699,T-10957,Tian Fu Family Clinic Pte Ltd,Goh Hui Ling,admin@tianfufamilyclinic.example.com,+65 9718 5933,Post
+C76734,T-10962,Smart Kids Bakery Pte Ltd,Chia Siew Lan,admin@smartkidsbakery.example.com,+65 9318 4844,SMS
+C76755,T-10965,Ong & Sons Supermarket Pte Ltd,Low Shu Fen,admin@ongsonssupermarket.example.com,+65 9330 3116,SMS
+C76776,T-10968,Harmony Trading Pte Ltd,Vijay Menon,admin@harmonytrading.example.com,+65 9794 3996,Post
+C76818,T-10974,HENG ANN CONFECTIONERY,Lee Mei Fen,hengann.bakery@example.com,+65 9978 3527,Email
+C76832,T-10976,Kian Huat Provision Shop Pte Ltd,Devi Nair,admin@kianhuatprovisions.example.com,+65 9771 1807,Email
+C76839,T-10977,Seri Murni Hardware,Low Jun Jie,admin@serimurnihardware.example.com,+65 9106 8955,Email
+C76860,T-10980,Ever Joy Tuition Centre Pte Ltd,Nur Aisyah binte Kamal,,+65 9510 1939,Post
+C76874,T-10982,Lucky Star Medical Hall Pte Ltd,Wong Teck Soon,admin@luckystarmedicalha.example.com,+65 9168 7034,Email
+C76895,T-10985,SUNFLOWER CONSULTANCY,Anand Subramaniam,admin@sunflowerconsultan.example.com,+65 9660 9137,Post
+C76902,T-10986,Hassan Eating Place,Siti Rohani binte Salleh,admin@hassaneatingplace.example.com,+65 9175 4306,Email
+C76930,T-10990,Gold Coin Medical Supplies,Goh Boon Huat,admin@goldcoinmedicalsup.example.com,+65 9815 6058,Email
+C76937,T-10991,Ah Seng Consultancy,Teo Kok Leong,admin@ahsengconsultancy.example.com,+65 9248 1748,Email
+C76951,T-10993,Fresh Valley Kindergarten Pte Ltd,Tay Chee Keong,admin@freshvalleykinderg.example.com,+65 9413 6065,SMS
+C76958,T-10994,Starlight Trading Pte Ltd,Teo Wei Ming,admin@starlighttrading.example.com,+65 9350 6783,Email
+C76972,T-10996,Wellcare Learning Centre,Muhammad Firdaus,admin@wellcarelearningce.example.com,+65 9489 4649,Email
+C76986,T-10998,Chin Lee Fruits Pte Ltd,Devi Nair,admin@chinleefruits.example.com,+65 9637 6495,Email
+C77007,T-11001,Happy Paws Education Hub,Chan Teck Soon,admin@happypawseducation.example.com,+65 9117 9615,SMS
+C77028,T-11004,Amanah Cake House Pte Ltd,Nur Aisyah binte Kamal,admin@amanahcakehouse.example.com,+65 9937 9735,Email
+C77035,T-11005,Hock Lee Family Clinic,Ong Wei Ming,admin@hockleefamilyclini.example.com,+65 9981 8843,Post
+C77056,T-11008,Chin Lee Medical Clinic Pte Ltd,Ong Wei Ming,admin@chinleemedicalclin.example.com,+65 9143 5944,SMS
+C77084,T-11012,Nur Remittance,Lee Jun Jie,admin@nurremittance.example.com,+65 9405 4099,Email
+C77112,T-11016,Rainbow Supermarket,Ahmad bin Hassan,admin@rainbowsupermarket.example.com,+65 9191 8983,SMS
+C77147,T-11021,Harmony Florist Pte Ltd,Yeo Li Ting,admin@harmonyflorist.example.com,+65 9309 1163,Email
+C77161,T-11023,Sin Hock Dental Surgery,Norhayati binte Said,admin@sinhockdentalsurge.example.com,+65 9868 6164,Post
+C77168,T-11024,Fortune TCM Clinic Pte Ltd,Arun Kumar,admin@fortunetcmclinic.example.com,+65 9653 5849,Post
+C77175,T-11025,Tian Fu Mart Pte Ltd,Tay Teck Soon,admin@tianfumart.example.com,+65 9659 8578,Post
+C77196,T-11028,Bloom Trading,Chia Teck Soon,admin@bloomtrading.example.com,+65 9151 7329,SMS
+C77224,T-11032,Teck Guan Kitchen,Wong Hui Ling,admin@teckguankitchen.example.com,+65 9188 1772,Post
+C77231,T-11033,KUMAR LAUNDRY,Lim Kim Seng,admin@kumarlaundry.example.com,+65 9712 3474,Post
+C77238,T-11034,Lotus Mobile,Chan Mei Fen,admin@lotusmobile.example.com,+65 9565 3978,SMS
+C77259,T-11037,Unity Eating House,Hafiz bin Rahman,admin@unityeatinghouse.example.com,+65 9396 5823,SMS
+C77280,T-11040,Bloom Locksmith Pte Ltd,Wong Wei Ming,admin@bloomlocksmith.example.com,+65 9799 7185,SMS
+C77301,T-11043,Raja Tuition Centre Pte Ltd,Ganesh Murugan,admin@rajatuitioncentre.example.com,+65 9773 4427,Email
+C77315,T-11045,Treasure Tea House Pte Ltd,Devi Nair,admin@treasureteahouse.example.com,+65 9245 3192,Post
+C77329,T-11047,Sri Ganesh Family Clinic Pte Ltd,Ganesh Murugan,admin@sriganeshfamilycli.example.com,+65 9255 6205,SMS
+C77350,T-11050,Hassan Supermarket Pte Ltd,Suresh s/o Ramasamy,admin@hassansupermarket.example.com,+65 9177 6492,Post
+C77371,T-11053,Kim Hiap Medical Clinic,Siti Rohani binte Salleh,admin@kimhiapmedicalclin.example.com,+65 9257 8134,Email
+C77378,T-11054,Lim's Restaurant,Lim Ah Hock,admin@limsrestaurant.example.com,+65 9868 3188,Email
+C77392,T-11056,Value Money Changer,Yeo Jun Jie,admin@valuemoneychanger.example.com,+65 9418 2945,Post
+C77406,T-11058,Fresh Valley Store,Anand Subramaniam,admin@freshvalleystore.example.com,+65 9582 8315,Email
+C77427,T-11061,Jade Garden Store Pte Ltd,Sim Wei Ming,admin@jadegardenstore.example.com,+65 9996 8077,Email
+C77434,T-11062,Heng Ann Locksmith,Teo Mei Fen,admin@hengannlocksmith.example.com,+65 9293 2578,SMS
+C77455,T-11065,Kampung Confectionery,Chong Kim Seng,admin@kampungconfectione.example.com,+65 9161 8390,SMS
+C77462,T-11066,Cosy Supermarket,Nur Aisyah binte Kamal,admin@cosysupermarket.example.com,+65 9517 2364,Email
+C77476,T-11068,Hock Lee Optical Pte Ltd,Lakshmi d/o Krishnan,admin@hockleeoptical.example.com,+65 9294 3540,Email
+C77497,T-11071,Golden Leaf Mart,Ng Boon Huat,admin@goldenleafmart.example.com,+65 9873 7065,Email
+C77511,T-11073,Silver Moon Optical,Iskandar bin Yusof,admin@silvermoonoptical.example.com,+65 9615 2813,Email
+C77525,T-11075,Ananda Kopitiam,Muhammad Firdaus,admin@anandakopitiam.example.com,+65 9477 7541,Email
+C77532,T-11076,Peng Kee Cake House,Arun Kumar,admin@pengkeecakehouse.example.com,+65 9328 5470,Email
+C77539,T-11077,Hassan Mart Pte Ltd,Ho Li Ting,admin@hassanmart.example.com,+65 9596 1353,Email
+C77553,T-11079,Blue Pearl Eye Centre,Yeo Jun Jie,admin@bluepearleyecentre.example.com,+65 9298 9258,Email
+C77581,T-11083,Barakah Fruits Pte Ltd,Suresh s/o Ramasamy,admin@barakahfruits.example.com,+65 9396 2002,Email
+C77616,T-11088,Hock Lee Kueh Corner Pte Ltd,Ong Teck Soon,admin@hockleekuehcorner.example.com,+65 9113 1774,Email
+C77623,T-11089,Lakshmi Kindergarten Pte Ltd,Chong Mei Fen,admin@lakshmikindergarte.example.com,+65 9780 5820,Email
+C77644,T-11092,Mutiara Learning Centre Pte Ltd,Ang Teck Soon,admin@mutiaralearningcen.example.com,+65 9336 5446,Post
+C77665,T-11095,Bright Path Mart,Wong Hui Ling,admin@brightpathmart.example.com,+65 9439 4865,Post
+C77686,T-11098,Bright Path Medical Clinic Pte Ltd,Wong Shu Fen,,+65 9103 5081,Email
+C77700,T-11100,Fortune Beauty & Hair Pte Ltd,Tay Kim Seng,admin@fortunebeautyhair.example.com,+65 9757 9938,Email
+C77707,T-11101,Phoenix Clinic & Surgery,Zainab binte Ali,admin@phoenixclinicsurge.example.com,+65 9979 6122,Post
+C77728,T-11104,Prima Medical Hall Pte Ltd,Ho Jun Jie,admin@primamedicalhall.example.com,+65 9335 6998,Post
+C77749,T-11107,Joo Chiat Dry Cleaners Pte Ltd,Anand Subramaniam,admin@joochiatdrycleaner.example.com,+65 9441 4790,Email
+C77756,T-11108,Golden Leaf Minimart Pte Ltd,Ong Bee Choo,accounts@goldenleafmart.example.com,+65 9138 9404,SMS
+C77798,T-11114,Bayu Fruit Trading,Vijay Menon,admin@bayufruittrading.example.com,+65 9624 2759,SMS
+C77805,T-11115,Tan Brothers Trading,Meena Pillai,admin@tanbrotherstrading.example.com,+65 9239 5209,Email
+C77833,T-11119,Wong's Mart,Arun Kumar,admin@wongsmart.example.com,+65 9499 5537,Post
+C77875,T-11125,Suria Boba Bar,Lakshmi d/o Krishnan,admin@suriabobabar.example.com,+65 9641 9854,Email
+C77889,T-11127,Lim's Medical Hall,Lakshmi d/o Krishnan,admin@limsmedicalhall.example.com,+65 9535 9132,Email
+C77910,T-11130,Bayu Store Pte Ltd,Tay Pei Shan,admin@bayustore.example.com,+65 9893 2342,Email
+C77931,T-11133,Sin Hock Minimart,Norhayati binte Said,admin@sinhockminimart.example.com,+65 9953 2726,Email
+C77952,T-11136,Golden Leaf Supermarket,Teo Mei Fen,admin@goldenleafsupermar.example.com,+65 9504 1327,Email
+C77973,T-11139,Tian Fu Medical Supplies Pte Ltd,Devi Nair,admin@tianfumedicalsuppl.example.com,+65 9840 7989,Email
+C77987,T-11141,Bayu Education Hub Pte Ltd,Chong Mei Fen,admin@bayueducationhub.example.com,+65 9347 1988,Post
+C78008,T-11144,Everbright Laundry,Chua Bee Choo,admin@everbrightlaundry.example.com,+65 9567 1461,SMS
+C78022,T-11146,SILVER MOON KITCHEN PTE LTD,Chan Jun Jie,admin@silvermoonkitchen.example.com,+65 9799 7753,SMS
+C78036,T-11148,Nanyang Medical Clinic,Rahim bin Osman,admin@nanyangmedicalclin.example.com,+65 9143 7116,Post
+C78043,T-11149,Sin Hock Eye Centre Pte Ltd,Ong Teck Soon,admin@sinhockeyecentre.example.com,+65 9369 5246,Email
+C78050,T-11150,Soon Hin Telecom Pte Ltd,Norhayati binte Said,admin@soonhintelecom.example.com,+65 9103 3845,SMS
+C78064,T-11152,Ananda Mobile,Devi Nair,admin@anandamobile.example.com,+65 9564 3224,SMS
+C78085,T-11155,Ever Joy Minimart,Chan Kim Seng,admin@everjoyminimart.example.com,+65 9412 4412,SMS
+C78099,T-11157,Daily Fresh Learning Centre,Low Bee Choo,admin@dailyfreshlearning.example.com,+65 9196 4810,Post
+C78113,T-11159,Teck Guan Medical Hall,Yeo Kok Leong,admin@teckguanmedicalhal.example.com,+65 9906 3733,Post
+C78134,T-11162,Mutiara Flowers & Gifts,Chan Hui Ling,admin@mutiaraflowersgift.example.com,+65 9824 9105,Email
+C78141,T-11163,Hassan Mart,Ong Kok Leong,admin@hassanmart.example.com,+65 9576 1461,Post
+C78176,T-11168,Nur Minimart,Tan Kok Leong,admin@nurminimart.example.com,+65 9559 3782,Post
+C78183,T-11169,Gold Coin Fruit Trading Pte Ltd,Tan Wei Ming,admin@goldcoinfruittradi.example.com,+65 9587 6128,Post
+C78197,T-11171,Sunflower Laundry,Muhammad Firdaus,admin@sunflowerlaundry.example.com,+65 9211 4345,Email
+C78211,T-11173,Hup Seng Education Hub,Ng Bee Choo,admin@hupsengeducationhu.example.com,+65 9271 9964,SMS
+C78218,T-11174,Phoenix Mart Pte Ltd,Ong Siew Lan,admin@phoenixmart.example.com,+65 9701 5421,SMS
+C78232,T-11176,Raja Flowers & Gifts,Nur Aisyah binte Kamal,admin@rajaflowersgifts.example.com,+65 9530 6785,SMS
+C78253,T-11179,Bright Path Hardware & Electrical,Norhayati binte Said,admin@brightpathhardware.example.com,+65 9214 7263,Post
+C78274,T-11182,Lim's Dental Care Pte Ltd,Yeo Kim Seng,admin@limsdentalcare.example.com,+65 9721 9779,Email
+C78302,T-11186,Gold Coin Learning Centre,Arun Kumar,admin@goldcoinlearningce.example.com,+65 9407 1714,Post
+C78323,T-11189,Daily Fresh Fruit Trading Pte Ltd,Vijay Menon,admin@dailyfreshfruittra.example.com,+65 9329 9647,Post
+C78337,T-11191,Thye Hin Supermarket,Chong Hui Ling,admin@thyehinsupermarket.example.com,+65 9103 9456,Post
+C78344,T-11192,Kian Huat TCM Clinic Pte Ltd,Lakshmi d/o Krishnan,admin@kianhuattcmclinic.example.com,+65 9871 3494,Email
+C78365,T-11195,Sejahtera Mart,Vijay Menon,admin@sejahteramart.example.com,+65 9364 7365,SMS
+C78372,T-11196,Silver Moon Medical Clinic Pte Ltd,Lee Siew Lan,admin@silvermoonmedicalc.example.com,+65 9718 7051,Email
+C78393,T-11199,Sin Hock Bakery Pte Ltd,Rahim bin Osman,admin@sinhockbakery.example.com,+65 9130 8315,SMS
+C78414,T-11202,Wisdom Eye Centre Pte Ltd,Siti Rohani binte Salleh,admin@wisdomeyecentre.example.com,+65 9241 5374,SMS
+C78435,T-11205,Teck Guan Fruit Trading Pte Ltd,Devi Nair,admin@teckguanfruittradi.example.com,+65 9108 5827,SMS
+C78449,T-11207,Hock Lee Beauty & Hair Pte Ltd,Arun Kumar,admin@hockleebeautyhair.example.com,+65 9454 1293,SMS
+C78463,T-11209,Tian Fu Hair Studio,Devi Nair,admin@tianfuhairstudio.example.com,+65 9853 8035,Email
+C78484,T-11212,Lucky Star Confectionery,Ho Ah Hock,admin@luckystarconfectio.example.com,+65 9407 7272,Post
+C78491,T-11213,Little Sprouts Accounting Services Pte Ltd,Low Ah Hock,,+65 9267 6207,SMS
+C78498,T-11214,Daily Fresh Dental Surgery,Devi Nair,admin@dailyfreshdentalsu.example.com,+65 9976 3130,SMS
+C78512,T-11216,Old Town Tuition Centre,Chia Jun Jie,admin@oldtowntuitioncent.example.com,+65 9949 2319,SMS
+C78519,T-11217,Brilliant Mart,Chan Kim Seng,admin@brilliantmart.example.com,+65 9154 6033,Post
+C78526,T-11218,Sunflower Trading,Anand Subramaniam,admin@sunflowertrading.example.com,+65 9465 5207,Email
+C78547,T-11221,Sunflower Provision Shop Pte Ltd,Nur Aisyah binte Kamal,admin@sunflowerprovision.example.com,+65 9182 9703,Email
+C78554,T-11222,Sejahtera Store,Toh Kim Seng,admin@sejahterastore.example.com,+65 9166 9654,Email
+C78561,T-11223,Jade Garden Accounting Services Pte Ltd,Devi Nair,admin@jadegardenaccounti.example.com,+65 9772 5570,Email
+C78568,T-11224,Bloom Bakery Pte Ltd,Hafiz bin Rahman,admin@bloombakery.example.com,+65 9159 4319,Email
+C78575,T-11225,Nanyang Aquarium & Pets,Meena Pillai,admin@nanyangaquariumpet.example.com,+65 9608 2620,Post
+C78596,T-11228,Hock Lee Education Hub,Devi Nair,admin@hockleeeducationhu.example.com,+65 9731 1834,Post
+C78617,T-11231,Suria Education Hub Pte Ltd,Lakshmi d/o Krishnan,admin@suriaeducationhub.example.com,+65 9548 6582,Email
+C78624,T-11232,Pinnacle Family Clinic,Nur Aisyah binte Kamal,admin@pinnaclefamilyclin.example.com,+65 9525 2733,SMS
+C78645,T-11235,New Life Learning Centre,Ang Bee Choo,admin@newlifelearningcen.example.com,+65 9115 3780,SMS
+C78666,T-11238,Lakshmi Accounting Services Pte. Ltd.,Chong Pei Shan,,+65 9866 3327,Email
+C78673,T-11239,Bayu Learning Centre Pte Ltd,Vijay Menon,admin@bayulearningcentre.example.com,+65 9388 4471,SMS
+C78687,T-11241,Old Town Medical Hall,Koh Teck Soon,admin@oldtownmedicalhall.example.com,+65 9535 2222,SMS
+C78708,T-11244,NEW LIFE BUBBLE TEA,Nur Aisyah binte Kamal,admin@newlifebubbletea.example.com,+65 9988 6406,Email
+C78715,T-11245,Smart Kids Beauty & Hair,Siti Rohani binte Salleh,admin@smartkidsbeautyhai.example.com,+65 9352 6520,Post
+C78722,T-11246,Raja Hardware & Electrical Pte Ltd,Chong Siew Lan,admin@rajahardwareelectr.example.com,+65 9618 2613,Email
+C78736,T-11248,Evergreen Eating Place,Chan Kim Seng,admin@evergreeneatingpla.example.com,+65 9644 4766,Email
+C78750,T-11250,Kim Hiap Telecom,Muhammad Firdaus,admin@kimhiaptelecom.example.com,+65 9265 3830,SMS
+C78764,T-11252,Soon Hin Kindergarten Pte Ltd,Yeo Boon Huat,admin@soonhinkindergarte.example.com,+65 9589 2107,Post
+C78771,T-11253,Bayu Kindergarten,Lim Ah Hock,admin@bayukindergarten.example.com,+65 9130 5313,Email
+C78785,T-11255,Fortune Mart Pte Ltd,Toh Pei Shan,admin@fortunemart.example.com,+65 9585 4277,Email
+C78799,T-11257,Mei Ling Medical Clinic,Teo Ah Hock,,+65 9854 8760,SMS
+C78820,T-11260,Little Sprouts Fruits,Yeo Shu Fen,admin@littlesproutsfruit.example.com,+65 9846 4379,Post
+C78855,T-11265,Kian Huat Mobile Pte Ltd,Ganesh Murugan,admin@kianhuatmobile.example.com,+65 9312 3935,Post
+C78869,T-11267,Phoenix Supermarket Pte Ltd,Suresh s/o Ramasamy,admin@phoenixsupermarket.example.com,+65 9125 2170,Email
+C78897,T-11271,Fortune TCM Clinic,Yeo Kim Seng,admin@fortunetcmclinic.example.com,+65 9162 3560,Email
+C78918,T-11274,Mutiara Provision Shop,Rahim bin Osman,mutiara.provision@example.com,+65 9817 3588,SMS
+C78946,T-11278,Tan Brothers Mart Pte Ltd,Zainab binte Ali,admin@tanbrothersmart.example.com,+65 9840 1009,SMS
+C78967,T-11281,Sin Hock Consultancy,Wong Li Ting,admin@sinhockconsultancy.example.com,+65 9290 2273,Email
+C79002,T-11286,Amanah Hair Salon,Chua Siew Lan,,+65 9915 1547,SMS
+C79009,T-11287,Thye Hin Optical Pte Ltd,Ong Wei Ming,admin@thyehinoptical.example.com,+65 9455 9820,Email
+C79016,T-11288,Kampung Mobile Pte Ltd,Iskandar bin Yusof,admin@kampungmobile.example.com,+65 9715 3193,Post
+C79030,T-11290,Kumar Telecom,Tan Ah Hock,,+65 9893 5394,Email
+C79051,T-11293,Tian Fu Minimart Pte Ltd,Siti Rohani binte Salleh,admin@tianfuminimart.example.com,+65 9337 7566,Post
+C79058,T-11294,Ah Seng Medical Supplies Pte. Ltd.,Ahmad bin Hassan,admin@ahsengmedicalsuppl.example.com,+65 9707 3594,SMS
+C79072,T-11296,Evergreen Learning Centre Pte Ltd,Chua Pei Shan,admin@evergreenlearningc.example.com,+65 9110 6206,Post
+C79079,T-11297,Joo Chiat Dental Care,Ho Bee Choo,admin@joochiatdentalcare.example.com,+65 9753 3288,Email
+C79107,T-11301,Bloom Education Hub Pte Ltd,Goh Teck Soon,admin@bloomeducationhub.example.com,+65 9703 8045,Email
+C79128,T-11304,Thye Hin Mart Pte Ltd,Toh Kim Seng,admin@thyehinmart.example.com,+65 9639 9690,Email
+C79163,T-11309,Kian Huat Accounting Services,Sim Ah Hock,admin@kianhuataccounting.example.com,+65 9878 5127,Post
+C79170,T-11310,Gold Coin Mobile,Tay Ah Hock,admin@goldcoinmobile.example.com,+65 9554 1651,Post
+C79191,T-11313,Hometown Consultancy Pte Ltd,Ho Hui Ling,admin@hometownconsultanc.example.com,+65 9327 7263,Post
+C79212,T-11316,SOON HIN ACCOUNTING SERVICES,Ganesh Murugan,admin@soonhinaccountings.example.com,+65 9825 9613,Email
+C79219,T-11317,Wisdom Confectionery Pte Ltd,Ong Pei Shan,admin@wisdomconfectioner.example.com,+65 9213 4368,Email
+C79254,T-11322,SOON HIN LEARNING CENTRE PTE LTD,Chan Li Ting,admin@soonhinlearningcen.example.com,+65 9738 1737,Email
+C79275,T-11325,Kim Hiap Mart Pte Ltd,Teo Kim Seng,admin@kimhiapmart.example.com,+65 9943 7368,Email
+C79289,T-11327,Hometown Agency,Arun Kumar,admin@hometownagency.example.com,+65 9681 1679,Email
+C79296,T-11328,Cosy Hair Salon,Chan Kok Leong,admin@cosyhairsalon.example.com,+65 9843 5563,Email
+C79303,T-11329,Brilliant Laundry Pte Ltd,Low Pei Shan,admin@brilliantlaundry.example.com,+65 9520 2537,Email
+C79317,T-11331,Prima Trading,Ho Pei Shan,admin@primatrading.example.com,+65 9999 7809,Post
+C79331,T-11333,Sin Hock Aquarium & Pets Pte Ltd,Sim Ah Hock,admin@sinhockaquariumpet.example.com,+65 9341 6952,Email
+C79345,T-11335,Phoenix Dental Care Pte Ltd,Anand Subramaniam,admin@phoenixdentalcare.example.com,+65 9894 2331,Email
+C79366,T-11338,Hup Seng Eating Place Pte Ltd,Ravi Shankar,admin@hupsengeatingplace.example.com,+65 9242 2932,SMS
+C79373,T-11339,Old Town Flowers & Gifts,Yeo Mei Fen,admin@oldtownflowersgift.example.com,+65 9880 2142,Post
+C79394,T-11342,Lim's Dental Care,Lakshmi d/o Krishnan,admin@limsdentalcare.example.com,+65 9935 9790,SMS
+C79422,T-11346,Hometown Education Hub,Lakshmi d/o Krishnan,admin@hometowneducationh.example.com,+65 9434 5955,Email
+C79429,T-11347,Siva Hair Salon,Ang Jun Jie,admin@sivahairsalon.example.com,+65 9266 5449,Email
+C79436,T-11348,Prima Clinic & Surgery Pte Ltd,Siti Rohani binte Salleh,admin@primaclinicsurgery.example.com,+65 9651 2829,Post
+C79457,T-11351,Wisdom Florist,Vijay Menon,admin@wisdomflorist.example.com,+65 9205 7219,Email
+C79478,T-11354,Daily Fresh Dental Care Pte Ltd,Suresh s/o Ramasamy,admin@dailyfreshdentalca.example.com,+65 9155 3557,Email
+C79492,T-11356,Harmony Laundry,Koh Pei Shan,admin@harmonylaundry.example.com,+65 9434 1494,Email
+C79506,T-11358,Happy Paws TCM Clinic Pte Ltd,Chong Boon Huat,admin@happypawstcmclinic.example.com,+65 9714 7305,SMS
+C79527,T-11361,LOTUS MART PTE LTD,Ravi Shankar,admin@lotusmart.example.com,+65 9433 7250,Email
+C79555,T-11365,Wisdom Education Hub,Suresh s/o Ramasamy,admin@wisdomeducationhub.example.com,+65 9485 8354,Email
+C79569,T-11367,BLUE PEARL HARDWARE,Ang Kim Seng,admin@bluepearlhardware.example.com,+65 9116 4982,Email
+C79590,T-11370,Treasure Medical Hall,Chan Shu Fen,admin@treasuremedicalhal.example.com,+65 9255 4237,SMS
+C79625,T-11375,Treasure Dental Care Pte Ltd,Ho Teck Soon,admin@treasuredentalcare.example.com,+65 9517 3898,SMS
+C79646,T-11378,Ong & Sons Beauty & Hair,Sim Shu Fen,admin@ongsonsbeautyhair.example.com,+65 9669 9433,Email
+C79660,T-11380,Sin Hock Tuition Centre Pte Ltd,Lim Chee Keong,admin@sinhocktuitioncent.example.com,+65 9932 5047,Post
+C79667,T-11381,Heng Ann Snacks Pte Ltd,Farah binte Ismail,admin@hengannsnacks.example.com,+65 9960 2103,Post
+C79688,T-11384,Gold Coin Dental Surgery Pte Ltd,Hafiz bin Rahman,admin@goldcoindentalsurg.example.com,+65 9133 9849,SMS
+C79709,T-11387,Amanah Clinic & Surgery,Toh Kok Leong,admin@amanahclinicsurger.example.com,+65 9951 4803,Email
+C79730,T-11390,Little Sprouts Supermarket,Chong Pei Shan,admin@littlesproutssuper.example.com,+65 9764 7062,Email
+C79751,T-11393,Nur Kopitiam Pte. Ltd.,Koh Pei Shan,admin@nurkopitiam.example.com,+65 9353 6035,Email
+C79765,T-11395,Sunflower Remittance,Norhayati binte Said,admin@sunflowerremittanc.example.com,+65 9839 2162,Email
+C79779,T-11397,Fresh Valley TCM Clinic,Ho Shu Fen,admin@freshvalleytcmclin.example.com,+65 9986 3108,Post
+C79793,T-11399,Chin Lee Agency Pte Ltd,Farah binte Ismail,admin@chinleeagency.example.com,+65 9804 6853,Post
+C79814,T-11402,Ananda Mobile Pte Ltd,Chan Wei Ming,admin@anandamobile.example.com,+65 9671 6800,Post
+C79835,T-11405,Hassan Aquarium & Pets,Siti Rohani binte Salleh,admin@hassanaquariumpets.example.com,+65 9762 9059,SMS
+C79842,T-11406,Old Town Dental Surgery,Sim Kok Leong,admin@oldtowndentalsurge.example.com,+65 9923 9841,SMS
+C79877,T-11411,FRESH VALLEY STORE PTE LTD,Goh Shu Fen,admin@freshvalleystore.example.com,+65 9838 7840,Email
+C79912,T-11416,Fresh Valley Hardware Pte Ltd,Muhammad Firdaus,admin@freshvalleyhardwar.example.com,+65 9202 2576,Email
+C79933,T-11419,KIAN HUAT HAIR STUDIO PTE LTD,Muhammad Firdaus,admin@kianhuathairstudio.example.com,+65 9421 4700,SMS
+C79968,T-11424,Sejahtera Dental Care,Kavitha Raj,admin@sejahteradentalcar.example.com,+65 9235 7675,Email
+C79982,T-11426,Murugan Optical Pte Ltd,Sim Jun Jie,admin@muruganoptical.example.com,+65 9482 8965,Email
+C79989,T-11427,Everbright Laundry Pte. Ltd.,Tan Siew Lan,admin@everbrightlaundry.example.com,+65 9848 9698,SMS
+C80024,T-11432,Murugan Learning Centre,Yeo Wei Ming,admin@muruganlearningcen.example.com,+65 9833 9739,Email
+C80038,T-11434,Thye Hin Clinic & Surgery Pte Ltd,Chong Kok Leong,admin@thyehinclinicsurge.example.com,+65 9392 5612,Email
+C80045,T-11435,Fresh Valley Mart,Arun Kumar,,+65 9913 7078,SMS
+C80059,T-11437,Bright Path Kueh Corner,Koh Bee Choo,admin@brightpathkuehcorn.example.com,+65 9875 7907,Post
+C80087,T-11441,Tian Fu Provision Shop Pte. Ltd.,Chong Siew Lan,admin@tianfuprovisionsho.example.com,+65 9680 5347,Email
+C80108,T-11444,Lim's Learning Centre Pte Ltd,Vijay Menon,admin@limslearningcentre.example.com,+65 9430 9108,Post
+C80129,T-11447,Brilliant Medical Clinic,Chua Pei Shan,admin@brilliantmedicalcl.example.com,+65 9202 4041,Email
+C80150,T-11450,Bright Path Optical,Chan Wei Ming,admin@brightpathoptical.example.com,+65 9236 6278,Email
+C80178,T-11454,HENG ANN FLORIST PTE LTD,Wong Chee Keong,admin@hengannflorist.example.com,+65 9241 4480,Post
+C80185,T-11455,Brilliant Kitchen,Chan Shu Fen,admin@brilliantkitchen.example.com,+65 9498 1943,Email
+C80192,T-11456,BARAKAH BAKERY PTE LTD,Koh Mei Fen,admin@barakahbakery.example.com,+65 9258 4019,SMS
+C80213,T-11459,Cosy Mobile,Kavitha Raj,admin@cosymobile.example.com,+65 9103 4396,Post
+C80227,T-11461,Wellcare Beauty & Hair,Koh Shu Fen,admin@wellcarebeautyhair.example.com,+65 9607 5427,SMS
+C80255,T-11465,Little Sprouts Medical Clinic,Chan Siew Lan,admin@littlesproutsmedic.example.com,+65 9761 4422,Email
+C80276,T-11468,Cosy Telecom Pte. Ltd.,Zainab binte Ali,admin@cosytelecom.example.com,+65 9987 5621,SMS
+C80304,T-11472,Murugan Hair Salon Pte Ltd,Ho Ah Hock,admin@muruganhairsalon.example.com,+65 9297 9700,Post
+C80346,T-11478,Prima Tuition Centre,Chan Li Ting,admin@primatuitioncentre.example.com,+65 9510 6012,Email
+C80367,T-11481,Swee Heng Hardware & Electrical,Yeo Mei Fen,admin@sweehenghardwareel.example.com,+65 9347 1060,SMS
+C80381,T-11483,Kian Huat Childcare Pte Ltd,Teo Shu Fen,admin@kianhuatchildcare.example.com,+65 9618 7657,Email
+C80395,T-11485,Bloom Flowers & Gifts Pte. Ltd.,Low Ah Hock,admin@bloomflowersgifts.example.com,+65 9107 1856,Email
+C80437,T-11491,Mei Ling Hardware,Kavitha Raj,admin@meilinghardware.example.com,+65 9165 8415,Post
+C80472,T-11496,Sin Hock Medical Supplies,Norhayati binte Said,admin@sinhockmedicalsupp.example.com,+65 9998 8978,Email
+C80486,T-11498,Starlight Boba Bar Pte Ltd,Lim Bee Choo,admin@starlightbobabar.example.com,+65 9871 7187,Email
+C80521,T-11503,Kopi Corner Florist Pte Ltd,Ahmad bin Hassan,admin@kopicornerflorist.example.com,+65 9964 6114,SMS
+C80535,T-11505,Fresh Valley Fruit Trading,Ng Boon Huat,admin@freshvalleyfruittr.example.com,+65 9625 7969,Email
+C80556,T-11508,Value Optical,Hafiz bin Rahman,admin@valueoptical.example.com,+65 9626 5529,Email
+C80577,T-11511,Kian Huat Learning Centre,Siti Rohani binte Salleh,admin@kianhuatlearningce.example.com,+65 9931 9677,Email
+C80598,T-11514,Murugan Telecom,Tay Siew Lan,admin@murugantelecom.example.com,+65 9655 8340,Post
+C80612,T-11516,Chop Wah TCM Clinic,Vijay Menon,admin@chopwahtcmclinic.example.com,+65 9140 8412,SMS
+C80633,T-11519,Starlight Optical Pte Ltd,Chan Chee Keong,admin@starlightoptical.example.com,+65 9520 4364,Email
+C80640,T-11520,Fortune Kueh Corner,Chia Wei Ming,admin@fortunekuehcorner.example.com,+65 9855 2445,Post
+C80654,T-11522,Starlight Dental Care,Ong Mei Fen,admin@starlightdentalcar.example.com,+65 9703 3358,Post
+C80661,T-11523,Hup Seng Tea House Pte Ltd,Chia Ah Hock,admin@hupsengteahouse.example.com,+65 9985 4691,SMS
+C80696,T-11528,CAHAYA STORE PTE LTD,Lim Jun Jie,admin@cahayastore.example.com,+65 9650 4428,Email
+C80710,T-11530,Prima Eating House Pte Ltd,Yeo Pei Shan,admin@primaeatinghouse.example.com,+65 9176 1613,Post
+C80717,T-11531,Wisdom Telecom Pte Ltd,Low Li Ting,admin@wisdomtelecom.example.com,+65 9879 4799,SMS
+C80724,T-11532,Bright Path Education Hub Pte Ltd,Hafiz bin Rahman,admin@brightpatheducatio.example.com,+65 9989 2950,SMS
+C80752,T-11536,Joo Chiat Eating Place Pte Ltd,Wong Jun Jie,admin@joochiateatingplac.example.com,+65 9975 7108,Email
+C80766,T-11538,Ah Seng Bubble Tea,Yeo Pei Shan,admin@ahsengbubbletea.example.com,+65 9360 7369,Email
+C80787,T-11541,Wellcare Cake House,Anand Subramaniam,admin@wellcarecakehouse.example.com,+65 9165 8240,Post
+C80801,T-11543,Jade Garden Family Clinic,Kavitha Raj,admin@jadegardenfamilycl.example.com,+65 9159 5180,Email
+C80808,T-11544,Tan Brothers Cake House,Chua Mei Fen,admin@tanbrotherscakehou.example.com,+65 9534 6699,SMS
+C80815,T-11545,Sri Ganesh Beauty & Hair,Ho Hui Ling,admin@sriganeshbeautyhai.example.com,+65 9486 7807,Post
+C80850,T-11550,Smart Kids Dry Cleaners,Ho Li Ting,admin@smartkidsdrycleane.example.com,+65 9253 5987,Post
+C80864,T-11552,Everbright Dry Cleaners Pte Ltd,Yeo Pei Shan,admin@everbrightdryclean.example.com,+65 9662 7287,Email
+C80885,T-11555,Amanah Stationery,Farah binte Ismail,admin@amanahstationery.example.com,+65 9484 5304,SMS
+C80927,T-11561,Hometown Fruits,Chua Mei Fen,admin@hometownfruits.example.com,+65 9469 5521,Email
+C80955,T-11565,BLOOM KINDERGARTEN PTE LTD,Toh Kim Seng,,+65 9152 1979,Post
+C80969,T-11567,Brilliant Eye Centre Pte Ltd,Suresh s/o Ramasamy,admin@brillianteyecentre.example.com,+65 9179 9991,SMS
+C80990,T-11570,Heng Ann Childcare,Goh Mei Fen,admin@hengannchildcare.example.com,+65 9369 3936,SMS
+C81011,T-11573,Amanah Supermarket Pte Ltd,Arun Kumar,admin@amanahsupermarket.example.com,+65 9858 2565,Email
+C81032,T-11576,Rainbow Remittance Pte Ltd,Chua Mei Fen,admin@rainbowremittance.example.com,+65 9231 3223,Email
+C81053,T-11579,Tian Fu Hardware,Ong Boon Huat,admin@tianfuhardware.example.com,+65 9779 1759,Email
+C81074,T-11582,Unity Family Clinic,Chia Jun Jie,admin@unityfamilyclinic.example.com,+65 9795 5641,Email
+C81088,T-11584,Pinnacle Snacks Pte Ltd,Ang Kok Leong,admin@pinnaclesnacks.example.com,+65 9950 4801,SMS
+C81116,T-11588,Cahaya Minimart Pte Ltd,Muhammad Firdaus,admin@cahayaminimart.example.com,+65 9896 5436,SMS
+C81137,T-11591,Chin Lee TCM Clinic,Hafiz bin Rahman,admin@chinleetcmclinic.example.com,+65 9355 3524,Email
+C81158,T-11594,Harmony Telecom Pte Ltd,Ho Pei Shan,,+65 9528 4219,Email
+C81172,T-11596,Silver Moon Education Hub,Iskandar bin Yusof,admin@silvermooneducatio.example.com,+65 9403 8706,Email
+C81179,T-11597,Cosy Minimart Pte Ltd,Nur Aisyah binte Kamal,admin@cosyminimart.example.com,+65 9129 5011,Email
+C81193,T-11599,Hometown Education Hub Pte Ltd,Suresh s/o Ramasamy,admin@hometowneducationh.example.com,+65 9495 5507,Email
+C81200,T-11600,Tan Brothers Hair Salon,Teo Boon Huat,admin@tanbrothershairsal.example.com,+65 9866 3694,Email
+C81221,T-11603,Joo Chiat Minimart Pte Ltd,Toh Pei Shan,admin@joochiatminimart.example.com,+65 9783 2799,Email
+C81228,T-11604,Hassan Medical Supplies,Sim Mei Fen,admin@hassanmedicalsuppl.example.com,+65 9325 2817,Post
+C81249,T-11607,Murugan Mart,Tay Pei Shan,admin@muruganmart.example.com,+65 9919 4360,Email
+C81263,T-11609,Wong's Minimart Pte Ltd,Lakshmi d/o Krishnan,admin@wongsminimart.example.com,+65 9110 5635,Email
+C81270,T-11610,Harmony Fruit Trading,Sim Wei Ming,admin@harmonyfruittradin.example.com,+65 9716 1648,Post
+C81291,T-11613,Harmony Fruits Pte Ltd,Lim Shu Fen,admin@harmonyfruits.example.com,+65 9787 2575,Email
+C81305,T-11615,Evergreen Family Clinic Pte Ltd,Lee Kim Seng,admin@evergreenfamilycli.example.com,+65 9308 3215,SMS
+C81326,T-11618,Daily Fresh Tuition Centre,Meena Pillai,admin@dailyfreshtuitionc.example.com,+65 9344 2305,Email
+C81347,T-11621,Fresh Valley Minimart Pte Ltd,Koh Teck Soon,admin@freshvalleyminimar.example.com,+65 9827 4890,Email
+C81361,T-11623,Sejahtera Provision Shop,Farah binte Ismail,admin@sejahteraprovision.example.com,+65 9102 3276,Email
+C81375,T-11625,Lim's Aquarium & Pets,Ganesh Murugan,admin@limsaquariumpets.example.com,+65 9389 9301,SMS
+C81389,T-11627,Nanyang Medical Supplies Pte Ltd,Ong Pei Shan,admin@nanyangmedicalsupp.example.com,+65 9753 2415,Email
+C81417,T-11631,Lucky Star Flowers & Gifts,Suresh s/o Ramasamy,admin@luckystarflowersgi.example.com,+65 9518 9871,Email
+C81438,T-11634,Rainbow Hardware,Ng Hui Ling,admin@rainbowhardware.example.com,+65 9265 3293,Email
+C81452,T-11636,Ong & Sons Telecom Pte Ltd,Sim Jun Jie,admin@ongsonstelecom.example.com,+65 9921 2897,SMS
+C81466,T-11638,Rainbow Laundry,Tan Kim Seng,admin@rainbowlaundry.example.com,+65 9220 6888,Email
+C81473,T-11639,Ah Seng Hardware & Electrical Pte Ltd,Devi Nair,admin@ahsenghardwareelec.example.com,+65 9179 6454,Email
+C81487,T-11641,Fresh Valley Tuition Centre,Ong Chee Keong,admin@freshvalleytuition.example.com,+65 9187 9354,Email
+C81494,T-11642,Suria Cake House,Siti Rohani binte Salleh,admin@suriacakehouse.example.com,+65 9735 8284,SMS
+C81508,T-11644,Tan Brothers Education Hub Pte Ltd,Chan Kok Leong,admin@tanbrotherseducati.example.com,+65 9100 7866,Email
+C81522,T-11646,Murugan Trading,Lim Hui Ling,admin@murugantrading.example.com,+65 9247 8277,Email
+C81543,T-11649,Happy Paws Learning Centre,Muhammad Firdaus,admin@happypawslearningc.example.com,+65 9969 7517,Email
+C81550,T-11650,Swee Heng Learning Centre,Ong Teck Soon,admin@sweehenglearningce.example.com,+65 9317 5939,SMS
+C81564,T-11652,Wong's Dental Care Pte Ltd,Koh Pei Shan,admin@wongsdentalcare.example.com,+65 9493 3852,Email
+C81571,T-11653,Hassan Dry Cleaners,Chua Pei Shan,admin@hassandrycleaners.example.com,+65 9755 9811,Post
+C81578,T-11654,Wong's Mobile,Tay Bee Choo,admin@wongsmobile.example.com,+65 9222 6884,Email
+C81585,T-11655,Lakshmi Minimart,Anand Subramaniam,admin@lakshmiminimart.example.com,+65 9146 5949,SMS
+C81592,T-11656,Cahaya Medical Clinic,Ahmad bin Hassan,admin@cahayamedicalclini.example.com,+65 9122 4011,Email
+C81599,T-11657,Daily Fresh Medical Hall Pte Ltd,Ho Li Ting,admin@dailyfreshmedicalh.example.com,+65 9332 1007,Email
+C81606,T-11658,Wellcare Tuition Centre,Sim Kim Seng,admin@wellcaretuitioncen.example.com,+65 9439 7174,Email
+C81627,T-11661,Barakah Kueh Corner,Chia Shu Fen,admin@barakahkuehcorner.example.com,+65 9786 8395,Email
+C81634,T-11662,Pinnacle Clinic & Surgery,Tan Kim Seng,admin@pinnacleclinicsurg.example.com,+65 9667 2417,SMS
+C81655,T-11665,Wellcare Family Clinic Pte Ltd,Nur Aisyah binte Kamal,admin@wellcarefamilyclin.example.com,+65 9129 5011,SMS
+C81676,T-11668,Kim Hiap Mobile Pte Ltd,Toh Pei Shan,admin@kimhiapmobile.example.com,+65 9727 4419,Email
+C81690,T-11670,Nanyang Supermarket Pte Ltd,Chan Boon Huat,admin@nanyangsupermarket.example.com,+65 9923 6785,Email
+C81697,T-11671,Smart Kids Bookstore,Meena Pillai,admin@smartkidsbookstore.example.com,+65 9954 6987,Email
+C81711,T-11673,Kampung Minimart Pte Ltd,Ang Pei Shan,admin@kampungminimart.example.com,+65 9414 7664,Post
+C81725,T-11675,Swee Heng Medical Clinic,Arun Kumar,admin@sweehengmedicalcli.example.com,+65 9987 7909,Email
+C81746,T-11678,Wisdom Learning Centre Pte Ltd,Tay Pei Shan,,+65 9104 4048,Post
+C81767,T-11681,Heng Ann Medical Clinic,Farah binte Ismail,admin@hengannmedicalclin.example.com,+65 9219 9515,Email
+C81774,T-11682,Harmony Clinic & Surgery Pte Ltd,Rahim bin Osman,admin@harmonyclinicsurge.example.com,+65 9834 7466,Email
+C81781,T-11683,Seri Murni Snacks,Lim Teck Soon,admin@serimurnisnacks.example.com,+65 9399 9247,SMS
+C81823,T-11689,BLUE PEARL STORE,Chia Kok Leong,admin@bluepearlstore.example.com,+65 9479 7869,Post
+C81851,T-11693,Daily Fresh Clinic & Surgery,Rahim bin Osman,admin@dailyfreshclinicsu.example.com,+65 9169 2003,Email
+C81858,T-11694,Lucky Star Hair Studio,Chan Siew Lan,luckystarhair@example.com,+65 9761 4559,Email
+C81886,T-11698,Hock Lee Medical Supplies,Nur Aisyah binte Kamal,admin@hockleemedicalsupp.example.com,+65 9205 8142,Email
+C81907,T-11701,Mei Ling Accounting Services Pte Ltd,Yeo Bee Choo,admin@meilingaccountings.example.com,+65 9853 9541,Email
+C81928,T-11704,Lakshmi Pharmacy,Ong Chee Keong,admin@lakshmipharmacy.example.com,+65 9473 4922,Email
+C81949,T-11707,Rainbow Minimart,Zainab binte Ali,admin@rainbowminimart.example.com,+65 9168 6410,Post
+C81970,T-11710,Sejahtera Hardware Pte. Ltd.,Low Kim Seng,admin@sejahterahardware.example.com,+65 9706 4636,Email
+C81991,T-11713,Pinnacle Kitchen,Siti Rohani binte Salleh,,+65 9243 6227,Post
+C82012,T-11716,Rainbow Clinic & Surgery,Koh Bee Choo,admin@rainbowclinicsurge.example.com,+65 9153 6714,SMS
+C82019,T-11717,Lim's Medical Supplies Pte Ltd,Iskandar bin Yusof,admin@limsmedicalsupplie.example.com,+65 9512 8458,Post
+C82026,T-11718,Golden Leaf TCM Clinic,Koh Kok Leong,admin@goldenleaftcmclini.example.com,+65 9798 6972,Email
+C82047,T-11721,Lucky Star Family Clinic Pte. Ltd.,Ganesh Murugan,admin@luckystarfamilycli.example.com,+65 9616 1535,Email
+C82061,T-11723,Sejahtera Locksmith,Meena Pillai,admin@sejahteralocksmith.example.com,+65 9619 9198,Post
+C82082,T-11726,Kian Huat Medical Hall,Chua Teck Soon,,+65 9748 7346,Post
+C82089,T-11727,Bloom Clinic & Surgery Pte Ltd,Ang Kok Leong,admin@bloomclinicsurgery.example.com,+65 9417 7436,SMS
+C82103,T-11729,TIAN FU FRUIT TRADING PTE LTD,Ong Wei Ming,admin@tianfufruittrading.example.com,+65 9780 1813,Email
+C82110,T-11730,Chop Wah Cake House Pte Ltd,Nur Aisyah binte Kamal,admin@chopwahcakehouse.example.com,+65 9530 4556,SMS
+C82117,T-11731,EVERGREEN ACCOUNTING SERVICES,Chia Li Ting,admin@evergreenaccountin.example.com,+65 9666 8264,SMS
+C82138,T-11734,Lucky Star Pharmacy,Chan Hui Ling,admin@luckystarpharmacy.example.com,+65 9714 3944,Email
+C82159,T-11737,Cahaya Cake House Pte Ltd,Tay Ah Hock,admin@cahayacakehouse.example.com,+65 9758 1405,Email
+C82180,T-11740,Ananda Clinic & Surgery Pte Ltd,Lakshmi d/o Krishnan,admin@anandaclinicsurger.example.com,+65 9797 9986,Email
+C82201,T-11743,Kian Huat Trading Pte Ltd,Vijay Menon,admin@kianhuattrading.example.com,+65 9507 3052,Email
+C82222,T-11746,Lakshmi Minimart Pte. Ltd.,Wong Bee Choo,admin@lakshmiminimart.example.com,+65 9706 3603,Email
+C82264,T-11752,Brilliant Medical Hall,Chia Pei Shan,admin@brilliantmedicalha.example.com,+65 9403 1408,Post
+C82271,T-11753,Thye Hin Family Clinic,Ganesh Murugan,admin@thyehinfamilyclini.example.com,+65 9664 4087,Email
+C82292,T-11756,Value Mart,Ho Wei Ming,,+65 9757 1272,Email
+C82306,T-11758,Ever Joy Mobile Pte Ltd,Low Boon Huat,admin@everjoymobile.example.com,+65 9239 5287,Email
+C82327,T-11761,Fresh Valley Remittance,Lee Kim Seng,admin@freshvalleyremitta.example.com,+65 9412 7406,Email
+C82362,T-11766,Chop Wah Education Hub,Koh Chee Keong,admin@chopwaheducationhu.example.com,+65 9461 9962,Email
+C82369,T-11767,Kumar Hair Salon Pte Ltd,Toh Teck Soon,admin@kumarhairsalon.example.com,+65 9349 3606,SMS
+C82390,T-11770,Nur Beauty & Hair,Ang Wei Ming,admin@nurbeautyhair.example.com,+65 9918 1976,Email
+C82411,T-11773,Chop Wah Mobile,Low Teck Soon,admin@chopwahmobile.example.com,+65 9422 5417,SMS
+C82418,T-11774,Soon Hin Minimart Pte Ltd,Lim Boon Huat,admin@soonhinminimart.example.com,+65 9813 1079,SMS
+C82432,T-11776,Wong's Bubble Tea,Nur Aisyah binte Kamal,admin@wongsbubbletea.example.com,+65 9735 6416,SMS
+C82439,T-11777,Lakshmi Kopitiam Pte Ltd,Ang Kok Leong,admin@lakshmikopitiam.example.com,+65 9252 8112,Email
+C82446,T-11778,Kopi Corner Tuition Centre,Ang Siew Lan,,+65 9182 5252,SMS
+C82474,T-11782,Soon Hin Tuition Centre Pte Ltd,Ng Pei Shan,admin@soonhintuitioncent.example.com,+65 9783 6201,SMS
+C82488,T-11784,Jade Garden Fruits,Toh Hui Ling,admin@jadegardenfruits.example.com,+65 9552 7426,Post
+C82495,T-11785,Ong & Sons Tuition Centre Pte Ltd,Anand Subramaniam,admin@ongsonstuitioncent.example.com,+65 9175 8140,Email
+C82516,T-11788,Soon Hin Dental Surgery Pte Ltd,Wong Kim Seng,admin@soonhindentalsurge.example.com,+65 9900 4754,SMS
+C82530,T-11790,Ong & Sons Learning Centre Pte Ltd,Ong Chee Keong,admin@ongsonslearningcen.example.com,+65 9343 2754,Post
+C82544,T-11792,Thye Hin Mobile,Lee Chee Keong,admin@thyehinmobile.example.com,+65 9406 5075,Post
+C82565,T-11795,Kampung Clinic & Surgery,Ng Siew Lan,admin@kampungclinicsurge.example.com,+65 9250 2879,Email
+C82586,T-11798,Swee Heng Money Changer Pte Ltd,Low Hui Ling,admin@sweehengmoneychang.example.com,+65 9240 9418,Post
+C82600,T-11800,Hup Seng Accounting Services Pte Ltd,Yeo Shu Fen,admin@hupsengaccountings.example.com,+65 9673 9099,SMS
+C82642,T-11806,Rainbow Learning Centre,Lim Hui Ling,admin@rainbowlearningcen.example.com,+65 9780 3165,SMS
+C82649,T-11807,Old Town Dental Surgery Pte Ltd,Sim Boon Huat,admin@oldtowndentalsurge.example.com,+65 9470 4867,Email
+C82670,T-11810,Barakah Supermarket,Tan Mei Fen,admin@barakahsupermarket.example.com,+65 9792 2408,Post
+C82677,T-11811,Lucky Star TCM Clinic Pte Ltd,Ng Kim Seng,admin@luckystartcmclinic.example.com,+65 9109 8483,Email
+C82698,T-11814,Hometown Eating Place Pte Ltd,Tan Chee Keong,admin@hometowneatingplac.example.com,+65 9883 2804,Email
+C82733,T-11819,Cosy Medical Supplies,Chong Siew Lan,admin@cosymedicalsupplie.example.com,+65 9237 7581,Email
+C82747,T-11821,Bright Path Minimart,Rahim bin Osman,admin@brightpathminimart.example.com,+65 9170 5946,Email
+C82761,T-11823,Soon Hin Learning Centre,Siti Rohani binte Salleh,admin@soonhinlearningcen.example.com,+65 9402 9378,Email
+C82775,T-11825,Little Sprouts Flowers & Gifts Pte Ltd,Yeo Chee Keong,admin@littlesproutsflowe.example.com,+65 9707 9364,Email
+C82789,T-11827,Old Town Provision Shop,Meena Pillai,admin@oldtownprovisionsh.example.com,+65 9332 2290,Post
+C82810,T-11830,Wong's Snacks,Lim Ah Hock,admin@wongssnacks.example.com,+65 9328 5590,SMS
+C82845,T-11835,AMANAH STORE PTE LTD,Hafiz bin Rahman,admin@amanahstore.example.com,+65 9952 8816,Post
+C82852,T-11836,Hock Lee Trading Pte Ltd,Tay Kim Seng,admin@hockleetrading.example.com,+65 9464 9466,SMS
+C82873,T-11839,Hup Seng Tuition Centre,Meena Pillai,,+65 9710 8552,SMS
+C82894,T-11842,Peng Kee Dry Cleaners Pte Ltd,Lee Hui Ling,admin@pengkeedrycleaners.example.com,+65 9638 1877,Email
+C82908,T-11844,Teck Guan Mobile Pte Ltd,Meena Pillai,admin@teckguanmobile.example.com,+65 9921 4966,Email
+C82929,T-11847,Lakshmi Supermarket Pte Ltd,Hafiz bin Rahman,admin@lakshmisupermarket.example.com,+65 9811 7899,SMS
+C82943,T-11849,Bayu Fruits Pte Ltd,Zainab binte Ali,admin@bayufruits.example.com,+65 9928 5461,Post
+C82964,T-11852,Blue Pearl Mart,Ng Pei Shan,admin@bluepearlmart.example.com,+65 9292 7648,Post
+C82985,T-11855,BLUE PEARL FRUIT TRADING PTE LTD,Lim Li Ting,admin@bluepearlfruittrad.example.com,+65 9890 8705,Email
+C83006,T-11858,PENG KEE MART,Ong Boon Huat,admin@pengkeemart.example.com,+65 9132 3880,Email
+C83013,T-11859,Soon Hin Agency,Meena Pillai,admin@soonhinagency.example.com,+65 9296 8025,Email
+C83034,T-11862,Orchid Beauty & Hair Pte Ltd,Lakshmi d/o Krishnan,admin@orchidbeautyhair.example.com,+65 9910 4760,Email
+C83062,T-11866,Heng Ann Beauty & Hair,Lee Hui Ling,admin@hengannbeautyhair.example.com,+65 9627 7976,Email
+C83083,T-11869,Old Town Pharmacy,Koh Pei Shan,admin@oldtownpharmacy.example.com,+65 9407 6321,SMS
+C83111,T-11873,Unity Eye Centre,Anand Subramaniam,admin@unityeyecentre.example.com,+65 9683 6684,Post
+C83118,T-11874,Peng Kee Mobile Pte Ltd,Ravi Shankar,admin@pengkeemobile.example.com,+65 9534 3911,Email
+C83132,T-11876,HOCK LEE STORE,Ravi Shankar,admin@hockleestore.example.com,+65 9545 6930,SMS
+C83139,T-11877,New Life Mart Pte Ltd,Teo Pei Shan,admin@newlifemart.example.com,+65 9982 6691,Email
+C83153,T-11879,Sin Hock Fruits,Ganesh Murugan,admin@sinhockfruits.example.com,+65 9314 6287,SMS
+C83174,T-11882,Tan Brothers Trading Pte Ltd,Ho Mei Fen,admin@tanbrotherstrading.example.com,+65 9857 7585,Post
+C83188,T-11884,Golden Leaf Dry Cleaners,Anand Subramaniam,admin@goldenleafdryclean.example.com,+65 9182 1431,Post
+C83202,T-11886,Brilliant Bubble Tea Pte Ltd,Teo Hui Ling,admin@brilliantbubbletea.example.com,+65 9617 7920,Post
+C83216,T-11888,Gold Coin Eating Place Pte Ltd,Ravi Shankar,admin@goldcoineatingplac.example.com,+65 9761 6490,Email
+C83230,T-11890,Lucky Star Mobile,Arun Kumar,admin@luckystarmobile.example.com,+65 9173 8727,SMS
+C83237,T-11891,Tian Fu Medical Clinic Pte Ltd,Nur Aisyah binte Kamal,admin@tianfumedicalclini.example.com,+65 9992 9036,SMS
+C83265,T-11895,Rainbow Medical Hall,Siti Rohani binte Salleh,admin@rainbowmedicalhall.example.com,+65 9313 1025,Post
+C83286,T-11898,SMART KIDS DENTAL SURGERY PTE LTD,Ahmad bin Hassan,admin@smartkidsdentalsur.example.com,+65 9435 7798,SMS
+C83293,T-11899,Wong's Mart Pte Ltd,Chua Mei Fen,admin@wongsmart.example.com,+65 9173 3466,Email
+C83314,T-11902,Prima Bubble Tea,Ho Jun Jie,admin@primabubbletea.example.com,+65 9572 8562,Post
+C83328,T-11904,Al-Ameen Kueh Corner,Hafiz bin Rahman,admin@alameenkuehcorner.example.com,+65 9933 9124,Email
+C83349,T-11907,Bright Path Store Pte Ltd,Ho Kim Seng,admin@brightpathstore.example.com,+65 9871 4932,SMS
+C83356,T-11908,Golden Leaf Medical Hall Pte Ltd,Chia Bee Choo,admin@goldenleafmedicalh.example.com,+65 9405 2446,Post
+C83377,T-11911,Evergreen Provision Shop,Chan Shu Fen,admin@evergreenprovision.example.com,+65 9481 7527,Email
+C83391,T-11913,Green Leaf Childcare Pte. Ltd.,Arun Kumar,admin@greenleafchildcare.example.com,+65 9132 1220,Email
+C83412,T-11916,Silver Moon Hair Salon,Iskandar bin Yusof,admin@silvermoonhairsalo.example.com,+65 9714 9222,Email
+C83419,T-11917,Hup Seng Cake House Pte Ltd,Chan Ah Hock,admin@hupsengcakehouse.example.com,+65 9419 6020,Email
+C83447,T-11921,Kopi Corner Supermarket,Nur Aisyah binte Kamal,admin@kopicornersupermar.example.com,+65 9847 3956,SMS
+C83461,T-11923,Evergreen Medical Clinic Pte Ltd,Yeo Ah Hock,admin@evergreenmedicalcl.example.com,+65 9596 6038,SMS
+C83482,T-11926,Cosy Trading Pte. Ltd.,Koh Pei Shan,admin@cosytrading.example.com,+65 9292 6362,SMS
+C83510,T-11930,RAINBOW MART,Tay Kim Seng,admin@rainbowmart.example.com,+65 9934 2286,Email
+C83524,T-11932,New Life Supermarket Pte Ltd,Norhayati binte Said,admin@newlifesupermarket.example.com,+65 9635 5973,Post
+C83538,T-11934,Hassan Tea House Pte Ltd,Lakshmi d/o Krishnan,admin@hassanteahouse.example.com,+65 9418 9724,Email
+C83545,T-11935,Hometown Tea House,Chan Kok Leong,admin@hometownteahouse.example.com,+65 9419 3572,Post
+C83566,T-11938,Hup Seng Learning Centre,Lee Jun Jie,admin@hupsenglearningcen.example.com,+65 9301 5087,SMS
+C83580,T-11940,Thye Hin Florist Pte Ltd,Ng Teck Soon,admin@thyehinflorist.example.com,+65 9858 7672,Email
+C83594,T-11942,Nur Florist,Koh Hui Ling,admin@nurflorist.example.com,+65 9288 2610,Post
+C83601,T-11943,SOON HIN FRUIT TRADING,Siti Rohani binte Salleh,admin@soonhinfruittradin.example.com,+65 9207 7265,Email
+C83622,T-11946,Barakah Trading,Arun Kumar,admin@barakahtrading.example.com,+65 9185 9179,Email
+C83643,T-11949,Teck Guan Eye Centre,Lakshmi d/o Krishnan,admin@teckguaneyecentre.example.com,+65 9453 4774,Email
+C83664,T-11952,Suria Mart,Ong Jun Jie,admin@suriamart.example.com,+65 9574 3000,Post
+C83671,T-11953,Value Hardware & Electrical Pte Ltd,Sim Wei Ming,admin@valuehardwareelect.example.com,+65 9368 1209,Email
+C83692,T-11956,COSY EDUCATION HUB,Chan Mei Fen,admin@cosyeducationhub.example.com,+65 9498 6394,Email
+C83713,T-11959,Unity Mart Pte Ltd,Anand Subramaniam,admin@unitymart.example.com,+65 9310 7379,Email
+C83741,T-11963,Nanyang Dental Surgery Pte Ltd,Hafiz bin Rahman,admin@nanyangdentalsurge.example.com,+65 9847 5028,Email
+C83762,T-11966,Treasure Store Pte Ltd,Ho Kok Leong,admin@treasurestore.example.com,+65 9702 6872,Email
+C83783,T-11969,KOPI CORNER HARDWARE & ELECTRICAL,Ong Li Ting,admin@kopicornerhardware.example.com,+65 9892 9762,SMS
+C83825,T-11975,Kian Huat Dental Surgery Pte Ltd,Chan Shu Fen,admin@kianhuatdentalsurg.example.com,+65 9433 8781,SMS
+C83839,T-11977,Sunflower Supermarket Pte Ltd,Toh Ah Hock,admin@sunflowersupermark.example.com,+65 9538 8270,Email
+C83860,T-11980,Cahaya Tuition Centre,Siti Rohani binte Salleh,admin@cahayatuitioncentr.example.com,+65 9546 6090,Email
+C83867,T-11981,Ananda Education Hub,Ng Ah Hock,admin@anandaeducationhub.example.com,+65 9187 6362,SMS
+C83895,T-11985,MUTIARA DENTAL SURGERY PTE LTD,Koh Chee Keong,admin@mutiaradentalsurge.example.com,+65 9958 6466,Post
+C83916,T-11988,Amanah Education Hub Pte Ltd,Rahim bin Osman,admin@amanaheducationhub.example.com,+65 9164 2754,Email
+C83937,T-11991,Kampung Hardware & Electrical Pte Ltd,Chia Siew Lan,,+65 9756 9388,Email
+C83958,T-11994,Treasure Laundry,Ang Siew Lan,admin@treasurelaundry.example.com,+65 9686 5543,SMS
+C83979,T-11997,JADE GARDEN HARDWARE & ELECTRICAL,Toh Kim Seng,admin@jadegardenhardware.example.com,+65 9629 6510,SMS
+C83993,T-11999,SWEE HENG KUEH CORNER,Nur Aisyah binte Kamal,admin@sweehengkuehcorner.example.com,+65 9327 8076,Email
+C84021,T-12003,Prima Mobile Pte Ltd,Farah binte Ismail,admin@primamobile.example.com,+65 9884 5714,Post
+C84049,T-12007,Suria Hair Studio,Ong Chee Keong,admin@suriahairstudio.example.com,+65 9457 1289,Post
+C84070,T-12010,Joo Chiat Kitchen Pte Ltd,Tay Ah Hock,admin@joochiatkitchen.example.com,+65 9906 9698,Email
+C84077,T-12011,Joo Chiat Medical Clinic Pte. Ltd.,Chan Ah Hock,admin@joochiatmedicalcli.example.com,+65 9748 2573,SMS
+C84098,T-12014,Silver Moon Hardware & Electrical Pte Ltd,Norhayati binte Said,admin@silvermoonhardware.example.com,+65 9630 4551,Email
+C84105,T-12015,Teck Guan Clinic & Surgery,Ho Siew Lan,admin@teckguanclinicsurg.example.com,+65 9131 1644,Post
+C84126,T-12018,Wisdom Education Hub Pte Ltd,Chia Kok Leong,admin@wisdomeducationhub.example.com,+65 9421 2603,Email
+C84133,T-12019,New Life Medical Supplies Pte Ltd,Goh Kim Seng,,+65 9345 7029,SMS
+C84140,T-12020,Bayu Dental Care,Goh Li Ting,admin@bayudentalcare.example.com,+65 9378 4105,Post
+C84154,T-12022,Siva TCM Clinic Pte Ltd,Nur Aisyah binte Kamal,admin@sivatcmclinic.example.com,+65 9829 7783,Email
+C84196,T-12028,Soon Hin Provision Shop,Ravi Shankar,admin@soonhinprovisionsh.example.com,+65 9618 9570,Post
+C84231,T-12033,Wisdom Flowers & Gifts,Ang Boon Huat,admin@wisdomflowersgifts.example.com,+65 9393 2251,SMS
+C84245,T-12035,Raja Hair Studio,Muhammad Firdaus,admin@rajahairstudio.example.com,+65 9665 9845,Email
+C84273,T-12039,Wisdom Mobile,Wong Chee Keong,admin@wisdommobile.example.com,+65 9111 4204,SMS
+C84287,T-12041,Lucky Star Hardware,Iskandar bin Yusof,admin@luckystarhardware.example.com,+65 9342 8619,SMS
+C84301,T-12043,Rainbow Hair Studio Pte Ltd,Ganesh Murugan,admin@rainbowhairstudio.example.com,+65 9772 5911,Email
+C84322,T-12046,Kampung Tuition Centre,Yeo Jun Jie,admin@kampungtuitioncent.example.com,+65 9578 5890,Email
+C84336,T-12048,Treasure Learning Centre,Farah binte Ismail,admin@treasurelearningce.example.com,+65 9334 5888,Post
+C84343,T-12049,New Life Hardware,Ng Mei Fen,admin@newlifehardware.example.com,+65 9245 7410,Email
+C84364,T-12052,Old Town Learning Centre,Chia Boon Huat,admin@oldtownlearningcen.example.com,+65 9518 6932,Email
+C84385,T-12055,Ananda Provision Shop Pte Ltd,Rahim bin Osman,admin@anandaprovisionsho.example.com,+65 9254 9897,Email
+C84406,T-12058,Bloom Minimart,Lim Siew Lan,admin@bloomminimart.example.com,+65 9562 1933,SMS
+C84441,T-12063,Nur Bakery Pte Ltd,Teo Boon Huat,admin@nurbakery.example.com,+65 9565 4820,SMS
+C84448,T-12064,Little Sprouts Store,Kavitha Raj,admin@littlesproutsstore.example.com,+65 9370 6575,Email
+C84462,T-12066,Hock Lee Mobile Pte Ltd,Kavitha Raj,admin@hockleemobile.example.com,+65 9560 6931,Post
+C84483,T-12069,Kumar Mart,Goh Li Ting,admin@kumarmart.example.com,+65 9247 7164,Email
+C84518,T-12074,Fortune Dental Care,Nur Aisyah binte Kamal,admin@fortunedentalcare.example.com,+65 9488 1369,SMS
+C84539,T-12077,Brilliant Supermarket,Rahim bin Osman,admin@brilliantsupermark.example.com,+65 9947 6510,Email
+C84560,T-12080,Value Family Clinic Pte Ltd,Koh Teck Soon,admin@valuefamilyclinic.example.com,+65 9921 1105,Post
+C84581,T-12083,Mutiara Tea House,Vijay Menon,admin@mutiarateahouse.example.com,+65 9313 3158,Email
+C84602,T-12086,Lucky Star Remittance,Lee Kok Leong,admin@luckystarremittanc.example.com,+65 9797 3608,Email
+C84630,T-12090,Orchid Medical Hall,Chan Kok Leong,admin@orchidmedicalhall.example.com,+65 9988 7524,Email
+C84637,T-12091,Chop Wah Hardware,Low Kok Leong,admin@chopwahhardware.example.com,+65 9668 4541,SMS
+C84651,T-12093,Smart Kids TCM Clinic Pte Ltd,Toh Shu Fen,admin@smartkidstcmclinic.example.com,+65 9749 8541,SMS
+C84665,T-12095,Tian Fu Minimart,Ong Wei Ming,admin@tianfuminimart.example.com,+65 9258 6780,Post
+C84686,T-12098,Hock Lee Dental Surgery,Zainab binte Ali,admin@hockleedentalsurge.example.com,+65 9179 8034,Email
+C84700,T-12100,Joo Chiat TCM Clinic,Wong Jun Jie,admin@joochiattcmclinic.example.com,+65 9946 4903,Email
+C84735,T-12105,Orchid Supermarket,Ng Siew Lan,admin@orchidsupermarket.example.com,+65 9971 6036,SMS
+C84756,T-12108,PRIMA CHILDCARE PTE LTD,Rahim bin Osman,admin@primachildcare.example.com,+65 9582 7860,SMS
+C84770,T-12110,Tian Fu Hair Salon,Ong Kok Leong,admin@tianfuhairsalon.example.com,+65 9708 3519,Post
+C84777,T-12111,WISDOM BEAUTY & HAIR,Teo Kok Leong,admin@wisdombeautyhair.example.com,+65 9211 2862,Email
+C84805,T-12115,KAMPUNG PROVISION SHOP,Teo Li Ting,admin@kampungprovisionsh.example.com,+65 9525 8885,Post
+C84812,T-12116,Orchid Family Clinic Pte Ltd,Koh Bee Choo,admin@orchidfamilyclinic.example.com,+65 9432 1173,SMS
+C84833,T-12119,Kumar Medical Clinic Pte Ltd,Rahim bin Osman,admin@kumarmedicalclinic.example.com,+65 9615 9009,Email
+C84854,T-12122,Bloom Beauty & Hair Pte Ltd,Iskandar bin Yusof,admin@bloombeautyhair.example.com,+65 9930 5385,Post
+C84875,T-12125,Tan Brothers Fruits,Toh Bee Choo,admin@tanbrothersfruits.example.com,+65 9327 6478,Email
+C84882,T-12126,Golden Leaf Hair Salon Pte Ltd,Goh Wei Ming,admin@goldenleafhairsalo.example.com,+65 9533 6082,Post
+C84889,T-12127,Murugan Telecom Pte Ltd,Lim Kok Leong,admin@murugantelecom.example.com,+65 9434 2570,Email
+C84910,T-12130,Prima Tuition Centre Pte Ltd,Rahim bin Osman,admin@primatuitioncentre.example.com,+65 9412 2166,Email
+C84917,T-12131,Tan Brothers Minimart,Devi Nair,admin@tanbrothersminimar.example.com,+65 9832 4657,Email
+C84931,T-12133,Sri Ganesh Hardware & Electrical,Zainab binte Ali,,+65 9501 8081,Post
+C84938,T-12134,HOMETOWN SUPERMARKET PTE LTD,Nur Aisyah binte Kamal,admin@hometownsupermarke.example.com,+65 9109 1012,Post
+C84952,T-12136,Wong's Tuition Centre,Goh Shu Fen,admin@wongstuitioncentre.example.com,+65 9617 1688,Post
+C84973,T-12139,Harmony Telecom,Ng Chee Keong,admin@harmonytelecom.example.com,+65 9139 5604,Post
+C84994,T-12142,Pinnacle Telecom Pte Ltd,Iskandar bin Yusof,admin@pinnacletelecom.example.com,+65 9458 1576,Post
+C85001,T-12143,Kopi Corner Hair Studio Pte Ltd,Low Kok Leong,admin@kopicornerhairstud.example.com,+65 9753 2839,Email
+C85022,T-12146,Cahaya Cake House,Sim Mei Fen,admin@cahayacakehouse.example.com,+65 9718 8265,SMS
+C85036,T-12148,Ananda Kindergarten,Lee Jun Jie,admin@anandakindergarten.example.com,+65 9369 1578,Email
+C85057,T-12151,Sejahtera Trading,Ang Ah Hock,admin@sejahteratrading.example.com,+65 9784 6987,Email
+C85085,T-12155,Golden Leaf Consultancy Pte Ltd,Sim Bee Choo,admin@goldenleafconsulta.example.com,+65 9901 3635,Post
+C85106,T-12158,Value Store,Yeo Mei Fen,admin@valuestore.example.com,+65 9917 5621,Email
+C85127,T-12161,Treasure Dry Cleaners Pte Ltd,Yeo Kok Leong,admin@treasuredrycleaner.example.com,+65 9608 4189,Email
+C85134,T-12162,Raja Dental Surgery,Ong Mei Fen,admin@rajadentalsurgery.example.com,+65 9329 5701,Email
+C85148,T-12164,Smart Kids Laundry,Iskandar bin Yusof,admin@smartkidslaundry.example.com,+65 9243 8760,Post
+C85155,T-12165,Sin Hock TCM Clinic Pte Ltd,Muhammad Firdaus,admin@sinhocktcmclinic.example.com,+65 9657 7437,Email
+C85169,T-12167,Green Leaf Bookstore Pte Ltd,Lakshmi d/o Krishnan,admin@greenleafbookstore.example.com,+65 9812 3498,Email
+C85190,T-12170,Little Sprouts Mart,Toh Li Ting,admin@littlesproutsmart.example.com,+65 9934 3051,SMS
+C85225,T-12175,Wellcare Key & Shoe Service Pte Ltd,Chong Boon Huat,admin@wellcarekeyshoeser.example.com,+65 9419 8379,Post
+C85239,T-12177,Harmony Dry Cleaners Pte Ltd,Lim Bee Choo,admin@harmonydrycleaners.example.com,+65 9327 4519,SMS
+C85246,T-12178,Silver Moon Education Hub Pte Ltd,Chia Jun Jie,admin@silvermooneducatio.example.com,+65 9935 7627,Email
+C85267,T-12181,Lucky Star Tuition Centre,Lee Boon Huat,admin@luckystartuitionce.example.com,+65 9127 9746,Email
+C85288,T-12184,Sin Hock Hardware Pte Ltd,Lim Teck Soon,admin@sinhockhardware.example.com,+65 9104 2176,Post
+C85302,T-12186,Gold Coin Eye Centre,Lim Bee Choo,admin@goldcoineyecentre.example.com,+65 9213 2210,SMS
+C85316,T-12188,Siva Learning Centre Pte Ltd,Koh Hui Ling,admin@sivalearningcentre.example.com,+65 9969 7928,Email
+C85337,T-12191,Peng Kee Hardware Pte Ltd,Meena Pillai,admin@pengkeehardware.example.com,+65 9214 8825,Email
+C85351,T-12193,HARMONY FLORIST,Ang Pei Shan,,+65 9978 6399,Email
+C85358,T-12194,Happy Paws Clinic & Surgery Pte Ltd,Kavitha Raj,admin@happypawsclinicsur.example.com,+65 9550 1546,SMS
+C85365,T-12195,Barakah Hardware Pte Ltd,Chong Chee Keong,admin@barakahhardware.example.com,+65 9997 7078,Post
+C85379,T-12197,Green Leaf Mart Pte Ltd,Chua Jun Jie,admin@greenleafmart.example.com,+65 9586 2622,SMS
+C85407,T-12201,Kumar Family Clinic,Chia Boon Huat,admin@kumarfamilyclinic.example.com,+65 9242 2437,Email
+C85414,T-12202,Unity Clinic & Surgery,Hafiz bin Rahman,admin@unityclinicsurgery.example.com,+65 9230 4221,SMS
+C85428,T-12204,Green Leaf Hair Salon,Muhammad Firdaus,admin@greenleafhairsalon.example.com,+65 9660 3231,SMS
+C85435,T-12205,Cahaya Hair Studio Pte Ltd,Ng Shu Fen,admin@cahayahairstudio.example.com,+65 9722 4911,Email
+C85449,T-12207,Gold Coin Supermarket Pte Ltd,Muhammad Firdaus,admin@goldcoinsupermarke.example.com,+65 9907 9743,Email
+C85470,T-12210,FORTUNE TUITION CENTRE,Anand Subramaniam,admin@fortunetuitioncent.example.com,+65 9290 6128,SMS
+C85491,T-12213,Old Town Money Changer,Lakshmi d/o Krishnan,admin@oldtownmoneychange.example.com,+65 9901 4646,SMS
+C85512,T-12216,Gold Coin Pet Shop,Rahim bin Osman,admin@goldcoinpetshop.example.com,+65 9579 3757,SMS
+C85519,T-12217,Bayu Bakery Pte Ltd,Sim Kim Seng,admin@bayubakery.example.com,+65 9737 6234,Email
+C85526,T-12218,Kumar Mobile,Anand Subramaniam,admin@kumarmobile.example.com,+65 9169 3392,SMS
+C85547,T-12221,Bayu Telecom,Toh Ah Hock,,+65 9502 8586,Email
+C85568,T-12224,LUCKY STAR KITCHEN PTE LTD,Toh Shu Fen,admin@luckystarkitchen.example.com,+65 9270 5140,Email
+C85596,T-12228,Kampung Flowers & Gifts,Nur Aisyah binte Kamal,admin@kampungflowersgift.example.com,+65 9434 2084,Email
+C85603,T-12229,DAILY FRESH SNACKS,Chan Shu Fen,admin@dailyfreshsnacks.example.com,+65 9539 3833,Post
+C85624,T-12232,Kopi Corner Mobile Pte Ltd,Chan Boon Huat,admin@kopicornermobile.example.com,+65 9381 4235,Post
+C85631,T-12233,Ever Joy Pharmacy,Ganesh Murugan,admin@everjoypharmacy.example.com,+65 9532 7984,Email
+C85659,T-12237,Jade Garden Locksmith Pte Ltd,Tay Pei Shan,admin@jadegardenlocksmit.example.com,+65 9103 3123,Post
+C85701,T-12243,Teck Guan Hardware & Electrical,Ang Teck Soon,admin@teckguanhardwareel.example.com,+65 9158 6014,SMS
+C85722,T-12246,Hometown TCM Clinic,Ang Kim Seng,admin@hometowntcmclinic.example.com,+65 9107 8715,SMS
+C85750,T-12250,Wong's Beauty & Hair,Goh Kim Seng,admin@wongsbeautyhair.example.com,+65 9916 9982,SMS
+C85778,T-12254,Kim Hiap TCM Clinic,Toh Li Ting,admin@kimhiaptcmclinic.example.com,+65 9332 1115,SMS
+C85799,T-12257,Gold Coin Education Hub,Chia Kok Leong,admin@goldcoineducationh.example.com,+65 9748 6379,Post
+C85820,T-12260,Smart Kids Cake House,Muhammad Firdaus,admin@smartkidscakehouse.example.com,+65 9851 9390,SMS
+C85848,T-12264,Blue Pearl Kitchen Pte Ltd,Kavitha Raj,admin@bluepearlkitchen.example.com,+65 9948 3791,SMS
+C85855,T-12265,Joo Chiat Trading,Yeo Wei Ming,admin@joochiattrading.example.com,+65 9449 9444,Post
+C85876,T-12268,Gold Coin Stationery Pte Ltd,Toh Kim Seng,admin@goldcoinstationery.example.com,+65 9608 6404,Email
+C85890,T-12270,Bayu Medical Clinic,Meena Pillai,admin@bayumedicalclinic.example.com,+65 9767 2603,Email
+C85897,T-12271,Hup Seng Supermarket Pte Ltd,Toh Chee Keong,admin@hupsengsupermarket.example.com,+65 9697 3567,Post
+C85904,T-12272,Teck Guan Tuition Centre,Sim Siew Lan,admin@teckguantuitioncen.example.com,+65 9845 4068,Post
+C85911,T-12273,Kumar Key & Shoe Service Pte. Ltd.,Siti Rohani binte Salleh,admin@kumarkeyshoeservic.example.com,+65 9561 3553,SMS
+C85925,T-12275,Pinnacle Medical Clinic Pte Ltd,Ravi Shankar,admin@pinnaclemedicalcli.example.com,+65 9380 8702,Email
+C85946,T-12278,SIN HOCK MEDICAL CLINIC PTE LTD,Siti Rohani binte Salleh,admin@sinhockmedicalclin.example.com,+65 9990 3448,SMS
+C85960,T-12280,Ever Joy Supermarket Pte Ltd,Chan Siew Lan,admin@everjoysupermarket.example.com,+65 9930 6572,Post
+C85974,T-12282,Heng Ann Dental Surgery,Koh Teck Soon,admin@henganndentalsurge.example.com,+65 9761 3242,Email
+C85995,T-12285,Golden Leaf Tuition Centre Pte Ltd,Iskandar bin Yusof,admin@goldenleaftuitionc.example.com,+65 9124 2099,Post
+C86016,T-12288,Unity Provision Shop,Nur Aisyah binte Kamal,,+65 9702 2188,SMS
+C86023,T-12289,Ah Seng Mart Pte Ltd,Suresh s/o Ramasamy,,+65 9228 3380,Post
+C86037,T-12291,KAMPUNG SUPERMARKET,Ahmad bin Hassan,admin@kampungsupermarket.example.com,+65 9531 1868,Email
+C86058,T-12294,Golden Leaf Supermarket Pte Ltd,Kavitha Raj,admin@goldenleafsupermar.example.com,+65 9742 5211,Post
+C86072,T-12296,Kumar Accounting Services,Chia Chee Keong,admin@kumaraccountingser.example.com,+65 9564 3509,SMS
+C86100,T-12300,Everbright Supermarket,Yeo Ah Hock,admin@everbrightsupermar.example.com,+65 9990 7024,Email
+C86114,T-12302,Bright Path Supermarket,Ravi Shankar,admin@brightpathsupermar.example.com,+65 9910 1295,SMS
+C86135,T-12305,Al-Ameen Mobile,Toh Kim Seng,admin@alameenmobile.example.com,+65 9597 2683,Post
+C86142,T-12306,Mei Ling Kopitiam,Yeo Bee Choo,admin@meilingkopitiam.example.com,+65 9400 7754,Email
+C86163,T-12309,Heng Ann Laundry,Kavitha Raj,admin@hengannlaundry.example.com,+65 9470 1460,Post
+C86170,T-12310,Wellcare Minimart,Farah binte Ismail,admin@wellcareminimart.example.com,+65 9909 8755,SMS
+C86184,T-12312,Swee Heng Supermarket,Rahim bin Osman,,+65 9254 7284,Post
+C86191,T-12313,Evergreen Trading Pte. Ltd.,Goh Bee Choo,admin@evergreentrading.example.com,+65 9912 7002,SMS
+C86205,T-12315,Everbright Stationery Pte Ltd,Iskandar bin Yusof,admin@everbrightstatione.example.com,+65 9427 6627,SMS
+C86212,T-12316,Green Leaf Dental Surgery,Lee Jun Jie,admin@greenleafdentalsur.example.com,+65 9726 1571,Post
+C86219,T-12317,Lakshmi Trading Pte Ltd,Chia Li Ting,admin@lakshmitrading.example.com,+65 9314 3992,Email
+C86261,T-12323,Chin Lee Hardware,Ho Shu Fen,admin@chinleehardware.example.com,+65 9381 9714,SMS
+C86282,T-12326,Seri Murni Medical Clinic,Sim Jun Jie,admin@serimurnimedicalcl.example.com,+65 9495 1080,Email
+C86296,T-12328,Pinnacle Minimart Pte Ltd,Wong Bee Choo,admin@pinnacleminimart.example.com,+65 9148 5447,Email
+C86310,T-12330,Hassan Supermarket,Sim Chee Keong,admin@hassansupermarket.example.com,+65 9438 5803,Email
+C86317,T-12331,Happy Paws Hardware Pte Ltd,Arun Kumar,admin@happypawshardware.example.com,+65 9318 7814,Email
+C86331,T-12333,Seri Murni Mobile Pte Ltd,Chia Wei Ming,admin@serimurnimobile.example.com,+65 9960 5567,Post
+C86345,T-12335,New Life Kitchen Pte Ltd,Nur Aisyah binte Kamal,admin@newlifekitchen.example.com,+65 9128 7863,Post
+C86359,T-12337,Fortune Provision Shop Pte Ltd,Wong Kim Seng,admin@fortuneprovisionsh.example.com,+65 9868 9061,Post
+C86373,T-12339,SOON HIN LAUNDRY,Arun Kumar,admin@soonhinlaundry.example.com,+65 9314 9906,Email
+C86380,T-12340,Everbright Kitchen Pte Ltd,Devi Nair,admin@everbrightkitchen.example.com,+65 9439 9414,Post
+C86415,T-12345,Wisdom Mart,Rahim bin Osman,admin@wisdommart.example.com,+65 9613 3561,SMS
+C86443,T-12349,Value Telecom,Farah binte Ismail,admin@valuetelecom.example.com,+65 9239 8003,Email
+C86464,T-12352,Wisdom Medical Clinic,Iskandar bin Yusof,admin@wisdommedicalclini.example.com,+65 9649 4728,Email
+C86492,T-12356,Suria Snacks,Arun Kumar,admin@suriasnacks.example.com,+65 9935 8342,Post
+C86499,T-12357,Amanah Agency Pte Ltd,Chia Shu Fen,admin@amanahagency.example.com,+65 9692 8370,Email
+C86513,T-12359,Kian Huat Medical Hall Pte Ltd,Devi Nair,admin@kianhuatmedicalhal.example.com,+65 9110 5866,SMS
+C86520,T-12360,Nanyang Family Clinic,Arun Kumar,admin@nanyangfamilyclini.example.com,+65 9716 6411,Email
+C86534,T-12362,KAMPUNG FAMILY CLINIC,Anand Subramaniam,admin@kampungfamilyclini.example.com,+65 9962 5571,SMS
+C86555,T-12365,Prima Mobile,Tan Shu Fen,admin@primamobile.example.com,+65 9838 9266,SMS
+C86576,T-12368,Kim Hiap Learning Centre,Devi Nair,admin@kimhiaplearningcen.example.com,+65 9568 5590,Email
+C86611,T-12373,Treasure Money Changer,Devi Nair,admin@treasuremoneychang.example.com,+65 9804 7336,Post
+C86618,T-12374,Hup Seng Bakery,Arun Kumar,admin@hupsengbakery.example.com,+65 9784 9676,SMS
+C86632,T-12376,Hup Seng Provision Shop Pte Ltd,Ong Bee Choo,admin@hupsengprovisionsh.example.com,+65 9883 5293,Post
+C86667,T-12381,Sunflower Mobile,Koh Shu Fen,admin@sunflowermobile.example.com,+65 9920 9230,Email
+C86709,T-12387,Nanyang Remittance,Chong Pei Shan,admin@nanyangremittance.example.com,+65 9135 3666,SMS
+C86723,T-12389,KAMPUNG REMITTANCE PTE LTD,Chong Pei Shan,admin@kampungremittance.example.com,+65 9625 3524,Post
+C86765,T-12395,Sunflower Optical,Rahim bin Osman,admin@sunfloweroptical.example.com,+65 9932 1494,Post
+C86772,T-12396,Wisdom Kitchen,Low Hui Ling,admin@wisdomkitchen.example.com,+65 9586 7403,Email
+C86779,T-12397,Unity Hardware Pte Ltd,Kavitha Raj,,+65 9845 2258,Email
+C86793,T-12399,Ah Seng Minimart,Nur Aisyah binte Kamal,admin@ahsengminimart.example.com,+65 9508 8563,Post
+C86807,T-12401,Everbright Education Hub,Nur Aisyah binte Kamal,admin@everbrighteducatio.example.com,+65 9572 1971,SMS
+C86814,T-12402,HAPPY PAWS SUPERMARKET PTE LTD,Wong Mei Fen,admin@happypawssupermark.example.com,+65 9964 1501,Email
+C86835,T-12405,Old Town Florist,Ho Siew Lan,admin@oldtownflorist.example.com,+65 9105 9075,Email
+C86856,T-12408,SEJAHTERA EYE CENTRE PTE LTD,Chia Kim Seng,admin@sejahteraeyecentre.example.com,+65 9530 1392,Email
+C86884,T-12412,Chin Lee Medical Clinic,Low Shu Fen,admin@chinleemedicalclin.example.com,+65 9502 4782,Email
+C86891,T-12413,Barakah Agency Pte Ltd,Ng Hui Ling,admin@barakahagency.example.com,+65 9918 2302,Email
+C86905,T-12415,BARAKAH TCM CLINIC PTE LTD,Goh Teck Soon,admin@barakahtcmclinic.example.com,+65 9191 9460,Email
+C86926,T-12418,Little Sprouts Family Clinic,Ganesh Murugan,,+65 9969 4792,Email
+C86940,T-12420,Treasure Dry Cleaners,Tan Mei Fen,admin@treasuredrycleaner.example.com,+65 9194 7777,Email
+C86954,T-12422,Tan Brothers Kueh Corner,Ng Boon Huat,admin@tanbrotherskuehcor.example.com,+65 9993 4402,Email
+C86968,T-12424,Fortune Mart,Chan Mei Fen,admin@fortunemart.example.com,+65 9134 1255,Email
+C86975,T-12425,Wong's Bubble Tea Pte Ltd,Iskandar bin Yusof,admin@wongsbubbletea.example.com,+65 9400 3264,Email
+C87003,T-12429,Lim's Mobile Pte Ltd,Tay Shu Fen,admin@limsmobile.example.com,+65 9333 3659,Email
+C87024,T-12432,Hock Lee Tea House,Teo Bee Choo,admin@hockleeteahouse.example.com,+65 9855 4922,SMS
+C87031,T-12433,Silver Moon Medical Hall,Sim Mei Fen,admin@silvermoonmedicalh.example.com,+65 9594 3768,SMS
+C87052,T-12436,Ever Joy Family Clinic,Ganesh Murugan,admin@everjoyfamilyclini.example.com,+65 9380 8476,Post
+C87073,T-12439,Value Medical Supplies Pte Ltd,Kavitha Raj,admin@valuemedicalsuppli.example.com,+65 9218 7824,Email
+C87094,T-12442,Kumar Dental Surgery,Rahim bin Osman,admin@kumardentalsurgery.example.com,+65 9849 9457,Email
+C87115,T-12445,Sin Hock Key & Shoe Service,Chong Pei Shan,admin@sinhockkeyshoeserv.example.com,+65 9147 5029,Email
+C87129,T-12447,Mutiara TCM Clinic Pte Ltd,Tay Bee Choo,admin@mutiaratcmclinic.example.com,+65 9550 7707,SMS
+C87164,T-12452,Ananda Hair Studio,Koh Siew Lan,admin@anandahairstudio.example.com,+65 9162 4045,Post
+C87171,T-12453,Starlight Clinic & Surgery,Ang Bee Choo,admin@starlightclinicsur.example.com,+65 9110 1540,SMS
+C87213,T-12459,Tan Brothers Family Clinic Pte Ltd,Goh Ah Hock,admin@tanbrothersfamilyc.example.com,+65 9313 4180,SMS
+C87234,T-12462,Murugan Bubble Tea Pte Ltd,Meena Pillai,admin@muruganbubbletea.example.com,+65 9280 4051,Post
+C87255,T-12465,Lim's Agency Pte Ltd,Lim Mei Fen,admin@limsagency.example.com,+65 9373 4236,SMS
+C87262,T-12466,Tian Fu Medical Hall,Tan Jun Jie,admin@tianfumedicalhall.example.com,+65 9550 2655,SMS
+C87283,T-12469,Sri Ganesh Hair Salon,Hafiz bin Rahman,admin@sriganeshhairsalon.example.com,+65 9742 7326,Post
+C87304,T-12472,Raja Learning Centre,Hafiz bin Rahman,admin@rajalearningcentre.example.com,+65 9731 4345,SMS
+C87325,T-12475,Suria Store,Goh Hui Ling,admin@suriastore.example.com,+65 9343 3703,SMS
+C87339,T-12477,Wellcare Hardware Pte Ltd,Tay Teck Soon,admin@wellcarehardware.example.com,+65 9514 1603,SMS
+C87360,T-12480,Lim's Tuition Centre,Suresh s/o Ramasamy,admin@limstuitioncentre.example.com,+65 9442 4034,Email
+C87381,T-12483,Soon Hin Snacks,Norhayati binte Said,admin@soonhinsnacks.example.com,+65 9305 6699,Email
+C87395,T-12485,Sunflower Bakery,Kavitha Raj,admin@sunflowerbakery.example.com,+65 9787 7161,Post
+C87430,T-12490,Golden Leaf Medical Supplies Pte Ltd,Iskandar bin Yusof,admin@goldenleafmedicals.example.com,+65 9873 8328,Email
+C87444,T-12492,Evergreen Education Hub,Ng Teck Soon,admin@evergreeneducation.example.com,+65 9889 6992,SMS
+C87465,T-12495,Nur Kueh Corner,Ho Chee Keong,admin@nurkuehcorner.example.com,+65 9560 8250,Email
+C87479,T-12497,Ong & Sons Medical Clinic,Lim Ah Hock,admin@ongsonsmedicalclin.example.com,+65 9431 1946,Email
+C87500,T-12500,Kopi Corner Mart,Arun Kumar,admin@kopicornermart.example.com,+65 9464 7371,Email
+C87514,T-12502,Unity Dry Cleaners Pte Ltd,Lim Mei Fen,admin@unitydrycleaners.example.com,+65 9365 8230,Email
+C87521,T-12503,Mei Ling TCM Clinic Pte Ltd,Suresh s/o Ramasamy,admin@meilingtcmclinic.example.com,+65 9688 7636,Email
+C87542,T-12506,Seri Murni Boba Bar,Koh Hui Ling,admin@serimurnibobabar.example.com,+65 9716 4630,Email
+C87563,T-12509,Cahaya Telecom Pte Ltd,Ahmad bin Hassan,admin@cahayatelecom.example.com,+65 9446 8895,Post
+C87591,T-12513,Red Lantern Dental Care,Ng Boon Huat,admin@redlanterndentalca.example.com,+65 9953 7746,SMS
+C87605,T-12515,Kim Hiap Florist Pte Ltd,Ong Wei Ming,admin@kimhiapflorist.example.com,+65 9142 1854,Email
+C87633,T-12519,Sunflower Minimart Pte Ltd,Lee Chee Keong,admin@sunflowerminimart.example.com,+65 9783 3158,SMS
+C87661,T-12523,FRESH VALLEY TRADING PTE LTD,Ong Kim Seng,admin@freshvalleytrading.example.com,+65 9911 7917,SMS
+C87668,T-12524,CHIN LEE MINIMART,Chia Bee Choo,admin@chinleeminimart.example.com,+65 9139 4868,Post
+C87675,T-12525,Kumar Mart Pte. Ltd.,Chua Boon Huat,admin@kumarmart.example.com,+65 9659 6707,Email
+C87703,T-12529,Teck Guan Hair Studio Pte Ltd,Ravi Shankar,admin@teckguanhairstudio.example.com,+65 9637 7567,SMS
+C87710,T-12530,Bright Path Supermarket Pte Ltd,Ganesh Murugan,admin@brightpathsupermar.example.com,+65 9876 7393,Post
+C87724,T-12532,New Life Money Changer,Ang Ah Hock,admin@newlifemoneychange.example.com,+65 9863 9045,SMS
+C87731,T-12533,Sejahtera Minimart Pte Ltd,Lim Wei Ming,admin@sejahteraminimart.example.com,+65 9863 9560,Email
+C87745,T-12535,EVERGREEN MONEY CHANGER,Nur Aisyah binte Kamal,admin@evergreenmoneychan.example.com,+65 9885 2436,Email
+C87759,T-12537,Hometown Kitchen,Nur Aisyah binte Kamal,admin@hometownkitchen.example.com,+65 9576 8892,Email
+C87766,T-12538,Jade Garden Optical Pte Ltd,Lee Mei Fen,admin@jadegardenoptical.example.com,+65 9679 9471,Email
+C87780,T-12540,Ananda Medical Clinic,Iskandar bin Yusof,admin@anandamedicalclini.example.com,+65 9440 6924,Email
+C87808,T-12544,Kopi Corner Eating Place,Teo Wei Ming,admin@kopicornereatingpl.example.com,+65 9444 6988,Email
+C87829,T-12547,Nanyang Learning Centre,Yeo Chee Keong,admin@nanyanglearningcen.example.com,+65 9294 2683,Post
+C87836,T-12548,Blue Pearl Medical Clinic Pte Ltd,Suresh s/o Ramasamy,admin@bluepearlmedicalcl.example.com,+65 9384 5688,Email
+C87850,T-12550,Suria Medical Clinic Pte Ltd,Chia Kim Seng,admin@suriamedicalclinic.example.com,+65 9199 3006,Email
+C87864,T-12552,Ah Seng Remittance Pte Ltd,Rahim bin Osman,admin@ahsengremittance.example.com,+65 9408 9131,Post
+C87885,T-12555,Kopi Corner Bookstore,Lim Shu Fen,admin@kopicornerbookstor.example.com,+65 9475 3514,Email
+C87906,T-12558,Sin Hock Telecom,Koh Shu Fen,admin@sinhocktelecom.example.com,+65 9916 7493,SMS
+C87941,T-12563,Hometown Provision Shop Pte Ltd,Vijay Menon,admin@hometownprovisions.example.com,+65 9268 8876,SMS
+C87962,T-12566,Nur Supermarket Pte Ltd,Yeo Ah Hock,admin@nursupermarket.example.com,+65 9133 5475,Email
+C87983,T-12569,Value Medical Hall,Ng Kok Leong,admin@valuemedicalhall.example.com,+65 9221 1476,SMS
+C88004,T-12572,Golden Leaf Medical Clinic,Ganesh Murugan,admin@goldenleafmedicalc.example.com,+65 9641 2553,Post
+C88025,T-12575,Silver Moon Telecom,Meena Pillai,admin@silvermoontelecom.example.com,+65 9805 7453,Post
+C88046,T-12578,Mei Ling Pharmacy Pte Ltd,Low Jun Jie,admin@meilingpharmacy.example.com,+65 9698 6669,Post
+C88060,T-12580,Tian Fu Remittance Pte Ltd,Low Pei Shan,admin@tianfuremittance.example.com,+65 9472 1451,SMS
+C88074,T-12582,Blue Pearl Dental Surgery,Chong Li Ting,admin@bluepearldentalsur.example.com,+65 9102 9594,Email
+C88095,T-12585,Mutiara Education Hub,Wong Kim Seng,admin@mutiaraeducationhu.example.com,+65 9285 8083,Email
+C88116,T-12588,Green Leaf Trading,Muhammad Firdaus,admin@greenleaftrading.example.com,+65 9107 2942,Email
+C88130,T-12590,Bloom Learning Centre,Iskandar bin Yusof,admin@bloomlearningcentr.example.com,+65 9534 9322,Post
+C88137,T-12591,Kopi Corner Medical Supplies,Ang Chee Keong,admin@kopicornermedicals.example.com,+65 9982 5806,SMS
+C88151,T-12593,Harmony Medical Hall Pte Ltd,Zainab binte Ali,admin@harmonymedicalhall.example.com,+65 9927 5322,Email
+C88165,T-12595,Lim's Clinic & Surgery Pte Ltd,Zainab binte Ali,admin@limsclinicsurgery.example.com,+65 9928 4909,SMS
+C88179,T-12597,Orchid Laundry,Hafiz bin Rahman,admin@orchidlaundry.example.com,+65 9422 4719,Email
+C88193,T-12599,Happy Paws Boba Bar,Farah binte Ismail,admin@happypawsbobabar.example.com,+65 9483 4761,Email
+C88221,T-12603,Starlight Restaurant Pte Ltd,Tan Siew Lan,admin@starlightrestauran.example.com,+65 9921 3312,SMS
+C88228,T-12604,Thye Hin Mart,Yeo Pei Shan,admin@thyehinmart.example.com,+65 9138 5057,Post
+C88235,T-12605,Gold Coin Money Changer,Lee Wei Ming,admin@goldcoinmoneychang.example.com,+65 9600 8146,Post
+C88263,T-12609,Red Lantern Mart,Goh Pei Shan,admin@redlanternmart.example.com,+65 9927 6635,Email
+C88277,T-12611,Ah Seng Beauty & Hair Pte Ltd,Tay Kim Seng,admin@ahsengbeautyhair.example.com,+65 9592 2395,Email
+C88298,T-12614,Green Leaf Minimart,Lim Bee Choo,admin@greenleafminimart.example.com,+65 9640 4358,Email
+C88326,T-12618,Siva Dental Care Pte Ltd,Toh Mei Fen,admin@sivadentalcare.example.com,+65 9922 5199,SMS
+C88354,T-12622,Nur Dental Care,Tay Li Ting,admin@nurdentalcare.example.com,+65 9227 6924,Email
+C88375,T-12625,Kian Huat Mart Pte Ltd,Arun Kumar,admin@kianhuatmart.example.com,+65 9970 7546,Post
+C88396,T-12628,Tan Brothers Mobile,Suresh s/o Ramasamy,admin@tanbrothersmobile.example.com,+65 9574 4415,SMS
+C88417,T-12631,Swee Heng Accounting Services Pte Ltd,Sim Kok Leong,admin@sweehengaccounting.example.com,+65 9974 7299,Email
+C88431,T-12633,Joo Chiat Beauty & Hair Pte Ltd,Toh Siew Lan,,+65 9714 8324,SMS
+C88452,T-12636,Amanah Cake House,Ng Siew Lan,admin@amanahcakehouse.example.com,+65 9260 8962,Post
+C88459,T-12637,TAN BROTHERS MART,Wong Pei Shan,admin@tanbrothersmart.example.com,+65 9762 8651,Email
+C88473,T-12639,Daily Fresh Family Clinic,Norhayati binte Said,admin@dailyfreshfamilycl.example.com,+65 9368 9221,Email
+C88487,T-12641,Daily Fresh Cake House Pte Ltd,Teo Shu Fen,admin@dailyfreshcakehous.example.com,+65 9685 3231,Email
+C88501,T-12643,Ah Seng Eye Centre,Ang Siew Lan,admin@ahsengeyecentre.example.com,+65 9814 4446,Email
+C88536,T-12648,Tan Brothers Remittance,Ahmad bin Hassan,admin@tanbrothersremitta.example.com,+65 9827 5669,SMS
+C88571,T-12653,Ah Seng Dental Care,Chia Shu Fen,admin@ahsengdentalcare.example.com,+65 9408 3030,SMS
+C88599,T-12657,Lakshmi Trading,Devi Nair,admin@lakshmitrading.example.com,+65 9225 7946,SMS
+C88627,T-12661,Pinnacle Eating House Pte Ltd,Hafiz bin Rahman,admin@pinnacleeatinghous.example.com,+65 9195 8484,SMS
+C88648,T-12664,Soon Hin Optical,Vijay Menon,admin@soonhinoptical.example.com,+65 9458 1400,SMS
+C88669,T-12667,Fortune Dental Surgery,Siti Rohani binte Salleh,admin@fortunedentalsurge.example.com,+65 9729 4461,SMS
+C88683,T-12669,Nur Mart Pte Ltd,Ong Shu Fen,admin@nurmart.example.com,+65 9338 5898,Email
+C88718,T-12674,JOO CHIAT MART,Toh Bee Choo,admin@joochiatmart.example.com,+65 9413 5214,SMS
+C88732,T-12676,Amanah Medical Clinic Pte Ltd,Chia Jun Jie,admin@amanahmedicalclini.example.com,+65 9741 7207,Post
+C88753,T-12679,Starlight Kueh Corner Pte Ltd,Ng Boon Huat,admin@starlightkuehcorne.example.com,+65 9959 3279,Email
+C88788,T-12684,Value Trading,Chan Kim Seng,admin@valuetrading.example.com,+65 9698 7308,Post
+C88816,T-12688,Orchid Medical Clinic Pte Ltd,Tay Siew Lan,admin@orchidmedicalclini.example.com,+65 9918 5148,Email
+C88851,T-12693,Red Lantern Clinic & Surgery Pte Ltd,Sim Siew Lan,admin@redlanternclinicsu.example.com,+65 9189 5310,Email
+C88865,T-12695,Nanyang Dental Care,Lim Kim Seng,admin@nanyangdentalcare.example.com,+65 9312 4349,SMS
+C88893,T-12699,Amanah Laundry,Chia Li Ting,admin@amanahlaundry.example.com,+65 9215 5750,Post
+C88907,T-12701,Barakah Minimart Pte Ltd,Ong Teck Soon,admin@barakahminimart.example.com,+65 9511 8467,SMS
+C88914,T-12702,Fresh Valley Provision Shop,Tay Siew Lan,admin@freshvalleyprovisi.example.com,+65 9279 4631,SMS
+C88928,T-12704,Sejahtera Dental Care Pte. Ltd.,Lim Boon Huat,admin@sejahteradentalcar.example.com,+65 9744 8750,Email
+C88942,T-12706,Mei Ling Store Pte Ltd,Lakshmi d/o Krishnan,admin@meilingstore.example.com,+65 9814 9561,Email
+C88949,T-12707,Green Leaf Learning Centre,Nur Aisyah binte Kamal,admin@greenleaflearningc.example.com,+65 9985 7071,Email
+C88963,T-12709,Amanah Medical Clinic,Koh Mei Fen,admin@amanahmedicalclini.example.com,+65 9823 9650,Email
+C88991,T-12713,Soon Hin Bookstore,Ang Shu Fen,admin@soonhinbookstore.example.com,+65 9576 1867,Email
+C89005,T-12715,MURUGAN MONEY CHANGER,Muhammad Firdaus,admin@muruganmoneychange.example.com,+65 9110 5416,Post
+C89047,T-12721,Fortune Supermarket,Lee Wei Ming,admin@fortunesupermarket.example.com,+65 9838 6948,SMS
+C89068,T-12724,Kim Hiap Tuition Centre,Low Wei Ming,admin@kimhiaptuitioncent.example.com,+65 9830 5222,Email
+C89110,T-12730,Swee Heng Bubble Tea Pte Ltd,Farah binte Ismail,admin@sweehengbubbletea.example.com,+65 9777 3623,Email
+C89117,T-12731,BARAKAH FRUIT TRADING,Ng Wei Ming,admin@barakahfruittradin.example.com,+65 9546 1052,Post
+C89124,T-12732,Orchid Clinic & Surgery Pte Ltd,Vijay Menon,admin@orchidclinicsurger.example.com,+65 9943 9043,Email
+C89138,T-12734,Mei Ling Education Hub,Yeo Jun Jie,admin@meilingeducationhu.example.com,+65 9602 8366,Email
+C89159,T-12737,Sri Ganesh Eating Place,Ng Mei Fen,admin@sriganesheatingpla.example.com,+65 9345 8529,Email
+C89166,T-12738,Bloom Confectionery Pte Ltd,Hafiz bin Rahman,admin@bloomconfectionery.example.com,+65 9584 4098,Post
+C89187,T-12741,Fortune Coffeeshop,Devi Nair,admin@fortunecoffeeshop.example.com,+65 9414 4541,Email
+C89194,T-12742,Ananda Florist,Goh Wei Ming,admin@anandaflorist.example.com,+65 9536 3016,Post
+C89201,T-12743,Kim Hiap Florist,Lim Siew Lan,admin@kimhiapflorist.example.com,+65 9643 3172,Email
+C89215,T-12745,AMANAH TCM CLINIC PTE LTD,Chia Boon Huat,admin@amanahtcmclinic.example.com,+65 9602 5154,Post
+C89222,T-12746,Al-Ameen Tuition Centre,Zainab binte Ali,admin@alameentuitioncent.example.com,+65 9809 9109,SMS
+C89229,T-12747,Tian Fu Dry Cleaners Pte Ltd,Ang Mei Fen,admin@tianfudrycleaners.example.com,+65 9178 2125,SMS
+C89250,T-12750,Red Lantern Fruit Trading,Chia Jun Jie,admin@redlanternfruittra.example.com,+65 9690 2645,Email
+C89271,T-12753,Hometown Dental Surgery Pte Ltd,Chan Mei Fen,admin@hometowndentalsurg.example.com,+65 9379 5358,SMS
+C89292,T-12756,Harmony Bakery,Toh Kim Seng,admin@harmonybakery.example.com,+65 9658 7810,SMS
+C89306,T-12758,Cosy Eating Place Pte. Ltd.,Low Wei Ming,admin@cosyeatingplace.example.com,+65 9569 7052,Email
+C89327,T-12761,Kampung Agency Pte Ltd,Devi Nair,admin@kampungagency.example.com,+65 9266 1053,Post
+C89348,T-12764,Sejahtera Hair Salon,Ahmad bin Hassan,admin@sejahterahairsalon.example.com,+65 9915 5093,SMS
+C89355,T-12765,Little Sprouts Florist,Arun Kumar,admin@littlesproutsflori.example.com,+65 9209 8988,SMS
+C89383,T-12769,Siva Minimart,Wong Li Ting,admin@sivaminimart.example.com,+65 9437 3911,Email
+C89390,T-12770,Gold Coin Telecom,Tan Kim Seng,admin@goldcointelecom.example.com,+65 9935 9408,Email
+C89404,T-12772,Orchid Eye Centre Pte Ltd,Arun Kumar,admin@orchideyecentre.example.com,+65 9561 5947,Post
+C89418,T-12774,Hassan Dry Cleaners Pte Ltd,Lee Shu Fen,admin@hassandrycleaners.example.com,+65 9574 4057,Post
+C89439,T-12777,Hock Lee Medical Supplies Pte Ltd,Wong Teck Soon,admin@hockleemedicalsupp.example.com,+65 9287 9898,Email
+C89460,T-12780,Blue Pearl Tuition Centre Pte Ltd,Lee Boon Huat,admin@bluepearltuitionce.example.com,+65 9110 3284,Email
+C89481,T-12783,Mei Ling Dental Surgery,Yeo Wei Ming,admin@meilingdentalsurge.example.com,+65 9733 4242,Email
+C89495,T-12785,Everbright Flowers & Gifts Pte Ltd,Farah binte Ismail,admin@everbrightflowersg.example.com,+65 9176 1650,Post
+C89516,T-12788,Mutiara Mart,Norhayati binte Said,admin@mutiaramart.example.com,+65 9390 8568,SMS
+C89530,T-12790,Murugan Store,Sim Boon Huat,admin@muruganstore.example.com,+65 9273 9376,Email
+C89544,T-12792,New Life Education Hub Pte Ltd,Lim Jun Jie,admin@newlifeeducationhu.example.com,+65 9997 4805,SMS
+C89565,T-12795,Lim's Pharmacy,Chua Jun Jie,admin@limspharmacy.example.com,+65 9158 6671,Email
+C89579,T-12797,Heng Ann Kueh Corner,Chia Kim Seng,admin@hengannkuehcorner.example.com,+65 9901 6677,Email
+C89586,T-12798,SWEE HENG BEAUTY & HAIR PTE LTD,Rahim bin Osman,admin@sweehengbeautyhair.example.com,+65 9857 6881,Email
+C89593,T-12799,Teck Guan Beauty & Hair Pte Ltd,Zainab binte Ali,admin@teckguanbeautyhair.example.com,+65 9695 7774,SMS
+C89607,T-12801,Bloom Provision Shop Pte Ltd,Low Pei Shan,admin@bloomprovisionshop.example.com,+65 9989 1647,SMS
+C89628,T-12804,SRI GANESH FAMILY CLINIC,Toh Pei Shan,admin@sriganeshfamilycli.example.com,+65 9842 4769,Email
+C89656,T-12808,Golden Leaf Education Hub,Suresh s/o Ramasamy,admin@goldenleafeducatio.example.com,+65 9885 6477,SMS
+C89670,T-12810,Joo Chiat Eating Place,Lim Teck Soon,admin@joochiateatingplac.example.com,+65 9169 9205,Post
+C89691,T-12813,New Life Medical Supplies,Nur Aisyah binte Kamal,admin@newlifemedicalsupp.example.com,+65 9388 8835,Email
+C89705,T-12815,Nanyang Tuition Centre Pte Ltd,Ang Hui Ling,admin@nanyangtuitioncent.example.com,+65 9401 7473,Email
+C89712,T-12816,PRIMA HARDWARE & ELECTRICAL,Muhammad Firdaus,admin@primahardwareelect.example.com,+65 9711 6854,SMS
+C89726,T-12818,Unity Learning Centre,Hafiz bin Rahman,admin@unitylearningcentr.example.com,+65 9608 8437,Email
+C89733,T-12819,Ong & Sons Childcare,Ho Boon Huat,admin@ongsonschildcare.example.com,+65 9142 5550,SMS
+C89740,T-12820,Kumar Bookstore Pte Ltd,Tan Bee Choo,admin@kumarbookstore.example.com,+65 9512 6106,Email
+C89754,T-12822,Treasure Minimart,Nur Aisyah binte Kamal,admin@treasureminimart.example.com,+65 9837 3297,Email
+C89775,T-12825,PHOENIX MONEY CHANGER PTE LTD,Tan Ah Hock,admin@phoenixmoneychange.example.com,+65 9421 7889,SMS
+C89796,T-12828,Cahaya Clinic & Surgery Pte Ltd,Suresh s/o Ramasamy,admin@cahayaclinicsurger.example.com,+65 9825 7769,SMS
+C89803,T-12829,Sin Hock Mart Pte Ltd,Farah binte Ismail,admin@sinhockmart.example.com,+65 9901 3847,Email
+C89845,T-12835,Suria Tuition Centre,Teo Bee Choo,admin@suriatuitioncentre.example.com,+65 9392 5812,Email
+C89859,T-12837,Wong's Fruits,Rahim bin Osman,,+65 9203 8602,Post
+C89880,T-12840,Kampung Trading,Lakshmi d/o Krishnan,admin@kampungtrading.example.com,+65 9296 1969,Email
+C89887,T-12841,Little Sprouts Coffeeshop,Toh Kim Seng,admin@littlesproutscoffe.example.com,+65 9574 7016,SMS
+C89901,T-12843,Amanah Mobile Pte Ltd,Ong Mei Fen,admin@amanahmobile.example.com,+65 9941 6514,SMS
+C89922,T-12846,Silver Moon Eating Place,Chan Boon Huat,admin@silvermooneatingpl.example.com,+65 9893 7953,Post
+C89964,T-12852,Red Lantern Minimart,Anand Subramaniam,admin@redlanternminimart.example.com,+65 9132 3997,SMS
+C89985,T-12855,Nanyang Supermarket,Wong Chee Keong,admin@nanyangsupermarket.example.com,+65 9444 1459,Email
+C90006,T-12858,Treasure Mart Pte Ltd,Koh Ah Hock,admin@treasuremart.example.com,+65 9149 8123,Email
+C90013,T-12859,Murugan Supermarket Pte Ltd,Ganesh Murugan,admin@murugansupermarket.example.com,+65 9203 3289,Email
+C90034,T-12862,Nur Family Clinic Pte Ltd,Chia Pei Shan,admin@nurfamilyclinic.example.com,+65 9962 5143,SMS
+C90055,T-12865,Kumar Fruit Trading Pte Ltd,Lee Kim Seng,admin@kumarfruittrading.example.com,+65 9370 7785,Post
+C90069,T-12867,Kumar TCM Clinic Pte Ltd,Ng Bee Choo,admin@kumartcmclinic.example.com,+65 9845 3354,SMS
+C90097,T-12871,BARAKAH PET SHOP PTE LTD,Ong Chee Keong,admin@barakahpetshop.example.com,+65 9138 8812,SMS
+C90111,T-12873,Hup Seng Education Hub Pte Ltd,Farah binte Ismail,admin@hupsengeducationhu.example.com,+65 9906 3182,Post
+C90118,T-12874,Bright Path Medical Hall Pte Ltd,Siti Rohani binte Salleh,admin@brightpathmedicalh.example.com,+65 9743 5118,SMS
+C90132,T-12876,Bayu Medical Clinic Pte Ltd,Chua Hui Ling,admin@bayumedicalclinic.example.com,+65 9285 1070,Email
+C90146,T-12878,Raja Fruits Pte Ltd,Nur Aisyah binte Kamal,admin@rajafruits.example.com,+65 9859 6101,Email
+C90160,T-12880,Red Lantern Education Hub,Hafiz bin Rahman,admin@redlanterneducatio.example.com,+65 9657 1303,SMS
+C90167,T-12881,Value Clinic & Surgery,Chua Li Ting,admin@valueclinicsurgery.example.com,+65 9431 7775,Email
+C90181,T-12883,Hassan Family Clinic Pte Ltd,Sim Chee Keong,admin@hassanfamilyclinic.example.com,+65 9913 8109,Email
+C90188,T-12884,Sejahtera Family Clinic,Rahim bin Osman,,+65 9403 8171,Email
+C90195,T-12885,Cosy Flowers & Gifts,Ng Jun Jie,admin@cosyflowersgifts.example.com,+65 9415 4702,Email
+C90216,T-12888,Little Sprouts Tuition Centre Pte Ltd,Ravi Shankar,admin@littlesproutstuiti.example.com,+65 9402 4296,SMS
+C90223,T-12889,Al-Ameen Eating Place,Iskandar bin Yusof,admin@alameeneatingplace.example.com,+65 9853 6896,Post
+C90244,T-12892,NUR MONEY CHANGER,Lee Chee Keong,admin@nurmoneychanger.example.com,+65 9341 8373,Email
+C90251,T-12893,Nur Telecom Pte Ltd,Ong Teck Soon,admin@nurtelecom.example.com,+65 9549 9955,Post
+C90272,T-12896,Lotus Eye Centre,Lim Pei Shan,admin@lotuseyecentre.example.com,+65 9842 3605,Email
+C90286,T-12898,Harmony Provision Shop Pte Ltd,Farah binte Ismail,admin@harmonyprovisionsh.example.com,+65 9983 6716,Post
+C90307,T-12901,Heng Ann Tuition Centre,Tay Boon Huat,admin@henganntuitioncent.example.com,+65 9814 4367,Email
+C90328,T-12904,Wisdom Kindergarten Pte Ltd,Nur Aisyah binte Kamal,admin@wisdomkindergarten.example.com,+65 9152 5551,Email
+C90342,T-12906,Chop Wah Tuition Centre,Iskandar bin Yusof,admin@chopwahtuitioncent.example.com,+65 9819 8510,SMS
+C90356,T-12908,Heng Ann Hardware & Electrical Pte Ltd,Ganesh Murugan,admin@hengannhardwareele.example.com,+65 9636 3445,Post
+C90377,T-12911,Ong & Sons Aquarium & Pets Pte Ltd,Norhayati binte Said,admin@ongsonsaquariumpet.example.com,+65 9748 3638,Post
+C90398,T-12914,Barakah Dental Care,Ahmad bin Hassan,admin@barakahdentalcare.example.com,+65 9379 9379,Post
+C90426,T-12918,Kian Huat Trading,Farah binte Ismail,admin@kianhuattrading.example.com,+65 9936 8763,Email
+C90461,T-12923,Happy Paws Family Clinic Pte Ltd,Sim Siew Lan,,+65 9721 3788,Email
+C90475,T-12925,Brilliant Family Clinic Pte Ltd,Meena Pillai,admin@brilliantfamilycli.example.com,+65 9351 3657,Email
+C90482,T-12926,Sri Ganesh Dental Surgery,Toh Chee Keong,,+65 9635 9161,Email
+C90496,T-12928,Blue Pearl Tuition Centre,Teo Hui Ling,admin@bluepearltuitionce.example.com,+65 9659 4272,SMS
+C90510,T-12930,Mei Ling Kopitiam Pte Ltd,Goh Kim Seng,admin@meilingkopitiam.example.com,+65 9924 6822,Email
+C90531,T-12933,STARLIGHT FLORIST,Norhayati binte Said,admin@starlightflorist.example.com,+65 9542 3112,Email
+C90538,T-12934,TAN BROTHERS TCM CLINIC PTE LTD,Hafiz bin Rahman,admin@tanbrotherstcmclin.example.com,+65 9541 9605,Post
+C90552,T-12936,Treasure Education Hub,Lakshmi d/o Krishnan,admin@treasureeducationh.example.com,+65 9770 9101,Email
+C90573,T-12939,Kumar Provision Shop Pte Ltd,Ang Boon Huat,admin@kumarprovisionshop.example.com,+65 9142 5489,Post
+C90580,T-12940,Everbright Hair Salon Pte Ltd,Nur Aisyah binte Kamal,admin@everbrighthairsalo.example.com,+65 9794 6780,SMS
+C90587,T-12941,Fortune Mobile,Chia Kim Seng,admin@fortunemobile.example.com,+65 9167 5483,Email
+C90608,T-12944,Wong's Tea House,Vijay Menon,admin@wongsteahouse.example.com,+65 9755 8628,Email
+C90629,T-12947,Cahaya Mart Pte Ltd,Ravi Shankar,admin@cahayamart.example.com,+65 9284 7383,Email
+C90650,T-12950,Tian Fu Clinic & Surgery Pte Ltd,Muhammad Firdaus,admin@tianfuclinicsurger.example.com,+65 9160 2609,Post
+C90664,T-12952,Treasure Hair Studio,Suresh s/o Ramasamy,admin@treasurehairstudio.example.com,+65 9214 2796,Email
+C90692,T-12956,Teck Guan Medical Clinic Pte Ltd,Koh Jun Jie,,+65 9866 7855,Email
+C90720,T-12960,Evergreen Hardware Pte Ltd,Lim Wei Ming,admin@evergreenhardware.example.com,+65 9144 1982,Email
+C90734,T-12962,Fresh Valley Telecom Pte Ltd,Wong Chee Keong,admin@freshvalleytelecom.example.com,+65 9573 1455,Email
+C90755,T-12965,Seri Murni Hair Salon Pte Ltd,Zainab binte Ali,admin@serimurnihairsalon.example.com,+65 9420 9111,Email
+C90776,T-12968,Bloom Hardware & Electrical,Chong Siew Lan,admin@bloomhardwareelect.example.com,+65 9435 7747,Email
+C90790,T-12970,Hup Seng Dental Care Pte Ltd,Chan Chee Keong,admin@hupsengdentalcare.example.com,+65 9243 2446,Post
+C90811,T-12973,Little Sprouts Telecom Pte Ltd,Ang Pei Shan,admin@littlesproutstelec.example.com,+65 9756 3137,SMS
+C90825,T-12975,Lucky Star Key & Shoe Service Pte Ltd,Chong Chee Keong,admin@luckystarkeyshoese.example.com,+65 9116 4281,SMS
+C90853,T-12979,Thye Hin Kitchen Pte Ltd,Ahmad bin Hassan,admin@thyehinkitchen.example.com,+65 9259 6090,Email
+C90888,T-12984,Lim's Family Clinic Pte Ltd,Chong Bee Choo,admin@limsfamilyclinic.example.com,+65 9489 3397,Email
+C90902,T-12986,Old Town Consultancy,Lim Shu Fen,admin@oldtownconsultancy.example.com,+65 9578 3897,Post
+C90930,T-12990,Ong & Sons Fruit Trading,Chia Siew Lan,admin@ongsonsfruittradin.example.com,+65 9537 6308,Post
+C90951,T-12993,Murugan Supermarket,Chua Chee Keong,admin@murugansupermarket.example.com,+65 9504 4123,SMS
+C90972,T-12996,Sunflower Supermarket,Suresh s/o Ramasamy,admin@sunflowersupermark.example.com,+65 9320 2569,Post
+C90986,T-12998,Smart Kids Store Pte Ltd,Tan Wei Ming,admin@smartkidsstore.example.com,+65 9207 2297,Email
+C90993,T-12999,Thye Hin Kueh Corner,Vijay Menon,,+65 9481 2191,Email
+C91007,T-13001,Orchid Hardware Pte Ltd,Ang Pei Shan,admin@orchidhardware.example.com,+65 9319 3915,Email
+C91035,T-13005,Sri Ganesh Provision Shop,Sim Ah Hock,admin@sriganeshprovision.example.com,+65 9107 3941,Post
+C91049,T-13007,Ong & Sons Boba Bar Pte Ltd,Teo Wei Ming,admin@ongsonsbobabar.example.com,+65 9914 6238,SMS
+C91070,T-13010,Smart Kids Tea House,Nur Aisyah binte Kamal,admin@smartkidsteahouse.example.com,+65 9560 7434,SMS
+C91084,T-13012,SERI MURNI PROVISION SHOP PTE LTD,Ganesh Murugan,,+65 9174 1647,Post
+C91098,T-13014,Kim Hiap Boba Bar Pte Ltd,Rahim bin Osman,admin@kimhiapbobabar.example.com,+65 9931 8207,Email
+C91105,T-13015,Kampung Medical Hall,Norhayati binte Said,admin@kampungmedicalhall.example.com,+65 9749 5878,SMS
+C91140,T-13020,Treasure Florist,Teo Hui Ling,admin@treasureflorist.example.com,+65 9876 1657,SMS
+C91154,T-13022,Kampung Kitchen,Goh Shu Fen,admin@kampungkitchen.example.com,+65 9732 6788,Email
+C91168,T-13024,Lotus Flowers & Gifts,Nur Aisyah binte Kamal,admin@lotusflowersgifts.example.com,+65 9842 6561,Email
+C91182,T-13026,Ah Seng Consultancy Pte Ltd,Tay Mei Fen,admin@ahsengconsultancy.example.com,+65 9415 7293,Post
+C91196,T-13028,Tian Fu Beauty & Hair Pte Ltd,Sim Ah Hock,admin@tianfubeautyhair.example.com,+65 9514 3720,Post
+C91203,T-13029,Starlight Supermarket Pte Ltd,Tay Mei Fen,admin@starlightsupermark.example.com,+65 9898 1968,Post
+C91217,T-13031,Kopi Corner Clinic & Surgery Pte. Ltd.,Ang Bee Choo,admin@kopicornerclinicsu.example.com,+65 9382 5363,Email
+C91245,T-13035,Joo Chiat Kueh Corner Pte Ltd,Lakshmi d/o Krishnan,admin@joochiatkuehcorner.example.com,+65 9213 3015,Post
+C91266,T-13038,Starlight Dry Cleaners Pte Ltd,Kavitha Raj,admin@starlightdrycleane.example.com,+65 9551 4347,Email
+C91287,T-13041,Treasure Bakery Pte Ltd,Ho Siew Lan,admin@treasurebakery.example.com,+65 9477 2233,Post
+C91308,T-13044,Chop Wah Optical Pte Ltd,Chan Ah Hock,admin@chopwahoptical.example.com,+65 9860 8838,Post
+C91329,T-13047,Prima Beauty & Hair Pte Ltd,Ahmad bin Hassan,admin@primabeautyhair.example.com,+65 9854 7377,Post
+C91343,T-13049,Peng Kee Beauty & Hair Pte Ltd,Lee Chee Keong,admin@pengkeebeautyhair.example.com,+65 9816 1605,SMS
+C91371,T-13053,Orchid Stationery,Meena Pillai,admin@orchidstationery.example.com,+65 9215 3828,SMS
+C91399,T-13057,Blue Pearl Mart Pte Ltd,Low Kok Leong,admin@bluepearlmart.example.com,+65 9964 9736,SMS
+C91413,T-13059,Pinnacle Flowers & Gifts Pte Ltd,Anand Subramaniam,admin@pinnacleflowersgif.example.com,+65 9707 4762,Post
+C91427,T-13061,Jade Garden Snacks Pte Ltd,Hafiz bin Rahman,admin@jadegardensnacks.example.com,+65 9104 5599,Post
+C91455,T-13065,Swee Heng TCM Clinic,Toh Jun Jie,admin@sweehengtcmclinic.example.com,+65 9269 3240,SMS
+C91462,T-13066,Cosy Medical Clinic,Zainab binte Ali,admin@cosymedicalclinic.example.com,+65 9346 6511,Post
+C91490,T-13070,Orchid Medical Clinic,Koh Ah Hock,admin@orchidmedicalclini.example.com,+65 9965 1841,Email
+C91511,T-13073,Mei Ling Medical Supplies,Iskandar bin Yusof,admin@meilingmedicalsupp.example.com,+65 9794 1864,Post
+C91525,T-13075,Soon Hin Clinic & Surgery,Meena Pillai,admin@soonhinclinicsurge.example.com,+65 9170 4304,Email
+C91539,T-13077,Orchid Hair Studio Pte Ltd,Tan Ah Hock,admin@orchidhairstudio.example.com,+65 9369 7678,Post
+C91546,T-13078,Bayu Mobile Pte Ltd,Lakshmi d/o Krishnan,admin@bayumobile.example.com,+65 9923 7301,Email
+C91560,T-13080,Thye Hin Eye Centre Pte Ltd,Tay Boon Huat,admin@thyehineyecentre.example.com,+65 9780 3961,Post
+C91581,T-13083,Seri Murni Provision Shop,Tay Bee Choo,admin@serimurniprovision.example.com,+65 9565 4934,Email
+C91602,T-13086,Blue Pearl Hardware Pte Ltd,Siti Rohani binte Salleh,admin@bluepearlhardware.example.com,+65 9490 4347,Email
+C91609,T-13087,Nanyang Hair Salon,Toh Siew Lan,,+65 9904 1466,Email
+C91616,T-13088,Hup Seng Beauty & Hair,Ravi Shankar,admin@hupsengbeautyhair.example.com,+65 9547 3575,Post
+C91630,T-13090,Bright Path Medical Hall,Kavitha Raj,admin@brightpathmedicalh.example.com,+65 9278 5618,Post
+C91637,T-13091,KAMPUNG MART,Sim Li Ting,admin@kampungmart.example.com,+65 9785 5917,Email
+C91665,T-13095,Kopi Corner Money Changer,Low Teck Soon,admin@kopicornermoneycha.example.com,+65 9614 8699,Email
+C91679,T-13097,Unity Telecom,Meena Pillai,admin@unitytelecom.example.com,+65 9246 6631,Email
+C91700,T-13100,Mutiara Hardware & Electrical Pte Ltd,Suresh s/o Ramasamy,admin@mutiarahardwareele.example.com,+65 9208 7776,Post
+C91714,T-13102,Lotus Trading Pte Ltd,Toh Shu Fen,admin@lotustrading.example.com,+65 9990 3056,SMS
+C91728,T-13104,Seri Murni Tuition Centre Pte Ltd,Teo Siew Lan,admin@serimurnituitionce.example.com,+65 9526 2326,Email
+C91742,T-13106,Sin Hock Mart,Tay Hui Ling,admin@sinhockmart.example.com,+65 9312 6475,Post
+C91749,T-13107,WELLCARE MOBILE,Kavitha Raj,admin@wellcaremobile.example.com,+65 9959 7354,SMS
+C91756,T-13108,Evergreen Tuition Centre Pte Ltd,Goh Ah Hock,admin@evergreentuitionce.example.com,+65 9284 6694,Post
+C91777,T-13111,Nanyang TCM Clinic,Toh Pei Shan,,+65 9577 1278,Email
+C91791,T-13113,Soon Hin Hair Salon Pte Ltd,Ho Siew Lan,admin@soonhinhairsalon.example.com,+65 9848 5740,Post
+C91812,T-13116,Kampung Trading Pte Ltd,Rahim bin Osman,admin@kampungtrading.example.com,+65 9826 8282,Post
+C91833,T-13119,Seri Murni Supermarket Pte Ltd,Siti Rohani binte Salleh,admin@serimurnisupermark.example.com,+65 9771 3680,Email
+C91847,T-13121,Lotus Hardware & Electrical,Kavitha Raj,admin@lotushardwareelect.example.com,+65 9453 4242,Post
+C91882,T-13126,Everbright Trading Pte Ltd,Ravi Shankar,admin@everbrighttrading.example.com,+65 9173 9200,Post
+C91889,T-13127,Heng Ann Education Hub Pte Ltd,Ho Bee Choo,,+65 9374 2462,SMS
+C91910,T-13130,Starlight Provision Shop,Chan Shu Fen,admin@starlightprovision.example.com,+65 9934 1388,Email
+C91931,T-13133,Kumar Trading,Lakshmi d/o Krishnan,admin@kumartrading.example.com,+65 9648 8158,Email
+C91952,T-13136,SUNFLOWER KUEH CORNER,Ho Chee Keong,admin@sunflowerkuehcorne.example.com,+65 9313 6973,Email
+C91966,T-13138,Ah Seng Bubble Tea Pte Ltd,Nur Aisyah binte Kamal,admin@ahsengbubbletea.example.com,+65 9822 9700,Post
+C91973,T-13139,Bayu Clinic & Surgery,Arun Kumar,admin@bayuclinicsurgery.example.com,+65 9732 7994,Email
+C91980,T-13140,Chop Wah Clinic & Surgery Pte Ltd,Hafiz bin Rahman,admin@chopwahclinicsurge.example.com,+65 9470 7889,Email
+C92008,T-13144,Hometown Flowers & Gifts,Ahmad bin Hassan,admin@hometownflowersgif.example.com,+65 9614 8024,SMS
+C92022,T-13146,Bloom Clinic & Surgery,Teo Chee Keong,,+65 9114 2484,Email
+C92057,T-13151,GOLD COIN HARDWARE,Vijay Menon,admin@goldcoinhardware.example.com,+65 9207 4451,SMS
+C92064,T-13152,Ananda Mart Pte. Ltd.,Chan Boon Huat,admin@anandamart.example.com,+65 9745 2110,SMS
+C92078,T-13154,Wong's Medical Supplies,Wong Boon Huat,admin@wongsmedicalsuppli.example.com,+65 9164 3972,Post
+C92085,T-13155,Bright Path Accounting Services,Tay Bee Choo,admin@brightpathaccounti.example.com,+65 9137 7344,Post
+C92092,T-13156,Chop Wah Trading Pte Ltd,Low Chee Keong,admin@chopwahtrading.example.com,+65 9572 5698,Email
+C92113,T-13159,Unity Snacks,Ng Siew Lan,admin@unitysnacks.example.com,+65 9181 6336,Email
+C92134,T-13162,Raja Telecom,Ong Shu Fen,admin@rajatelecom.example.com,+65 9665 3208,Post
+C92141,T-13163,Lakshmi Supermarket,Tan Mei Fen,admin@lakshmisupermarket.example.com,+65 9487 8174,SMS
+C92162,T-13166,Pinnacle Bookstore Pte Ltd,Farah binte Ismail,admin@pinnaclebookstore.example.com,+65 9514 5617,Email
+C92183,T-13169,Peng Kee Bubble Tea Pte Ltd,Zainab binte Ali,admin@pengkeebubbletea.example.com,+65 9407 5868,SMS
+C92204,T-13172,Green Leaf Optical,Devi Nair,admin@greenleafoptical.example.com,+65 9355 4804,SMS
+C92218,T-13174,Hometown Bakery,Goh Hui Ling,admin@hometownbakery.example.com,+65 9365 8109,Email
+C92225,T-13175,Joo Chiat Supermarket,Chua Pei Shan,admin@joochiatsupermarke.example.com,+65 9691 3469,SMS
+C92239,T-13177,Raja Family Clinic Pte. Ltd.,Devi Nair,admin@rajafamilyclinic.example.com,+65 9753 3186,Post
+C92253,T-13179,Bayu Cake House,Zainab binte Ali,admin@bayucakehouse.example.com,+65 9580 8272,Post
+C92274,T-13182,Jade Garden Fruit Trading Pte Ltd,Sim Li Ting,admin@jadegardenfruittra.example.com,+65 9651 9680,Email
+C92295,T-13185,Mei Ling Cake House,Siti Rohani binte Salleh,admin@meilingcakehouse.example.com,+65 9898 7007,Email
+C92309,T-13187,Starlight Hair Salon,Yeo Wei Ming,admin@starlighthairsalon.example.com,+65 9636 9818,Email
+C92316,T-13188,Everbright TCM Clinic Pte Ltd,Yeo Wei Ming,admin@everbrighttcmclini.example.com,+65 9261 7457,Email
+C92330,T-13190,Gold Coin Minimart,Meena Pillai,admin@goldcoinminimart.example.com,+65 9824 4646,Email
+C92365,T-13195,Harmony Optical,Ng Boon Huat,,+65 9419 9635,Email
+C92386,T-13198,Evergreen Dental Care,Tay Li Ting,admin@evergreendentalcar.example.com,+65 9206 8244,Post
+C92414,T-13202,HAPPY PAWS TEA HOUSE,Goh Siew Lan,admin@happypawsteahouse.example.com,+65 9360 1229,SMS
+C92435,T-13205,Value Mart Pte Ltd,Ahmad bin Hassan,admin@valuemart.example.com,+65 9867 1498,Post
+C92449,T-13207,Kumar Eye Centre Pte Ltd,Arun Kumar,admin@kumareyecentre.example.com,+65 9811 3717,SMS
+C92470,T-13210,Al-Ameen Flowers & Gifts,Arun Kumar,admin@alameenflowersgift.example.com,+65 9540 3723,SMS
+C92491,T-13213,Bright Path Money Changer,Chia Jun Jie,admin@brightpathmoneycha.example.com,+65 9352 3765,Post
+C92505,T-13215,Thye Hin Minimart,Meena Pillai,admin@thyehinminimart.example.com,+65 9502 6812,SMS
+C92526,T-13218,Lakshmi Pet Shop Pte Ltd,Chan Pei Shan,admin@lakshmipetshop.example.com,+65 9669 7741,Email
+C92533,T-13219,Amanah Tea House,Vijay Menon,admin@amanahteahouse.example.com,+65 9208 6481,Email
+C92547,T-13221,Cosy Supermarket Pte Ltd,Teo Boon Huat,admin@cosysupermarket.example.com,+65 9590 5813,Post
+C92561,T-13223,Little Sprouts Mobile Pte Ltd,Tan Mei Fen,admin@littlesproutsmobil.example.com,+65 9708 4452,Email
+C92582,T-13226,Lim's Store Pte Ltd,Chua Kim Seng,admin@limsstore.example.com,+65 9511 1298,Post
+C92596,T-13228,Thye Hin Pharmacy Pte Ltd,Goh Ah Hock,admin@thyehinpharmacy.example.com,+65 9171 8535,SMS
+C92603,T-13229,Smart Kids Medical Hall,Hafiz bin Rahman,admin@smartkidsmedicalha.example.com,+65 9325 1187,Email
+C92624,T-13232,Ever Joy Tuition Centre,Ahmad bin Hassan,admin@everjoytuitioncent.example.com,+65 9360 9009,Email
+C92638,T-13234,Kian Huat Education Hub,Lim Chee Keong,admin@kianhuateducationh.example.com,+65 9929 2794,Email
+C92645,T-13235,Kampung Minimart,Hafiz bin Rahman,admin@kampungminimart.example.com,+65 9564 2119,Email
+C92666,T-13238,SURIA RESTAURANT PTE LTD,Lee Hui Ling,admin@suriarestaurant.example.com,+65 9650 6436,Email
+C92694,T-13242,Lim's Florist,Toh Jun Jie,,+65 9812 6696,SMS
+C92701,T-13243,Evergreen Clinic & Surgery,Tay Mei Fen,admin@evergreenclinicsur.example.com,+65 9428 7036,SMS
+C92722,T-13246,Prima Eye Centre Pte Ltd,Chia Bee Choo,admin@primaeyecentre.example.com,+65 9520 9586,Post
+C92736,T-13248,Harmony Hair Salon,Chong Shu Fen,admin@harmonyhairsalon.example.com,+65 9942 3444,Post
+C92750,T-13250,Chin Lee Dental Surgery,Zainab binte Ali,admin@chinleedentalsurge.example.com,+65 9956 4987,SMS
+C92771,T-13253,Tan Brothers TCM Clinic,Kavitha Raj,admin@tanbrotherstcmclin.example.com,+65 9431 4195,Email
+C92778,T-13254,Golden Leaf Trading Pte Ltd,Yeo Kim Seng,admin@goldenleaftrading.example.com,+65 9400 2981,Post
+C92785,T-13255,Raja Clinic & Surgery,Siti Rohani binte Salleh,admin@rajaclinicsurgery.example.com,+65 9318 6337,SMS
+C92799,T-13257,KAMPUNG FRUITS,Ng Bee Choo,admin@kampungfruits.example.com,+65 9507 3219,Email
+C92820,T-13260,Nanyang Telecom,Siti Rohani binte Salleh,admin@nanyangtelecom.example.com,+65 9914 6749,SMS
+C92841,T-13263,Evergreen Clinic & Surgery Pte Ltd,Teo Jun Jie,admin@evergreenclinicsur.example.com,+65 9432 4838,Post
+C92862,T-13266,RED LANTERN LAUNDRY PTE LTD,Ho Wei Ming,admin@redlanternlaundry.example.com,+65 9474 9154,Email
+C92883,T-13269,Ah Seng Learning Centre Pte Ltd,Ang Hui Ling,admin@ahsenglearningcent.example.com,+65 9594 8319,SMS
+C92897,T-13271,Tan Brothers Telecom Pte Ltd,Kavitha Raj,admin@tanbrotherstelecom.example.com,+65 9883 5115,Email
+C92904,T-13272,Sri Ganesh Pharmacy,Iskandar bin Yusof,admin@sriganeshpharmacy.example.com,+65 9485 2260,Post
+C92911,T-13273,Harmony Bakery Pte Ltd,Farah binte Ismail,,+65 9792 9356,Email
+C92932,T-13276,Wong's Aquarium & Pets Pte Ltd,Rahim bin Osman,admin@wongsaquariumpets.example.com,+65 9882 2956,Email
+C92946,T-13278,Sri Ganesh Store,Chua Siew Lan,,+65 9837 8079,SMS
+C92960,T-13280,Thye Hin Medical Hall,Chan Kok Leong,admin@thyehinmedicalhall.example.com,+65 9252 6680,Post
+C92981,T-13283,Swee Heng Education Hub Pte Ltd,Chong Kok Leong,admin@sweehengeducationh.example.com,+65 9329 2294,Email
+C92995,T-13285,LAKSHMI TUITION CENTRE,Ng Mei Fen,admin@lakshmituitioncent.example.com,+65 9688 6658,Post
+C93030,T-13290,Smart Kids Mart Pte Ltd,Ng Teck Soon,admin@smartkidsmart.example.com,+65 9987 6964,Post
+C93044,T-13292,Mutiara Cake House Pte Ltd,Rahim bin Osman,admin@mutiaracakehouse.example.com,+65 9754 8763,Email
+C93065,T-13295,Chop Wah Mobile Pte Ltd,Ong Bee Choo,admin@chopwahmobile.example.com,+65 9267 3275,Email
+C93086,T-13298,Mutiara Family Clinic,Arun Kumar,admin@mutiarafamilyclini.example.com,+65 9190 8444,SMS
+C93107,T-13301,Fresh Valley Telecom,Goh Jun Jie,admin@freshvalleytelecom.example.com,+65 9388 5042,SMS
+C93135,T-13305,Wellcare TCM Clinic Pte Ltd,Chan Mei Fen,admin@wellcaretcmclinic.example.com,+65 9277 7459,Post
+C93156,T-13308,Fresh Valley Bakery Pte Ltd,Chia Kok Leong,admin@freshvalleybakery.example.com,+65 9231 6899,Email
+C93177,T-13311,Kopi Corner Flowers & Gifts Pte Ltd,Ravi Shankar,admin@kopicornerflowersg.example.com,+65 9542 1570,Post
+C93184,T-13312,Fresh Valley Bubble Tea Pte Ltd,Norhayati binte Said,admin@freshvalleybubblet.example.com,+65 9477 9240,Email
+C93219,T-13317,Raja Fruits,Tay Mei Fen,admin@rajafruits.example.com,+65 9180 4683,SMS
+C93261,T-13323,Hassan Coffeeshop,Low Chee Keong,admin@hassancoffeeshop.example.com,+65 9257 3214,Post
+C93268,T-13324,Blue Pearl Provision Shop,Norhayati binte Said,admin@bluepearlprovision.example.com,+65 9286 6238,Email
+C93275,T-13325,TREASURE SUPERMARKET PTE LTD,Ahmad bin Hassan,admin@treasuresupermarke.example.com,+65 9108 1025,Email
+C93289,T-13327,Tan Brothers Eye Centre Pte Ltd,Goh Pei Shan,,+65 9877 4850,Post
+C93324,T-13332,Wong's Learning Centre,Ganesh Murugan,admin@wongslearningcentr.example.com,+65 9881 9151,Email
+C93331,T-13333,Chop Wah Telecom,Devi Nair,admin@chopwahtelecom.example.com,+65 9433 9716,Post
+C93352,T-13336,Bloom Fruits,Rahim bin Osman,admin@bloomfruits.example.com,+65 9374 7802,Email
+C93373,T-13339,Everbright Mobile Pte Ltd,Suresh s/o Ramasamy,admin@everbrightmobile.example.com,+65 9179 7370,Email
+C93415,T-13345,Kampung Kindergarten,Ho Bee Choo,admin@kampungkindergarte.example.com,+65 9469 5885,Email
+C93422,T-13346,Tan Brothers Medical Supplies,Devi Nair,admin@tanbrothersmedical.example.com,+65 9662 3999,Email
+C93436,T-13348,Seri Murni Minimart Pte Ltd,Ravi Shankar,admin@serimurniminimart.example.com,+65 9611 8897,Post
+C93471,T-13353,Lotus Hardware,Vijay Menon,admin@lotushardware.example.com,+65 9727 9156,Email
+C93499,T-13357,New Life Hardware & Electrical,Lim Teck Soon,admin@newlifehardwareele.example.com,+65 9423 7604,SMS
+C93513,T-13359,Old Town Optical,Ng Wei Ming,admin@oldtownoptical.example.com,+65 9669 7888,Email
+C93520,T-13360,Tan Brothers Childcare Pte Ltd,Hafiz bin Rahman,,+65 9298 7293,SMS
+C93534,T-13362,Smart Kids Stationery Pte Ltd,Nur Aisyah binte Kamal,admin@smartkidsstationer.example.com,+65 9151 6294,Post
+C93562,T-13366,Hup Seng Pharmacy,Koh Bee Choo,admin@hupsengpharmacy.example.com,+65 9546 6977,SMS
+C93576,T-13368,Sri Ganesh Minimart Pte Ltd,Rahim bin Osman,admin@sriganeshminimart.example.com,+65 9911 7394,Email
+C93590,T-13370,Fortune Kitchen,Toh Jun Jie,,+65 9555 7048,SMS
+C93611,T-13373,Value Hair Salon Pte Ltd,Sim Pei Shan,admin@valuehairsalon.example.com,+65 9848 4070,Email
+C93625,T-13375,Swee Heng Telecom Pte Ltd,Siti Rohani binte Salleh,admin@sweehengtelecom.example.com,+65 9383 5962,Email
+C93632,T-13376,Teck Guan Store Pte Ltd,Suresh s/o Ramasamy,admin@teckguanstore.example.com,+65 9342 4312,SMS
+C93653,T-13379,Old Town Laundry,Wong Shu Fen,admin@oldtownlaundry.example.com,+65 9513 1001,Post
+C93674,T-13382,New Life Hair Studio,Goh Bee Choo,admin@newlifehairstudio.example.com,+65 9148 8681,SMS
+C93688,T-13384,Chin Lee Learning Centre,Low Chee Keong,admin@chinleelearningcen.example.com,+65 9111 1905,Email
+C93695,T-13385,Wong's Eye Centre Pte Ltd,Suresh s/o Ramasamy,admin@wongseyecentre.example.com,+65 9117 8232,Email
+C93702,T-13386,RAJA REMITTANCE PTE LTD,Teo Li Ting,admin@rajaremittance.example.com,+65 9180 6754,Email
+C93723,T-13389,Tan Brothers Beauty & Hair,Vijay Menon,admin@tanbrothersbeautyh.example.com,+65 9606 6395,Post
+C93737,T-13391,Kumar Supermarket,Goh Pei Shan,admin@kumarsupermarket.example.com,+65 9720 7806,SMS
+C93744,T-13392,Brilliant Education Hub,Sim Kim Seng,admin@brillianteducation.example.com,+65 9395 3795,SMS
+C93765,T-13395,Cosy Family Clinic,Hafiz bin Rahman,admin@cosyfamilyclinic.example.com,+65 9553 3652,Email
+C93779,T-13397,SILVER MOON BEAUTY & HAIR,Ng Kim Seng,admin@silvermoonbeautyha.example.com,+65 9862 8240,Email
+C93793,T-13399,Cosy Education Hub Pte Ltd,Teo Kim Seng,admin@cosyeducationhub.example.com,+65 9558 3478,Email
+C93800,T-13400,Golden Leaf Dental Surgery Pte Ltd,Rahim bin Osman,admin@goldenleafdentalsu.example.com,+65 9219 7653,Post
+C93814,T-13402,Kian Huat Beauty & Hair,Ganesh Murugan,admin@kianhuatbeautyhair.example.com,+65 9908 6042,SMS
+C93835,T-13405,Jade Garden Hair Salon Pte. Ltd.,Ang Hui Ling,admin@jadegardenhairsalo.example.com,+65 9783 4014,Email
+C93842,T-13406,Tan Brothers Laundry Pte Ltd,Vijay Menon,admin@tanbrotherslaundry.example.com,+65 9527 9123,Email
+C93863,T-13409,Sin Hock Snacks,Vijay Menon,admin@sinhocksnacks.example.com,+65 9118 4765,Email
+C93870,T-13410,Chin Lee Mart,Ng Kok Leong,admin@chinleemart.example.com,+65 9531 2769,Email
+C93891,T-13413,Lim's Mart,Lim Boon Huat,admin@limsmart.example.com,+65 9617 8394,Email
+C93905,T-13415,Jade Garden Dental Surgery Pte Ltd,Lee Jun Jie,admin@jadegardendentalsu.example.com,+65 9189 7838,Email
+C93926,T-13418,Rainbow Beauty & Hair,Rahim bin Osman,admin@rainbowbeautyhair.example.com,+65 9188 2876,Email
+C93940,T-13420,Mei Ling Hair Studio Pte Ltd,Meena Pillai,admin@meilinghairstudio.example.com,+65 9708 7425,Email
+C93961,T-13423,Sejahtera Learning Centre Pte Ltd,Lim Chee Keong,admin@sejahteralearningc.example.com,+65 9997 9611,Email
+C93968,T-13424,Smart Kids Education Hub,Muhammad Firdaus,admin@smartkidseducation.example.com,+65 9262 8394,Email
+C93989,T-13427,Daily Fresh Minimart,Yeo Chee Keong,admin@dailyfreshminimart.example.com,+65 9823 8500,Email
+C94010,T-13430,Teck Guan Dental Care Pte Ltd,Low Kok Leong,admin@teckguandentalcare.example.com,+65 9616 5270,SMS
+C94031,T-13433,Mei Ling Kitchen,Ahmad bin Hassan,admin@meilingkitchen.example.com,+65 9506 3022,Email
+C94038,T-13434,Sejahtera Family Clinic Pte Ltd,Sim Mei Fen,admin@sejahterafamilycli.example.com,+65 9204 6224,Email
+C94045,T-13435,Kim Hiap TCM Clinic Pte Ltd,Meena Pillai,admin@kimhiaptcmclinic.example.com,+65 9657 2544,SMS
+C94052,T-13436,Golden Leaf Telecom,Wong Mei Fen,admin@goldenleaftelecom.example.com,+65 9161 5746,Email
+C94066,T-13438,Swee Heng Hair Salon,Tan Ah Hock,admin@sweehenghairsalon.example.com,+65 9729 9576,Email
+C94080,T-13440,Kopi Corner Stationery Pte Ltd,Sim Mei Fen,admin@kopicornerstatione.example.com,+65 9195 7411,Email
+C94101,T-13443,Chop Wah Hardware Pte Ltd,Muhammad Firdaus,admin@chopwahhardware.example.com,+65 9449 7408,Post
+C94129,T-13447,Harmony TCM Clinic Pte Ltd,Wong Kim Seng,admin@harmonytcmclinic.example.com,+65 9138 2837,Email
+C94143,T-13449,Thye Hin Provision Shop,Koh Siew Lan,admin@thyehinprovisionsh.example.com,+65 9565 9946,Email
+C94157,T-13451,MEI LING LEARNING CENTRE PTE LTD,Meena Pillai,admin@meilinglearningcen.example.com,+65 9468 6988,SMS
+C94171,T-13453,Mutiara TCM Clinic,Ahmad bin Hassan,admin@mutiaratcmclinic.example.com,+65 9155 4084,Email
+C94185,T-13455,Nur Accounting Services,Suresh s/o Ramasamy,admin@nuraccountingservi.example.com,+65 9312 2265,Post
+C94192,T-13456,Murugan Hardware Pte Ltd,Sim Kok Leong,admin@muruganhardware.example.com,+65 9107 2045,Email
+C94220,T-13460,Fortune Hardware & Electrical Pte Ltd,Tan Kok Leong,admin@fortunehardwareele.example.com,+65 9902 7166,Email
+C94248,T-13464,Ananda Minimart Pte Ltd,Ho Teck Soon,admin@anandaminimart.example.com,+65 9820 9586,Email
+C94269,T-13467,Bayu Bakery,Lee Teck Soon,admin@bayubakery.example.com,+65 9370 2514,Email
+C94276,T-13468,Teck Guan Money Changer Pte Ltd,Siti Rohani binte Salleh,admin@teckguanmoneychang.example.com,+65 9191 8561,Email
+C94297,T-13471,Tian Fu Kitchen Pte Ltd,Vijay Menon,admin@tianfukitchen.example.com,+65 9189 8455,Post
+C94311,T-13473,Little Sprouts Minimart Pte Ltd,Teo Jun Jie,admin@littlesproutsminim.example.com,+65 9840 1937,Email
+C94318,T-13474,Lotus Telecom,Lakshmi d/o Krishnan,admin@lotustelecom.example.com,+65 9999 8750,Post
+C94339,T-13477,Rainbow Mobile Pte Ltd,Tay Teck Soon,admin@rainbowmobile.example.com,+65 9860 2200,SMS
+C94346,T-13478,Happy Paws Education Hub Pte Ltd,Low Jun Jie,admin@happypawseducation.example.com,+65 9432 4085,Email
+C94360,T-13480,SIN HOCK FLOWERS & GIFTS PTE LTD,Rahim bin Osman,admin@sinhockflowersgift.example.com,+65 9807 4492,Email
+C94402,T-13486,Murugan Provision Shop Pte Ltd,Rahim bin Osman,admin@muruganprovisionsh.example.com,+65 9600 6020,Email
+C94423,T-13489,Ong & Sons Medical Hall Pte Ltd,Ahmad bin Hassan,admin@ongsonsmedicalhall.example.com,+65 9536 9224,Email
+C94430,T-13490,Treasure Provision Shop,Lakshmi d/o Krishnan,admin@treasureprovisions.example.com,+65 9736 7518,Email
+C94451,T-13493,Lakshmi Hardware,Arun Kumar,admin@lakshmihardware.example.com,+65 9643 5372,SMS
+C94458,T-13494,Sunflower Cake House Pte Ltd,Yeo Kok Leong,admin@sunflowercakehouse.example.com,+65 9761 1424,Email
+C94465,T-13495,Sunflower TCM Clinic Pte Ltd,Kavitha Raj,admin@sunflowertcmclinic.example.com,+65 9717 3286,Email
+C94472,T-13496,Phoenix Dry Cleaners Pte. Ltd.,Tan Pei Shan,admin@phoenixdrycleaners.example.com,+65 9971 6636,Email
+C94486,T-13498,Sunflower Florist Pte Ltd,Low Mei Fen,admin@sunflowerflorist.example.com,+65 9423 9059,SMS
+C94507,T-13501,Cahaya Supermarket,Anand Subramaniam,,+65 9805 9968,Email
+C94528,T-13504,Phoenix Confectionery Pte Ltd,Ong Mei Fen,admin@phoenixconfectione.example.com,+65 9741 2630,Email
+C94535,T-13505,Prima Family Clinic Pte Ltd,Lim Kok Leong,admin@primafamilyclinic.example.com,+65 9690 5569,Post
+C94556,T-13508,Value Provision Shop,Ng Ah Hock,admin@valueprovisionshop.example.com,+65 9243 7156,Email
+C94570,T-13510,Raja Clinic & Surgery Pte Ltd,Sim Kim Seng,admin@rajaclinicsurgery.example.com,+65 9103 4233,Email
+C94577,T-13511,Cahaya Optical Pte Ltd,Chan Ah Hock,admin@cahayaoptical.example.com,+65 9962 7000,Post
+C94584,T-13512,Lakshmi Money Changer,Goh Teck Soon,admin@lakshmimoneychange.example.com,+65 9840 2656,Post
+C94591,T-13513,HOMETOWN TUITION CENTRE,Arun Kumar,admin@hometowntuitioncen.example.com,+65 9597 6801,Post
+C94605,T-13515,Smart Kids Bakery,Lim Mei Fen,admin@smartkidsbakery.example.com,+65 9737 2264,Email
+C94612,T-13516,Fresh Valley Trading,Ng Ah Hock,admin@freshvalleytrading.example.com,+65 9559 5891,Post
+C94619,T-13517,Gold Coin Boba Bar,Nur Aisyah binte Kamal,admin@goldcoinbobabar.example.com,+65 9739 2960,Post
+C94633,T-13519,New Life Clinic & Surgery,Devi Nair,admin@newlifeclinicsurge.example.com,+65 9650 2617,SMS
+C94654,T-13522,Little Sprouts Trading Pte Ltd,Kavitha Raj,admin@littlesproutstradi.example.com,+65 9944 8327,Email
+C94675,T-13525,Happy Paws Mobile,Yeo Boon Huat,admin@happypawsmobile.example.com,+65 9715 4976,Email
+C94682,T-13526,Ananda TCM Clinic Pte Ltd,Lee Pei Shan,admin@anandatcmclinic.example.com,+65 9543 6887,SMS
+C94696,T-13528,Mutiara Restaurant Pte Ltd,Ang Jun Jie,admin@mutiararestaurant.example.com,+65 9494 9657,Email
+C94703,T-13529,Hup Seng Mart Pte Ltd,Vijay Menon,admin@hupsengmart.example.com,+65 9581 6429,Email
+C94724,T-13532,Barakah Eye Centre,Chua Hui Ling,admin@barakaheyecentre.example.com,+65 9549 2157,SMS
+C94731,T-13533,Lucky Star Childcare,Siti Rohani binte Salleh,admin@luckystarchildcare.example.com,+65 9511 8730,Email
+C94745,T-13535,Thye Hin Tuition Centre Pte Ltd,Toh Li Ting,admin@thyehintuitioncent.example.com,+65 9799 6051,Post
+C94773,T-13539,Peng Kee Minimart,Iskandar bin Yusof,admin@pengkeeminimart.example.com,+65 9361 7638,Email
+C94794,T-13542,Brilliant Mobile,Farah binte Ismail,admin@brilliantmobile.example.com,+65 9974 8700,SMS
+C94801,T-13543,HOMETOWN STORE PTE LTD,Ho Ah Hock,admin@hometownstore.example.com,+65 9509 1939,Post
+C94822,T-13546,Siva Hair Studio Pte Ltd,Kavitha Raj,admin@sivahairstudio.example.com,+65 9912 6816,SMS
+C94843,T-13549,SOON HIN CONFECTIONERY PTE LTD,Kavitha Raj,admin@soonhinconfectione.example.com,+65 9944 2818,Email
+C94864,T-13552,Sejahtera Supermarket,Tay Mei Fen,admin@sejahterasupermark.example.com,+65 9806 5448,Email
+C94878,T-13554,Bayu Remittance,Low Kok Leong,admin@bayuremittance.example.com,+65 9823 3341,Post
+C94899,T-13557,Ever Joy Education Hub,Arun Kumar,admin@everjoyeducationhu.example.com,+65 9936 7604,Email
+C94920,T-13560,Starlight Laundry,Tan Pei Shan,admin@starlightlaundry.example.com,+65 9922 3844,Email
+C94941,T-13563,Rainbow Provision Shop Pte Ltd,Toh Hui Ling,admin@rainbowprovisionsh.example.com,+65 9872 6044,Email
+C94976,T-13568,SURIA BOOKSTORE PTE LTD,Ang Hui Ling,admin@suriabookstore.example.com,+65 9248 1450,Email
+C94997,T-13571,LIM'S HAIR SALON PTE LTD,Ravi Shankar,admin@limshairsalon.example.com,+65 9791 4404,Email
+C95018,T-13574,Cosy Dental Surgery Pte Ltd,Nur Aisyah binte Kamal,admin@cosydentalsurgery.example.com,+65 9663 6316,Post
+C95032,T-13576,Bright Path Laundry,Lee Ah Hock,admin@brightpathlaundry.example.com,+65 9147 6406,Email
+C95060,T-13580,Brilliant Money Changer,Chia Hui Ling,,+65 9118 8259,Email
+C95074,T-13582,Hup Seng Remittance,Teo Bee Choo,admin@hupsengremittance.example.com,+65 9781 9417,Email
+C95088,T-13584,Silver Moon Supermarket Pte Ltd,Arun Kumar,admin@silvermoonsupermar.example.com,+65 9548 9668,SMS
+C95109,T-13587,Lucky Star Supermarket,Kavitha Raj,admin@luckystarsupermark.example.com,+65 9295 2511,Email
+C95116,T-13588,Fortune Education Hub,Siti Rohani binte Salleh,admin@fortuneeducationhu.example.com,+65 9776 5741,Email
+C95144,T-13592,Wisdom Minimart Pte Ltd,Chan Pei Shan,admin@wisdomminimart.example.com,+65 9165 1506,SMS
+C95165,T-13595,Chin Lee Remittance,Chia Kim Seng,admin@chinleeremittance.example.com,+65 9983 5489,Email
+C95200,T-13600,Smart Kids Bubble Tea,Toh Kok Leong,admin@smartkidsbubbletea.example.com,+65 9211 2897,Email
+C95221,T-13603,Golden Leaf Learning Centre,Zainab binte Ali,admin@goldenleaflearning.example.com,+65 9143 3791,SMS
+C95235,T-13605,Amanah Hair Studio Pte Ltd,Tay Kim Seng,admin@amanahhairstudio.example.com,+65 9622 5129,Email
+C95249,T-13607,HOMETOWN TEA HOUSE PTE LTD,Sim Hui Ling,admin@hometownteahouse.example.com,+65 9536 6897,Email
+C95270,T-13610,Swee Heng Optical Pte Ltd,Lee Shu Fen,admin@sweehengoptical.example.com,+65 9875 2816,Post
+C95305,T-13615,Kampung Learning Centre,Ng Jun Jie,admin@kampunglearningcen.example.com,+65 9750 3474,SMS
+C95326,T-13618,Cahaya Family Clinic Pte Ltd,Chan Kim Seng,admin@cahayafamilyclinic.example.com,+65 9794 2675,Email
+C95347,T-13621,Old Town Bakery Pte Ltd,Zainab binte Ali,admin@oldtownbakery.example.com,+65 9162 9718,Email
+C95368,T-13624,Orchid Supermarket Pte Ltd,Chua Bee Choo,admin@orchidsupermarket.example.com,+65 9480 6522,Email
+C95382,T-13626,Unity Mobile Pte Ltd,Chong Ah Hock,admin@unitymobile.example.com,+65 9980 7497,Email
+C95389,T-13627,Rainbow Family Clinic,Chan Siew Lan,admin@rainbowfamilyclini.example.com,+65 9120 7344,SMS
+C95417,T-13631,Nur Florist Pte Ltd,Tay Wei Ming,admin@nurflorist.example.com,+65 9813 9134,Post
+C95438,T-13634,Siva Restaurant,Sim Pei Shan,admin@sivarestaurant.example.com,+65 9369 8698,SMS
+C95445,T-13635,Prima Flowers & Gifts,Ng Teck Soon,admin@primaflowersgifts.example.com,+65 9435 9043,Email
+C95452,T-13636,Sin Hock Medical Clinic,Lee Siew Lan,admin@sinhockmedicalclin.example.com,+65 9219 4088,Email
+C95480,T-13640,Lucky Star Telecom,Tay Li Ting,admin@luckystartelecom.example.com,+65 9321 3523,SMS
+C95515,T-13645,LUCKY STAR MONEY CHANGER PTE LTD,Lakshmi d/o Krishnan,admin@luckystarmoneychan.example.com,+65 9310 5867,Email
+C95543,T-13649,Unity Supermarket Pte Ltd,Lakshmi d/o Krishnan,admin@unitysupermarket.example.com,+65 9732 8846,Email
+C95550,T-13650,HAPPY PAWS BAKERY,Chua Shu Fen,admin@happypawsbakery.example.com,+65 9746 4920,Email
+C95557,T-13651,Old Town Mart,Ho Wei Ming,admin@oldtownmart.example.com,+65 9256 7368,SMS
+C95599,T-13657,Old Town Learning Centre Pte Ltd,Ho Siew Lan,admin@oldtownlearningcen.example.com,+65 9809 7490,Post
+C95655,T-13665,Kumar TCM Clinic,Vijay Menon,admin@kumartcmclinic.example.com,+65 9361 7823,Email
+C95662,T-13666,Jade Garden Tea House Pte Ltd,Iskandar bin Yusof,admin@jadegardenteahouse.example.com,+65 9844 7799,Post
+C95676,T-13668,Ever Joy TCM Clinic,Wong Teck Soon,admin@everjoytcmclinic.example.com,+65 9822 4951,Email
+C95683,T-13669,Amanah Bubble Tea,Nur Aisyah binte Kamal,admin@amanahbubbletea.example.com,+65 9550 4281,Email
+C95704,T-13672,Mutiara Eye Centre,Vijay Menon,admin@mutiaraeyecentre.example.com,+65 9510 5146,Email
+C95718,T-13674,HUP SENG KITCHEN,Teo Chee Keong,admin@hupsengkitchen.example.com,+65 9565 3859,SMS
+C95739,T-13677,Ah Seng TCM Clinic Pte Ltd,Chua Chee Keong,admin@ahsengtcmclinic.example.com,+65 9834 4823,Email
+C95767,T-13681,Murugan Medical Supplies Pte Ltd,Sim Wei Ming,admin@muruganmedicalsupp.example.com,+65 9305 9038,SMS
+C95781,T-13683,MURUGAN MONEY CHANGER PTE LTD,Lee Kok Leong,admin@muruganmoneychange.example.com,+65 9982 5675,Post
+C95788,T-13684,Treasure Minimart Pte Ltd,Yeo Siew Lan,admin@treasureminimart.example.com,+65 9993 6293,Email
+C95795,T-13685,Pinnacle Education Hub,Low Shu Fen,admin@pinnacleeducationh.example.com,+65 9807 3560,SMS
+C95816,T-13688,New Life Store,Goh Wei Ming,admin@newlifestore.example.com,+65 9261 2785,Email
+C95823,T-13689,Hometown Eating Place,Lakshmi d/o Krishnan,admin@hometowneatingplac.example.com,+65 9318 5142,Email
+C95837,T-13691,SILVER MOON AGENCY,Tay Siew Lan,admin@silvermoonagency.example.com,+65 9789 6834,Post
+C95858,T-13694,Red Lantern Stationery Pte Ltd,Vijay Menon,admin@redlanternstatione.example.com,+65 9610 6625,Post
+C95879,T-13697,Phoenix Provision Shop Pte Ltd,Zainab binte Ali,admin@phoenixprovisionsh.example.com,+65 9855 3698,SMS
+C95914,T-13702,Mei Ling Medical Hall,Lim Jun Jie,admin@meilingmedicalhall.example.com,+65 9232 5289,Email
+C95935,T-13705,Daily Fresh Dental Care,Tan Ah Hock,admin@dailyfreshdentalca.example.com,+65 9911 2220,SMS
+C95956,T-13708,Cosy Dental Care Pte Ltd,Chia Bee Choo,admin@cosydentalcare.example.com,+65 9391 9449,Email
+C95977,T-13711,Sunflower Telecom,Chan Mei Fen,admin@sunflowertelecom.example.com,+65 9459 7207,Email
+C95991,T-13713,Bayu Learning Centre,Chia Boon Huat,admin@bayulearningcentre.example.com,+65 9430 8369,Email
+C96012,T-13716,Barakah Provision Shop,Siti Rohani binte Salleh,admin@barakahprovisionsh.example.com,+65 9415 3493,Post
+C96019,T-13717,Red Lantern Florist Pte Ltd,Tan Boon Huat,admin@redlanternflorist.example.com,+65 9494 4560,Post
+C96033,T-13719,Blue Pearl Clinic & Surgery,Chua Bee Choo,admin@bluepearlclinicsur.example.com,+65 9610 9104,Email
+C96054,T-13722,Hock Lee Flowers & Gifts Pte Ltd,Chong Chee Keong,admin@hockleeflowersgift.example.com,+65 9619 6936,Email
+C96075,T-13725,Gold Coin Dry Cleaners Pte Ltd,Sim Pei Shan,admin@goldcoindrycleaner.example.com,+65 9469 6431,Email
+C96096,T-13728,Golden Leaf Florist Pte Ltd,Chia Kim Seng,admin@goldenleafflorist.example.com,+65 9936 9549,Email
+C96124,T-13732,Prima Dental Care Pte Ltd,Dr Kavitha Raj,hello@primadental.example.com,+65 9725 8794,Email
+C99871,,Kim Hiap Trading Pte. Ltd.,Ahmad bin Hassan,kimhiap.trading@example.com,+65 9950 9875,SMS

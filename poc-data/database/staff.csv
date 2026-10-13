@@ -1,0 +1,13 @@
+staff_id,name,title,dept,email,phone
+S01,Tan Wei Ling,"Director, Properties & Land Group",PLG Directorate,tan.weiling@heb.example.org,+65 6100 2001
+S02,Rajesh Pillai,"Deputy Director, Leasing Policy & Planning",Leasing Policy & Planning,rajesh.pillai@heb.example.org,+65 6100 2014
+S03,Nurul Huda Rahman,"Senior Manager, Tenancy Management",Tenancy Management,nurul.huda@heb.example.org,+65 6100 2032
+S04,Marcus Lim,Estate Manager (East),Estate Management,marcus.lim@heb.example.org,+65 6100 2047
+S05,Siti Aishah Yusof,Leasing Officer,Tenancy Management,siti.aishah@heb.example.org,+65 6100 2058
+S06,Daniel Ong,Property Officer (Inspections),Estate Management,daniel.ong@heb.example.org,+65 6100 2063
+S07,Priya Menon,"Manager, Finance & Arrears",Finance & Arrears,priya.menon@heb.example.org,+65 6100 2071
+S08,Kelvin Goh,"Data Analyst, Ops Analytics",Ops Analytics,kelvin.goh@heb.example.org,+65 6100 2086
+S09,Joanne Teo,Legal Counsel,Legal,joanne.teo@heb.example.org,+65 6100 2090
+S10,Ahmad Faizal Ismail,Maintenance Coordinator (i-EMS),Estate Management,ahmad.faizal@heb.example.org,+65 6100 2104
+S11,Grace Chua,Customer Relations Officer,Customer Relations,grace.chua@heb.example.org,+65 6100 2112
+S12,Benjamin Ho,Estate Manager (West),Estate Management,benjamin.ho@heb.example.org,+65 6100 2125

@@ -1,0 +1,26 @@
+trade,trade_group,allowed_unit_types
+Minimart,Daily Necessities,Shop|Shop with Living Quarters
+Provision Shop,Daily Necessities,Shop|Shop with Living Quarters
+Hair Salon,Personal Services,Shop
+Bakery & Confectionery,Food & Beverage,Shop
+GP Clinic,Healthcare,Shop|Office
+Dental Clinic,Healthcare,Shop|Office
+TCM Clinic,Healthcare,Shop|Office
+Pharmacy,Healthcare,Shop
+Tuition Centre,Education,Office|Shop
+Laundry,Personal Services,Shop
+Florist,Retail,Shop|Kiosk
+Optical,Retail,Shop
+Mobile Phone & Accessories,Retail,Shop|Kiosk
+Hardware,Retail,Shop|Shop with Living Quarters
+Stationery & Books,Retail,Shop
+Bubble Tea,Food & Beverage,Shop|Kiosk
+Restaurant,Food & Beverage,Shop
+Childcare Centre,Education,Office
+Remittance & Money Changer,Financial Services,Kiosk|Shop
+Pet Shop,Retail,Shop
+Key Cutting & Shoe Repair,Personal Services,Kiosk
+Snack Kiosk,Food & Beverage,Kiosk
+Professional Services Office,Professional Services,Office
+Fruit Shop,Daily Necessities,Shop|Kiosk
+Coffeeshop,Food & Beverage,Eating House

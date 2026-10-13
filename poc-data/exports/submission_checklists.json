@@ -1,0 +1,173 @@
+{
+  "version": "2026.1",
+  "owner": "Tenancy Management",
+  "effective": "2026-01-01",
+  "checklists": {
+    "NEW_TENANCY": {
+      "label": "New Tenancy",
+      "documents": [
+        {
+          "code": "LOA",
+          "description": "Signed acceptance of Letter of Offer",
+          "mandatory": true
+        },
+        {
+          "code": "BIZ",
+          "description": "Business profile (company registry extract, < 3 months old)",
+          "mandatory": true
+        },
+        {
+          "code": "NRIC",
+          "description": "Identity document of sole proprietor / director (masked copy)",
+          "mandatory": true
+        },
+        {
+          "code": "DEP",
+          "description": "Proof of security deposit payment (3 months' rent)",
+          "mandatory": true
+        },
+        {
+          "code": "GIRO",
+          "description": "GIRO authorisation form for monthly rent",
+          "mandatory": true
+        },
+        {
+          "code": "INS",
+          "description": "Public liability insurance certificate (min S$1,000,000)",
+          "mandatory": true
+        },
+        {
+          "code": "LIC",
+          "description": "Trade licence or licence application (food, healthcare, childcare trades)",
+          "mandatory": false
+        }
+      ]
+    },
+    "RENEWAL": {
+      "label": "Tenancy Renewal",
+      "documents": [
+        {
+          "code": "REN",
+          "description": "Tenancy renewal application form",
+          "mandatory": true
+        },
+        {
+          "code": "BIZ",
+          "description": "Business profile (company registry extract, < 3 months old)",
+          "mandatory": true
+        },
+        {
+          "code": "INS",
+          "description": "Valid public liability insurance certificate covering the new term",
+          "mandatory": true
+        },
+        {
+          "code": "GIRO",
+          "description": "GIRO authorisation form (only if bank account changed)",
+          "mandatory": false
+        }
+      ]
+    },
+    "ASSIGNMENT": {
+      "label": "Assignment of Tenancy",
+      "documents": [
+        {
+          "code": "ASG",
+          "description": "Application for assignment of tenancy",
+          "mandatory": true
+        },
+        {
+          "code": "BIZ",
+          "description": "Business profile of assignor",
+          "mandatory": true
+        },
+        {
+          "code": "BIZ2",
+          "description": "Business profile of assignee",
+          "mandatory": true
+        },
+        {
+          "code": "NRIC",
+          "description": "Identity document of assignee director (masked copy)",
+          "mandatory": true
+        },
+        {
+          "code": "FEE",
+          "description": "Proof of assignment fee payment",
+          "mandatory": true
+        },
+        {
+          "code": "INS",
+          "description": "Assignee public liability insurance certificate",
+          "mandatory": true
+        }
+      ]
+    },
+    "CHANGE_OF_TRADE": {
+      "label": "Change of Trade",
+      "documents": [
+        {
+          "code": "COT",
+          "description": "Application for change / addition of trade",
+          "mandatory": true
+        },
+        {
+          "code": "PLAN",
+          "description": "Business plan for proposed trade",
+          "mandatory": true
+        },
+        {
+          "code": "LAYOUT",
+          "description": "Proposed floor layout plan",
+          "mandatory": true
+        },
+        {
+          "code": "LIC",
+          "description": "Trade licence application or approval (if regulated trade)",
+          "mandatory": false
+        }
+      ]
+    },
+    "ALTERATION": {
+      "label": "Alteration & Addition Works",
+      "documents": [
+        {
+          "code": "AA",
+          "description": "Application for alteration & addition (A&A) works",
+          "mandatory": true
+        },
+        {
+          "code": "DWG",
+          "description": "Layout and elevation drawings",
+          "mandatory": true
+        },
+        {
+          "code": "CON",
+          "description": "Contractor's registration certificate",
+          "mandatory": true
+        },
+        {
+          "code": "PE",
+          "description": "Professional Engineer endorsement (structural works only)",
+          "mandatory": false
+        },
+        {
+          "code": "MS",
+          "description": "Method statement and work schedule",
+          "mandatory": true
+        },
+        {
+          "code": "INS",
+          "description": "Contractor's all-risk insurance certificate",
+          "mandatory": true
+        }
+      ]
+    }
+  },
+  "rules": [
+    "Business profile must be dated within 3 months of submission.",
+    "Insurance certificate must cover the whole tenancy term (or the A&A works period).",
+    "Documents must name the correct unit address/unit ID.",
+    "Illegible scans are treated as not submitted."
+  ]
+}

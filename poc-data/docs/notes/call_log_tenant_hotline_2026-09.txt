@@ -1,0 +1,17 @@
+PLG TENANT HOTLINE - CALL LOG SEPTEMBER 2026 (transcribed from call system notes)
+==============================================================================
+date       time   officer  caller                         summary
+------------------------------------------------------------------------------
+2026-09-01 09:14  S11      resident (anon)                complained abt rats near Blk 3xx KR bins. advised to submit via CityFix. created FB case.
+2026-09-02 10:02  S05      Ong Bee Choo (Golden Leaf)     asked if can pay arrears by instalment 6 mths. told to put in writing, F&A will assess.
+2026-09-03 15:40  S11      tenant (hair salon RH)         asked if 1.0m display applies to void deck - told NO, NC only.
+2026-09-08 11:21  S05      Dr Kavitha Raj (Prima Dental)  insurance cert emailed? not recvd yet. GIRO form still pending at bank.
+2026-09-10 16:05  S11      MP office                      MP letter re: noise from karaoke at Blk 5xx ST. escalated to Nurul. reply within 5 working days.
+2026-09-12 09:30  S03      Lumina Valuers                 valuation for KR clinic renewal ready next wk.
+2026-09-15 14:47  S05      Dr Lim Kok Leong (Wellcare)    asked abt renewal lead time - siti said 3 mths ok (!!). see email.
+2026-09-18 10:12  S11      resident                       compliment for i-EMS fast fix at Blk 214. no action.
+2026-09-22 13:55  S07      tenant (minimart CD)           GIRO failed due to bank acct closure. sent new GIRO form.
+2026-09-24 17:20  S11      unknown                        caller asked for list of all tenants' contact numbers - REFUSED, PDPA.
+2026-09-29 08:45  S10      Sunrise M&E                    power trip at Blk 1xx CD row of shops, attending.
+------------------------------------------------------------------------------
+total calls logged: 11 (sample only - full log in CRM)

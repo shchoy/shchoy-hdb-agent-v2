@@ -1,0 +1,122 @@
+[
+  {
+    "id": "S01",
+    "name": "Tan Wei Ling",
+    "first": "Wei Ling",
+    "title": "Director, Properties & Land Group",
+    "dept": "PLG Directorate",
+    "style": "formal",
+    "email": "tan.weiling@heb.example.org",
+    "phone": "+65 6100 2001"
+  },
+  {
+    "id": "S02",
+    "name": "Rajesh Pillai",
+    "first": "Rajesh",
+    "title": "Deputy Director, Leasing Policy & Planning",
+    "dept": "Leasing Policy & Planning",
+    "style": "formal",
+    "email": "rajesh.pillai@heb.example.org",
+    "phone": "+65 6100 2014"
+  },
+  {
+    "id": "S03",
+    "name": "Nurul Huda Rahman",
+    "first": "Nurul",
+    "title": "Senior Manager, Tenancy Management",
+    "dept": "Tenancy Management",
+    "style": "chatty",
+    "email": "nurul.huda@heb.example.org",
+    "phone": "+65 6100 2032"
+  },
+  {
+    "id": "S04",
+    "name": "Marcus Lim",
+    "first": "Marcus",
+    "title": "Estate Manager (East)",
+    "dept": "Estate Management",
+    "style": "terse",
+    "email": "marcus.lim@heb.example.org",
+    "phone": "+65 6100 2047"
+  },
+  {
+    "id": "S05",
+    "name": "Siti Aishah Yusof",
+    "first": "Siti",
+    "title": "Leasing Officer",
+    "dept": "Tenancy Management",
+    "style": "chatty",
+    "email": "siti.aishah@heb.example.org",
+    "phone": "+65 6100 2058"
+  },
+  {
+    "id": "S06",
+    "name": "Daniel Ong",
+    "first": "Daniel",
+    "title": "Property Officer (Inspections)",
+    "dept": "Estate Management",
+    "style": "terse",
+    "email": "daniel.ong@heb.example.org",
+    "phone": "+65 6100 2063"
+  },
+  {
+    "id": "S07",
+    "name": "Priya Menon",
+    "first": "Priya",
+    "title": "Manager, Finance & Arrears",
+    "dept": "Finance & Arrears",
+    "style": "formal",
+    "email": "priya.menon@heb.example.org",
+    "phone": "+65 6100 2071"
+  },
+  {
+    "id": "S08",
+    "name": "Kelvin Goh",
+    "first": "Kelvin",
+    "title": "Data Analyst, Ops Analytics",
+    "dept": "Ops Analytics",
+    "style": "terse",
+    "email": "kelvin.goh@heb.example.org",
+    "phone": "+65 6100 2086"
+  },
+  {
+    "id": "S09",
+    "name": "Joanne Teo",
+    "first": "Joanne",
+    "title": "Legal Counsel",
+    "dept": "Legal",
+    "style": "formal",
+    "email": "joanne.teo@heb.example.org",
+    "phone": "+65 6100 2090"
+  },
+  {
+    "id": "S10",
+    "name": "Ahmad Faizal Ismail",
+    "first": "Faizal",
+    "title": "Maintenance Coordinator (i-EMS)",
+    "dept": "Estate Management",
+    "style": "terse",
+    "email": "ahmad.faizal@heb.example.org",
+    "phone": "+65 6100 2104"
+  },
+  {
+    "id": "S11",
+    "name": "Grace Chua",
+    "first": "Grace",
+    "title": "Customer Relations Officer",
+    "dept": "Customer Relations",
+    "style": "chatty",
+    "email": "grace.chua@heb.example.org",
+    "phone": "+65 6100 2112"
+  },
+  {
+    "id": "S12",
+    "name": "Benjamin Ho",
+    "first": "Benjamin",
+    "title": "Estate Manager (West)",
+    "dept": "Estate Management",
+    "style": "semi-formal",
+    "email": "benjamin.ho@heb.example.org",
+    "phone": "+65 6100 2125"
+  }
+]

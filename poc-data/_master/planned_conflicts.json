@@ -1,0 +1,44 @@
+[
+  {
+    "id": "C1",
+    "topic": "Letter of demand trigger for rental arrears",
+    "a": "PLG-POL-003 Rental Arrears Management Policy v2.0 (effective 2026-04-01): LOD at 60 days overdue",
+    "b": "PLG-SOP-014 Rental Arrears Recovery SOP v1.2 (2025-06-02): LOD at 45 days overdue",
+    "resolution": "Policy v2.0 prevails; SOP v1.2 was not updated after the policy revision (flagged in Internal Audit finding IA-04)."
+  },
+  {
+    "id": "C2",
+    "topic": "Security deposit amount",
+    "a": "PLG-POL-002 Tenancy Renewal & Security Deposit Policy v2.1: 3 months' rent",
+    "b": "Tenant FAQ (Commercial Tenants) 2025 edition, Q7: 2 months' rent",
+    "resolution": "Policy prevails (3 months). FAQ is outdated."
+  },
+  {
+    "id": "C3",
+    "topic": "Lead time to apply for tenancy renewal",
+    "a": "PLG-POL-002 v2.1 cl. 4.2: at least 6 months before expiry",
+    "b": "onboarding_guide_new_officers.md and Siti's email reply to Wellcare Family Clinic: 3 months",
+    "resolution": "Policy prevails (6 months)."
+  },
+  {
+    "id": "C4",
+    "topic": "Number of vacant units as at 31 Aug 2026",
+    "a": "Vacancy_Report_Aug2026.xlsx and Monthly Operations Report Aug 2026: 47 vacant units",
+    "b": "PLG_QBR_Q3_2026.pptx slide 4: 52 vacant units",
+    "resolution": "Both are arithmetically correct; the QBR uses the pre-April definition that counts units under tender (5). Current definition (minutes of 15 Apr 2026, glossary) excludes them, so 47."
+  },
+  {
+    "id": "C5",
+    "topic": "Permitted display area beyond shopfront",
+    "a": "PLG-POL-001 Trade Mix & Usage Policy v3.0 cl. 7.3: 0.6 m",
+    "b": "PLG Circular 07/2026 (effective 2026-08-01): 1.0 m (NCs only, max 50% of frontage)",
+    "resolution": "Circular 07/2026 supersedes cl. 7.3 for NC units from 1 Aug 2026; 0.6 m still applies to void-deck shops."
+  },
+  {
+    "id": "C6",
+    "topic": "Monthly rent of Heng Ann Confectionery tenancy",
+    "a": "Scanned tenancy agreement (PDF): S$4,580 per month",
+    "b": "PLG Records database tenancies table and rent roll: S$4,850 per month",
+    "resolution": "Data-entry transposition in PLG Records; agreement is the legal source. Invoices have been over-billed by S$270/month."
+  }
+]

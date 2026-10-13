@@ -1,0 +1,250 @@
+{
+  "taxonomy": [
+    {
+      "code": "STR",
+      "category": "Structural",
+      "examples": "spalling concrete, cracks in beams/columns/walls, falling plaster",
+      "team": "Civil & Structural",
+      "vendor": "Kemas Building Works Pte Ltd",
+      "default_severity": "High",
+      "iems": true
+    },
+    {
+      "code": "SEP",
+      "category": "Water Seepage / Leak",
+      "examples": "ceiling leak, wall seepage, leaking roof slab",
+      "team": "Civil & Structural",
+      "vendor": "Kemas Building Works Pte Ltd",
+      "default_severity": "Medium",
+      "iems": true
+    },
+    {
+      "code": "PLB",
+      "category": "Plumbing & Sanitary",
+      "examples": "choked floor trap, burst pipe, overflowing grease interceptor (common)",
+      "team": "M&E",
+      "vendor": "Sunrise M&E Services Pte Ltd",
+      "default_severity": "Medium",
+      "iems": true
+    },
+    {
+      "code": "ELE",
+      "category": "Electrical",
+      "examples": "power trip, exposed wiring, faulty common corridor lighting at shopfront",
+      "team": "M&E",
+      "vendor": "Sunrise M&E Services Pte Ltd",
+      "default_severity": "High",
+      "iems": true
+    },
+    {
+      "code": "FIR",
+      "category": "Fire Safety",
+      "examples": "blocked fire exit, fire incident, missing hose reel cover",
+      "team": "Estate Compliance",
+      "vendor": "",
+      "default_severity": "Critical",
+      "iems": true
+    },
+    {
+      "code": "PST",
+      "category": "Pest",
+      "examples": "rats, cockroach infestation, termites",
+      "team": "Pest Control",
+      "vendor": "PestAway Solutions",
+      "default_severity": "Medium",
+      "iems": true
+    },
+    {
+      "code": "HYG",
+      "category": "Hygiene (Tenant)",
+      "examples": "grease smell, refuse left outside shop, dirty shopfront",
+      "team": "Estate Compliance",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    },
+    {
+      "code": "ENC",
+      "category": "Obstruction / Encroachment",
+      "examples": "goods displayed beyond permitted area, tables blocking walkway",
+      "team": "Estate Compliance",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    },
+    {
+      "code": "NOI",
+      "category": "Noise / Nuisance",
+      "examples": "late-night operations, loud music, karaoke",
+      "team": "Estate Compliance",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    },
+    {
+      "code": "CMN",
+      "category": "Common Area (Town Council)",
+      "examples": "corridor lighting, common area cleanliness, lift lobby",
+      "team": "Town Council Liaison",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    },
+    {
+      "code": "OTH",
+      "category": "General Enquiry / Non-defect",
+      "examples": "rental enquiry, compliment, tender enquiry",
+      "team": "Customer Relations",
+      "vendor": "",
+      "default_severity": "Low",
+      "iems": false
+    }
+  ],
+  "checklists": {
+    "NEW_TENANCY": [
+      [
+        "LOA",
+        "Signed acceptance of Letter of Offer",
+        true
+      ],
+      [
+        "BIZ",
+        "Business profile (company registry extract, < 3 months old)",
+        true
+      ],
+      [
+        "NRIC",
+        "Identity document of sole proprietor / director (masked copy)",
+        true
+      ],
+      [
+        "DEP",
+        "Proof of security deposit payment (3 months' rent)",
+        true
+      ],
+      [
+        "GIRO",
+        "GIRO authorisation form for monthly rent",
+        true
+      ],
+      [
+        "INS",
+        "Public liability insurance certificate (min S$1,000,000)",
+        true
+      ],
+      [
+        "LIC",
+        "Trade licence or licence application (food, healthcare, childcare trades)",
+        false
+      ]
+    ],
+    "RENEWAL": [
+      [
+        "REN",
+        "Tenancy renewal application form",
+        true
+      ],
+      [
+        "BIZ",
+        "Business profile (company registry extract, < 3 months old)",
+        true
+      ],
+      [
+        "INS",
+        "Valid public liability insurance certificate covering the new term",
+        true
+      ],
+      [
+        "GIRO",
+        "GIRO authorisation form (only if bank account changed)",
+        false
+      ]
+    ],
+    "ASSIGNMENT": [
+      [
+        "ASG",
+        "Application for assignment of tenancy",
+        true
+      ],
+      [
+        "BIZ",
+        "Business profile of assignor",
+        true
+      ],
+      [
+        "BIZ2",
+        "Business profile of assignee",
+        true
+      ],
+      [
+        "NRIC",
+        "Identity document of assignee director (masked copy)",
+        true
+      ],
+      [
+        "FEE",
+        "Proof of assignment fee payment",
+        true
+      ],
+      [
+        "INS",
+        "Assignee public liability insurance certificate",
+        true
+      ]
+    ],
+    "CHANGE_OF_TRADE": [
+      [
+        "COT",
+        "Application for change / addition of trade",
+        true
+      ],
+      [
+        "PLAN",
+        "Business plan for proposed trade",
+        true
+      ],
+      [
+        "LAYOUT",
+        "Proposed floor layout plan",
+        true
+      ],
+      [
+        "LIC",
+        "Trade licence application or approval (if regulated trade)",
+        false
+      ]
+    ],
+    "ALTERATION": [
+      [
+        "AA",
+        "Application for alteration & addition (A&A) works",
+        true
+      ],
+      [
+        "DWG",
+        "Layout and elevation drawings",
+        true
+      ],
+      [
+        "CON",
+        "Contractor's registration certificate",
+        true
+      ],
+      [
+        "PE",
+        "Professional Engineer endorsement (structural works only)",
+        false
+      ],
+      [
+        "MS",
+        "Method statement and work schedule",
+        true
+      ],
+      [
+        "INS",
+        "Contractor's all-risk insurance certificate",
+        true
+      ]
+    ]
+  }
+}

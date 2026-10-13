@@ -1,0 +1,7 @@
+.env
+.env.*
+.DS_Store
+ref-ignore/
+.claude/settings.local.json
+__pycache__/
+*.pyc

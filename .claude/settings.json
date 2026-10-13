@@ -1,0 +1,22 @@
+{
+    "permissions": {
+        "deny": [
+            "NotebookEdit",
+            "DesignSync",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "PushNotification",
+            "RemoteTrigger",
+            "RemoteTrigger",
+            "ReportFindings",
+            "ScheduleWakeup"
+        ]
+    },
+    "disableClaudeAiConnectors": true,
+    "disableWorkflows": true,
+    "disableBundledSkills": true,
+    "disableArtifact": true
+}

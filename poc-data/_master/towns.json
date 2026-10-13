@@ -1,0 +1,140 @@
+[
+  {
+    "code": "BV",
+    "name": "Bayshore Vale",
+    "region": "East",
+    "blk_range": [
+      201,
+      299
+    ],
+    "postal": "46",
+    "rate": 52,
+    "tc": "Bayshore-Cendana Town Council",
+    "em": "S04",
+    "streets": [
+      "Bayshore Vale Street 21",
+      "Bayshore Vale Avenue 2",
+      "Bayshore Vale Drive"
+    ],
+    "ncs": [
+      "Bayshore Vale Central NC",
+      "Bayshore Vale North NC",
+      "Vale Point NC"
+    ]
+  },
+  {
+    "code": "CD",
+    "name": "Cendana",
+    "region": "East",
+    "blk_range": [
+      101,
+      199
+    ],
+    "postal": "47",
+    "rate": 48,
+    "tc": "Bayshore-Cendana Town Council",
+    "em": "S04",
+    "streets": [
+      "Cendana Road",
+      "Cendana Street 11",
+      "Jalan Cendana Indah"
+    ],
+    "ncs": [
+      "Cendana Central NC",
+      "Cendana Gardens NC",
+      "Cendana Lake NC"
+    ]
+  },
+  {
+    "code": "KR",
+    "name": "Kebun Raya",
+    "region": "West",
+    "blk_range": [
+      301,
+      399
+    ],
+    "postal": "65",
+    "rate": 45,
+    "tc": "Kebun Raya-Rimba Town Council",
+    "em": "S12",
+    "streets": [
+      "Kebun Raya Avenue 3",
+      "Kebun Raya Street 31",
+      "Kebun Raya Crescent"
+    ],
+    "ncs": [
+      "Kebun Raya Central NC",
+      "Raya Hill NC",
+      "Kebun Raya West NC"
+    ]
+  },
+  {
+    "code": "RH",
+    "name": "Rimba Heights",
+    "region": "West",
+    "blk_range": [
+      401,
+      499
+    ],
+    "postal": "67",
+    "rate": 40,
+    "tc": "Kebun Raya-Rimba Town Council",
+    "em": "S12",
+    "streets": [
+      "Rimba Heights Road",
+      "Rimba Heights Street 45",
+      "Rimba Walk"
+    ],
+    "ncs": [
+      "Rimba Heights NC",
+      "Rimba Green NC",
+      "Rimba Park NC"
+    ]
+  },
+  {
+    "code": "ST",
+    "name": "Sungai Tinggi",
+    "region": "West",
+    "blk_range": [
+      501,
+      599
+    ],
+    "postal": "73",
+    "rate": 38,
+    "tc": "Sungai Tinggi-Pasir Indah Town Council",
+    "em": "S12",
+    "streets": [
+      "Sungai Tinggi Drive",
+      "Sungai Tinggi Street 52",
+      "Tinggi Link"
+    ],
+    "ncs": [
+      "Sungai Tinggi Central NC",
+      "Tinggi Vista NC",
+      "Sungai Tinggi East NC"
+    ]
+  },
+  {
+    "code": "PI",
+    "name": "Pasir Indah",
+    "region": "East",
+    "blk_range": [
+      601,
+      699
+    ],
+    "postal": "51",
+    "rate": 44,
+    "tc": "Sungai Tinggi-Pasir Indah Town Council",
+    "em": "S04",
+    "streets": [
+      "Pasir Indah Avenue 6",
+      "Pasir Indah Street 62",
+      "Jalan Pasir Indah"
+    ],
+    "ncs": [
+      "Pasir Indah Central NC",
+      "Indah Bay NC",
+      "Pasir Indah South NC"
+    ]
+  }
+]

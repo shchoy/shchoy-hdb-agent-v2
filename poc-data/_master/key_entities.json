@@ -1,0 +1,64 @@
+{
+  "Golden Leaf Minimart Pte Ltd": {
+    "unit": "U-BV214-01-32",
+    "tenancy": "TA-2024-00542",
+    "tenant": "T-11108",
+    "lod": "LTR-2026-02435",
+    "lod_date": "2026-08-01"
+  },
+  "Sin Hock Eating House": {
+    "unit": "U-CD118-01-01",
+    "tenancy": "TA-2024-00224",
+    "tenant": "T-10605"
+  },
+  "Wellcare Family Clinic": {
+    "unit": "U-KR305-01-12",
+    "tenancy": "TA-2024-00026",
+    "tenant": "T-10288",
+    "application": "APP-2026-0293"
+  },
+  "Mutiara Provision Shop": {
+    "unit": "U-PI627-01-08",
+    "tenancy": "TA-2024-00648",
+    "tenant": "T-11274",
+    "application": "APP-2026-0256"
+  },
+  "Lucky Star Hair Studio": {
+    "unit": "U-RH455-01-20",
+    "tenancy": "TA-2025-00118",
+    "tenant": "T-11694",
+    "inspection": "INSP-2026-1119",
+    "task": "TSK-2026-0452"
+  },
+  "Heng Ann Confectionery": {
+    "unit": "U-ST512-01-05",
+    "tenancy": "TA-2024-00451",
+    "tenant": "T-10974"
+  },
+  "Kim Hiap Trading": {
+    "unit": "U-BV214-01-07",
+    "tenancy": "TA-2024-00159",
+    "tenant": "T-10514"
+  },
+  "Prima Dental Care Pte Ltd": {
+    "unit": "U-ST512-01-33",
+    "tenancy": "TA-2026-00614",
+    "tenant": "T-13732",
+    "application": "APP-2026-0228"
+  },
+  "seepage": {
+    "feedback": "FB-2026-00707",
+    "ticket": "IEMS-2608-0022"
+  },
+  "fire": {
+    "feedback": "FB-2026-00456",
+    "ticket": "IEMS-2605-0038"
+  },
+  "bubble_tea_nc": {
+    "nc_id": "NC-PI-1",
+    "tenancies": [
+      "TA-2024-00120",
+      "TA-2025-00225"
+    ]
+  }
+}

@@ -1,0 +1,1352 @@
+[
+  {
+    "block_id": "BV204",
+    "town": "BV",
+    "blk": 204,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-3",
+    "postal": "460204",
+    "year_built": 2012
+  },
+  {
+    "block_id": "BV205",
+    "town": "BV",
+    "blk": 205,
+    "street": "Bayshore Vale Street 21",
+    "nc_id": "NC-BV-2",
+    "postal": "460205",
+    "year_built": 2006
+  },
+  {
+    "block_id": "BV212",
+    "town": "BV",
+    "blk": 212,
+    "street": "Bayshore Vale Avenue 2",
+    "nc_id": "NC-BV-3",
+    "postal": "460212",
+    "year_built": 1978
+  },
+  {
+    "block_id": "BV214",
+    "town": "BV",
+    "blk": 214,
+    "street": "Bayshore Vale Street 21",
+    "nc_id": "NC-BV-1",
+    "postal": "460214",
+    "year_built": 1988
+  },
+  {
+    "block_id": "BV215",
+    "town": "BV",
+    "blk": 215,
+    "street": "Bayshore Vale Avenue 2",
+    "nc_id": "NC-BV-3",
+    "postal": "460215",
+    "year_built": 1999
+  },
+  {
+    "block_id": "BV216",
+    "town": "BV",
+    "blk": 216,
+    "street": "Bayshore Vale Street 21",
+    "nc_id": "NC-BV-2",
+    "postal": "460216",
+    "year_built": 1991
+  },
+  {
+    "block_id": "BV219",
+    "town": "BV",
+    "blk": 219,
+    "street": "Bayshore Vale Street 21",
+    "nc_id": "NC-BV-2",
+    "postal": "460219",
+    "year_built": 1983
+  },
+  {
+    "block_id": "BV227",
+    "town": "BV",
+    "blk": 227,
+    "street": "Bayshore Vale Street 21",
+    "nc_id": "NC-BV-2",
+    "postal": "460227",
+    "year_built": 2000
+  },
+  {
+    "block_id": "BV229",
+    "town": "BV",
+    "blk": 229,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-2",
+    "postal": "460229",
+    "year_built": 1994
+  },
+  {
+    "block_id": "BV230",
+    "town": "BV",
+    "blk": 230,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-1",
+    "postal": "460230",
+    "year_built": 2007
+  },
+  {
+    "block_id": "BV231",
+    "town": "BV",
+    "blk": 231,
+    "street": "Bayshore Vale Street 21",
+    "nc_id": "NC-BV-3",
+    "postal": "460231",
+    "year_built": 2002
+  },
+  {
+    "block_id": "BV233",
+    "town": "BV",
+    "blk": 233,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-1",
+    "postal": "460233",
+    "year_built": 1996
+  },
+  {
+    "block_id": "BV237",
+    "town": "BV",
+    "blk": 237,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-3",
+    "postal": "460237",
+    "year_built": 2001
+  },
+  {
+    "block_id": "BV256",
+    "town": "BV",
+    "blk": 256,
+    "street": "Bayshore Vale Street 21",
+    "nc_id": "NC-BV-3",
+    "postal": "460256",
+    "year_built": 1982
+  },
+  {
+    "block_id": "BV266",
+    "town": "BV",
+    "blk": 266,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-1",
+    "postal": "460266",
+    "year_built": 1992
+  },
+  {
+    "block_id": "BV271",
+    "town": "BV",
+    "blk": 271,
+    "street": "Bayshore Vale Street 21",
+    "nc_id": "NC-BV-2",
+    "postal": "460271",
+    "year_built": 1992
+  },
+  {
+    "block_id": "BV273",
+    "town": "BV",
+    "blk": 273,
+    "street": "Bayshore Vale Avenue 2",
+    "nc_id": "NC-BV-1",
+    "postal": "460273",
+    "year_built": 1995
+  },
+  {
+    "block_id": "BV277",
+    "town": "BV",
+    "blk": 277,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-2",
+    "postal": "460277",
+    "year_built": 2001
+  },
+  {
+    "block_id": "BV279",
+    "town": "BV",
+    "blk": 279,
+    "street": "Bayshore Vale Avenue 2",
+    "nc_id": "NC-BV-1",
+    "postal": "460279",
+    "year_built": 2000
+  },
+  {
+    "block_id": "BV283",
+    "town": "BV",
+    "blk": 283,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-1",
+    "postal": "460283",
+    "year_built": 1995
+  },
+  {
+    "block_id": "BV284",
+    "town": "BV",
+    "blk": 284,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-3",
+    "postal": "460284",
+    "year_built": 1982
+  },
+  {
+    "block_id": "BV288",
+    "town": "BV",
+    "blk": 288,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-3",
+    "postal": "460288",
+    "year_built": 1988
+  },
+  {
+    "block_id": "BV290",
+    "town": "BV",
+    "blk": 290,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-3",
+    "postal": "460290",
+    "year_built": 1993
+  },
+  {
+    "block_id": "BV296",
+    "town": "BV",
+    "blk": 296,
+    "street": "Bayshore Vale Avenue 2",
+    "nc_id": "NC-BV-1",
+    "postal": "460296",
+    "year_built": 2002
+  },
+  {
+    "block_id": "BV297",
+    "town": "BV",
+    "blk": 297,
+    "street": "Bayshore Vale Drive",
+    "nc_id": "NC-BV-2",
+    "postal": "460297",
+    "year_built": 1992
+  },
+  {
+    "block_id": "CD105",
+    "town": "CD",
+    "blk": 105,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-3",
+    "postal": "470105",
+    "year_built": 2005
+  },
+  {
+    "block_id": "CD108",
+    "town": "CD",
+    "blk": 108,
+    "street": "Cendana Street 11",
+    "nc_id": "NC-CD-3",
+    "postal": "470108",
+    "year_built": 2001
+  },
+  {
+    "block_id": "CD109",
+    "town": "CD",
+    "blk": 109,
+    "street": "Cendana Road",
+    "nc_id": "NC-CD-1",
+    "postal": "470109",
+    "year_built": 2010
+  },
+  {
+    "block_id": "CD118",
+    "town": "CD",
+    "blk": 118,
+    "street": "Cendana Road",
+    "nc_id": "NC-CD-1",
+    "postal": "470118",
+    "year_built": 2009
+  },
+  {
+    "block_id": "CD119",
+    "town": "CD",
+    "blk": 119,
+    "street": "Cendana Road",
+    "nc_id": "NC-CD-1",
+    "postal": "470119",
+    "year_built": 1985
+  },
+  {
+    "block_id": "CD120",
+    "town": "CD",
+    "blk": 120,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-1",
+    "postal": "470120",
+    "year_built": 1988
+  },
+  {
+    "block_id": "CD129",
+    "town": "CD",
+    "blk": 129,
+    "street": "Cendana Street 11",
+    "nc_id": "NC-CD-3",
+    "postal": "470129",
+    "year_built": 1982
+  },
+  {
+    "block_id": "CD131",
+    "town": "CD",
+    "blk": 131,
+    "street": "Cendana Street 11",
+    "nc_id": "NC-CD-2",
+    "postal": "470131",
+    "year_built": 2007
+  },
+  {
+    "block_id": "CD133",
+    "town": "CD",
+    "blk": 133,
+    "street": "Cendana Street 11",
+    "nc_id": "NC-CD-3",
+    "postal": "470133",
+    "year_built": 1978
+  },
+  {
+    "block_id": "CD135",
+    "town": "CD",
+    "blk": 135,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-3",
+    "postal": "470135",
+    "year_built": 1985
+  },
+  {
+    "block_id": "CD136",
+    "town": "CD",
+    "blk": 136,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-3",
+    "postal": "470136",
+    "year_built": 1995
+  },
+  {
+    "block_id": "CD142",
+    "town": "CD",
+    "blk": 142,
+    "street": "Cendana Street 11",
+    "nc_id": "NC-CD-3",
+    "postal": "470142",
+    "year_built": 1985
+  },
+  {
+    "block_id": "CD143",
+    "town": "CD",
+    "blk": 143,
+    "street": "Cendana Street 11",
+    "nc_id": "NC-CD-2",
+    "postal": "470143",
+    "year_built": 1988
+  },
+  {
+    "block_id": "CD152",
+    "town": "CD",
+    "blk": 152,
+    "street": "Cendana Road",
+    "nc_id": "NC-CD-2",
+    "postal": "470152",
+    "year_built": 1994
+  },
+  {
+    "block_id": "CD153",
+    "town": "CD",
+    "blk": 153,
+    "street": "Cendana Road",
+    "nc_id": "NC-CD-3",
+    "postal": "470153",
+    "year_built": 2010
+  },
+  {
+    "block_id": "CD160",
+    "town": "CD",
+    "blk": 160,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-1",
+    "postal": "470160",
+    "year_built": 1997
+  },
+  {
+    "block_id": "CD165",
+    "town": "CD",
+    "blk": 165,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-3",
+    "postal": "470165",
+    "year_built": 1990
+  },
+  {
+    "block_id": "CD170",
+    "town": "CD",
+    "blk": 170,
+    "street": "Cendana Street 11",
+    "nc_id": "NC-CD-1",
+    "postal": "470170",
+    "year_built": 1988
+  },
+  {
+    "block_id": "CD173",
+    "town": "CD",
+    "blk": 173,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-3",
+    "postal": "470173",
+    "year_built": 1978
+  },
+  {
+    "block_id": "CD174",
+    "town": "CD",
+    "blk": 174,
+    "street": "Cendana Street 11",
+    "nc_id": "NC-CD-3",
+    "postal": "470174",
+    "year_built": 2009
+  },
+  {
+    "block_id": "CD181",
+    "town": "CD",
+    "blk": 181,
+    "street": "Cendana Road",
+    "nc_id": "NC-CD-1",
+    "postal": "470181",
+    "year_built": 2001
+  },
+  {
+    "block_id": "CD185",
+    "town": "CD",
+    "blk": 185,
+    "street": "Cendana Road",
+    "nc_id": "NC-CD-2",
+    "postal": "470185",
+    "year_built": 1981
+  },
+  {
+    "block_id": "CD189",
+    "town": "CD",
+    "blk": 189,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-1",
+    "postal": "470189",
+    "year_built": 1983
+  },
+  {
+    "block_id": "CD190",
+    "town": "CD",
+    "blk": 190,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-1",
+    "postal": "470190",
+    "year_built": 2009
+  },
+  {
+    "block_id": "CD194",
+    "town": "CD",
+    "blk": 194,
+    "street": "Jalan Cendana Indah",
+    "nc_id": "NC-CD-1",
+    "postal": "470194",
+    "year_built": 1986
+  },
+  {
+    "block_id": "KR305",
+    "town": "KR",
+    "blk": 305,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-1",
+    "postal": "650305",
+    "year_built": 1979
+  },
+  {
+    "block_id": "KR310",
+    "town": "KR",
+    "blk": 310,
+    "street": "Kebun Raya Crescent",
+    "nc_id": "NC-KR-3",
+    "postal": "650310",
+    "year_built": 1992
+  },
+  {
+    "block_id": "KR317",
+    "town": "KR",
+    "blk": 317,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-3",
+    "postal": "650317",
+    "year_built": 1978
+  },
+  {
+    "block_id": "KR318",
+    "town": "KR",
+    "blk": 318,
+    "street": "Kebun Raya Crescent",
+    "nc_id": "NC-KR-1",
+    "postal": "650318",
+    "year_built": 1981
+  },
+  {
+    "block_id": "KR323",
+    "town": "KR",
+    "blk": 323,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-1",
+    "postal": "650323",
+    "year_built": 1980
+  },
+  {
+    "block_id": "KR327",
+    "town": "KR",
+    "blk": 327,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-2",
+    "postal": "650327",
+    "year_built": 2010
+  },
+  {
+    "block_id": "KR329",
+    "town": "KR",
+    "blk": 329,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-1",
+    "postal": "650329",
+    "year_built": 2009
+  },
+  {
+    "block_id": "KR330",
+    "town": "KR",
+    "blk": 330,
+    "street": "Kebun Raya Crescent",
+    "nc_id": "NC-KR-1",
+    "postal": "650330",
+    "year_built": 1986
+  },
+  {
+    "block_id": "KR333",
+    "town": "KR",
+    "blk": 333,
+    "street": "Kebun Raya Crescent",
+    "nc_id": "NC-KR-3",
+    "postal": "650333",
+    "year_built": 2008
+  },
+  {
+    "block_id": "KR335",
+    "town": "KR",
+    "blk": 335,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-1",
+    "postal": "650335",
+    "year_built": 2004
+  },
+  {
+    "block_id": "KR341",
+    "town": "KR",
+    "blk": 341,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-1",
+    "postal": "650341",
+    "year_built": 1984
+  },
+  {
+    "block_id": "KR345",
+    "town": "KR",
+    "blk": 345,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-3",
+    "postal": "650345",
+    "year_built": 2000
+  },
+  {
+    "block_id": "KR349",
+    "town": "KR",
+    "blk": 349,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-2",
+    "postal": "650349",
+    "year_built": 2007
+  },
+  {
+    "block_id": "KR353",
+    "town": "KR",
+    "blk": 353,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-3",
+    "postal": "650353",
+    "year_built": 1984
+  },
+  {
+    "block_id": "KR356",
+    "town": "KR",
+    "blk": 356,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-1",
+    "postal": "650356",
+    "year_built": 1999
+  },
+  {
+    "block_id": "KR358",
+    "town": "KR",
+    "blk": 358,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-1",
+    "postal": "650358",
+    "year_built": 1990
+  },
+  {
+    "block_id": "KR359",
+    "town": "KR",
+    "blk": 359,
+    "street": "Kebun Raya Crescent",
+    "nc_id": "NC-KR-1",
+    "postal": "650359",
+    "year_built": 2006
+  },
+  {
+    "block_id": "KR362",
+    "town": "KR",
+    "blk": 362,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-1",
+    "postal": "650362",
+    "year_built": 1989
+  },
+  {
+    "block_id": "KR368",
+    "town": "KR",
+    "blk": 368,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-2",
+    "postal": "650368",
+    "year_built": 1993
+  },
+  {
+    "block_id": "KR369",
+    "town": "KR",
+    "blk": 369,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-1",
+    "postal": "650369",
+    "year_built": 1984
+  },
+  {
+    "block_id": "KR371",
+    "town": "KR",
+    "blk": 371,
+    "street": "Kebun Raya Crescent",
+    "nc_id": "NC-KR-1",
+    "postal": "650371",
+    "year_built": 2012
+  },
+  {
+    "block_id": "KR372",
+    "town": "KR",
+    "blk": 372,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-1",
+    "postal": "650372",
+    "year_built": 1993
+  },
+  {
+    "block_id": "KR379",
+    "town": "KR",
+    "blk": 379,
+    "street": "Kebun Raya Street 31",
+    "nc_id": "NC-KR-1",
+    "postal": "650379",
+    "year_built": 2009
+  },
+  {
+    "block_id": "KR385",
+    "town": "KR",
+    "blk": 385,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-2",
+    "postal": "650385",
+    "year_built": 2003
+  },
+  {
+    "block_id": "KR386",
+    "town": "KR",
+    "blk": 386,
+    "street": "Kebun Raya Avenue 3",
+    "nc_id": "NC-KR-1",
+    "postal": "650386",
+    "year_built": 2002
+  },
+  {
+    "block_id": "RH401",
+    "town": "RH",
+    "blk": 401,
+    "street": "Rimba Heights Road",
+    "nc_id": "NC-RH-3",
+    "postal": "670401",
+    "year_built": 1981
+  },
+  {
+    "block_id": "RH407",
+    "town": "RH",
+    "blk": 407,
+    "street": "Rimba Heights Road",
+    "nc_id": "NC-RH-3",
+    "postal": "670407",
+    "year_built": 1989
+  },
+  {
+    "block_id": "RH408",
+    "town": "RH",
+    "blk": 408,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-1",
+    "postal": "670408",
+    "year_built": 1982
+  },
+  {
+    "block_id": "RH420",
+    "town": "RH",
+    "blk": 420,
+    "street": "Rimba Heights Road",
+    "nc_id": "NC-RH-3",
+    "postal": "670420",
+    "year_built": 2003
+  },
+  {
+    "block_id": "RH425",
+    "town": "RH",
+    "blk": 425,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-1",
+    "postal": "670425",
+    "year_built": 1993
+  },
+  {
+    "block_id": "RH428",
+    "town": "RH",
+    "blk": 428,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-3",
+    "postal": "670428",
+    "year_built": 1980
+  },
+  {
+    "block_id": "RH434",
+    "town": "RH",
+    "blk": 434,
+    "street": "Rimba Heights Road",
+    "nc_id": "NC-RH-3",
+    "postal": "670434",
+    "year_built": 2004
+  },
+  {
+    "block_id": "RH437",
+    "town": "RH",
+    "blk": 437,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-3",
+    "postal": "670437",
+    "year_built": 2011
+  },
+  {
+    "block_id": "RH438",
+    "town": "RH",
+    "blk": 438,
+    "street": "Rimba Heights Street 45",
+    "nc_id": "NC-RH-2",
+    "postal": "670438",
+    "year_built": 1991
+  },
+  {
+    "block_id": "RH441",
+    "town": "RH",
+    "blk": 441,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-3",
+    "postal": "670441",
+    "year_built": 1998
+  },
+  {
+    "block_id": "RH450",
+    "town": "RH",
+    "blk": 450,
+    "street": "Rimba Heights Street 45",
+    "nc_id": "NC-RH-1",
+    "postal": "670450",
+    "year_built": 2003
+  },
+  {
+    "block_id": "RH455",
+    "town": "RH",
+    "blk": 455,
+    "street": "Rimba Heights Street 45",
+    "nc_id": "NC-RH-1",
+    "postal": "670455",
+    "year_built": 1986
+  },
+  {
+    "block_id": "RH456",
+    "town": "RH",
+    "blk": 456,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-3",
+    "postal": "670456",
+    "year_built": 1997
+  },
+  {
+    "block_id": "RH460",
+    "town": "RH",
+    "blk": 460,
+    "street": "Rimba Heights Street 45",
+    "nc_id": "NC-RH-2",
+    "postal": "670460",
+    "year_built": 1982
+  },
+  {
+    "block_id": "RH463",
+    "town": "RH",
+    "blk": 463,
+    "street": "Rimba Heights Street 45",
+    "nc_id": "NC-RH-1",
+    "postal": "670463",
+    "year_built": 1984
+  },
+  {
+    "block_id": "RH464",
+    "town": "RH",
+    "blk": 464,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-1",
+    "postal": "670464",
+    "year_built": 1991
+  },
+  {
+    "block_id": "RH466",
+    "town": "RH",
+    "blk": 466,
+    "street": "Rimba Heights Street 45",
+    "nc_id": "NC-RH-3",
+    "postal": "670466",
+    "year_built": 1986
+  },
+  {
+    "block_id": "RH471",
+    "town": "RH",
+    "blk": 471,
+    "street": "Rimba Heights Road",
+    "nc_id": "NC-RH-2",
+    "postal": "670471",
+    "year_built": 1993
+  },
+  {
+    "block_id": "RH473",
+    "town": "RH",
+    "blk": 473,
+    "street": "Rimba Heights Street 45",
+    "nc_id": "NC-RH-2",
+    "postal": "670473",
+    "year_built": 1988
+  },
+  {
+    "block_id": "RH476",
+    "town": "RH",
+    "blk": 476,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-2",
+    "postal": "670476",
+    "year_built": 1997
+  },
+  {
+    "block_id": "RH482",
+    "town": "RH",
+    "blk": 482,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-3",
+    "postal": "670482",
+    "year_built": 2011
+  },
+  {
+    "block_id": "RH484",
+    "town": "RH",
+    "blk": 484,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-1",
+    "postal": "670484",
+    "year_built": 1997
+  },
+  {
+    "block_id": "RH485",
+    "town": "RH",
+    "blk": 485,
+    "street": "Rimba Heights Road",
+    "nc_id": "NC-RH-3",
+    "postal": "670485",
+    "year_built": 1986
+  },
+  {
+    "block_id": "RH486",
+    "town": "RH",
+    "blk": 486,
+    "street": "Rimba Heights Road",
+    "nc_id": "NC-RH-2",
+    "postal": "670486",
+    "year_built": 1984
+  },
+  {
+    "block_id": "RH491",
+    "town": "RH",
+    "blk": 491,
+    "street": "Rimba Walk",
+    "nc_id": "NC-RH-3",
+    "postal": "670491",
+    "year_built": 1987
+  },
+  {
+    "block_id": "ST501",
+    "town": "ST",
+    "blk": 501,
+    "street": "Sungai Tinggi Street 52",
+    "nc_id": "NC-ST-3",
+    "postal": "730501",
+    "year_built": 2005
+  },
+  {
+    "block_id": "ST506",
+    "town": "ST",
+    "blk": 506,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-3",
+    "postal": "730506",
+    "year_built": 1985
+  },
+  {
+    "block_id": "ST507",
+    "town": "ST",
+    "blk": 507,
+    "street": "Tinggi Link",
+    "nc_id": "NC-ST-1",
+    "postal": "730507",
+    "year_built": 1987
+  },
+  {
+    "block_id": "ST512",
+    "town": "ST",
+    "blk": 512,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-1",
+    "postal": "730512",
+    "year_built": 2012
+  },
+  {
+    "block_id": "ST513",
+    "town": "ST",
+    "blk": 513,
+    "street": "Sungai Tinggi Street 52",
+    "nc_id": "NC-ST-1",
+    "postal": "730513",
+    "year_built": 1987
+  },
+  {
+    "block_id": "ST518",
+    "town": "ST",
+    "blk": 518,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-2",
+    "postal": "730518",
+    "year_built": 1980
+  },
+  {
+    "block_id": "ST522",
+    "town": "ST",
+    "blk": 522,
+    "street": "Sungai Tinggi Street 52",
+    "nc_id": "NC-ST-2",
+    "postal": "730522",
+    "year_built": 1980
+  },
+  {
+    "block_id": "ST528",
+    "town": "ST",
+    "blk": 528,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-2",
+    "postal": "730528",
+    "year_built": 1993
+  },
+  {
+    "block_id": "ST534",
+    "town": "ST",
+    "blk": 534,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-3",
+    "postal": "730534",
+    "year_built": 2000
+  },
+  {
+    "block_id": "ST535",
+    "town": "ST",
+    "blk": 535,
+    "street": "Sungai Tinggi Street 52",
+    "nc_id": "NC-ST-3",
+    "postal": "730535",
+    "year_built": 1987
+  },
+  {
+    "block_id": "ST536",
+    "town": "ST",
+    "blk": 536,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-1",
+    "postal": "730536",
+    "year_built": 1989
+  },
+  {
+    "block_id": "ST537",
+    "town": "ST",
+    "blk": 537,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-2",
+    "postal": "730537",
+    "year_built": 1989
+  },
+  {
+    "block_id": "ST538",
+    "town": "ST",
+    "blk": 538,
+    "street": "Sungai Tinggi Street 52",
+    "nc_id": "NC-ST-3",
+    "postal": "730538",
+    "year_built": 2004
+  },
+  {
+    "block_id": "ST544",
+    "town": "ST",
+    "blk": 544,
+    "street": "Tinggi Link",
+    "nc_id": "NC-ST-3",
+    "postal": "730544",
+    "year_built": 1993
+  },
+  {
+    "block_id": "ST545",
+    "town": "ST",
+    "blk": 545,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-2",
+    "postal": "730545",
+    "year_built": 1984
+  },
+  {
+    "block_id": "ST556",
+    "town": "ST",
+    "blk": 556,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-2",
+    "postal": "730556",
+    "year_built": 2008
+  },
+  {
+    "block_id": "ST564",
+    "town": "ST",
+    "blk": 564,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-1",
+    "postal": "730564",
+    "year_built": 2007
+  },
+  {
+    "block_id": "ST566",
+    "town": "ST",
+    "blk": 566,
+    "street": "Sungai Tinggi Street 52",
+    "nc_id": "NC-ST-2",
+    "postal": "730566",
+    "year_built": 1992
+  },
+  {
+    "block_id": "ST579",
+    "town": "ST",
+    "blk": 579,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-1",
+    "postal": "730579",
+    "year_built": 1990
+  },
+  {
+    "block_id": "ST583",
+    "town": "ST",
+    "blk": 583,
+    "street": "Sungai Tinggi Street 52",
+    "nc_id": "NC-ST-2",
+    "postal": "730583",
+    "year_built": 1995
+  },
+  {
+    "block_id": "ST589",
+    "town": "ST",
+    "blk": 589,
+    "street": "Sungai Tinggi Street 52",
+    "nc_id": "NC-ST-1",
+    "postal": "730589",
+    "year_built": 2000
+  },
+  {
+    "block_id": "ST590",
+    "town": "ST",
+    "blk": 590,
+    "street": "Tinggi Link",
+    "nc_id": "NC-ST-3",
+    "postal": "730590",
+    "year_built": 2003
+  },
+  {
+    "block_id": "ST591",
+    "town": "ST",
+    "blk": 591,
+    "street": "Tinggi Link",
+    "nc_id": "NC-ST-3",
+    "postal": "730591",
+    "year_built": 1999
+  },
+  {
+    "block_id": "ST593",
+    "town": "ST",
+    "blk": 593,
+    "street": "Sungai Tinggi Drive",
+    "nc_id": "NC-ST-1",
+    "postal": "730593",
+    "year_built": 1994
+  },
+  {
+    "block_id": "ST596",
+    "town": "ST",
+    "blk": 596,
+    "street": "Tinggi Link",
+    "nc_id": "NC-ST-1",
+    "postal": "730596",
+    "year_built": 1994
+  },
+  {
+    "block_id": "PI601",
+    "town": "PI",
+    "blk": 601,
+    "street": "Pasir Indah Street 62",
+    "nc_id": "NC-PI-3",
+    "postal": "510601",
+    "year_built": 1985
+  },
+  {
+    "block_id": "PI605",
+    "town": "PI",
+    "blk": 605,
+    "street": "Pasir Indah Street 62",
+    "nc_id": "NC-PI-3",
+    "postal": "510605",
+    "year_built": 2010
+  },
+  {
+    "block_id": "PI606",
+    "town": "PI",
+    "blk": 606,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-2",
+    "postal": "510606",
+    "year_built": 2004
+  },
+  {
+    "block_id": "PI609",
+    "town": "PI",
+    "blk": 609,
+    "street": "Pasir Indah Street 62",
+    "nc_id": "NC-PI-2",
+    "postal": "510609",
+    "year_built": 1996
+  },
+  {
+    "block_id": "PI614",
+    "town": "PI",
+    "blk": 614,
+    "street": "Pasir Indah Avenue 6",
+    "nc_id": "NC-PI-3",
+    "postal": "510614",
+    "year_built": 1990
+  },
+  {
+    "block_id": "PI615",
+    "town": "PI",
+    "blk": 615,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-2",
+    "postal": "510615",
+    "year_built": 2002
+  },
+  {
+    "block_id": "PI625",
+    "town": "PI",
+    "blk": 625,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-3",
+    "postal": "510625",
+    "year_built": 1989
+  },
+  {
+    "block_id": "PI626",
+    "town": "PI",
+    "blk": 626,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-3",
+    "postal": "510626",
+    "year_built": 1997
+  },
+  {
+    "block_id": "PI627",
+    "town": "PI",
+    "blk": 627,
+    "street": "Pasir Indah Street 62",
+    "nc_id": "NC-PI-1",
+    "postal": "510627",
+    "year_built": 2003
+  },
+  {
+    "block_id": "PI634",
+    "town": "PI",
+    "blk": 634,
+    "street": "Pasir Indah Avenue 6",
+    "nc_id": "NC-PI-3",
+    "postal": "510634",
+    "year_built": 1997
+  },
+  {
+    "block_id": "PI642",
+    "town": "PI",
+    "blk": 642,
+    "street": "Pasir Indah Avenue 6",
+    "nc_id": "NC-PI-2",
+    "postal": "510642",
+    "year_built": 2005
+  },
+  {
+    "block_id": "PI644",
+    "town": "PI",
+    "blk": 644,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-3",
+    "postal": "510644",
+    "year_built": 1998
+  },
+  {
+    "block_id": "PI646",
+    "town": "PI",
+    "blk": 646,
+    "street": "Pasir Indah Street 62",
+    "nc_id": "NC-PI-2",
+    "postal": "510646",
+    "year_built": 2006
+  },
+  {
+    "block_id": "PI648",
+    "town": "PI",
+    "blk": 648,
+    "street": "Pasir Indah Avenue 6",
+    "nc_id": "NC-PI-3",
+    "postal": "510648",
+    "year_built": 2010
+  },
+  {
+    "block_id": "PI651",
+    "town": "PI",
+    "blk": 651,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-2",
+    "postal": "510651",
+    "year_built": 1988
+  },
+  {
+    "block_id": "PI657",
+    "town": "PI",
+    "blk": 657,
+    "street": "Pasir Indah Avenue 6",
+    "nc_id": "NC-PI-3",
+    "postal": "510657",
+    "year_built": 1996
+  },
+  {
+    "block_id": "PI667",
+    "town": "PI",
+    "blk": 667,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-3",
+    "postal": "510667",
+    "year_built": 1999
+  },
+  {
+    "block_id": "PI668",
+    "town": "PI",
+    "blk": 668,
+    "street": "Pasir Indah Avenue 6",
+    "nc_id": "NC-PI-1",
+    "postal": "510668",
+    "year_built": 1997
+  },
+  {
+    "block_id": "PI670",
+    "town": "PI",
+    "blk": 670,
+    "street": "Pasir Indah Avenue 6",
+    "nc_id": "NC-PI-1",
+    "postal": "510670",
+    "year_built": 1987
+  },
+  {
+    "block_id": "PI675",
+    "town": "PI",
+    "blk": 675,
+    "street": "Pasir Indah Avenue 6",
+    "nc_id": "NC-PI-1",
+    "postal": "510675",
+    "year_built": 1993
+  },
+  {
+    "block_id": "PI678",
+    "town": "PI",
+    "blk": 678,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-2",
+    "postal": "510678",
+    "year_built": 1982
+  },
+  {
+    "block_id": "PI679",
+    "town": "PI",
+    "blk": 679,
+    "street": "Pasir Indah Street 62",
+    "nc_id": "NC-PI-2",
+    "postal": "510679",
+    "year_built": 1990
+  },
+  {
+    "block_id": "PI684",
+    "town": "PI",
+    "blk": 684,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-3",
+    "postal": "510684",
+    "year_built": 2002
+  },
+  {
+    "block_id": "PI693",
+    "town": "PI",
+    "blk": 693,
+    "street": "Pasir Indah Street 62",
+    "nc_id": "NC-PI-2",
+    "postal": "510693",
+    "year_built": 1993
+  },
+  {
+    "block_id": "PI696",
+    "town": "PI",
+    "blk": 696,
+    "street": "Jalan Pasir Indah",
+    "nc_id": "NC-PI-1",
+    "postal": "510696",
+    "year_built": 1978
+  }
+]

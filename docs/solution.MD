@@ -13,6 +13,7 @@
 | Memory (D21, new) | **Short-term:** a LangGraph checkpointer thread per session, with history summarisation and compact agent results. **Long-term:** a `MemoryStore` (LangGraph `BaseStore` backed by LanceDB) holding each user's profile and past sessions, curated team facts and few-shot examples, plus graph links to the entities each user worked on (§2.6). |
 | Ontology (D22, new) | **A lightweight PLG ontology in LinkML (YAML) with a SKOS-style vocabulary**, used at design time. It is the single source from which graph labels and edges, extraction schemas, validation constraints and synonyms are generated. It is also the **single, versioned home of the business glossary** (§2.7.1). There is no triple store or OWL reasoner; the runtime stays a property graph (§2.7). |
 | Tracing & evaluation (D20) | **LangSmith**, LangChain's platform for LangGraph. It traces every graph run and every Claude call, holds the golden datasets, and runs offline experiments and online evaluators (§6). |
+| Front-end (D23, new) | **A TypeScript web app on Node.js: Next.js (App Router, React) as the UI plus a backend-for-frontend (BFF).** It calls a thin **FastAPI service (`plg serve`)** that wraps the LangGraph graph and streams results over Server-Sent Events. The browser never calls Claude, LanceDB or DuckDB directly. Python stays the only owner of the graph, the tools and the safety boundary. The CLI and notebook remain for jobs, evals and debugging (§2.8). |
 | All other choices (D3–D19, except D5) | The ★ recommended option from `solutions-options.MD`, unchanged. |
 
 **Why this blend:** LangGraph owns the parts that must be *deterministic and auditable*: routing edges, workflow steps, the approval interrupt, and checkpointed state. Claude owns the parts that need *judgement*: answering, querying, classifying and drafting. Calling the native SDK, rather than a LangChain chat wrapper, keeps the Citations API and Claude's PDF support available, and the agent loop stays a few dozen lines of transparent code. Only the specialist nodes call Claude, through one `LLMClient` seam. That seam keeps the on-prem open-weight path open if the data is later classified Sensitive-High.
@@ -20,8 +21,14 @@
 ## 2. Architecture
 
 ```
+ Browser ─► Web front-end (TypeScript · Node.js · Next.js UI + BFF route handlers)          (§2.8)
+                 │  HTTPS + SSE (typed client generated from OpenAPI)
+                 ▼
+            plg-api (FastAPI · `plg serve`): sessions · auth context · stream runs · resume approvals · memory · feedback
+                 │  in-process call: graph.astream(...) / Command(resume=...)
+                 ▼
                          ┌────────────────────── LangGraph StateGraph (front door) ─────────────────────┐
- User (CLI / notebook) ─►│ screen_input ─► load_memory ─► summarise_history ─► route (Haiku) ─► Send()   │
+ Web / CLI / notebook ──►│ screen_input ─► load_memory ─► summarise_history ─► route (Haiku) ─► Send()   │
                          │                                              │                                │
                          │      ┌──────────────┬──────────────┬─────────┴─────┬───────────────────┐     │
                          │      ▼              ▼              ▼               ▼                   ▼     │
@@ -71,6 +78,7 @@
 - Specialist agents get **read-only tools only**: search, SQL on a read-only connection, graph lookups through fixed `GraphStore` methods over a **frozen** networkx graph (`nx.freeze`, so any mutation raises; on Neptune, an IAM role limited to `neptune-db:ReadDataViaQuery`), template render to a draft, and record lookup.
 - Anything that leaves the system (send email or letter, create an i-EMS ticket, update a record) can only be **returned as a `ProposedAction`** in graph state. Only `execute_action` can perform it, and it is reachable **only through the `approval` interrupt**. The model cannot bypass this, because the tool does not exist in its toolset.
 - Input screening covers user text and ingested emails (the corpus contains a planted prompt injection). Drafts get a PII check before approval. All approvals and actions go to the audit log.
+- **Web front-end (§2.8):** the UI holds no tools and no model or data credentials. It can only ask a question, or send an approve, edit or reject decision for an `interrupt()` that is already pending. `plg-api` checks that the caller owns the thread, and that an approver has the right role for the action type, before resuming. An approval is accepted only for the exact `ProposedAction` ID and version shown, so an edited or replayed request cannot approve something else. Model output and document text are rendered as sanitised Markdown with no raw HTML, so a planted injection in a source email cannot run script in the browser.
 
 ### 2.3 Graph state (sketch)
 
@@ -169,7 +177,7 @@ AWS infrastructure (`infra/`, AWS CDK) is deferred until migration and is not pa
 
 | Concern | Mechanism |
 |---|---|
-| Conversation and graph state | LangGraph checkpointer, one `thread_id` per CLI or notebook session. The POC uses `SqliteSaver`; production uses `PostgresSaver` on Amazon Aurora PostgreSQL. Follow-ups ("and for Cendana?") and paused approvals resume from it. |
+| Conversation and graph state | LangGraph checkpointer, one `thread_id` per web, CLI or notebook session (the web UI lists and reopens a user's threads, §2.8). The POC uses `SqliteSaver`; production uses `PostgresSaver` on Amazon Aurora PostgreSQL. Follow-ups ("and for Cendana?") and paused approvals resume from it. |
 | Context-window limit | `summarise_history` runs when `messages` exceed a token threshold (e.g. 40k). Older turns are folded into `history_summary`, and the last N turns are kept verbatim. Entity IDs, open `ProposedAction`s and the approval status are always kept verbatim. |
 | Specialist output size | Agents return compact `AgentResult`s: the answer, citation spans and the final SQL with its result summary. Full retrieved chunks and full result sets go to the LangSmith trace, not into graph state. |
 | Agent scratchpad | The tool-use loop inside `run_agent()` is discarded when the node finishes, so only its result enters shared state. |
@@ -286,6 +294,64 @@ plg:Vacant_v2:
 
 **Explicitly out of scope for the POC:** an RDF triple store or SPARQL (including Neptune's RDF mode), OWL reasoning, and importing whole upper ontologies. The runtime model stays one property graph (networkx → Neptune openCypher). Because the ontology is in LinkML, an RDF/OWL view can be generated later if PLG needs one.
 
+### 2.8 Web front-end (D23)
+
+**Goal:** give PLG staff a browser UI for the whole POC: ask questions, check cited sources, see the SQL reasoning, approve actions and manage memory. It does this without moving any AI logic out of Python.
+
+**Split of responsibilities**
+
+| Layer | Tech | Owns | Never does |
+|---|---|---|---|
+| **Web app** (`web/`) | TypeScript (strict), Node.js 24 LTS, Next.js App Router, React, Tailwind CSS + shadcn/ui, TanStack Query, zod | Pages and components, streaming rendering, citation viewer, approval UI, login session; **BFF route handlers** that attach the user identity and proxy to `plg-api` | Call Claude, Voyage, LanceDB, DuckDB or the graph; hold API keys; decide routing or approvals |
+| **API** (`src/plg/api/`) | Python FastAPI + `sse-starlette`, one process with the graph | Thread lifecycle, `graph.astream(...)`, `Command(resume=…)`, permission checks, memory and feedback endpoints, file serving from `DocumentSource` | Business logic of its own: it only adapts HTTP to the graph and stores |
+| **Graph** (`src/plg/graph/`) | LangGraph + native Anthropic SDK (unchanged) | Everything in §2.1–§2.7 | Know about HTTP |
+
+**Why this shape:** the graph, `run_agent()`, Citations, the read-only tool boundary and LangSmith tracing are all Python. Rewriting them in LangGraph.js would duplicate the core. A thin HTTP layer keeps one implementation, and the CLI, notebook and web UI all drive the same graph. A Node BFF, rather than the browser calling `plg-api` directly, keeps the API off the public network and keeps session cookies httpOnly. It is also where SSO is added later. *Alternative considered:* the LangGraph Agent Server API (`langgraph dev`) with `@langchain/langgraph-sdk`'s `useStream` hook. It gives threads, runs and interrupts for free, but its dev server keeps state in memory rather than in the §2.6 `SqliteSaver`, self-hosted production use needs a LangSmith Deployment licence, and memory, feedback and file endpoints would still need custom routes. It is kept as an option if PLG adopts LangSmith Deployment.
+
+**API contract (`plg-api`, OpenAPI 3.1)**
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /threads` · `GET /threads` · `GET /threads/{id}` | Create, list (own threads only) and reload a session from the checkpointer, including history, pending approvals and `history_summary` |
+| `POST /threads/{id}/runs` → `text/event-stream` | Send a user turn and stream the run. Events: `node` (node entered/finished, for the trajectory view), `token` (merged answer text), `citation`, `sql_trace`, `proposed_action`, `interrupt`, `done` (with LangSmith `run_id`), `error` |
+| `POST /threads/{id}/resume` → `text/event-stream` | Approve, edit or reject a pending `ProposedAction` (`{action_id, version, decision, edits?}`) → `Command(resume=…)`, then stream `execute_action` and the audit result |
+| `GET /approvals?status=pending` | Approval inbox across the user's threads (and, for curators, team-fact and glossary proposals) |
+| `GET /documents/{doc_id}` · `GET /documents/{doc_id}/chunks/{chunk_id}` | Source file or text via `DocumentSource`, plus the chunk's location so the cited span can be highlighted |
+| `GET/PATCH/DELETE /memory/...` | `plg memory list / show / edit / forget` for the current user (§2.6) |
+| `POST /feedback` | 👍/👎 and corrections → `client.create_feedback(run_id, …)` (§6.1) |
+| `GET /tasks/digest` · `GET /audit/reports/latest` · `GET /categories` | Read-only views over the `tasks`, `corpus_audit` and `categorise` outputs |
+
+- Event payloads are Pydantic models, and their JSON Schema goes into the OpenAPI document. The web app generates its types from it (`openapi-typescript` + `openapi-fetch`), so a schema change breaks the TypeScript build instead of the UI at runtime. SSE frames are validated with zod on arrival.
+- Streaming uses `graph.astream(..., stream_mode=["updates", "messages", "custom"], subgraphs=True)`. Only the `merge` node's tokens are streamed to the user; specialist outputs arrive as finished `AgentResult` summaries, which matches §2.6's compact-results rule.
+- Reconnection: every event has a sequence number, and a client that reconnects can call `GET /threads/{id}` to rebuild the view from the checkpoint. Approvals survive browser restarts because they live in the checkpointer, not in the UI.
+
+**Screens**
+
+| Screen | What it shows | Requirements |
+|---|---|---|
+| **Ask** (chat) | Streaming answer; live trajectory of graph nodes (route → knowledge + data → merge); multi-intent results as sections; follow-up questions in the same thread | SYS, DC2–DC5 |
+| **Sources panel** | Each citation opens the source: PDF via `react-pdf` with the cited span highlighted, DOCX/email/MD as rendered text; "policy stance" cards with current version, effective date and superseded versions; glossary definitions with their version | DC2–DC4, DC6 |
+| **Reasoning panel** | The `SqlTrace` (plan → SQL → result table → explanation, including the glossary definition used), with copy and CSV export | DC5, DC6 |
+| **Approvals** | Inbox of pending `ProposedAction`s; diff-style preview of drafted letters and i-EMS payloads; editable slot fields; approve / edit / reject with a reason; audit trail per action | DC1, AC1, AC5, D11 |
+| **Draft preview** | Rendered letter (HTML preview of the docxtpl output) plus a DOCX download | DC1 |
+| **Document check** | Upload or pick an application bundle → checklist with ✓/✗ per required document → generated missing-documents notice → approval | AC5 |
+| **Tasks** | Prioritised task list with rule explanations (from `tasks` / `task_digest`) | AC2 |
+| **Library** | Categories with summaries; corpus-audit findings (conflicts, duplicates, stale SOPs) with both sides cited | AC3, AC4 |
+| **Memory** | My profile, episodes and pending team-fact proposals, each with provenance; edit / forget; curator review queue | D21 |
+| **Feedback** | 👍/👎 and "correct this" on every answer, linked to the LangSmith `run_id` | D19 |
+
+**Identity and access**
+- **POC:** a mock sign-in that picks a staff member from the `staff` table (e.g. Estate Manager East, Ops Analytics). The BFF stores the user in an httpOnly session cookie and sends `X-PLG-User` to `plg-api` on a private loopback port. `plg-api` builds `UserCtx` from it, so §2.6 memory isolation and approver roles can be demonstrated with several personas.
+- **Production:** Microsoft Entra ID (OIDC) through Auth.js in the BFF. The BFF forwards a signed token that `plg-api` verifies; the role comes from directory groups, not the UI.
+
+**Quality**
+- **Unit and component tests:** Vitest + React Testing Library, with MSW replaying recorded SSE streams so the UI is tested without Claude.
+- **End-to-end:** Playwright against `plg serve` with a recorded or stubbed `LLMClient` for determinism. Key journeys: ask with citations, follow-up in the same thread, approve and reject an LOD, planted-injection email rendered as inert text, user A cannot open user B's thread.
+- **Contract:** CI regenerates the OpenAPI types and fails if the committed client differs.
+- **Accessibility:** WCAG 2.1 AA (government users), checked with `axe-core` in Playwright.
+
+**Running locally:** `plg serve` (uvicorn on `127.0.0.1:8001`, one worker, because of the single-process stores in §2.5) and `pnpm --dir web dev` (Next.js on `:3000`). There is still no Docker. On AWS the web app runs as a container on ECS Fargate (or App Runner) behind an ALB, and `plg-api` sits in a private subnet next to OpenSearch and Neptune.
+
 ## 3. Requirement Coverage
 
 | Req | Delivered by |
@@ -303,6 +369,7 @@ plg:Vacant_v2:
 | AC4 Conflicts, duplicates, gaps | `jobs/corpus_audit` (MinHash → vector-similarity pairs + graph lineage checks + **ontology rule check** → Opus judge) → `CONFLICTS_WITH` edges + report with citations; gaps found from low-score question logs |
 | AC5 Document completeness; notify tenants | `doc_check_flow` subgraph + TPL-DOC-02 notice + approval → `Outbox` |
 | SYS Front door, guardrails, HITL, learning | LangGraph router + §2.2 boundary + `interrupt()` + short- and long-term memory (§2.6) + feedback few-shot examples; "interpret like a domain expert" supported by the ontology (§2.7) |
+| SYS User interface | TypeScript/Node.js web front-end (§2.8): streaming chat with cited sources and SQL reasoning, approvals inbox, document check, tasks, library, memory and feedback; the CLI is kept for jobs and power users |
 
 ## 4. Design Tree (selected)
 
@@ -336,6 +403,7 @@ PLG Super-Librarian POC
 │   ├── Short-term .................... checkpointer thread + summarise_history + compact agent results   ◆ user choice
 │   └── Long-term ..................... MemoryStore (LangGraph BaseStore on LanceDB): profile · episodes · team facts · examples (+ graph WORKED_ON)  ◆ user choice
 ├── D22 Ontology .................... LinkML + SKOS-style vocabulary, design-time; generates schemas, allow-list, synonyms, rules  ★ (recommended, accepted)
+├── D23 Front-end ..................... TypeScript · Node.js · Next.js UI + BFF → FastAPI `plg-api` (SSE) → LangGraph      ◆ user choice
 └── D20 Evaluation & observability .... LangSmith: tracing + datasets + offline experiments + online evaluators  ◆ user choice
 ```
 ◆ = user selection · ★ = recommended option accepted
@@ -376,10 +444,16 @@ agent-hdb-v2/
 │   ├── guardrails/           # injection screen, PII check, audit log
 │   ├── jobs/                 # categorise, corpus_audit, task_digest
 │   ├── memory/               # MemoryStore (BaseStore on LanceDB), load/write/summarise nodes, extraction prompts, curation, CLI
-│   └── cli.py                # `plg ask | sync | approve | digest | audit | categorise`
+│   ├── api/                  # FastAPI app: routes (threads, runs, resume, approvals, documents, memory, feedback), SSE event models, auth context
+│   └── cli.py                # `plg ask | serve | sync | approve | digest | audit | categorise`
+├── web/                      # TypeScript front-end (Node.js 24, pnpm)
+│   ├── app/                  # Next.js App Router: (chat)/, approvals/, doc-check/, tasks/, library/, memory/, api/ (BFF route handlers)
+│   ├── components/           # chat stream, citation + PDF viewer, SQL trace, approval card, draft preview (shadcn/ui)
+│   ├── lib/                  # generated OpenAPI client + types, SSE parser (zod-validated), session/auth
+│   └── tests/                # Vitest + MSW (unit/component), Playwright e2e + axe accessibility
 ├── templates/                # approved letter/email templates (docxtpl / Jinja2)
 ├── .plg/                     # git-ignored local state: lancedb/, graph/ (canonical CSVs), checkpoints.sqlite
-├── infra/                    # (post-POC) AWS CDK: VPC, OpenSearch domain, Neptune Serverless, S3, IAM
+├── infra/                    # (post-POC) AWS CDK: VPC, OpenSearch domain, Neptune Serverless, S3, IAM, ECS Fargate (web + plg-api), ALB
 ├── evals/
 │   ├── datasets/             # golden sets per node (JSONL, version-controlled; synced to LangSmith datasets)
 │   ├── evaluators/           # code evaluators + LLM-as-judge evaluators
@@ -388,7 +462,9 @@ agent-hdb-v2/
 └── notebooks/demo.ipynb
 ```
 
-**Core stack:** Python 3.12 · `langgraph` + `langgraph-checkpoint-sqlite` · `anthropic` · `lancedb` · `networkx` · `filelock` · later: `opensearch-py`, `boto3` / SigV4 for Amazon OpenSearch Service and Neptune · `voyageai` · `duckdb` · `docxtpl` / `jinja2` · `python-docx`, `pypdf`, `openpyxl`, `python-pptx` · `datasketch` · `hdbscan` · `langsmith` · `openevals` · `linkml` / `linkml-runtime` · `pytest`.
+**Core stack:** Python 3.12 · `langgraph` + `langgraph-checkpoint-sqlite` · `anthropic` · `lancedb` · `networkx` · `filelock` · later: `opensearch-py`, `boto3` / SigV4 for Amazon OpenSearch Service and Neptune · `voyageai` · `duckdb` · `docxtpl` / `jinja2` · `python-docx`, `pypdf`, `openpyxl`, `python-pptx` · `datasketch` · `hdbscan` · `langsmith` · `openevals` · `linkml` / `linkml-runtime` · `fastapi` + `uvicorn` + `sse-starlette` · `pytest`.
+
+**Front-end stack:** Node.js 24 LTS · TypeScript (strict) · pnpm · Next.js (App Router) + React · Tailwind CSS + shadcn/ui · TanStack Query · zod · `openapi-typescript` + `openapi-fetch` · `react-markdown` (no raw HTML) · `react-pdf` · Auth.js (production SSO) · Vitest + React Testing Library + MSW · Playwright + `@axe-core/playwright` · ESLint + Prettier.
 
 ## 6. Tracing & Evaluation (D20, LangSmith)
 
@@ -401,7 +477,8 @@ agent-hdb-v2/
 | Tools and retrieval | Read-only tools, hybrid search, reranking and SQL execution are decorated with `@traceable(run_type="tool" / "retriever")`, so retrieved chunk IDs and SQL text appear in the trace. |
 | Metadata and tags | Each run carries `thread_id`, `user`, `intents`, `model_tier` and `git_sha` metadata, so traces can be filtered by session, user, agent or release. Projects: `plg-dev`, `plg-eval`, `plg-demo`. |
 | Approvals and audit | `ProposedAction`, the approval decision and `execute_action` are traced spans. The audit log stores the LangSmith `run_id`, so every external action links back to the full reasoning trace. |
-| User feedback (D19) | CLI 👍/👎 and corrections are recorded with `client.create_feedback(run_id, key="user_rating", …)`. Thumbs-down runs go to an **annotation queue** for review; corrected answers are promoted into datasets and few-shot memory. |
+| Web requests | `plg-api` starts each run with LangSmith metadata `channel=web` and the BFF request ID, and returns the root `run_id` in the `done` event. The UI keeps it with each answer for feedback and "view trace" links (visible to developers only). |
+| User feedback (D19) | Web and CLI 👍/👎 and corrections are recorded with `client.create_feedback(run_id, key="user_rating", …)`. Thumbs-down runs go to an **annotation queue** for review; corrected answers are promoted into datasets and few-shot memory. |
 | Privacy | `hide_inputs` / `hide_outputs` hooks mask NRIC-like IDs, phone numbers and emails before upload. Configuration in `.env`: `LANGSMITH_API_KEY`, `LANGSMITH_PROJECT`, `LANGSMITH_ENDPOINT` (pointed at self-hosted LangSmith in production). |
 
 ### 6.2 Evaluation
@@ -421,6 +498,7 @@ Ground truth already exists in `poc-data/_master/` (key entities, planned confli
 | Glossary | ▸ definition questions (current and historical) answered with the correct version and citation; SQL for glossary terms uses the bound predicate; superseded-definition usage detected by `corpus_audit` | ≥ 90% |
 | Ontology | ▸ 100% of graph CSVs and extracted relations valid against the ontology; rule-check recall of the planted issues in `data_quality_issues.json` and `planned_conflicts.json`; synonym expansion lift in retrieval recall@5 (with vs without) | 100% validity; ≥ 80% rule recall |
 | Memory | ▸ cross-session recall of profile and episode facts; **zero cross-user leakage**; no memory overriding a current policy; poisoned-email test writes nothing; quality of answers after summarisation vs full history | 100% isolation |
+| Web front-end | ▸ Playwright journeys (§2.8) pass with a stubbed `LLMClient`; zero approvals possible without a pending interrupt for that user; no script execution from rendered corpus text; axe: no serious WCAG 2.1 AA violations; time to first streamed token p95 | 100% journeys pass |
 | End-to-end | ▸ trajectory check (expected nodes visited) · ▸ answer correctness with citations; latency p95 and cost per query from traces | Report |
 
 **How it runs:**
@@ -433,10 +511,12 @@ Ground truth already exists in `poc-data/_master/` (key entities, planned confli
 
 | Week | Deliverable |
 |---|---|
-| 1 | **Ontology v1** (`plg.yaml`, vocabularies seeded from `_master`, **business glossary seed terms**, generators, ontology card); `SearchStore`/`GraphStore` interfaces + LanceDB store; `llm.py` loop + seam; **LangSmith tracing on from day 1**; ingestion into the LanceDB hybrid index; `knowledge` node with Citations; minimal graph (`route` → `knowledge`); golden datasets v1 + `route`/`knowledge` experiments |
-| 2 | Graph build (entity spine + relation extraction → canonical CSVs → `LocalGraphStore`), Cypher templates + contract tests + lint and graph tools (`policy_lineage`, `find_precedents`, `entity_context`); DuckDB + semantic-layer SQL bindings for glossary terms + `data` node with trace; `drafting` node; Send() fan-out and `merge` |
-| 3 | `approval` interrupt + `execute_action` + adapters; `defect_flow`, `doc_check_flow`, `tasks`; memory (`load_memory`, `write_memory`, `summarise_history`, MemoryStore, curation) + feedback |
-| 4 | `sync`, `categorise`, `corpus_audit` jobs (incl. ontology rule check); full experiment run, per-model-tier comparison and metrics report from LangSmith; online evaluators; demo notebook |
+| 1 | **Ontology v1** (`plg.yaml`, vocabularies seeded from `_master`, **business glossary seed terms**, generators, ontology card); `SearchStore`/`GraphStore` interfaces + LanceDB store; `llm.py` loop + seam; **LangSmith tracing on from day 1**; ingestion into the LanceDB hybrid index; `knowledge` node with Citations; minimal graph (`route` → `knowledge`); golden datasets v1 + `route`/`knowledge` experiments · **Web:** `plg serve` (threads, runs SSE) + OpenAPI type generation; Next.js skeleton, mock sign-in, Ask screen with streaming answer and Sources panel |
+| 2 | Graph build (entity spine + relation extraction → canonical CSVs → `LocalGraphStore`), Cypher templates + contract tests + lint and graph tools (`policy_lineage`, `find_precedents`, `entity_context`); DuckDB + semantic-layer SQL bindings for glossary terms + `data` node with trace; `drafting` node; Send() fan-out and `merge` · **Web:** Reasoning panel (SqlTrace), node trajectory, Draft preview, PDF span highlighting |
+| 3 | `approval` interrupt + `execute_action` + adapters; `defect_flow`, `doc_check_flow`, `tasks`; memory (`load_memory`, `write_memory`, `summarise_history`, MemoryStore, curation) + feedback · **Web:** `/resume` + Approvals inbox, Document check, Tasks, Memory screens, 👍/👎 |
+| 4 | `sync`, `categorise`, `corpus_audit` jobs (incl. ontology rule check); full experiment run, per-model-tier comparison and metrics report from LangSmith; online evaluators; demo notebook · **Web:** Library screen (categories, audit findings), Playwright + axe suite, demo run through the web UI |
+
+The web track adds about one developer's worth of effort alongside the Python work. If only one developer is available, the Week 1–2 web items stay and the Library and Memory screens fall back to the CLI.
 
 ## 8. Risks and Open Questions
 
@@ -447,11 +527,13 @@ Ground truth already exists in `poc-data/_master/` (key entities, planned confli
 5. **Trace data leaves the environment:** LangSmith Cloud stores full prompts, retrieved documents and outputs. That is fine for the synthetic POC corpus, but production needs self-hosted LangSmith (or Langfuse self-hosted as an open-source fallback) inside GCC or on-prem, plus masking of tenant PII in traces.
 6. **Local to AWS differences:** the local graph code is Python, not the Cypher Neptune will run, and LanceDB's hybrid scoring differs from OpenSearch's. Mitigation: the canonical CSVs, the graph contract tests that every backend must pass, Neptune-compatible data rules, and re-tuning the retrieval weights against the eval sets at migration. Budget a few days for that migration testing. The production target (GCC on AWS, Claude via Amazon Bedrock) is unchanged.
 7. **Graph quality:** relations extracted by an LLM can be wrong. Mitigation: deterministic ID-based edges wherever possible, evidence chunks on every extracted edge, and checks against `_master` ground truth.
-8. **Single-process limits:** an embedded LanceDB and an in-memory graph suit one user and one process (CLI or notebook). Concurrent writers are serialised with a file lock. Multi-user use needs the AWS backends.
+8. **Single-process limits:** an embedded LanceDB and an in-memory graph suit one process. The web UI therefore talks to a single `plg-api` worker, which is enough for a handful of demo users; concurrent writers are serialised with a file lock. Real multi-user use needs the AWS backends and several API workers.
 9. **Lotus Notes extraction** (DXL / Domino REST) remains the main production integration risk.
 10. **Memory risks:** stale or wrong memories, and over-personalisation. Mitigation: provenance on every item, expiry, curation of anything shared, a "memory never beats a cited source" rule, and user-visible `forget`.
 11. **Ontology scope creep:** ontology work can grow without limit. Mitigation: cap it at the classes and relations used by the POC's example questions and workflows, keep it design-time only, and time-box v1 to 2–3 days.
-12. **PLG artefacts:** the ontology, taxonomy, checklists, priority rules, glossary and templates are invented for the POC and need PLG validation.
+12. **Two languages (Python + TypeScript):** more tooling and a contract that can drift. Mitigation: all AI logic stays in Python; the web app is presentation only; types are generated from OpenAPI and checked in CI.
+13. **Streaming and long runs:** fan-out runs can take tens of seconds, and proxies may cut SSE connections. Mitigation: node-progress events, sequence numbers plus reload from the checkpoint, and heartbeat comments on the stream. The BFF route handlers use the Node.js runtime (not Edge) with buffering off.
+14. **PLG artefacts:** the ontology, taxonomy, checklists, priority rules, glossary and templates are invented for the POC and need PLG validation.
 
 ## 9. Prior Art and References
 
@@ -468,6 +550,13 @@ Ground truth already exists in `poc-data/_master/` (key entities, planned confli
 - Claude PDF support: https://docs.claude.com/en/docs/build-with-claude/pdf-support
 - Prompt caching: https://docs.claude.com/en/docs/build-with-claude/prompt-caching
 - Claude models: https://docs.claude.com/en/docs/about-claude/models/overview
+
+**Front-end and API**
+- Next.js App Router and route handlers: https://nextjs.org/docs/app · TypeScript: https://www.typescriptlang.org/docs/
+- FastAPI: https://fastapi.tiangolo.com · sse-starlette: https://github.com/sysid/sse-starlette · Server-Sent Events (WHATWG): https://html.spec.whatwg.org/multipage/server-sent-events.html
+- LangGraph streaming (`stream_mode`, subgraphs): https://langchain-ai.github.io/langgraph/how-tos/streaming/ · LangGraph JS SDK `useStream` (alternative considered): https://langchain-ai.github.io/langgraph/cloud/how-tos/use_stream_react/
+- openapi-typescript / openapi-fetch: https://openapi-ts.dev · zod: https://zod.dev · TanStack Query: https://tanstack.com/query · shadcn/ui: https://ui.shadcn.com · react-pdf: https://github.com/wojtekmaj/react-pdf
+- Auth.js (Microsoft Entra ID provider): https://authjs.dev · Playwright: https://playwright.dev · axe-core: https://github.com/dequelabs/axe-core · WCAG 2.1: https://www.w3.org/TR/WCAG21/
 
 **Retrieval**
 - Lewis et al., *Retrieval-Augmented Generation* (2020): https://arxiv.org/abs/2005.11401

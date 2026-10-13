@@ -1,4 +1,4 @@
-"""Run events streamed to clients. Published in OpenAPI so the web app can generate its types."""
+"""Run events streamed to clients as SSE. Pydantic models, so they can be published in OpenAPI (#3)."""
 
 from __future__ import annotations
 

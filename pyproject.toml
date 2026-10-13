@@ -6,6 +6,8 @@ requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.69",
     "fastapi>=0.115",
+    "httpx2>=2.13",
+    "langchain-core>=1.6",
     "langgraph>=0.6",
     "langsmith>=0.4",
     "pydantic>=2.8",

@@ -6,7 +6,7 @@ import asyncio
 import re
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Protocol, TypedDict
+from typing import Any, Literal, Protocol, TypedDict
 
 import httpx2
 from anthropic import AsyncAnthropic
@@ -16,7 +16,7 @@ from plg.config import Settings, Tier
 
 
 class Message(TypedDict):
-    role: str
+    role: Literal["user", "assistant"]
     content: str
 
 

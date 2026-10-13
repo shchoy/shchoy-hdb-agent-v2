@@ -8,19 +8,18 @@ from collections.abc import AsyncIterator
 from typing import Any, cast
 
 from langchain_core.runnables import RunnableConfig
-from langgraph.graph.state import CompiledStateGraph
 
 from plg.events import DoneEvent, ErrorEvent, NodeEvent, RunEvent, TokenEvent
-from plg.graph.state import PLGState
+from plg.graph.state import PLGGraph
 
 logger = logging.getLogger(__name__)
 
 
 async def stream_run(
-    graph: CompiledStateGraph[PLGState, Any, PLGState, PLGState], thread_id: str, message: str
+    graph: PLGGraph, thread_id: str, message: str
 ) -> AsyncIterator[RunEvent]:
-    run_id = str(uuid.uuid4())
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}, "run_id": uuid.UUID(run_id)}
+    run_id = uuid.uuid4()
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}, "run_id": run_id}
     seq = 0
 
     def next_seq() -> int:
@@ -49,8 +48,8 @@ async def stream_run(
         logger.exception("Run %s on thread %s failed", run_id, thread_id)
         yield ErrorEvent(
             seq=next_seq(),
-            run_id=run_id,
+            run_id=str(run_id),
             message="The run failed before the answer was complete. Please retry.",
         )
         return
-    yield DoneEvent(seq=next_seq(), run_id=run_id)
+    yield DoneEvent(seq=next_seq(), run_id=str(run_id))

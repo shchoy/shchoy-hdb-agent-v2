@@ -3,5 +3,10 @@
 .DS_Store
 ref-ignore/
 .claude/settings.local.json
+.claude/worktrees/
 __pycache__/
 *.pyc
+.plg/
+.venv/
+.mypy_cache/
+.pytest_cache/

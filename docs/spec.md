@@ -2,7 +2,7 @@
 
 > Source design: `docs/solution.MD` (selected solution, decisions D1–D23) · Requirements: `docs/REQ.md` · Corpus: `poc-data/` (seed 42, `_report.md`, `_scenario.md`, `_manifest.csv`)
 >
-> Tracking issue: https://github.com/shchoy/hdb-agent-v2/issues/27
+> Tracking issue: https://github.com/shchoy/shchoy-hdb-agent-v2/issues/1
 
 ## Problem Statement
 

@@ -6,3 +6,6 @@ ref-ignore/
 __pycache__/
 *.pyc
 .plg/
+.venv/
+.mypy_cache/
+.pytest_cache/

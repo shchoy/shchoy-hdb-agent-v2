@@ -3,15 +3,21 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from typer.testing import CliRunner, Result
 
+from plg import cli
 from plg.api.app import create_app
-from plg.config import Settings
+from plg.config import REPO_ROOT, Settings
 from plg.llm import ScriptedLLMClient
+from plg.search.embed import HashingEmbedder
+from plg.search.lance import LanceSearchStore
+from plg.search.models import DocumentMeta
 
 
 @dataclass
@@ -90,3 +96,51 @@ def make_api(llm: ScriptedLLMClient) -> Iterator[Callable[..., Api]]:
 @pytest.fixture
 def api(make_api: Callable[..., Api]) -> Api:
     return make_api()
+
+
+# ---------------------------------------------------------------- search index over poc-data
+
+CORPUS = REPO_ROOT / "poc-data"
+
+
+class CountingEmbedder(HashingEmbedder):
+    """The offline embedder, recording every text it is asked to embed."""
+
+    def __init__(self) -> None:
+        super().__init__(dim=128)
+        self.embedded: list[str] = []
+
+    def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+        self.embedded.extend(texts)
+        return super().embed_documents(texts)
+
+
+def run_sync(embedder: HashingEmbedder, index: Path, corpus: Path = CORPUS, *args: str) -> Result:
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(cli, "make_embedder", lambda settings: embedder)
+        env = {"PLG_SEARCH_DB": str(index), "PLG_CORPUS_DIR": str(corpus)}
+        result = CliRunner().invoke(cli.app, ["sync", *args], env=env)
+    assert result.exit_code == 0, result.output
+    return result
+
+
+def open_store(index: Path, embedder: HashingEmbedder) -> LanceSearchStore:
+    return LanceSearchStore(index, dim=embedder.dim)
+
+
+def by_path(store: LanceSearchStore) -> dict[str, DocumentMeta]:
+    return {d.source_path: d for d in store.documents()}
+
+
+@pytest.fixture(scope="session")
+def corpus_index(tmp_path_factory: pytest.TempPathFactory) -> tuple[LanceSearchStore, str]:
+    """The whole poc-data corpus, synced once per test session."""
+    embedder = CountingEmbedder()
+    index = tmp_path_factory.mktemp("index")
+    result = run_sync(embedder, index)
+    return open_store(index, embedder), result.output
+
+
+@pytest.fixture
+def store(corpus_index: tuple[LanceSearchStore, str]) -> LanceSearchStore:
+    return corpus_index[0]

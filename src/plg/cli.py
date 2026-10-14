@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import shutil
 import uuid
+from datetime import date
 
 import typer
 from dotenv import find_dotenv, load_dotenv
@@ -16,6 +19,9 @@ from plg.llm import AnthropicLLMClient, LLMClient, ScriptedLLMClient
 from plg.ontology.generated.models import GlossaryTerm
 from plg.ontology.glossary import load_glossary
 from plg.runs import stream_run
+from plg.search.embed import Embedder, VoyageEmbedder
+from plg.search.models import DocStatus, SearchFilter
+from plg.search.rerank import CrossEncoderReranker, Reranker
 
 app = typer.Typer(help="PLG Super-Librarian", no_args_is_help=True)
 glossary_app = typer.Typer(help="Business glossary: versioned definitions.", no_args_is_help=True)
@@ -24,6 +30,18 @@ app.add_typer(glossary_app, name="glossary")
 
 def make_llm(settings: Settings) -> LLMClient:
     return AnthropicLLMClient(settings)
+
+
+def make_embedder(settings: Settings) -> Embedder:
+    api_key = os.environ.get("VOYAGE_API_KEY")
+    if not api_key:
+        typer.echo("VOYAGE_API_KEY is not set. Add it to .env at the repo root.", err=True)
+        raise typer.Exit(code=1)
+    return VoyageEmbedder(settings, api_key)
+
+
+def make_reranker(settings: Settings) -> Reranker:
+    return CrossEncoderReranker(settings)
 
 
 @app.callback()
@@ -49,6 +67,61 @@ def ask(question: str) -> None:
 
     if not asyncio.run(run()):
         raise typer.Exit(code=1)
+
+
+@app.command()
+def sync(
+    full: bool = typer.Option(False, "--full", help="Drop the index and re-ingest everything."),
+) -> None:
+    """Ingest changed corpus documents (SharePoint and Lotus Notes mocks) into the search index."""
+    from plg.ingest.metadata import load_entity_spine
+    from plg.ingest.sources import DocumentSource, LotusNotesSource, SharePointSource
+    from plg.ingest.sync import sync as run_sync
+    from plg.search.lance import LanceSearchStore
+
+    settings = Settings.from_env()
+    embedder = make_embedder(settings)
+    if full and settings.search_db.exists():
+        shutil.rmtree(settings.search_db)
+    store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
+    entities, tagger = load_entity_spine(settings.records_db)
+    sources: list[DocumentSource] = [SharePointSource(settings.corpus_dir), LotusNotesSource(settings.corpus_dir)]
+    report = run_sync(store, embedder, sources, entities, tagger)
+
+    typer.echo(
+        f"Added {len(report.added)}, updated {len(report.updated)}, unchanged {len(report.unchanged)}, "
+        f"skipped {len(report.skipped)} documents; wrote {report.chunks_written} chunks."
+    )
+    for path in report.superseded:
+        typer.echo(f"Superseded: {path}")
+    for skipped in report.skipped:
+        typer.echo(f"Skipped: {skipped.rel_path} ({skipped.reason})")
+
+
+@app.command()
+def search(
+    query: str,
+    k: int = typer.Option(8, help="Number of results."),
+    status: DocStatus | None = typer.Option(None, help="current or superseded."),
+    doc_type: list[str] = typer.Option([], "--type", help="Document type, e.g. policy (repeatable)."),
+    in_force_on: str | None = typer.Option(None, help="Only documents in force on this date (YYYY-MM-DD)."),
+) -> None:
+    """Hybrid search of the index with cross-encoder rerank, for checking what `plg sync` indexed."""
+    from plg.search.lance import LanceSearchStore
+    from plg.search.rerank import Searcher
+
+    settings = Settings.from_env()
+    embedder = make_embedder(settings)
+    store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
+    searcher = Searcher(store, embedder, make_reranker(settings), candidates=settings.search_candidates)
+    filters = SearchFilter(
+        status=status, doc_type=doc_type or None,
+        in_force_on=date.fromisoformat(in_force_on) if in_force_on else None,
+    )
+    for hit in searcher.search(query, filters=filters, k=k):
+        c = hit.chunk
+        version = f" v{c.version}" if c.version else ""
+        typer.echo(f"{hit.score:7.3f}  {c.chunk_id}  {c.title}{version} [{c.status}]  {c.location}")
 
 
 @app.command()

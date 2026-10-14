@@ -123,6 +123,29 @@ make ontology
 
 It validates everything first (including that each glossary term's `supersedes` chain is unbroken) and, on any problem, lists them and exits 1 without writing anything.
 
+#### Browsing the ontology
+
+- **Quick overview:** `src/plg/ontology/generated/ontology_card.md` lists every node label, every relation (`Tenancy -OF_UNIT-> Unit [1]`), the vocabulary codes and the current glossary definitions. It's the same card the agent gets in its prompts.
+- **Documentation site:** one page per class, relation and enum, cross-linked. Open `/tmp/plg-docs/index.md` in VS Code's Markdown preview and click through.
+
+  ```bash
+  uv run gen-doc ontology/plg.yaml -d /tmp/plg-docs
+  ```
+
+- **ER diagram:** a Mermaid diagram of the classes, their attributes and relations. View it in VS Code's Markdown preview (Mermaid support may need an extension) or paste it into https://mermaid.live. Run `uv run gen-erdiagram --help` for options to focus on part of the model.
+
+  ```bash
+  uv run gen-erdiagram ontology/plg.yaml > /tmp/plg-er.md
+  ```
+
+- **Vocabularies and synonyms:** the vocabularies are plain YAML in `ontology/vocab/`. To see which concepts a word or abbreviation maps to:
+
+  ```bash
+  uv run python -c "from plg.ontology.vocab import load_vocab; print(load_vocab().resolve('ceiling leak'))"
+  ```
+
+- **Glossary:** `uv run plg glossary list --all` and `uv run plg glossary show <term>` (see above).
+
 ## 5. Run the frontend
 
 Start `plg-api` first (section 4), then in another terminal:

@@ -570,6 +570,20 @@ class UnitStatus(Concept):
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
+class PlaceType(Concept):
+    """
+    Where a commercial unit sits, as PLG officers name it (e.g. NC, void deck).
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/heb/plg'})
+
+    id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
+    notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
+    pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
+    alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
+
+
 class LetterType(Concept):
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/heb/plg'})
 
@@ -711,6 +725,7 @@ Team.model_rebuild()
 Vendor.model_rebuild()
 UnitType.model_rebuild()
 UnitStatus.model_rebuild()
+PlaceType.model_rebuild()
 LetterType.model_rebuild()
 DocumentType.model_rebuild()
 SubmissionDocumentType.model_rebuild()

@@ -33,6 +33,12 @@ class CrossEncoderReranker:
         return sorted(rescored, key=lambda h: h.score, reverse=True)
 
 
+class Retriever(Protocol):
+    """What agents search through: `Searcher`, or a stand-in."""
+
+    def search(self, query: str, *, filters: SearchFilter | None = None, k: int = 8) -> list[SearchHit]: ...
+
+
 class Searcher:
     def __init__(
         self, store: SearchStore, embedder: Embedder, reranker: Reranker, *, candidates: int = 50
@@ -47,3 +53,30 @@ class Searcher:
             query, self._embedder.embed_query(query), filters=filters, limit=self._candidates
         )
         return self._reranker.rerank(query, candidates)[:k]
+
+
+def open_searcher(settings: Settings) -> Searcher:
+    """The `plg sync` index, Voyage query embeddings and the local cross-encoder."""
+    import os
+
+    from plg.search.embed import VoyageEmbedder
+    from plg.search.lance import LanceSearchStore
+
+    api_key = os.environ.get("VOYAGE_API_KEY")
+    if not api_key:
+        raise RuntimeError("VOYAGE_API_KEY is not set. Add it to .env at the repo root.")
+    embedder = VoyageEmbedder(settings, api_key)
+    store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
+    return Searcher(store, embedder, CrossEncoderReranker(settings), candidates=settings.search_candidates)
+
+
+class LazySearcher:
+    """Opens the real searcher on first search, so plg-api starts (and prints OpenAPI) without the index or keys."""
+
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
+        self._searcher: Searcher | None = None
+
+    def search(self, query: str, *, filters: SearchFilter | None = None, k: int = 8) -> list[SearchHit]:
+        self._searcher = self._searcher or open_searcher(self._settings)
+        return self._searcher.search(query, filters=filters, k=k)

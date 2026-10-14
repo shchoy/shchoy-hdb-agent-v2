@@ -894,6 +894,51 @@
       "title": "NeighbourhoodCentre",
       "type": "object"
     },
+    "PlaceType": {
+      "additionalProperties": false,
+      "description": "Where a commercial unit sits, as PLG officers name it (e.g. NC, void deck).",
+      "properties": {
+        "alt_labels": {
+          "description": "Synonyms and abbreviations, resolved by the vocabulary index.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "definition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "in_scheme": {
+          "type": "string"
+        },
+        "notation": {
+          "description": "Short code, e.g. SEP.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pref_label": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "pref_label",
+        "in_scheme"
+      ],
+      "title": "PlaceType",
+      "type": "object"
+    },
     "Policy": {
       "additionalProperties": false,
       "description": "One version of a PLG policy, e.g. PLG-POL-003 v2.0.",

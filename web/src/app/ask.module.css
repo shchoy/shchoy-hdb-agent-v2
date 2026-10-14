@@ -61,6 +61,44 @@
   margin: 0 0 0.5rem;
 }
 
+.sourcesHeading {
+  font-size: 1rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.sources {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.chip summary {
+  cursor: pointer;
+}
+
+.chip blockquote {
+  margin: 0.5rem 0 0.25rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--border);
+}
+
+.marker {
+  font-weight: 600;
+}
+
+.location {
+  color: var(--muted);
+}
+
 .alert {
   border: 2px solid var(--danger);
   background: var(--danger-bg);

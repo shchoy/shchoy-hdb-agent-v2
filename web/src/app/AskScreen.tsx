@@ -2,15 +2,17 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
-import { parseRunEvents } from "@/lib/events";
+import { parseRunEvents, type CitationEvent } from "@/lib/events";
 import styles from "./ask.module.css";
 
 type Step = { node: string; finished: boolean };
 
+type Answer = { question: string; answer: string; citations: CitationEvent[]; trajectory: Step[] };
+
 type Run =
   | { status: "idle" }
-  | { status: "running"; question: string; answer: string; trajectory: Step[] }
-  | { status: "done"; question: string; answer: string; trajectory: Step[] }
+  | ({ status: "running" } & Answer)
+  | ({ status: "done" } & Answer)
   | { status: "failed"; question: string; reason: string; trajectory: Step[] };
 
 /** The run failed or was cut short: whatever was streamed is partial and not to be trusted. */
@@ -38,7 +40,10 @@ export function AskScreen() {
   async function ask(text: string) {
     let trajectory: Step[] = [];
     let answer = "";
-    setRun({ status: "running", question: text, answer, trajectory });
+    let citations: CitationEvent[] = [];
+    const update = (status: "running" | "done") =>
+      setRun({ status, question: text, answer, citations, trajectory });
+    update("running");
     try {
       threadId.current ??= await createThread();
       const response = await fetch(`/api/threads/${encodeURIComponent(threadId.current)}/runs`, {
@@ -57,16 +62,20 @@ export function AskScreen() {
                 : trajectory.map((step) =>
                     step.node === event.node && !step.finished ? { ...step, finished: true } : step,
                   );
-            setRun({ status: "running", question: text, answer, trajectory });
+            update("running");
             break;
           case "token":
             answer += event.text;
-            setRun({ status: "running", question: text, answer, trajectory });
+            update("running");
+            break;
+          case "citation":
+            citations = [...citations, event];
+            update("running");
             break;
           case "error":
             throw new RunFailed(event.message);
           case "done":
-            setRun({ status: "done", question: text, answer, trajectory });
+            update("done");
             return;
         }
       }
@@ -144,10 +153,35 @@ export function AskScreen() {
               <div aria-live="polite" aria-busy={running}>
                 <ReactMarkdown skipHtml>{run.answer}</ReactMarkdown>
               </div>
+              {run.citations.length > 0 && <Sources citations={run.citations} />}
             </section>
           )}
         </>
       )}
     </div>
+  );
+}
+
+/** Citation chips: the number used in the answer, the document and section; open one to read the quoted span. */
+function Sources({ citations }: { citations: CitationEvent[] }) {
+  return (
+    <>
+      <h3 id="sources-heading" className={styles.sourcesHeading}>
+        Sources
+      </h3>
+      <ol aria-labelledby="sources-heading" className={styles.sources}>
+        {citations.map((c) => (
+          <li key={c.index}>
+            <details className={styles.chip}>
+              <summary>
+                <span className={styles.marker}>[{c.index}]</span> {c.title}{" "}
+                <span className={styles.location}>{c.location}</span>
+              </summary>
+              <blockquote>{c.quote}</blockquote>
+            </details>
+          </li>
+        ))}
+      </ol>
+    </>
   );
 }

@@ -611,6 +611,32 @@
         "template_id": "TPL-DOC-02"
       }
     ],
+    "plg:place_types": [
+      {
+        "id": "plg:place_type/neighbourhood-centre",
+        "notation": "NC",
+        "pref_label": "Neighbourhood Centre",
+        "alt_labels": [
+          "NC",
+          "neighborhood centre",
+          "neighbourhood center",
+          "NC unit",
+          "NC shop"
+        ],
+        "in_scheme": "plg:place_types"
+      },
+      {
+        "id": "plg:place_type/void-deck",
+        "notation": "Void deck",
+        "pref_label": "Void deck",
+        "alt_labels": [
+          "void-deck shop",
+          "void deck shop",
+          "void-deck unit"
+        ],
+        "in_scheme": "plg:place_types"
+      }
+    ],
     "plg:submission_document_types": [
       {
         "id": "plg:submission_doc/LOA",
@@ -2826,6 +2852,54 @@
         "notation": "MS"
       }
     ],
+    "nc": [
+      {
+        "id": "plg:place_type/neighbourhood-centre",
+        "scheme": "plg:place_types",
+        "pref_label": "Neighbourhood Centre",
+        "notation": "NC"
+      }
+    ],
+    "nc shop": [
+      {
+        "id": "plg:place_type/neighbourhood-centre",
+        "scheme": "plg:place_types",
+        "pref_label": "Neighbourhood Centre",
+        "notation": "NC"
+      }
+    ],
+    "nc unit": [
+      {
+        "id": "plg:place_type/neighbourhood-centre",
+        "scheme": "plg:place_types",
+        "pref_label": "Neighbourhood Centre",
+        "notation": "NC"
+      }
+    ],
+    "neighborhood centre": [
+      {
+        "id": "plg:place_type/neighbourhood-centre",
+        "scheme": "plg:place_types",
+        "pref_label": "Neighbourhood Centre",
+        "notation": "NC"
+      }
+    ],
+    "neighbourhood center": [
+      {
+        "id": "plg:place_type/neighbourhood-centre",
+        "scheme": "plg:place_types",
+        "pref_label": "Neighbourhood Centre",
+        "notation": "NC"
+      }
+    ],
+    "neighbourhood centre": [
+      {
+        "id": "plg:place_type/neighbourhood-centre",
+        "scheme": "plg:place_types",
+        "pref_label": "Neighbourhood Centre",
+        "notation": "NC"
+      }
+    ],
     "new lease": [
       {
         "id": "plg:app_type/NEW_TENANCY",
@@ -3940,6 +4014,30 @@
         "scheme": "plg:glossary",
         "pref_label": "Vacant unit",
         "notation": null
+      }
+    ],
+    "void deck": [
+      {
+        "id": "plg:place_type/void-deck",
+        "scheme": "plg:place_types",
+        "pref_label": "Void deck",
+        "notation": "Void deck"
+      }
+    ],
+    "void deck shop": [
+      {
+        "id": "plg:place_type/void-deck",
+        "scheme": "plg:place_types",
+        "pref_label": "Void deck",
+        "notation": "Void deck"
+      }
+    ],
+    "void deck unit": [
+      {
+        "id": "plg:place_type/void-deck",
+        "scheme": "plg:place_types",
+        "pref_label": "Void deck",
+        "notation": "Void deck"
       }
     ],
     "wall seepage": [

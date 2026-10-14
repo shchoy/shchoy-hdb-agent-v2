@@ -315,6 +315,72 @@
         ],
         "title": "ValidationError"
       },
+      "CitationEvent": {
+        "description": "A source the answer cites. `index` is the number of its `[n]` marker in the answer text.",
+        "properties": {
+          "doc_id": {
+            "title": "Doc Id",
+            "type": "string"
+          },
+          "chunk_id": {
+            "title": "Chunk Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "span": {
+            "$ref": "#/components/schemas/Span"
+          },
+          "type": {
+            "const": "citation",
+            "default": "citation",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "doc_id",
+          "chunk_id",
+          "title",
+          "version",
+          "location",
+          "quote",
+          "span",
+          "seq",
+          "index"
+        ],
+        "title": "CitationEvent",
+        "type": "object"
+      },
       "DoneEvent": {
         "properties": {
           "type": {
@@ -403,6 +469,25 @@
         "title": "NodeEvent",
         "type": "object"
       },
+      "Span": {
+        "description": "Character offsets into the chunk's text: `text[start:end]` is the cited quote.",
+        "properties": {
+          "start": {
+            "title": "Start",
+            "type": "integer"
+          },
+          "end": {
+            "title": "End",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "Span",
+        "type": "object"
+      },
       "TokenEvent": {
         "properties": {
           "type": {
@@ -435,6 +520,7 @@
       "RunEvent": {
         "discriminator": {
           "mapping": {
+            "citation": "#/components/schemas/CitationEvent",
             "done": "#/components/schemas/DoneEvent",
             "error": "#/components/schemas/ErrorEvent",
             "node": "#/components/schemas/NodeEvent",
@@ -448,6 +534,9 @@
           },
           {
             "$ref": "#/components/schemas/TokenEvent"
+          },
+          {
+            "$ref": "#/components/schemas/CitationEvent"
           },
           {
             "$ref": "#/components/schemas/DoneEvent"

@@ -38,11 +38,50 @@ describe("Ask screen", () => {
     const answer = screen.getByRole("region", { name: "Answer" });
     expect(within(answer).getByText("POL-003 v2.0").tagName).toBe("STRONG");
     expect(answer).toHaveTextContent(
-      "Under POL-003 v2.0, a letter of demand is issued once arrears reach 60 days.",
+      "Under POL-003 v2.0, a letter of demand is issued once arrears reach 60 days [1].",
     );
     const trajectory = screen.getByRole("list", { name: "Trajectory" });
-    expect(within(trajectory).getByRole("listitem")).toHaveTextContent("merge ✓ finished");
+    expect(within(trajectory).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "route ✓ finished",
+      "knowledge ✓ finished",
+      "merge ✓ finished",
+    ]);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("shows a citation chip for each cited source, with the quoted span", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
+    );
+
+    const user = await ask();
+    await runFinished();
+
+    const sources = screen.getByRole("list", { name: "Sources" });
+    const [chip] = within(sources).getAllByRole("listitem");
+    expect(chip).toHaveTextContent("[1]");
+    expect(chip).toHaveTextContent("PLG-POL-003 Rental Arrears Management Policy (v2.0)");
+    expect(chip).toHaveTextContent("4. Policy Statements > 4.5 Letter of Demand");
+    const quote = within(chip).getByText(/when any amount is 60 days overdue/);
+    expect(quote).not.toBeVisible();
+    await user.click(within(chip).getByText("[1]"));
+    expect(quote).toBeVisible();
+  });
+
+  it("says the sources don't cover the question, with no citation chips", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("not_covered"))),
+    );
+
+    await ask();
+    await runFinished();
+
+    expect(screen.getByRole("region", { name: "Answer" })).toHaveTextContent(
+      "The indexed PLG sources don't cover this question",
+    );
+    expect(screen.queryByRole("list", { name: "Sources" })).not.toBeInTheDocument();
   });
 
   it("sends the question to the run on a new thread", async () => {

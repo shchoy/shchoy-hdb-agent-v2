@@ -17,6 +17,7 @@ from plg.graph.build import build_graph
 from plg.identity import UserCtx, load_personas
 from plg.llm import AnthropicLLMClient, LLMClient
 from plg.runs import stream_run
+from plg.search.rerank import LazySearcher, Retriever
 
 
 class ThreadCreated(BaseModel):
@@ -42,9 +43,11 @@ def current_user(
 User = Annotated[UserCtx, Depends(current_user)]
 
 
-def create_app(settings: Settings | None = None, llm: LLMClient | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, llm: LLMClient | None = None, searcher: Retriever | None = None
+) -> FastAPI:
     settings = settings or Settings.from_env()
-    graph = build_graph(llm or AnthropicLLMClient(settings))
+    graph = build_graph(llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings))
     # Thread registry. Ownership and persistence across restarts arrive with later tickets.
     threads: set[str] = set()
 

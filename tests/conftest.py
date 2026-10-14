@@ -14,10 +14,11 @@ from typer.testing import CliRunner, Result
 from plg import cli
 from plg.api.app import create_app
 from plg.config import REPO_ROOT, Settings
-from plg.llm import ScriptedLLMClient
+from plg.llm import ScriptedLLMClient, tool_call, turn
 from plg.search.embed import HashingEmbedder
 from plg.search.lance import LanceSearchStore
 from plg.search.models import DocumentMeta
+from plg.search.rerank import CrossEncoderReranker, Searcher
 
 
 @dataclass
@@ -74,6 +75,11 @@ class Api:
             return parse_sse(r.read().decode())
 
 
+def route(llm: ScriptedLLMClient, question: str, *intents: str) -> None:
+    """Script the router: `question` goes to these specialists (none: merge answers it directly)."""
+    llm.script_turns("route", question, turn(tool_call("route", intents=list(intents))))
+
+
 @pytest.fixture
 def llm() -> ScriptedLLMClient:
     return ScriptedLLMClient()
@@ -83,8 +89,9 @@ def llm() -> ScriptedLLMClient:
 def make_api(llm: ScriptedLLMClient) -> Iterator[Callable[..., Api]]:
     clients: list[TestClient] = []
 
-    def factory(**settings: object) -> Api:
-        client = TestClient(create_app(Settings(**settings), llm=llm))  # type: ignore[arg-type]
+    def factory(searcher: Searcher | None = None, **settings: object) -> Api:
+        app = create_app(Settings(**settings), llm=llm, searcher=searcher)  # type: ignore[arg-type]
+        client = TestClient(app)
         clients.append(client.__enter__())
         return Api(client)
 
@@ -144,3 +151,20 @@ def corpus_index(tmp_path_factory: pytest.TempPathFactory) -> tuple[LanceSearchS
 @pytest.fixture
 def store(corpus_index: tuple[LanceSearchStore, str]) -> LanceSearchStore:
     return corpus_index[0]
+
+
+@pytest.fixture(scope="session")
+def reranker() -> CrossEncoderReranker:
+    return CrossEncoderReranker(Settings())
+
+
+@pytest.fixture
+def searcher(store: LanceSearchStore, reranker: CrossEncoderReranker) -> Searcher:
+    """Hybrid search with the real cross-encoder over the synced corpus, embedding queries offline."""
+    return Searcher(store, HashingEmbedder(dim=128), reranker, candidates=50)
+
+
+@pytest.fixture
+def knowledge_api(make_api: Callable[..., Api], searcher: Searcher) -> Api:
+    """plg-api whose knowledge agent searches the synced poc-data corpus."""
+    return make_api(searcher=searcher)

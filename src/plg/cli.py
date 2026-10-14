@@ -12,7 +12,7 @@ import typer
 from dotenv import find_dotenv, load_dotenv
 
 from plg.config import Settings
-from plg.events import ErrorEvent, TokenEvent
+from plg.events import CitationEvent, ErrorEvent, TokenEvent
 from plg.graph.build import build_graph
 from plg.identity import load_personas
 from plg.llm import AnthropicLLMClient, LLMClient, ScriptedLLMClient
@@ -21,7 +21,7 @@ from plg.ontology.glossary import load_glossary
 from plg.runs import stream_run
 from plg.search.embed import Embedder, VoyageEmbedder
 from plg.search.models import DocStatus, SearchFilter
-from plg.search.rerank import CrossEncoderReranker, Reranker
+from plg.search.rerank import CrossEncoderReranker, LazySearcher, Reranker
 
 app = typer.Typer(help="PLG Super-Librarian", no_args_is_help=True)
 glossary_app = typer.Typer(help="Business glossary: versioned definitions.", no_args_is_help=True)
@@ -52,17 +52,25 @@ def main() -> None:
 @app.command()
 def ask(question: str) -> None:
     """Ask a question and stream the answer."""
-    graph = build_graph(make_llm(Settings.from_env()))
+    settings = Settings.from_env()
+    graph = build_graph(make_llm(settings), LazySearcher(settings))
 
     async def run() -> bool:
+        citations: list[CitationEvent] = []
         async for event in stream_run(graph, str(uuid.uuid4()), question):
             if isinstance(event, TokenEvent):
                 typer.echo(event.text, nl=False)
+            elif isinstance(event, CitationEvent):
+                citations.append(event)
             elif isinstance(event, ErrorEvent):
                 typer.echo()
                 typer.echo(f"Error: {event.message} (run {event.run_id})", err=True)
                 return False
         typer.echo()
+        if citations:
+            typer.echo("\nSources:")
+        for c in citations:
+            typer.echo(f"[{c.index}] {c.title} - {c.location} ({c.chunk_id})\n    \"{c.quote}\"")
         return True
 
     if not asyncio.run(run()):

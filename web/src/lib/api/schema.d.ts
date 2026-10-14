@@ -126,6 +126,34 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * CitationEvent
+         * @description A source the answer cites. `index` is the number of its `[n]` marker in the answer text.
+         */
+        CitationEvent: {
+            /** Doc Id */
+            doc_id: string;
+            /** Chunk Id */
+            chunk_id: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string | null;
+            /** Location */
+            location: string;
+            /** Quote */
+            quote: string;
+            span: components["schemas"]["Span"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "citation";
+            /** Seq */
+            seq: number;
+            /** Index */
+            index: number;
+        };
         /** DoneEvent */
         DoneEvent: {
             /**
@@ -175,6 +203,16 @@ export interface components {
              */
             status: "started" | "finished";
         };
+        /**
+         * Span
+         * @description Character offsets into the chunk's text: `text[start:end]` is the cited quote.
+         */
+        Span: {
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+        };
         /** TokenEvent */
         TokenEvent: {
             /**
@@ -189,7 +227,7 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;

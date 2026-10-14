@@ -1,0 +1,128 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"route","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"route","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"knowledge","status":"started"}
+
+id: 4
+event: node
+data: {"type":"node","seq":4,"node":"knowledge","status":"finished"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"merge","status":"started"}
+
+id: 6
+event: token
+data: {"type":"token","seq":6,"node":"merge","text":"The"}
+
+id: 7
+event: token
+data: {"type":"token","seq":7,"node":"merge","text":" indexed"}
+
+id: 8
+event: token
+data: {"type":"token","seq":8,"node":"merge","text":" PLG"}
+
+id: 9
+event: token
+data: {"type":"token","seq":9,"node":"merge","text":" sources"}
+
+id: 10
+event: token
+data: {"type":"token","seq":10,"node":"merge","text":" don't"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":" cover"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" this"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" question,"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" so"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" I"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" can't"}
+
+id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" give"}
+
+id: 18
+event: token
+data: {"type":"token","seq":18,"node":"merge","text":" you"}
+
+id: 19
+event: token
+data: {"type":"token","seq":19,"node":"merge","text":" a"}
+
+id: 20
+event: token
+data: {"type":"token","seq":20,"node":"merge","text":" sourced"}
+
+id: 21
+event: token
+data: {"type":"token","seq":21,"node":"merge","text":" answer."}
+
+id: 22
+event: token
+data: {"type":"token","seq":22,"node":"merge","text":" Try"}
+
+id: 23
+event: token
+data: {"type":"token","seq":23,"node":"merge","text":" rephrasing"}
+
+id: 24
+event: token
+data: {"type":"token","seq":24,"node":"merge","text":" it,"}
+
+id: 25
+event: token
+data: {"type":"token","seq":25,"node":"merge","text":" or"}
+
+id: 26
+event: token
+data: {"type":"token","seq":26,"node":"merge","text":" check"}
+
+id: 27
+event: token
+data: {"type":"token","seq":27,"node":"merge","text":" with"}
+
+id: 28
+event: token
+data: {"type":"token","seq":28,"node":"merge","text":" the"}
+
+id: 29
+event: token
+data: {"type":"token","seq":29,"node":"merge","text":" policy"}
+
+id: 30
+event: token
+data: {"type":"token","seq":30,"node":"merge","text":" owner."}
+
+id: 31
+event: node
+data: {"type":"node","seq":31,"node":"merge","status":"finished"}
+
+id: 32
+event: done
+data: {"type":"done","seq":32,"run_id":"ebf5adc2-d112-401c-8266-a8e46776de07"}
+

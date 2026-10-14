@@ -1,0 +1,22 @@
+# Curated by hand: the places PLG officers name when they talk about units and rules (e.g. Circular 07/2026
+# sets the display area for NC units apart from void-deck shops).
+scheme: plg:place_types
+concept_class: PlaceType
+title: Where commercial units sit
+concepts:
+- id: plg:place_type/neighbourhood-centre
+  notation: NC
+  pref_label: Neighbourhood Centre
+  alt_labels:
+  - NC
+  - neighborhood centre
+  - neighbourhood center
+  - NC unit
+  - NC shop
+- id: plg:place_type/void-deck
+  notation: Void deck
+  pref_label: Void deck
+  alt_labels:
+  - void-deck shop
+  - void deck shop
+  - void-deck unit

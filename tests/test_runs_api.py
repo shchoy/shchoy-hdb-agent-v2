@@ -5,12 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from plg.llm import ScriptedLLMClient
-from tests.conftest import USER, Api
+from tests.conftest import USER, Api, route
 
 
 def test_question_streams_answer_tokens_and_finishes_with_run_id(
     api: Api, llm: ScriptedLLMClient
 ) -> None:
+    route(llm, "hello")
     llm.script("merge", "hello", "Hello! How can I help with PLG today?")
     thread_id = api.create_thread()
 
@@ -25,6 +26,7 @@ def test_question_streams_answer_tokens_and_finishes_with_run_id(
 def test_failure_mid_answer_ends_the_stream_with_an_error_event(
     api: Api, llm: ScriptedLLMClient
 ) -> None:
+    route(llm, "hello")
     llm.script(
         "merge", "hello", "The letter of demand is", error=ConnectionError("Claude unavailable")
     )
@@ -43,6 +45,7 @@ def test_slow_run_sends_heartbeat_comments(
     make_api: Callable[..., Api], llm: ScriptedLLMClient
 ) -> None:
     api = make_api(heartbeat_seconds=0.05)
+    route(llm, "hello")
     llm.script("merge", "hello", "one two three four five", delay=0.05)
 
     stream = api.run(api.create_thread(), "hello")
@@ -62,6 +65,7 @@ def test_run_on_unknown_thread_is_not_found(api: Api) -> None:
 def test_every_event_carries_an_increasing_sequence_number(
     api: Api, llm: ScriptedLLMClient
 ) -> None:
+    route(llm, "hello")
     llm.script("merge", "hello", "Hi there, officer.")
     stream = api.run(api.create_thread(), "hello")
 
@@ -70,13 +74,18 @@ def test_every_event_carries_an_increasing_sequence_number(
     assert stream.ids == [str(s) for s in seqs]
 
 
-def test_node_events_bracket_the_streamed_answer(api: Api, llm: ScriptedLLMClient) -> None:
+def test_node_events_trace_route_then_merge_around_the_streamed_answer(
+    api: Api, llm: ScriptedLLMClient
+) -> None:
+    route(llm, "hello")
     llm.script("merge", "hello", "Hi there, officer.")
     stream = api.run(api.create_thread(), "hello")
 
     trajectory = [(e["type"], e.get("node"), e.get("status")) for e in stream.events]
     tokens = [("token", "merge", None)] * len(stream.of_type("token"))
     assert trajectory == [
+        ("node", "route", "started"),
+        ("node", "route", "finished"),
         ("node", "merge", "started"),
         *tokens,
         ("node", "merge", "finished"),
@@ -87,9 +96,11 @@ def test_node_events_bracket_the_streamed_answer(api: Api, llm: ScriptedLLMClien
 def test_retrying_a_failed_question_asks_claude_it_only_once(
     api: Api, llm: ScriptedLLMClient
 ) -> None:
+    route(llm, "hello")
     llm.script("merge", "hello", "Hi", error=ConnectionError("Claude unavailable"))
     thread_id = api.create_thread()
     api.run(thread_id, "hello")
+    route(llm, "hello")
     llm.script("merge", "hello", "Hi there, officer.")
 
     retried = api.run(thread_id, "hello")
@@ -101,7 +112,9 @@ def test_retrying_a_failed_question_asks_claude_it_only_once(
 def test_follow_up_question_carries_the_earlier_exchange(
     api: Api, llm: ScriptedLLMClient
 ) -> None:
+    route(llm, "hello")
     llm.script("merge", "hello", "Hi there, officer.")
+    route(llm, "and?")
     llm.script("merge", "and?", "That's all.")
     thread_id = api.create_thread()
     api.run(thread_id, "hello")

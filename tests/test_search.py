@@ -11,25 +11,13 @@ from typing import Any
 
 import pytest
 
-from plg.config import Settings
-from plg.search.embed import HashingEmbedder
 from plg.search.lance import LanceSearchStore
 from plg.search.models import SearchFilter, SearchHit
-from plg.search.rerank import CrossEncoderReranker, Searcher
+from plg.search.rerank import Searcher
 
 LOD_QUESTION = "When does PLG issue a Letter of Demand for rental arrears?"
 POL_003_V1 = "docs/PLG-POL-003_Rental_Arrears_Management_Policy_v1.0.docx"
 POL_003_V2 = "docs/PLG-POL-003_Rental_Arrears_Management_Policy_v2.0.docx"
-
-
-@pytest.fixture(scope="session")
-def reranker() -> CrossEncoderReranker:
-    return CrossEncoderReranker(Settings())
-
-
-@pytest.fixture
-def searcher(store: LanceSearchStore, reranker: CrossEncoderReranker) -> Searcher:
-    return Searcher(store, HashingEmbedder(dim=128), reranker, candidates=50)
 
 
 def search(searcher: Searcher, query: str, k: int = 5, **filters: Any) -> list[SearchHit]:

@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import { parseRunEvents, type CitationEvent } from "@/lib/events";
+import { SourceViewer } from "./SourceViewer";
 import styles from "./ask.module.css";
 
 type Step = { node: string; finished: boolean };
@@ -178,6 +179,7 @@ function Sources({ citations }: { citations: CitationEvent[] }) {
                 <span className={styles.location}>{c.location}</span>
               </summary>
               <blockquote>{c.quote}</blockquote>
+              <SourceViewer citation={c} />
             </details>
           </li>
         ))}

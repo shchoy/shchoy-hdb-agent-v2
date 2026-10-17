@@ -1,0 +1,308 @@
+{
+  "document": {
+    "doc_id": "SP-888995",
+    "title": "PLG-POL-003 Rental Arrears Management Policy (v2.0)",
+    "version": "2.0",
+    "kind": "docx",
+    "filename": "PLG-POL-003_Rental_Arrears_Management_Policy_v2.0.docx",
+    "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "blocks": [
+      {
+        "text": "Document Control",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "Field | Value",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Document ID | PLG-POL-003",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Version | 2.0",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Effective date | 1 April 2026",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Owner | Leasing Policy & Planning",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Approved by | Tan Wei Ling",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Next review | 1 April 2028",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Status | In force",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Supersedes | v1.0 (1 Mar 2024)",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Classification | Restricted (fictional POC data)",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Revision History",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "Version | Date | Author | Summary of changes",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "1.0 | 2024-02-20 | Rajesh Pillai | Instalment plan limits; LOD at 45 days",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "2.0 | 2026-03-16 | Rajesh Pillai | Hardship call 31-45 days; LOD moved to 60 days; termination threshold >3 months; instalments up to 12 months; Director limit S$30,000",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "1. Purpose",
+        "level": 1,
+        "page": null
+      },
+      {
+        "text": "This policy sets out how the Properties & Land Group (PLG) manages rental arrears for HEB commercial properties. It aims to recover rent promptly and keep treatment of tenants consistent, while giving viable businesses facing temporary difficulty a fair chance to recover.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "2. Scope",
+        "level": 1,
+        "page": null
+      },
+      {
+        "text": "This policy applies to all commercial tenancies managed by PLG, including shops, eating houses, kiosks, shops with living quarters and offices in HEB estates and neighbourhood centres (NCs). It does not apply to residential tenancies or to car park licences.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "3. Definitions",
+        "level": 1,
+        "page": null
+      },
+      {
+        "text": "Term | Definition",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Rent | Monthly rent payable in advance under the tenancy agreement, exclusive of GST.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Due date | The 1st day of each calendar month.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Arrears | Any rent, GST or late-payment interest that remains unpaid after the due date.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Days overdue | Calendar days between the due date of the oldest unpaid invoice and the date of assessment.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Letter of Demand (LOD) | A formal written demand issued by HEB Legal under template TPL-LOD-01.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Months of arrears | Total arrears divided by one month's rent inclusive of GST.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4. Policy Statements",
+        "level": 1,
+        "page": null
+      },
+      {
+        "text": "4.1 Payment of rent",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "Rent is payable monthly in advance on or before the 1st day of each month. Tenants are strongly encouraged to pay by GIRO. Where a GIRO deduction fails, the tenant must pay within 7 days of being notified.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4.2 Late-payment interest",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "Late-payment interest of 8% per annum, computed daily, is charged on overdue amounts from the day after the due date until full payment.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4.3 Reminders",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "- First reminder (TPL-REM-01) at 14 days overdue.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Second reminder (TPL-REM-01, second-notice variant) and a phone call at 30 days overdue.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4.4 Hardship assessment",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "Between 31 and 45 days overdue, the Finance & Arrears officer must call the tenant and record a hardship assessment (form FA-07) covering the cause of arrears, business viability and proposed repayment. This step must be completed before a Letter of Demand is issued.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4.5 Letter of Demand",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "A Letter of Demand shall be issued by HEB Legal when any amount is 60 days overdue and no approved instalment plan is in force. The LOD gives the tenant 14 days to pay the outstanding sum in full.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4.6 Termination",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "Where arrears exceed 3 months' rent (inclusive of GST), the case shall be put to the Director, PLG with a recommendation on whether to terminate the tenancy, re-enter the premises and set off the security deposit against the arrears. A tenant with arrears above this threshold is not eligible for renewal, change of trade or assignment until the arrears are cleared.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4.7 Instalment plans",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "Instalment plans of up to 12 months may be approved. The Manager, Finance & Arrears may approve plans for total arrears up to S$30,000; plans above S$30,000 require the Director's approval. Missing two consecutive instalments cancels the plan, and the full amount becomes due.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4.8 Security deposit",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "The security deposit shall not be used to offset arrears during the tenancy, except on termination or expiry.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "5. Roles and Responsibilities",
+        "level": 1,
+        "page": null
+      },
+      {
+        "text": "Role | Responsibility",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Finance & Arrears (F&A) | Monitor the ageing report, issue reminders, conduct hardship calls, recommend instalment plans.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Leasing Officer | Check arrears status before processing renewal, assignment or change-of-trade applications.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "HEB Legal | Issue Letters of Demand; advise on termination and recovery proceedings.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Director, PLG | Approve termination and instalment plans above the delegated limit.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "6. Related Documents",
+        "level": 1,
+        "page": null
+      },
+      {
+        "text": "- PLG-SOP-014 Rental Arrears Recovery SOP",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- PLG-POL-002 Tenancy Renewal & Security Deposit Policy",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Templates TPL-REM-01, TPL-LOD-01",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- PLG Circular 03/2026 - Revised Rental Arrears Management Policy",
+        "level": 0,
+        "page": null
+      }
+    ]
+  },
+  "location": {
+    "doc_id": "SP-888995",
+    "chunk_id": "SP-888995#014",
+    "location": "6. Related Documents",
+    "quote": "- PLG-SOP-014 Rental Arrears Recovery SOP",
+    "page": null,
+    "highlights": [
+      {
+        "block": 52,
+        "start": 0,
+        "end": 41
+      }
+    ]
+  },
+  "start": 0,
+  "end": 41
+}

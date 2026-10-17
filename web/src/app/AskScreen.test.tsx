@@ -4,6 +4,7 @@ import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { AskScreen } from "@/app/AskScreen";
 import { server } from "@/test/msw";
+import { documentFixture } from "@/test/documents";
 import { fixture, sseResponse } from "@/test/sse";
 
 const QUESTION = "When do we issue a letter of demand?";
@@ -67,6 +68,24 @@ describe("Ask screen", () => {
     expect(quote).not.toBeVisible();
     await user.click(within(chip).getByText("[1]"));
     expect(quote).toBeVisible();
+  });
+
+  it("opens a cited source with its span highlighted", async () => {
+    const recorded = documentFixture("docx");
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
+      http.get("/api/documents/:id", () => HttpResponse.json(recorded.document)),
+      http.get("/api/documents/:id/chunks/:chunk", () => HttpResponse.json(recorded.location)),
+    );
+
+    const user = await ask();
+    await runFinished();
+    await user.click(screen.getByText("[1]"));
+    await user.click(screen.getByRole("button", { name: "Open source" }));
+
+    const viewer = await screen.findByRole("region", { name: `Source: ${recorded.document.title}` });
+    expect(viewer.querySelector("mark")).toBeInTheDocument();
   });
 
   it("says the sources don't cover the question, with no citation chips", async () => {

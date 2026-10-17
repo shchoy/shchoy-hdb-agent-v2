@@ -1,0 +1,48 @@
+{
+  "document": {
+    "doc_id": "LN-4e408a5a4188",
+    "title": "Security deposit - Prima Dental Care (Blk 512 #01-33)",
+    "version": null,
+    "kind": "email",
+    "filename": "01_20260723.eml",
+    "content_type": "message/rfc822",
+    "blocks": [
+      {
+        "text": "From: Dr Kavitha Raj <hello@primadental.example.com>\nTo: Siti Aishah Yusof <siti.aishah@heb.example.org>\nDate: Thu, 23 Jul 2026 21:15:00 +0800\nSubject: Security deposit - Prima Dental Care (Blk 512 #01-33)",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Hi Siti,",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Thanks for the letter of offer. Quick question: your FAQ on the website says the security deposit is 2 months' rent, but the offer letter says 3 months (S$13,950). Which is correct? Hoping it's 2 :)",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "Best,\nDr Kavitha Raj\nPrima Dental Care Pte Ltd",
+        "level": 0,
+        "page": null
+      }
+    ]
+  },
+  "location": {
+    "doc_id": "LN-4e408a5a4188",
+    "chunk_id": "LN-4e408a5a4188#000",
+    "location": "(body)",
+    "quote": "From: Dr Kavitha Raj <hello@primadental.example.com>",
+    "page": null,
+    "highlights": [
+      {
+        "block": 0,
+        "start": 0,
+        "end": 52
+      }
+    ]
+  },
+  "start": 0,
+  "end": 52
+}

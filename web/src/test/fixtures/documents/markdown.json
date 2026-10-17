@@ -1,0 +1,178 @@
+{
+  "document": {
+    "doc_id": "SP-379982",
+    "title": "Welcome to PLG - Guide for New Officers",
+    "version": null,
+    "kind": "markdown",
+    "filename": "onboarding_guide_new_officers.md",
+    "content_type": "text/markdown",
+    "blocks": [
+      {
+        "text": "Welcome to PLG - Guide for New Officers",
+        "level": 1,
+        "page": null
+      },
+      {
+        "text": "_Prepared by Tenancy Management, v1.4, 3 Nov 2025_",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "1. Who we are",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "The Properties & Land Group (PLG) manages about 1,600 commercial units in HEB estates: void-deck shops, neighbourhood centres (NCs), eating houses,",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "kiosks and offices. Our job is to keep the estates lively and make sure residents' daily needs are met.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "2. Your first two weeks",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "- Get access to PLG Records, CRM, i-EMS (read-only) and the PLG SharePoint site.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Read the core policies: POL-001 (Trade Mix & Usage), POL-002 (Renewal & Deposit), POL-003 (Arrears).",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Shadow an inspection with Daniel Ong.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Sit in on the monthly Tenancy Management case review.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "3. Key processes in a nutshell",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "| Process | What to remember |",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "|---|---|",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "| Renewals | Tenants should apply **3 months** before expiry. Send the renewal invitation about 8 months before. |",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "| Arrears | Reminders at 14 and 30 days; LOD at 45 days (see SOP-014). |",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "| Change of trade | Check the trade mix (max 2 of the same trade per NC) and the precedents. |",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "| Feedback | Reply within 7 days using TPL-FBK-03. Defects go to i-EMS via Faizal. |",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "| Documents | Use the submission checklists; send TPL-DOC-02 for anything missing. |",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "4. Templates",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "Always use the approved templates on SharePoint (TPL-REM-01, TPL-DOC-02, TPL-FBK-03, TPL-LOD-01). Don't change the approved wording.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "5. Who to ask",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "- Policy questions: Rajesh Pillai",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Tenancy cases: Nurul Huda Rahman",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Arrears: Priya Menon",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Data/reports: Kelvin Goh",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Legal: Joanne Teo",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "6. Useful tips",
+        "level": 2,
+        "page": null
+      },
+      {
+        "text": "- Unit IDs look like `U-BV214-01-32` (town, block, floor, unit).",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Tenancy IDs look like `TA-2024-00542`.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "- Search the precedent compendium before recommending anything unusual.",
+        "level": 0,
+        "page": null
+      }
+    ]
+  },
+  "location": {
+    "doc_id": "SP-379982",
+    "chunk_id": "SP-379982#006",
+    "location": "Welcome to PLG - Guide for New Officers > 6. Useful tips",
+    "quote": "- Unit IDs look like `U-BV214-01-32` (town, block, floor, unit).",
+    "page": null,
+    "highlights": [
+      {
+        "block": 27,
+        "start": 0,
+        "end": 64
+      }
+    ]
+  },
+  "start": 0,
+  "end": 64
+}

@@ -6,18 +6,21 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
+from fastapi.responses import FileResponse
 from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel, TypeAdapter
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.config import Settings
+from plg.documents import ChunkLocation, DocumentLibrary, DocumentView
 from plg.events import RunEvent
 from plg.graph.build import build_graph
 from plg.identity import UserCtx, load_personas
 from plg.llm import AnthropicLLMClient, LLMClient
 from plg.runs import stream_run
 from plg.search.rerank import LazySearcher, Retriever
+from plg.search.store import SearchStore
 
 
 class ThreadCreated(BaseModel):
@@ -44,12 +47,17 @@ User = Annotated[UserCtx, Depends(current_user)]
 
 
 def create_app(
-    settings: Settings | None = None, llm: LLMClient | None = None, searcher: Retriever | None = None
+    settings: Settings | None = None,
+    llm: LLMClient | None = None,
+    searcher: Retriever | None = None,
+    store: SearchStore | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
     graph = build_graph(llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings))
     # Thread registry. Ownership and persistence across restarts arrive with later tickets.
     threads: set[str] = set()
+
+    library = DocumentLibrary(lambda: store or _open_store(settings), settings.corpus_dir)
 
     app = FastAPI(title="plg-api", version="0.1.0")
 
@@ -94,6 +102,41 @@ def create_app(
 
         return EventSourceResponse(frames(), ping=settings.heartbeat_seconds)
 
+    @app.get("/documents/{doc_id}", dependencies=[Depends(current_user)])
+    async def get_document(doc_id: str) -> DocumentView:
+        """A source document as plain text blocks; markup in the file is never interpreted."""
+        view = library.view(doc_id)
+        if view is None:
+            raise HTTPException(status_code=404, detail="Document not found")
+        return view
+
+    @app.get(
+        "/documents/{doc_id}/file",
+        dependencies=[Depends(current_user)],
+        response_class=FileResponse,
+        responses={200: {"description": "The source file.", "content": {"application/octet-stream": {}}}},
+    )
+    async def get_document_file(doc_id: str) -> Response:
+        """The source file. Only PDFs are shown inline; anything else downloads, sandboxed."""
+        source = library.file(doc_id)
+        if source is None:
+            raise HTTPException(status_code=404, detail="Document not found")
+        return FileResponse(
+            source.path, media_type=source.content_type, filename=source.filename,
+            content_disposition_type="inline" if source.kind == "pdf" else "attachment",
+            headers={"X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox"},
+        )
+
+    @app.get("/documents/{doc_id}/chunks/{chunk_id}", dependencies=[Depends(current_user)])
+    async def get_chunk_location(
+        doc_id: str, chunk_id: str, start: int | None = None, end: int | None = None
+    ) -> ChunkLocation:
+        """Where the span `start:end` of a chunk's text (default: the whole chunk) sits in its document."""
+        located = library.locate(doc_id, chunk_id, start, end)
+        if located is None:
+            raise HTTPException(status_code=404, detail="Chunk not found")
+        return located
+
     def openapi() -> dict[str, Any]:
         if app.openapi_schema is None:
             schema = get_openapi(
@@ -106,6 +149,12 @@ def create_app(
 
     app.openapi = openapi  # type: ignore[method-assign]
     return app
+
+
+def _open_store(settings: Settings) -> SearchStore:
+    from plg.search.lance import LanceSearchStore
+
+    return LanceSearchStore(settings.search_db, dim=settings.embed_dim, vector_weight=settings.vector_weight)
 
 
 def run_event_schemas() -> dict[str, Any]:

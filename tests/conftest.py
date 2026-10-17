@@ -89,8 +89,8 @@ def llm() -> ScriptedLLMClient:
 def make_api(llm: ScriptedLLMClient) -> Iterator[Callable[..., Api]]:
     clients: list[TestClient] = []
 
-    def factory(searcher: Searcher | None = None, **settings: object) -> Api:
-        app = create_app(Settings(**settings), llm=llm, searcher=searcher)  # type: ignore[arg-type]
+    def factory(searcher: Searcher | None = None, store: LanceSearchStore | None = None, **settings: object) -> Api:
+        app = create_app(Settings(**settings), llm=llm, searcher=searcher, store=store)  # type: ignore[arg-type]
         client = TestClient(app)
         clients.append(client.__enter__())
         return Api(client)
@@ -168,3 +168,9 @@ def searcher(store: LanceSearchStore, reranker: CrossEncoderReranker) -> Searche
 def knowledge_api(make_api: Callable[..., Api], searcher: Searcher) -> Api:
     """plg-api whose knowledge agent searches the synced poc-data corpus."""
     return make_api(searcher=searcher)
+
+
+@pytest.fixture
+def documents_api(make_api: Callable[..., Api], store: LanceSearchStore) -> Api:
+    """plg-api serving the source documents of the synced poc-data corpus."""
+    return make_api(store=store)

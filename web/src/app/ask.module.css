@@ -121,3 +121,47 @@
   white-space: nowrap;
   border: 0;
 }
+
+.viewer {
+  margin: 0.5rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.viewerHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.document {
+  max-height: 24rem;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.document p {
+  margin: 0.25rem 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.document h4 {
+  margin: 0.75rem 0 0.25rem;
+  color: var(--muted);
+}
+
+.blockHeading {
+  font-weight: 600;
+}
+
+.sourceNote,
+.sourceError {
+  margin: 0.5rem 0 0;
+}
+
+.sourceError {
+  color: var(--danger);
+}

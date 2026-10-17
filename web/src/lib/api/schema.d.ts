@@ -75,14 +75,133 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/documents/{doc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document
+         * @description A source document as plain text blocks; markup in the file is never interpreted.
+         */
+        get: operations["get_document_documents__doc_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{doc_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document File
+         * @description The source file. Only PDFs are shown inline; anything else downloads, sandboxed.
+         */
+        get: operations["get_document_file_documents__doc_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{doc_id}/chunks/{chunk_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Chunk Location
+         * @description Where the span `start:end` of a chunk's text (default: the whole chunk) sits in its document.
+         */
+        get: operations["get_chunk_location_documents__doc_id__chunks__chunk_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ChunkLocation
+         * @description Where a cited span sits in its document.
+         */
+        ChunkLocation: {
+            /** Doc Id */
+            doc_id: string;
+            /** Chunk Id */
+            chunk_id: string;
+            /** Location */
+            location: string;
+            /** Quote */
+            quote: string;
+            /** Page */
+            page: number | null;
+            /** Highlights */
+            highlights: components["schemas"]["Highlight"][];
+        };
+        /** DocumentBlock */
+        DocumentBlock: {
+            /** Text */
+            text: string;
+            /** Level */
+            level: number;
+            /** Page */
+            page: number | null;
+        };
+        /** DocumentView */
+        DocumentView: {
+            /** Doc Id */
+            doc_id: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text";
+            /** Filename */
+            filename: string;
+            /** Content Type */
+            content_type: string;
+            /** Blocks */
+            blocks: components["schemas"]["DocumentBlock"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * Highlight
+         * @description `blocks[block].text[start:end]` is part of the cited span.
+         */
+        Highlight: {
+            /** Block */
+            block: number;
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
         };
         /** RunRequest */
         RunRequest: {
@@ -346,6 +465,112 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": components["schemas"]["RunEvent"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_documents__doc_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_file_documents__doc_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The source file. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_chunk_location_documents__doc_id__chunks__chunk_id__get: {
+        parameters: {
+            query?: {
+                start?: number | null;
+                end?: number | null;
+            };
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                doc_id: string;
+                chunk_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChunkLocation"];
                 };
             };
             /** @description Validation Error */

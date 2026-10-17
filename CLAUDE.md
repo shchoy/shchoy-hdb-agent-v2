@@ -10,7 +10,8 @@ PLG "Super-Librarian" POC: a LangGraph agent that answers PLG officers' question
 src/plg/
 ├── config.py        Settings: model ID per tier (haiku/sonnet/opus), max tokens, SSE heartbeat, API host/port,
 │                    records_db (PLG Records SQLite), corpus_dir, search_db (LanceDB, default .plg/lancedb),
-│                    Voyage embed model/dim, local rerank model, search_candidates, vector_weight.
+│                    Voyage embed model/dim, rerank_backend (voyage|local), Voyage rerank model, local rerank model,
+│                    search_candidates, vector_weight.
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
@@ -51,7 +52,9 @@ src/plg/
 │                    incremental by content hash; superseded versions are marked, never deleted.
 ├── search/          SearchStore protocol (store.py) and LanceSearchStore (lance.py): chunks / entities / memory,
 │                    hybrid FTS + vector search with metadata pre-filters (SearchFilter). Embedder (Voyage; hashing
-│                    embedder for tests). rerank.py: CrossEncoderReranker (local fastembed), Searcher (embed → hybrid
+│                    embedder for tests). rerank.py: Reranker protocol; VoyageReranker (hosted, falls back to the hybrid order on any error or
+│                    unreadable reply), CrossEncoderReranker (local fastembed); make_reranker(settings) picks by rerank_backend;
+│                    Searcher (embed → hybrid
 │                    → rerank), Retriever protocol, open_searcher(settings) and LazySearcher (opened on first search,
 │                    so plg-api starts and prints OpenAPI without the index or VOYAGE_API_KEY).
 ├── ontology/        Runtime access to the GENERATED ontology artefacts (GENERATED = generated/ path).
@@ -80,7 +83,7 @@ ontology/            SOURCE of the ontology: plg.yaml (LinkML, ~25 node classes 
 tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLLMClient (conftest.py; requests
                      carry USER = X-PLG-User S05; route(llm, question, *intents) scripts the router). The poc-data
                      corpus is synced once per session (hashing embedder) for search and knowledge_api tests
-                     (real cross-encoder; each search costs seconds). test_anthropic_client.py runs the real client against a
+                     (real local cross-encoder; each search costs seconds). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).
 scripts/build_ontology.py

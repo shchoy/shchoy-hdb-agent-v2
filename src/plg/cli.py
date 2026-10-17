@@ -21,7 +21,8 @@ from plg.ontology.glossary import load_glossary
 from plg.runs import stream_run
 from plg.search.embed import Embedder, VoyageEmbedder
 from plg.search.models import DocStatus, SearchFilter
-from plg.search.rerank import CrossEncoderReranker, LazySearcher, Reranker
+from plg.search.rerank import LazySearcher, Reranker
+from plg.search.rerank import make_reranker as build_reranker
 
 app = typer.Typer(help="PLG Super-Librarian", no_args_is_help=True)
 glossary_app = typer.Typer(help="Business glossary: versioned definitions.", no_args_is_help=True)
@@ -41,7 +42,7 @@ def make_embedder(settings: Settings) -> Embedder:
 
 
 def make_reranker(settings: Settings) -> Reranker:
-    return CrossEncoderReranker(settings)
+    return build_reranker(settings)
 
 
 @app.callback()
@@ -114,7 +115,7 @@ def search(
     doc_type: list[str] = typer.Option([], "--type", help="Document type, e.g. policy (repeatable)."),
     in_force_on: str | None = typer.Option(None, help="Only documents in force on this date (YYYY-MM-DD)."),
 ) -> None:
-    """Hybrid search of the index with cross-encoder rerank, for checking what `plg sync` indexed."""
+    """Hybrid search of the index with rerank, for checking what `plg sync` indexed."""
     from plg.search.lance import LanceSearchStore
     from plg.search.rerank import Searcher
 

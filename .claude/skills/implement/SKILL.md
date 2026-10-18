@@ -6,8 +6,6 @@ disable-model-invocation: true
 
 Implement the work described by the user in the tickets.
 
-Before changing anything, create a new branch for the ticket, from `main`.
-
 Use subagents if required to try keeping the context below 100,000 tokens.
 
 Use /tdd where possible, at pre-agreed seams.

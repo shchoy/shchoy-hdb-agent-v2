@@ -1,0 +1,27 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:unit_types
+concept_class: UnitType
+title: Commercial unit types
+concepts:
+- id: plg:unit_type/eating-house
+  notation: Eating House
+  pref_label: Eating House
+  alt_labels:
+  - eating-house
+- id: plg:unit_type/kiosk
+  notation: Kiosk
+  pref_label: Kiosk
+  alt_labels:
+  - booth
+- id: plg:unit_type/office
+  notation: Office
+  pref_label: Office
+- id: plg:unit_type/shop
+  notation: Shop
+  pref_label: Shop
+- id: plg:unit_type/shop-with-living-quarters
+  notation: Shop with Living Quarters
+  pref_label: Shop with Living Quarters
+  alt_labels:
+  - SLQ
+  - shophouse

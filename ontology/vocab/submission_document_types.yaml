@@ -1,0 +1,62 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:submission_document_types
+concept_class: SubmissionDocumentType
+title: Documents submitted with tenant applications
+concepts:
+- id: plg:submission_doc/LOA
+  notation: LOA
+  pref_label: Letter of Offer acceptance
+- id: plg:submission_doc/BIZ
+  notation: BIZ
+  pref_label: Business profile
+- id: plg:submission_doc/NRIC
+  notation: NRIC
+  pref_label: Identity document
+- id: plg:submission_doc/DEP
+  notation: DEP
+  pref_label: Security deposit payment proof
+- id: plg:submission_doc/GIRO
+  notation: GIRO
+  pref_label: GIRO authorisation form
+- id: plg:submission_doc/INS
+  notation: INS
+  pref_label: Insurance certificate
+- id: plg:submission_doc/LIC
+  notation: LIC
+  pref_label: Trade licence
+- id: plg:submission_doc/REN
+  notation: REN
+  pref_label: Renewal application form
+- id: plg:submission_doc/ASG
+  notation: ASG
+  pref_label: Assignment application
+- id: plg:submission_doc/BIZ2
+  notation: BIZ2
+  pref_label: Business profile (assignee)
+- id: plg:submission_doc/FEE
+  notation: FEE
+  pref_label: Assignment fee payment proof
+- id: plg:submission_doc/COT
+  notation: COT
+  pref_label: Change of trade application
+- id: plg:submission_doc/PLAN
+  notation: PLAN
+  pref_label: Business plan
+- id: plg:submission_doc/LAYOUT
+  notation: LAYOUT
+  pref_label: Floor layout plan
+- id: plg:submission_doc/AA
+  notation: AA
+  pref_label: A&A works application
+- id: plg:submission_doc/DWG
+  notation: DWG
+  pref_label: Layout and elevation drawings
+- id: plg:submission_doc/CON
+  notation: CON
+  pref_label: Contractor's registration certificate
+- id: plg:submission_doc/PE
+  notation: PE
+  pref_label: Professional Engineer endorsement
+- id: plg:submission_doc/MS
+  notation: MS
+  pref_label: Method statement

@@ -1,0 +1,220 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:trades
+concept_class: Trade
+title: Approved trades with the unit types each may occupy
+concepts:
+- id: plg:trade/minimart
+  notation: Minimart
+  pref_label: Minimart
+  alt_labels:
+  - mini-mart
+  - mini mart
+  - convenience store
+  trade_group: Daily Necessities
+  allowed_unit_types:
+  - Shop
+  - Shop with Living Quarters
+- id: plg:trade/provision-shop
+  notation: Provision Shop
+  pref_label: Provision Shop
+  alt_labels:
+  - provision store
+  - sundry shop
+  trade_group: Daily Necessities
+  allowed_unit_types:
+  - Shop
+  - Shop with Living Quarters
+- id: plg:trade/hair-salon
+  notation: Hair Salon
+  pref_label: Hair Salon
+  alt_labels:
+  - hairdresser
+  - barber
+  trade_group: Personal Services
+  allowed_unit_types:
+  - Shop
+- id: plg:trade/bakery-confectionery
+  notation: Bakery & Confectionery
+  pref_label: Bakery & Confectionery
+  alt_labels:
+  - bakery
+  - confectionery
+  trade_group: Food & Beverage
+  allowed_unit_types:
+  - Shop
+- id: plg:trade/gp-clinic
+  notation: GP Clinic
+  pref_label: GP Clinic
+  alt_labels:
+  - GP
+  - general practitioner
+  - family clinic
+  trade_group: Healthcare
+  allowed_unit_types:
+  - Shop
+  - Office
+- id: plg:trade/dental-clinic
+  notation: Dental Clinic
+  pref_label: Dental Clinic
+  alt_labels:
+  - dentist
+  - dental
+  trade_group: Healthcare
+  allowed_unit_types:
+  - Shop
+  - Office
+- id: plg:trade/tcm-clinic
+  notation: TCM Clinic
+  pref_label: TCM Clinic
+  alt_labels:
+  - TCM
+  - traditional chinese medicine
+  trade_group: Healthcare
+  allowed_unit_types:
+  - Shop
+  - Office
+- id: plg:trade/pharmacy
+  notation: Pharmacy
+  pref_label: Pharmacy
+  trade_group: Healthcare
+  allowed_unit_types:
+  - Shop
+- id: plg:trade/tuition-centre
+  notation: Tuition Centre
+  pref_label: Tuition Centre
+  alt_labels:
+  - tuition
+  - enrichment centre
+  trade_group: Education
+  allowed_unit_types:
+  - Office
+  - Shop
+- id: plg:trade/laundry
+  notation: Laundry
+  pref_label: Laundry
+  alt_labels:
+  - laundromat
+  trade_group: Personal Services
+  allowed_unit_types:
+  - Shop
+- id: plg:trade/florist
+  notation: Florist
+  pref_label: Florist
+  trade_group: Retail
+  allowed_unit_types:
+  - Shop
+  - Kiosk
+- id: plg:trade/optical
+  notation: Optical
+  pref_label: Optical
+  alt_labels:
+  - optician
+  - optical shop
+  trade_group: Retail
+  allowed_unit_types:
+  - Shop
+- id: plg:trade/mobile-phone-accessories
+  notation: Mobile Phone & Accessories
+  pref_label: Mobile Phone & Accessories
+  alt_labels:
+  - handphone shop
+  - mobile phone shop
+  trade_group: Retail
+  allowed_unit_types:
+  - Shop
+  - Kiosk
+- id: plg:trade/hardware
+  notation: Hardware
+  pref_label: Hardware
+  trade_group: Retail
+  allowed_unit_types:
+  - Shop
+  - Shop with Living Quarters
+- id: plg:trade/stationery-books
+  notation: Stationery & Books
+  pref_label: Stationery & Books
+  alt_labels:
+  - bookshop
+  - stationery
+  trade_group: Retail
+  allowed_unit_types:
+  - Shop
+- id: plg:trade/bubble-tea
+  notation: Bubble Tea
+  pref_label: Bubble Tea
+  alt_labels:
+  - BBT
+  - boba
+  - bubble tea shop
+  trade_group: Food & Beverage
+  allowed_unit_types:
+  - Shop
+  - Kiosk
+- id: plg:trade/restaurant
+  notation: Restaurant
+  pref_label: Restaurant
+  trade_group: Food & Beverage
+  allowed_unit_types:
+  - Shop
+- id: plg:trade/childcare-centre
+  notation: Childcare Centre
+  pref_label: Childcare Centre
+  alt_labels:
+  - childcare
+  - preschool
+  trade_group: Education
+  allowed_unit_types:
+  - Office
+- id: plg:trade/remittance-money-changer
+  notation: Remittance & Money Changer
+  pref_label: Remittance & Money Changer
+  alt_labels:
+  - money changer
+  - remittance
+  trade_group: Financial Services
+  allowed_unit_types:
+  - Kiosk
+  - Shop
+- id: plg:trade/pet-shop
+  notation: Pet Shop
+  pref_label: Pet Shop
+  trade_group: Retail
+  allowed_unit_types:
+  - Shop
+- id: plg:trade/key-cutting-shoe-repair
+  notation: Key Cutting & Shoe Repair
+  pref_label: Key Cutting & Shoe Repair
+  alt_labels:
+  - cobbler
+  - key cutting
+  trade_group: Personal Services
+  allowed_unit_types:
+  - Kiosk
+- id: plg:trade/snack-kiosk
+  notation: Snack Kiosk
+  pref_label: Snack Kiosk
+  trade_group: Food & Beverage
+  allowed_unit_types:
+  - Kiosk
+- id: plg:trade/professional-services-office
+  notation: Professional Services Office
+  pref_label: Professional Services Office
+  trade_group: Professional Services
+  allowed_unit_types:
+  - Office
+- id: plg:trade/fruit-shop
+  notation: Fruit Shop
+  pref_label: Fruit Shop
+  trade_group: Daily Necessities
+  allowed_unit_types:
+  - Shop
+  - Kiosk
+- id: plg:trade/coffeeshop
+  notation: Coffeeshop
+  pref_label: Coffeeshop
+  alt_labels:
+  - coffee shop
+  - kopitiam
+  trade_group: Food & Beverage
+  allowed_unit_types:
+  - Eating House

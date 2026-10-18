@@ -1,0 +1,461 @@
+# PLG ontology v1: the one model that graph labels, edge types, extraction schemas, tool I/O schemas,
+# synonyms and the business glossary are generated from (`make ontology`).
+#
+# Conventions read by scripts/build_ontology.py:
+# - a class annotated `node` is a graph node label;
+# - a slot annotated `edge` is a graph relation (domain -> range, cardinality from required/multivalued);
+#   `extracted: true` marks the edges Haiku extracts from documents (the rest come from PLG Records);
+# - a slot annotated `vocabulary` takes its values from that SKOS-style scheme under ontology/vocab/.
+id: https://w3id.org/heb/plg
+name: plg
+title: PLG Super-Librarian ontology
+version: "1.0.0"
+license: Restricted (fictional POC data)
+prefixes:
+  linkml: https://w3id.org/linkml/
+  plg: https://w3id.org/heb/plg/
+  skos: http://www.w3.org/2004/02/skos/core#
+default_prefix: plg
+default_range: string
+imports:
+  - linkml:types
+
+classes:
+  # ---------------------------------------------------------------- abstract roots
+  Entity:
+    abstract: true
+    description: Anything with a stable ID that can be a graph node.
+    slots: [id, label]
+
+  Document:
+    abstract: true
+    is_a: Entity
+    description: A versioned corpus document. Superseded versions are kept, never deleted.
+    slots: [doc_type, version, effective_from, effective_to, doc_status, supersedes, conflicts_with, duplicate_of]
+
+  Concept:
+    abstract: true
+    description: A SKOS-style vocabulary concept.
+    class_uri: skos:Concept
+    slots: [id, notation, pref_label, alt_labels, definition, in_scheme]
+
+  # ---------------------------------------------------------------- PLG Records spine
+  Town:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [town_code]
+
+  NeighbourhoodCentre:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [in_town]
+
+  Block:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [in_nc]
+
+  Unit:
+    is_a: Entity
+    description: A lettable commercial unit (shop, eating house, kiosk, shop with living quarters, office).
+    annotations: {node: true}
+    slots: [unit_type, unit_status, in_block]
+
+  Tenant:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [uen]
+
+  Tenancy:
+    is_a: Entity
+    description: One tenant renting one unit for one trade over a term.
+    annotations: {node: true}
+    slots: [tenancy_status, start_date, end_date, monthly_rent, of_unit, held_by, for_trade]
+
+  RentInvoice:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [due_date, amount, billed_to]
+
+  Inspection:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [finding_code, inspected_unit, inspected_by]
+
+  FeedbackCase:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [severity, about_unit, feedback_category, raised_ticket]
+
+  IemsTicket:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [severity, ticket_category, routed_to, serviced_by]
+
+  Application:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [app_type, applied_by, for_unit, proposes_trade]
+
+  Task:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [due_date, assigned_to, concerns]
+
+  Letter:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [letter_type, issued_for, addressed_to]
+
+  Staff:
+    is_a: Entity
+    annotations: {node: true}
+    slots: [title, dept, worked_on]
+
+  # ---------------------------------------------------------------- corpus
+  Policy:
+    is_a: Document
+    description: One version of a PLG policy, e.g. PLG-POL-003 v2.0.
+    annotations: {node: true}
+    slots: [policy_id, has_clause]
+
+  Sop:
+    is_a: Document
+    description: One version of a standard operating procedure.
+    annotations: {node: true}
+    slots: [implements]
+
+  Circular:
+    is_a: Document
+    annotations: {node: true}
+    slots: [overrides]
+
+  Template:
+    is_a: Document
+    annotations: {node: true}
+    slots: [letter_type]
+
+  Clause:
+    is_a: Entity
+    description: A numbered clause of a policy version, e.g. PLG-POL-001 v3.0 cl. 7.3.
+    annotations: {node: true}
+    slots: [clause_number, text]
+
+  Precedent:
+    is_a: Entity
+    description: A decided case in the precedent compendium.
+    annotations: {node: true}
+    slots: [decision, applies, concerns_trade]
+
+  # ---------------------------------------------------------------- vocabulary concepts
+  Trade:
+    is_a: Concept
+    annotations: {node: true}
+    slots: [trade_group, allowed_unit_types]
+
+  DefectCategory:
+    is_a: Concept
+    annotations: {node: true}
+    slots: [examples, iems, default_severity, handled_by, default_vendor]
+
+  Team:
+    is_a: Concept
+    annotations: {node: true}
+
+  Vendor:
+    is_a: Concept
+    annotations: {node: true}
+
+  UnitType:
+    is_a: Concept
+
+  UnitStatus:
+    is_a: Concept
+
+  LetterType:
+    is_a: Concept
+    slots: [template_id]
+
+  DocumentType:
+    is_a: Concept
+
+  SubmissionDocumentType:
+    is_a: Concept
+
+  ApplicationType:
+    is_a: Concept
+    slots: [required_documents]
+
+  ChecklistItem:
+    description: One line of an application checklist.
+    slots: [document_type, description, mandatory]
+
+  # ---------------------------------------------------------------- business glossary
+  GlossaryTerm:
+    is_a: Concept
+    description: >-
+      One version of a business definition. `id` is versioned (plg:Vacant_v2); `concept` is stable (plg:Vacant).
+      Changes are proposed, approved by the owner and never deleted: the old version gets effective_to and
+      status superseded. Only a version 1 may omit effective_from, when its start was never recorded.
+    annotations: {node: true}
+    slots: [concept, version, value, source, owned_by, effective_from, effective_to, supersedes, status]
+    slot_usage:
+      version:
+        range: integer
+        required: true
+      definition:
+        required: true
+      supersedes:
+        range: GlossaryTerm
+        description: The previous version of this term. Authored, never extracted.
+        annotations: {edge: SUPERSEDES, extracted: false}
+
+  SourceCitation:
+    description: Where a definition comes from.
+    slots: [document_id, locator, quote]
+
+slots:
+  # ---------------------------------------------------------------- identity and labels
+  id:
+    identifier: true
+    range: uriorcurie
+  label:
+    description: Human-readable name.
+  notation:
+    description: Short code, e.g. SEP.
+  pref_label:
+    slot_uri: skos:prefLabel
+    required: true
+  alt_labels:
+    slot_uri: skos:altLabel
+    description: Synonyms and abbreviations, resolved by the vocabulary index.
+    multivalued: true
+  definition:
+    slot_uri: skos:definition
+  in_scheme:
+    slot_uri: skos:inScheme
+    required: true
+
+  # ---------------------------------------------------------------- attributes
+  town_code: {}
+  uen: {}
+  title: {}
+  dept: {}
+  policy_id: {}
+  clause_number: {}
+  text: {}
+  decision: {}
+  examples: {}
+  template_id: {}
+  description: {}
+  locator:
+    description: Clause, section, slide or item within the document.
+  quote: {}
+  document_id: {}
+  value:
+    description: The parameter a definition fixes, e.g. "60 days" or "1.0 m".
+  version: {}
+  monthly_rent:
+    range: decimal
+  amount:
+    range: decimal
+  start_date:
+    range: date
+  end_date:
+    range: date
+  due_date:
+    range: date
+  effective_from:
+    range: date
+  effective_to:
+    range: date
+  iems:
+    range: boolean
+  mandatory:
+    range: boolean
+    required: true
+  severity:
+    range: Severity
+  default_severity:
+    range: Severity
+    required: true
+  doc_status:
+    range: DocumentStatus
+  status:
+    range: GlossaryStatus
+    required: true
+  tenancy_status:
+    range: TenancyStatus
+  finding_code: {}
+  unit_type:
+    annotations: {vocabulary: unit_types}
+  unit_status:
+    annotations: {vocabulary: unit_statuses}
+  trade_group: {}
+  allowed_unit_types:
+    multivalued: true
+    annotations: {vocabulary: unit_types}
+  doc_type:
+    annotations: {vocabulary: document_types}
+  app_type:
+    annotations: {vocabulary: application_types}
+  letter_type:
+    annotations: {vocabulary: letter_types}
+  document_type:
+    required: true
+    annotations: {vocabulary: submission_document_types}
+  required_documents:
+    range: ChecklistItem
+    multivalued: true
+    inlined_as_list: true
+  concept:
+    range: uriorcurie
+    required: true
+    description: Stable ID shared by every version of a glossary term.
+  source:
+    range: SourceCitation
+    inlined: true
+    required: true
+
+  # ---------------------------------------------------------------- relations (graph edges)
+  in_town:
+    range: Town
+    required: true
+    annotations: {edge: IN_TOWN}
+  in_nc:
+    range: NeighbourhoodCentre
+    annotations: {edge: IN_NC}
+  in_block:
+    range: Block
+    required: true
+    annotations: {edge: IN_BLOCK}
+  of_unit:
+    range: Unit
+    required: true
+    annotations: {edge: OF_UNIT}
+  held_by:
+    range: Tenant
+    required: true
+    annotations: {edge: HELD_BY}
+  for_trade:
+    range: Trade
+    required: true
+    annotations: {edge: FOR_TRADE}
+  billed_to:
+    range: Tenancy
+    required: true
+    annotations: {edge: BILLED_TO}
+  inspected_unit:
+    range: Unit
+    required: true
+    annotations: {edge: INSPECTED}
+  inspected_by:
+    range: Staff
+    annotations: {edge: INSPECTED_BY}
+  about_unit:
+    range: Unit
+    annotations: {edge: ABOUT_UNIT}
+  feedback_category:
+    range: DefectCategory
+    annotations: {edge: IN_CATEGORY}
+  raised_ticket:
+    range: IemsTicket
+    annotations: {edge: RAISED}
+  ticket_category:
+    range: DefectCategory
+    required: true
+    annotations: {edge: IN_CATEGORY}
+  routed_to:
+    range: Team
+    required: true
+    annotations: {edge: ROUTED_TO}
+  serviced_by:
+    range: Vendor
+    annotations: {edge: SERVICED_BY}
+  handled_by:
+    range: Team
+    required: true
+    annotations: {edge: HANDLED_BY}
+  default_vendor:
+    range: Vendor
+    annotations: {edge: DEFAULT_VENDOR}
+  applied_by:
+    range: Tenant
+    annotations: {edge: APPLIED_BY}
+  for_unit:
+    range: Unit
+    required: true
+    annotations: {edge: FOR_UNIT}
+  proposes_trade:
+    range: Trade
+    annotations: {edge: PROPOSES_TRADE}
+  assigned_to:
+    range: Staff
+    required: true
+    annotations: {edge: ASSIGNED_TO}
+  concerns:
+    range: Entity
+    annotations: {edge: CONCERNS}
+  issued_for:
+    range: Entity
+    required: true
+    annotations: {edge: ISSUED_FOR}
+  addressed_to:
+    range: Tenant
+    annotations: {edge: ADDRESSED_TO}
+  worked_on:
+    range: Entity
+    multivalued: true
+    annotations: {edge: WORKED_ON}
+  supersedes:
+    description: A later version replaces an earlier one (POL-003 v2.0 supersedes v1.0).
+    range: Document
+    annotations: {edge: SUPERSEDES, extracted: true}
+  conflicts_with:
+    range: Document
+    multivalued: true
+    annotations: {edge: CONFLICTS_WITH}
+  duplicate_of:
+    range: Document
+    multivalued: true
+    annotations: {edge: DUPLICATE_OF}
+  has_clause:
+    range: Clause
+    multivalued: true
+    annotations: {edge: HAS_CLAUSE}
+  implements:
+    range: Policy
+    multivalued: true
+    annotations: {edge: IMPLEMENTS}
+  overrides:
+    description: A circular replaces a policy clause, possibly only for some units (Circular 07/2026 overrides
+      POL-001 v3.0 cl. 7.3 for NC units).
+    range: Clause
+    multivalued: true
+    annotations: {edge: OVERRIDES, extracted: true}
+  applies:
+    description: A precedent decision relied on a policy clause.
+    range: Clause
+    multivalued: true
+    annotations: {edge: APPLIES, extracted: true}
+  concerns_trade:
+    range: Trade
+    multivalued: true
+    annotations: {edge: CONCERNS_TRADE}
+  owned_by:
+    range: Staff
+    required: true
+    annotations: {edge: OWNED_BY}
+
+enums:
+  Severity:
+    permissible_values: {Critical: {}, High: {}, Medium: {}, Low: {}}
+  DocumentStatus:
+    permissible_values: {current: {}, superseded: {}, draft: {}}
+  GlossaryStatus:
+    permissible_values:
+      proposed: {description: Awaiting the term owner's approval.}
+      current: {description: In force.}
+      superseded: {description: Replaced by a later version; kept for historical questions.}
+  TenancyStatus:
+    permissible_values: {Active: {}, Renewed: {}, Expired: {}, Terminated: {}, Pending Commencement: {}}

@@ -1,0 +1,86 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:document_types
+concept_class: DocumentType
+title: Corpus document types
+concepts:
+- id: plg:doc_type/policy
+  notation: policy
+  pref_label: Policy
+  alt_labels:
+  - POL
+- id: plg:doc_type/sop
+  notation: sop
+  pref_label: Standard operating procedure
+  alt_labels:
+  - SOP
+- id: plg:doc_type/circular
+  notation: circular
+  pref_label: Circular
+- id: plg:doc_type/template
+  notation: template
+  pref_label: Letter template
+  alt_labels:
+  - TPL
+- id: plg:doc_type/minutes
+  notation: minutes
+  pref_label: Meeting minutes
+- id: plg:doc_type/guideline
+  notation: guideline
+  pref_label: Guidelines
+- id: plg:doc_type/faq
+  notation: faq
+  pref_label: FAQ
+  alt_labels:
+  - frequently asked questions
+- id: plg:doc_type/report
+  notation: report
+  pref_label: Report
+  alt_labels:
+  - ops report
+  - audit report
+  - incident report
+  - inspection report
+- id: plg:doc_type/deck
+  notation: deck
+  pref_label: Presentation deck
+  alt_labels:
+  - QBR
+  - slides
+- id: plg:doc_type/tracker
+  notation: tracker
+  pref_label: Spreadsheet tracker
+  alt_labels:
+  - Excel tracker
+- id: plg:doc_type/email
+  notation: email
+  pref_label: Email thread
+  alt_labels:
+  - email
+  - Lotus Notes
+- id: plg:doc_type/tenancy_agreement
+  notation: tenancy_agreement
+  pref_label: Tenancy agreement
+  alt_labels:
+  - TA
+- id: plg:doc_type/precedent_compendium
+  notation: precedent_compendium
+  pref_label: Precedent compendium
+  alt_labels:
+  - precedents
+- id: plg:doc_type/letter
+  notation: letter
+  pref_label: Issued letter
+- id: plg:doc_type/tender_notice
+  notation: tender_notice
+  pref_label: Tender notice
+- id: plg:doc_type/note
+  notation: note
+  pref_label: Note or wiki page
+  alt_labels:
+  - wiki
+  - handover notes
+- id: plg:doc_type/system_export
+  notation: system_export
+  pref_label: System export
+  alt_labels:
+  - export

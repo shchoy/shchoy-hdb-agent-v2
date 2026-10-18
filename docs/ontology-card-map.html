@@ -1,0 +1,263 @@
+<title>Ontology Card Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: one wide swimlane diagram (source → YAML → generator → card), then a narrow reading column. */
+:root{
+  --bg:#f6f7f5; --panel:#ffffff; --ink:#1d2421; --muted:#5d6863; --line:#cfd6d2;
+  --data:#e4efe9; --data-s:#3f7d63;      /* poc-data */
+  --src:#eae8f3; --src-s:#5b5390;        /* ontology/ YAML */
+  --code:#f3ece2; --code-s:#8a5a22;      /* build_ontology.py */
+  --card:#e3ecf4; --card-s:#2f6290;      /* ontology_card.md */
+  --warn:#9a3d1e; --warn-bg:#fbeee8;
+  --f-display:"Fraunces",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --panel:#1b211f; --ink:#e3e9e5; --muted:#9aa6a0; --line:#34403b;
+  --data:#1d2e27; --data-s:#7cc4a3; --src:#25233a; --src-s:#a9a1e0; --code:#2f271c; --code-s:#e0ad6c;
+  --card:#1c2836; --card-s:#86b6e4; --warn:#f0a07f; --warn-bg:#33201a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --panel:#1b211f; --ink:#e3e9e5; --muted:#9aa6a0; --line:#34403b;
+  --data:#1d2e27; --data-s:#7cc4a3; --src:#25233a; --src-s:#a9a1e0; --code:#2f271c; --code-s:#e0ad6c;
+  --card:#1c2836; --card-s:#86b6e4; --warn:#f0a07f; --warn-bg:#33201a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1160px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.read{max-width:760px;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--f-display);font-weight:600;font-size:2rem;line-height:1.15;margin:0;text-wrap:balance}
+h2{font-size:1.15rem;font-weight:600;margin:8px 0 0;text-wrap:balance}
+p{margin:0}
+.lede{color:var(--muted);max-width:68ch}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.diagram{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto;padding:12px}
+.diagram svg{display:block;min-width:1080px;width:100%;height:auto}
+svg text{font-family:var(--f-body);fill:var(--ink)}
+svg .t{font-size:12.5px} svg .m{font-family:var(--f-mono);font-size:11.5px} svg .h{font-size:13px;font-weight:600}
+svg .mut{fill:var(--muted)} svg .col{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;fill:var(--muted)}
+.b-data{fill:var(--data);stroke:var(--data-s)} .b-src{fill:var(--src);stroke:var(--src-s)}
+.b-code{fill:var(--code);stroke:var(--code-s)} .b-card{fill:var(--card);stroke:var(--card-s)}
+.b-none{fill:var(--panel);stroke:var(--line);stroke-dasharray:3 3}
+.lane{fill:none;stroke:var(--line)}
+.a{stroke:var(--ink);stroke-width:1.4;fill:none} .seed{stroke:var(--data-s);stroke-dasharray:6 4}
+.test{stroke:var(--warn);stroke-dasharray:2 3}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:.85rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend svg{width:34px;height:10px}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+.tbl{overflow-x:auto}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-weight:600;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+td:first-child{font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font-size:.75rem;font-family:var(--f-mono);padding:1px 7px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;margin:0;font-family:var(--f-mono);font-size:.85rem}
+ol,ul{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px}
+.flags li::marker{color:var(--warn)}
+.note{background:var(--warn-bg);border-radius:8px;padding:12px 14px}
+</style>
+
+<div class="wrap">
+  <header class="read">
+    <div class="eyebrow">agent-hdb-v2 · make ontology</div>
+    <h1>How ontology_card.md is made</h1>
+    <p class="lede">The card is generated, but not from <code>poc-data</code> directly. It is printed by <code>scripts/build_ontology.py</code> from three YAML sources in <code>ontology/</code>. Claude Code wrote those YAML files once, from the solution design and <code>poc-data</code>, and tests keep them in line with poc-data. The build itself is plain code with no LLM call.</p>
+  </header>
+
+  <section class="diagram" aria-label="Flow from poc-data to ontology_card.md, one lane per card section">
+    <svg viewBox="0 0 1100 640" role="img">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker>
+      </defs>
+      <!-- column headers -->
+      <text class="col" x="20" y="24">1 · POC-DATA</text>
+      <text class="col" x="290" y="24">2 · ONTOLOGY/ (SOURCE)</text>
+      <text class="col" x="560" y="24">3 · BUILD_ONTOLOGY.PY</text>
+      <text class="col" x="850" y="24">4 · ONTOLOGY_CARD.MD</text>
+
+      <!-- lanes -->
+      <rect class="lane" x="8" y="36" width="1084" height="138" rx="8"/>
+      <rect class="lane" x="8" y="182" width="1084" height="138" rx="8"/>
+      <rect class="lane" x="8" y="328" width="1084" height="138" rx="8"/>
+      <rect class="lane" x="8" y="474" width="1084" height="158" rx="8"/>
+
+      <!-- Lane 1: Node labels -->
+      <rect class="b-none" x="20" y="52" width="230" height="106" rx="6"/>
+      <text class="h" x="32" y="74">Not read at build</text>
+      <text class="t mut" x="32" y="94">Claude Code wrote the classes</text>
+      <text class="t mut" x="32" y="111">from solution.MD §2.7 and the</text>
+      <text class="t mut" x="32" y="128">PLG Records tables (schema.sql)</text>
+
+      <rect class="b-src" x="290" y="52" width="230" height="106" rx="6"/>
+      <text class="h" x="302" y="74">plg.yaml · classes</text>
+      <text class="m" x="302" y="94">annotations: {node: true}</text>
+      <text class="m" x="302" y="111">description: …</text>
+      <text class="t mut" x="302" y="134">25 node classes, AI-written</text>
+
+      <rect class="b-code" x="560" y="52" width="250" height="106" rx="6"/>
+      <text class="h" x="572" y="74">Ontology.nodes</text>
+      <text class="t" x="572" y="94">LinkML SchemaView: every class</text>
+      <text class="t" x="572" y="111">annotated <tspan class="m">node</tspan>, in file order</text>
+      <text class="m mut" x="572" y="134">→ ontology_card() loop 1</text>
+
+      <rect class="b-card" x="850" y="52" width="230" height="106" rx="6"/>
+      <text class="h" x="862" y="74">## Node labels</text>
+      <text class="m" x="862" y="94">- Unit: A lettable …</text>
+      <text class="t mut" x="862" y="116">label + class description</text>
+      <text class="t mut" x="862" y="133">(only 7 of 25 have one)</text>
+
+      <!-- Lane 2: Relations -->
+      <rect class="b-none" x="20" y="198" width="230" height="106" rx="6"/>
+      <text class="h" x="32" y="220">Not read</text>
+      <text class="t mut" x="32" y="240">Edges marked * are extracted</text>
+      <text class="t mut" x="32" y="257">later by Haiku from corpus docs</text>
+      <text class="t mut" x="32" y="274">at graph build, not for the card</text>
+
+      <rect class="b-src" x="290" y="198" width="230" height="106" rx="6"/>
+      <text class="h" x="302" y="220">plg.yaml · slots</text>
+      <text class="m" x="302" y="240">annotations: {edge: OF_UNIT,</text>
+      <text class="m" x="302" y="257">  extracted: true}</text>
+      <text class="m" x="302" y="274">range · required · multivalued</text>
+      <text class="t mut" x="302" y="291">AI-written, from FK columns</text>
+
+      <rect class="b-code" x="560" y="198" width="250" height="106" rx="6"/>
+      <text class="h" x="572" y="220">Ontology.edges()</text>
+      <text class="t" x="572" y="240">induced_slot per class + slot;</text>
+      <text class="t" x="572" y="257">required → 1/0, multivalued → *</text>
+      <text class="t" x="572" y="274">gives cardinality [0..1], [1] …</text>
+      <text class="m mut" x="572" y="291">→ ontology_card() loop 2</text>
+
+      <rect class="b-card" x="850" y="198" width="230" height="106" rx="6"/>
+      <text class="h" x="862" y="220">## Relations</text>
+      <text class="m" x="862" y="240">- Tenancy -OF_UNIT-></text>
+      <text class="m" x="862" y="257">  Unit [1]</text>
+      <text class="t mut" x="862" y="279">* = extracted edge</text>
+      <text class="t mut" x="862" y="296">(SUPERSEDES, OVERRIDES, APPLIES)</text>
+
+      <!-- Lane 3: Vocabularies -->
+      <rect class="b-data" x="20" y="344" width="230" height="106" rx="6"/>
+      <text class="h" x="32" y="366">Ground truth</text>
+      <text class="m" x="32" y="386">_master/taxonomy_and_</text>
+      <text class="m" x="32" y="401">  checklists.json</text>
+      <text class="m" x="32" y="420">plg_records.db: trades,</text>
+      <text class="m" x="32" y="435">  units, letters tables</text>
+
+      <rect class="b-src" x="290" y="344" width="230" height="106" rx="6"/>
+      <text class="h" x="302" y="366">vocab/*.yaml (10 files)</text>
+      <text class="m" x="302" y="386">id · notation · pref_label</text>
+      <text class="m" x="302" y="403">alt_labels (synonyms)</text>
+      <text class="t mut" x="302" y="426">codes seeded from poc-data;</text>
+      <text class="t mut" x="302" y="443">synonyms curated by hand</text>
+
+      <rect class="b-code" x="560" y="344" width="250" height="106" rx="6"/>
+      <text class="h" x="572" y="366">Validation.load()</text>
+      <text class="t" x="572" y="386">validates each concept against</text>
+      <text class="t" x="572" y="403">the generated Pydantic class;</text>
+      <text class="t" x="572" y="420">check_references() for links</text>
+      <text class="m mut" x="572" y="440">→ ontology_card() loop 3</text>
+
+      <rect class="b-card" x="850" y="344" width="230" height="106" rx="6"/>
+      <text class="h" x="862" y="366">## Vocabularies</text>
+      <text class="m" x="862" y="386">- defect_categories:</text>
+      <text class="m" x="862" y="403">  STR: Structural; …</text>
+      <text class="t mut" x="862" y="426">code: label, or label only</text>
+      <text class="t mut" x="862" y="443">when code = label</text>
+
+      <!-- Lane 4: Glossary -->
+      <rect class="b-data" x="20" y="490" width="230" height="126" rx="6"/>
+      <text class="h" x="32" y="512">Corpus documents</text>
+      <text class="m" x="32" y="532">OTH-004 plg_glossary.md</text>
+      <text class="m" x="32" y="549">DOC-012 mgmt minutes</text>
+      <text class="m" x="32" y="566">DOC-001..004 policies</text>
+      <text class="m" x="32" y="583">PDF-002 Circular 07/2026</text>
+      <text class="m" x="32" y="603">plg_records.db: staff</text>
+
+      <rect class="b-src" x="290" y="490" width="230" height="126" rx="6"/>
+      <text class="h" x="302" y="512">glossary.yaml</text>
+      <text class="m" x="302" y="532">id _vN · definition · value</text>
+      <text class="m" x="302" y="549">source {document_id, quote}</text>
+      <text class="m" x="302" y="566">owned_by · effective_from</text>
+      <text class="m" x="302" y="583">supersedes · status</text>
+      <text class="t mut" x="302" y="603">transcribed by hand, cited</text>
+
+      <rect class="b-code" x="560" y="490" width="250" height="126" rx="6"/>
+      <text class="h" x="572" y="512">Validation.load() + checks</text>
+      <text class="t" x="572" y="532">supersedes_errors(): chain rules</text>
+      <text class="t" x="572" y="549">owner must be a staff ID</text>
+      <text class="t" x="572" y="566">(load_personas reads the DB)</text>
+      <text class="t" x="572" y="583">keep only status == current</text>
+      <text class="m mut" x="572" y="603">→ ontology_card() loop 4</text>
+
+      <rect class="b-card" x="850" y="490" width="230" height="126" rx="6"/>
+      <text class="h" x="862" y="512">## Glossary</text>
+      <text class="m" x="862" y="532">- plg:Vacant_v2 Vacant</text>
+      <text class="m" x="862" y="549">  unit (from 2026-04-15)</text>
+      <text class="m" x="862" y="566">  [value]: definition</text>
+      <text class="t mut" x="862" y="589">19 current versions;</text>
+      <text class="t mut" x="862" y="606">superseded ones left out</text>
+
+      <!-- arrows: source → code → card (every build) -->
+      <g>
+        <path class="a" marker-end="url(#ar)" d="M520,105 H556"/><path class="a" marker-end="url(#ar)" d="M810,105 H846"/>
+        <path class="a" marker-end="url(#ar)" d="M520,251 H556"/><path class="a" marker-end="url(#ar)" d="M810,251 H846"/>
+        <path class="a" marker-end="url(#ar)" d="M520,397 H556"/><path class="a" marker-end="url(#ar)" d="M810,397 H846"/>
+        <path class="a" marker-end="url(#ar)" d="M520,553 H556"/><path class="a" marker-end="url(#ar)" d="M810,553 H846"/>
+      </g>
+      <!-- one-time seeding (dashed) -->
+      <path class="a seed" marker-end="url(#ar)" d="M250,388 H286"/>
+      <path class="a seed" marker-end="url(#ar)" d="M250,540 H286"/>
+      <!-- build-time read of staff table -->
+      <path class="a" marker-end="url(#ar)" d="M250,600 C 300,628 520,628 600,618"/>
+      <!-- tests check YAML-derived output against poc-data (dotted) -->
+      <path class="a test" marker-end="url(#ar)" d="M300,450 C 270,462 262,458 252,446"/>
+    </svg>
+  </section>
+
+  <div class="legend">
+    <span><svg viewBox="0 0 34 10"><path d="M0,5 H34" stroke="currentColor" stroke-width="1.6"/></svg>read on every <code>make ontology</code></span>
+    <span><svg viewBox="0 0 34 10"><path d="M0,5 H34" stroke="var(--data-s)" stroke-width="1.6" stroke-dasharray="6 4"/></svg>one-time seed by Claude Code in commit d926c09 (no script)</span>
+    <span><svg viewBox="0 0 34 10"><path d="M0,5 H34" stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="2 3"/></svg>checked back against poc-data by tests</span>
+  </div>
+
+  <main class="read">
+    <h2>Walkthrough</h2>
+    <ol>
+      <li><code>poc-data/</code> is the fictional corpus, made by <code>poc-data/_generator</code> (seed 42). Its ground truth lives in <code>_master/*.json</code> and the SQLite <code>plg_records.db</code>.</li>
+      <li>All of <code>ontology/</code> was written by Claude Code in one commit (<code>d926c09</code>, "Ontology v1 and business glossary seed (#4)", co-authored by Claude, 2026-10-13). It followed the design in <code>docs/solution.MD</code> §2.7 and the spec, and read poc-data while doing it: the PLG Records tables became node classes and their foreign keys became relations; the taxonomy, checklists and code lists became the vocabularies; the corpus docs were quoted into the glossary. Each vocab file still says <code>"# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand"</code>, but "by hand" here means in that session, not by a script. No generator for the YAML exists in the repo.</li>
+      <li>From then on <code>ontology/</code> is the source you edit (or ask Claude to edit): <code>plg.yaml</code> (LinkML classes and relations), <code>vocab/*.yaml</code> and <code>glossary.yaml</code>.</li>
+      <li><code>make ontology</code> runs <code>build()</code> in <code>scripts/build_ontology.py</code>. It loads <code>plg.yaml</code>, generates Pydantic models, validates every vocab concept and glossary term against them, checks references and <code>supersedes</code> chains, and checks each glossary owner against the <code>staff</code> table. If anything fails it writes nothing.</li>
+      <li>If all checks pass, <code>ontology_card()</code> prints the four sections and writes <code>src/plg/ontology/generated/ontology_card.md</code>, next to <code>models.py</code>, <code>allow_list.json</code>, <code>vocab_index.json</code> and the other artefacts.</li>
+      <li><code>tests/test_ontology_artefacts.py</code> then checks the committed output against poc-data (taxonomy, checklists, trades, unit statuses and types, letter types, glossary owners and cited doc IDs). CI reruns the generator and fails if the committed files differ.</li>
+    </ol>
+
+    <h2>Where each section comes from</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Section</th><th>Kind</th><th>Source</th><th>Code</th></tr></thead>
+      <tbody>
+        <tr><td>Node labels</td><td><span class="pill">AI-written once</span></td><td><code>plg.yaml</code> classes with <code>annotations: {node: true}</code>, plus <code>description</code>. Modelled on solution.MD §2.7 and the 17 tables in <code>poc-data/database/schema.sql</code></td><td><code>Ontology.__init__</code> (<code>self.nodes</code>), loop 1 of <code>ontology_card()</code></td></tr>
+        <tr><td>Relations</td><td><span class="pill">AI-written once</span></td><td><code>plg.yaml</code> slots with <code>edge</code>, <code>extracted</code>, <code>range</code>, <code>required</code>, <code>multivalued</code>. Mostly the FK columns of those tables, plus document edges from the design</td><td><code>Ontology.edges()</code>, loop 2</td></tr>
+        <tr><td>Vocabularies</td><td><span class="pill">seeded from data</span> + <span class="pill">hand synonyms</span></td><td><code>ontology/vocab/*.yaml</code>, seeded from <code>_master/taxonomy_and_checklists.json</code> and <code>plg_records.db</code> (<code>trades</code>, <code>units.status</code>, <code>units.unit_type</code>, <code>letters.letter_type</code>)</td><td><code>Validation.load()</code>, <code>check_references()</code>, loop 3</td></tr>
+        <tr><td>Glossary</td><td><span class="pill">AI-transcribed</span>, cited</td><td><code>ontology/glossary.yaml</code>, quoting corpus docs by <code>_manifest.csv</code> ID (mostly OTH-004, DOC-001 to DOC-004, DOC-012, PDF-002)</td><td><code>Validation.load()</code>, <code>supersedes_errors()</code>, owner check via <code>load_personas()</code>, loop 4 (current only)</td></tr>
+      </tbody>
+    </table></div>
+    <p>The header line comes from the <code>HEADER</code> constant and the version from <code>plg.yaml</code>'s <code>version: "1.0.0"</code>. The section headings are hard-coded in <code>ontology_card()</code>.</p>
+
+    <h2>Regenerate it</h2>
+<pre>cd ~/Documents/DevProjects/agent-hdb-v2
+uv sync                # once: dev deps include LinkML
+make ontology          # = uv run python scripts/build_ontology.py
+uv run pytest tests/test_ontology_artefacts.py</pre>
+    <p>Then commit <code>src/plg/ontology/generated/</code>. Editing the card by hand is pointless, because the next build overwrites it and CI flags the drift.</p>
+
+    <h2>Things that look off</h2>
+    <ul class="flags">
+      <li>The card is in <strong>agent-hdb-v2</strong>. The <code>agent-hdb</code> folder has no ontology at all.</li>
+      <li><code>docs/solution.MD</code> (§2.7 and D12/D14) and <code>docs/spec.md</code> say 8 defect categories. The taxonomy in poc-data, the vocab file and the card all have 11 (STR to OTH). The data and card agree; the docs are stale.</li>
+      <li>Only 7 of the 25 node labels have a description, so the card gives the agent little for Town, Block, Inspection, Task and the rest.</li>
+      <li>Relations name <code>Document</code> and <code>Entity</code>, which are abstract and not in the Node labels list. The edge is declared on the parent class, so readers have to know Policy, Sop and Circular are Documents.</li>
+      <li><code>SUPERSEDES</code> is used for two different edges: Document to Document (extracted, marked *) and GlossaryTerm to GlossaryTerm (not extracted).</li>
+      <li>Some vocabularies are not checked against poc-data by any test. <code>document_types</code> is curated (the manifest's <code>type</code> column holds file formats like pdf and xlsx, not these). <code>teams</code> and <code>vendors</code> are checked only through the taxonomy test. Glossary definitions are not compared with the quoted source text; tests check only that the cited doc IDs and owners exist.</li>
+      <li><code>unit_statuses</code> is titled "snapshot as at 2026-09-30". If poc-data is regenerated, the vocab needs reseeding by hand, and the tests are what will tell you.</li>
+    </ul>
+  </main>
+</div>

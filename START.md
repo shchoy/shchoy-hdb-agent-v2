@@ -23,7 +23,7 @@ From the repo root:
 uv sync
 ```
 
-This creates `.venv/` with the `plg` package (editable) and the dev tools (pytest, mypy).
+This creates `.venv/` with the `plg` package (editable) and the dev tools (pytest, mypy, LinkML for `make ontology`).
 
 Then install the web app's dependencies:
 
@@ -104,6 +104,47 @@ This is POC identity: `plg-api` trusts the header because only the BFF calls it,
 Each SSE event has a sequence number (`id:`) and a JSON payload of type `node`, `token`, `done` (with `run_id`) or `error`. Heartbeat comments (lines starting with `:`) keep long runs alive. Interactive API docs are at http://127.0.0.1:8000/docs.
 
 Threads are held in memory for now, so they are lost when the server restarts.
+
+### Business glossary
+
+```bash
+uv run plg glossary list           # every term at its current version
+uv run plg glossary list --all     # every version, including superseded ones
+uv run plg glossary show LOD       # current definition, source, owner, then history; accepts IDs, labels, synonyms
+```
+
+### Ontology
+
+The ontology, vocabularies and glossary are edited in `ontology/`. After changing them, regenerate the artefacts the app reads and commit them (CI fails if they drift):
+
+```bash
+make ontology
+```
+
+It validates everything first (including that each glossary term's `supersedes` chain is unbroken) and, on any problem, lists them and exits 1 without writing anything.
+
+#### Browsing the ontology
+
+- **Quick overview:** `src/plg/ontology/generated/ontology_card.md` lists every node label, every relation (`Tenancy -OF_UNIT-> Unit [1]`), the vocabulary codes and the current glossary definitions. It's the same card the agent gets in its prompts.
+- **Documentation site:** one page per class, relation and enum, cross-linked. Open `/tmp/plg-docs/index.md` in VS Code's Markdown preview and click through.
+
+  ```bash
+  uv run gen-doc ontology/plg.yaml -d /tmp/plg-docs
+  ```
+
+- **ER diagram:** a Mermaid diagram of the classes, their attributes and relations. View it in VS Code's Markdown preview (Mermaid support may need an extension) or paste it into https://mermaid.live. Run `uv run gen-erdiagram --help` for options to focus on part of the model.
+
+  ```bash
+  uv run gen-erdiagram ontology/plg.yaml > /tmp/plg-er.md
+  ```
+
+- **Vocabularies and synonyms:** the vocabularies are plain YAML in `ontology/vocab/`. To see which concepts a word or abbreviation maps to:
+
+  ```bash
+  uv run python -c "from plg.ontology.vocab import load_vocab; print(load_vocab().resolve('ceiling leak'))"
+  ```
+
+- **Glossary:** `uv run plg glossary list --all` and `uv run plg glossary show <term>` (see above).
 
 ## 5. Run the frontend
 

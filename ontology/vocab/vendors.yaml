@@ -1,0 +1,14 @@
+# Seeded from poc-data ground truth; synonyms (alt_labels) curated by hand.
+scheme: plg:vendors
+concept_class: Vendor
+title: Term-contract vendors
+concepts:
+- id: plg:vendor/kemas-building-works-pte-ltd
+  notation: kemas-building-works-pte-ltd
+  pref_label: Kemas Building Works Pte Ltd
+- id: plg:vendor/pestaway-solutions
+  notation: pestaway-solutions
+  pref_label: PestAway Solutions
+- id: plg:vendor/sunrise-m-e-services-pte-ltd
+  notation: sunrise-m-e-services-pte-ltd
+  pref_label: Sunrise M&E Services Pte Ltd

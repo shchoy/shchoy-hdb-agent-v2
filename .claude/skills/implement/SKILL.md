@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 Implement the work described by the user in the tickets.
 
-If an external API key is required and its not available, ask the user to provide it in the environment, and use it in the implementation.
+Before changing anything, create a new branch for the ticket, from `main`.
 
 Use subagents if required to try keeping the context below 100,000 tokens.
 

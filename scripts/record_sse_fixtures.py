@@ -1,14 +1,15 @@
-"""Record SSE streams from an in-process plg-api for the web tests to replay (MSW).
+"""Record SSE streams and source-viewer responses from an in-process plg-api for the web tests to replay (MSW).
 
     uv run python scripts/record_sse_fixtures.py
 
-Writes `web/src/test/fixtures/*.sse`. Streams come from the real API and graph with a scripted
+Writes `web/src/test/fixtures/*.sse` and `documents/*.json` (a document and a cited span's location, per file type). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
 
 from __future__ import annotations
 
+import json
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
@@ -83,14 +84,41 @@ SCRIPTS: dict[str, Callable[[ScriptedLLMClient], None]] = {
 }
 
 
-def searcher(index: Path) -> Searcher:
+DOCUMENTS = {
+    "pdf": "pdfs/Guidelines_AA_Works_Commercial_Tenants_2025.pdf",
+    "docx": "docs/PLG-POL-003_Rental_Arrears_Management_Policy_v2.0.docx",
+    "email": "emails/prima_deposit/01_20260723.eml",
+    "markdown": "docs/notes/onboarding_guide_new_officers.md",
+}
+
+
+def record_documents(store: LanceSearchStore) -> dict[str, Any]:
+    """Per file type: the document and where the first line of its last chunk sits, as a citation would ask."""
+    by_path = {d.source_path: d.doc_id for d in store.documents()}
+    recorded: dict[str, Any] = {}
+    with TestClient(create_app(Settings(), llm=ScriptedLLMClient(), store=store)) as client:
+        for kind, path in DOCUMENTS.items():
+            doc_id = by_path[path]
+            chunk = store.chunks(doc_id)[-1]
+            end = chunk.text.find("\n")
+            end = len(chunk.text) if end < 0 else end
+            document = client.get(f"/documents/{doc_id}", headers=USER).json()
+            located = client.get(
+                f"/documents/{doc_id}/chunks/{chunk.chunk_id.replace('#', '%23')}",
+                params={"start": 0, "end": end}, headers=USER,
+            ).json()
+            recorded[kind] = {"document": document, "location": located, "start": 0, "end": end}
+    return recorded
+
+
+def searcher(index: Path) -> tuple[Searcher, LanceSearchStore]:
     settings = Settings()
     embedder = HashingEmbedder(dim=128)
     store = LanceSearchStore(index, dim=embedder.dim)
     entities, tagger = load_entity_spine(settings.records_db)
     sources: list[Any] = [SharePointSource(settings.corpus_dir), LotusNotesSource(settings.corpus_dir)]
     sync(store, embedder, sources, entities, tagger)
-    return Searcher(store, embedder, CrossEncoderReranker(settings))
+    return Searcher(store, embedder, CrossEncoderReranker(settings), candidates=50), store
 
 
 def record(search: Searcher, script: Callable[[ScriptedLLMClient], None]) -> str:
@@ -107,10 +135,15 @@ def record(search: Searcher, script: Callable[[ScriptedLLMClient], None]) -> str
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as index:
-        search = searcher(Path(index))
+        search, store = searcher(Path(index))
         for name, script in SCRIPTS.items():
             path = OUT / f"{name}.sse"
             path.write_text(record(search, script))
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
+        (OUT / "documents").mkdir(exist_ok=True)
+        for kind, recorded in record_documents(store).items():
+            path = OUT / "documents" / f"{kind}.json"
+            path.write_text(json.dumps(recorded, indent=2) + "\n")
             print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 

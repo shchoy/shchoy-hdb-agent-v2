@@ -77,3 +77,37 @@ export function startRun(
     signal,
   });
 }
+
+/** A source document as plain text blocks; plg-api's status and JSON body, for the BFF to relay. */
+export async function getDocument(staffId: string, docId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/documents/{doc_id}", {
+    params: { path: { doc_id: docId }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** Where a cited span (`start`:`end` of the chunk's text) sits in its document. */
+export async function getChunkLocation(
+  staffId: string,
+  docId: string,
+  chunkId: string,
+  span: { start?: number; end?: number },
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/documents/{doc_id}/chunks/{chunk_id}", {
+    params: {
+      path: { doc_id: docId, chunk_id: chunkId },
+      query: span,
+      header: { "x-plg-user": staffId },
+    },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** The source file, unread, so the BFF can stream it through. */
+export function getDocumentFile(staffId: string, docId: string): Promise<Response> {
+  const path = "/documents/{doc_id}/file";
+  return fetch(plgApiUrl() + path.replace("{doc_id}", encodeURIComponent(docId)), {
+    headers: { [USER_HEADER]: staffId },
+    cache: "no-store",
+  });
+}

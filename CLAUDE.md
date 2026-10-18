@@ -92,12 +92,14 @@ scripts/build_ontology.py
                      problem lists them, exits 1, writes nothing. --source/--out for testing. Needs dev deps (linkml).
 scripts/record_sse_fixtures.py
                      Records real SSE streams (answer with citations, not_covered, error) from the in-process API,
-                     with the corpus synced into a temp index, into web/src/test/fixtures/*.sse.
+                     with the corpus synced into a temp index, into web/src/test/fixtures/*.sse, plus the source
+                     viewer's document + span-location responses per file type into fixtures/documents/*.json.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
-                     /api/threads, /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through).
+                     /api/threads, /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through),
+                     /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints).
                      Pages: /sign-in, / (Ask screen: streamed answer, node trajectory, citation chips under the
-                     answer (expand to read the quoted span), error + Retry).
+                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), error + Retry).
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.
                      Tests: Vitest + RTL + MSW replaying the recorded fixtures.

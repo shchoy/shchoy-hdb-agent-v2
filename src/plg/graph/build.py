@@ -16,7 +16,6 @@ from pydantic import BaseModel
 
 from plg.agents import data, knowledge
 from plg.agents.runtime import CACHE
-from plg.config import Settings
 from plg.data.semantic import SemanticLayer, load_semantic_layer
 from plg.data.warehouse import Warehouse
 from plg.entities.store import GraphStore
@@ -88,14 +87,14 @@ def build_graph(
     retriever: Retriever,
     vocab: VocabIndex | None = None,
     entities: GraphStore | None = None,
-    warehouse: Warehouse | None = None,
+    *,
+    warehouse: Warehouse,
     glossary: Glossary | None = None,
     layer: SemanticLayer | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
     layer = layer or load_semantic_layer()
-    warehouse = warehouse or Warehouse(Settings.from_env().records_db)
 
     def conversation(state: PLGState) -> list[Message]:
         return [*state.get("messages", []), {"role": "user", "content": state["question"]}]

@@ -77,10 +77,8 @@ class Warehouse:
         self._open()
         return self._tables
 
-    def run(self, sql: str, as_of: date) -> QueryResult:
-        """Validate, dry-run with EXPLAIN, then execute `sql` (`$as_of` is bound to `as_of`).
-
-        Raises SqlRejected when the validator or the dry run refuses it."""
+    def _plan(self, sql: str, as_of: date) -> tuple[duckdb.DuckDBPyConnection, dict[str, str], frozenset[str]]:
+        """Validate `sql` and EXPLAIN it on a fresh cursor. Returns the cursor, the parameters and the tables read."""
         self._open()
         tables = check_sql(sql, self._tables)
         params = {"as_of": as_of.isoformat()} if "$as_of" in sql else {}
@@ -89,14 +87,20 @@ class Warehouse:
             cursor.execute(f"EXPLAIN {sql}", params)
         except duckdb.Error as e:
             raise SqlRejected(f"The query does not plan: {str(e).splitlines()[0]}") from e
+        return cursor, params, tables
+
+    def run(self, sql: str, as_of: date) -> QueryResult:
+        """Validate, dry-run with EXPLAIN, then execute `sql` (`$as_of` is bound to `as_of`).
+
+        Raises SqlRejected when the validator or the dry run refuses it."""
+        cursor, params, tables = self._plan(sql, as_of)
         try:
             cursor.execute(sql, params)
             fetched = cursor.fetchmany(MAX_ROWS + 1)
         except duckdb.Error as e:
             raise SqlRejected(f"The query failed: {str(e).splitlines()[0]}") from e
-        columns = [d[0] for d in cursor.description]
         return QueryResult(
-            columns=columns,
+            columns=[d[0] for d in cursor.description],
             rows=[[cell(v) for v in row] for row in fetched[:MAX_ROWS]],
             truncated=len(fetched) > MAX_ROWS,
             tables=tables,
@@ -104,9 +108,4 @@ class Warehouse:
 
     def dry_run(self, sql: str, as_of: date) -> None:
         """Validate and EXPLAIN `sql` without running it."""
-        self._open()
-        check_sql(sql, self._tables)
-        try:
-            self._cursor().execute(f"EXPLAIN {sql}", {"as_of": as_of.isoformat()} if "$as_of" in sql else {})
-        except duckdb.Error as e:
-            raise SqlRejected(f"The query does not plan: {str(e).splitlines()[0]}") from e
+        self._plan(sql, as_of)

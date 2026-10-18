@@ -68,7 +68,7 @@ def sql_turn(plan: str, sql: str, concepts: list[str] | None = None, as_of: str 
 def test_vacancy_47_vs_52_is_explained_by_the_definition_change(api: Api, llm: ScriptedLLMClient) -> None:
     explanation = (
         "On 2026-08-31, 47 units were vacant under Vacant v2 (effective 2026-04-15, excluding units under tender). "
-        "The QBR's 52 follows Vacant v1, which counts the 5 units under tender as vacant."
+        "The QBR's 52 follows Vacant v1 (in force until 2026-04-14), which counts the 5 units under tender as vacant."
     )
     stream = ask(
         api, llm, VACANT_QUESTION,
@@ -239,3 +239,15 @@ def _fingerprint() -> list[int]:
         return [con.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in ("units", "tenancies", "towns", "tenants")]
     finally:
         con.close()
+
+
+def test_the_explanation_always_names_the_definition_and_its_effective_date(api: Api, llm: ScriptedLLMClient) -> None:
+    stream = ask(
+        api, llm, VACANT_QUESTION,
+        sql_turn("Count vacant units", count_of("plg:Vacant_v2"), ["plg:Vacant_v2"], "2026-08-31"),
+        turn(text("There were 47 vacant units.")),  # the agent forgot to name the definition
+    )
+
+    (trace,) = stream.of_type("sql_trace")
+    assert "47 vacant units" in str(trace["explanation"])
+    assert "Vacant unit v2 (plg:Vacant_v2, in force from 2026-04-15)" in str(trace["explanation"])

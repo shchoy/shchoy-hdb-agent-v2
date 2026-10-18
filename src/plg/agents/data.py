@@ -230,6 +230,22 @@ def terms_context(layer: SemanticLayer, glossary: Glossary, vocab: VocabIndex, q
     return "\n\n".join(parts)
 
 
+def with_definitions(text: str, traces: list[SqlTrace]) -> str:
+    """`text`, ending with the definitions the queries relied on (version and effective date) unless it already
+    names them all, so no explanation leaves out which definition was used."""
+    used = {c.id: c for t in traces if t.status == "ok" for c in t.concepts}
+    missing = [
+        c for c in used.values()
+        if not (str(c.effective_from) in text or c.effective_to and str(c.effective_to) in text)
+    ]
+    if not missing:
+        return text
+    def line(c: ConceptUsed) -> str:
+        start = f"from {c.effective_from}" if c.effective_from else "since before records began"
+        return f"{c.label} v{c.version} ({c.id}, in force {start}{f' to {c.effective_to}' if c.effective_to else ''})"
+    return f"{text}\n\nDefinitions used: {'; '.join(line(c) for c in missing)}.".strip()
+
+
 async def answer(
     llm: LLMClient,
     warehouse: Warehouse,
@@ -250,6 +266,8 @@ async def answer(
         tools=[definition_tool(glossary, layer), sql_tool(warehouse, glossary, layer, traces)],
         messages=messages,
     )
+    text = result.text
     if traces:
-        traces[-1].explanation = result.text
-    return DataResult(text=result.text, traces=traces)
+        text = with_definitions(text, traces)
+        traces[-1].explanation = text
+    return DataResult(text=text, traces=traces)

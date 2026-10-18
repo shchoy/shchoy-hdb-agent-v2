@@ -53,7 +53,7 @@ src/plg/
 │   ├── state.py     PLGState (messages = completed exchanges only, question, user, intents, findings, answer) and
 │                    PLGGraph. A turn joins `messages` only when merge answers it, so a failed run leaves no trace.
 │                    findings fan in by appending; route's empty update resets them each turn.
-│   └── build.py     build_graph(llm, retriever, ..., *, warehouse): START → route → knowledge (if intended) → merge → END.
+│   └── build.py     build_graph(llm, retriever, ..., *, warehouse): START → route → knowledge and/or data (if intended) → merge → END.
 │                    route = Haiku, forced `route` tool → intents (knowledge, data; none = merge answers
 │                    directly, told not to state PLG facts without sources). knowledge streams `citation` chunks, data
 │                    streams `sql_trace` chunks.

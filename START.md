@@ -6,7 +6,7 @@ How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on 
 
 | Part | Status | How to run |
 |---|---|---|
-| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
+| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations, data questions over PLG Records | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
 | Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in and Ask screen with citation chips | `cd web && npm run dev` |
 
 ## 1. Prerequisites
@@ -96,6 +96,20 @@ uv run plg ask "When do we issue a letter of demand?"
 
 The answer streams to the terminal, then its sources: each `[n]` in the answer is listed with its document, section and the quoted sentence. Policy and records questions are answered only from the indexed documents (current versions unless you ask about an earlier date). If the sources don't cover the question, the answer says so. If the run fails partway, the CLI prints an error to stderr and exits with code 1.
 
+### Ask a data question (issue #12)
+
+```bash
+uv run plg ask "Which tenancies have arrears above 3 months' rent?"
+uv run plg ask "Why does the QBR say 52 vacant and the monthly report 47?"
+```
+
+Numeric questions go to the `data` agent, which looks up the glossary definition in force on the reporting date, writes one read-only SQL query over PLG Records, and explains the result. The data is a snapshot as at 2026-09-30, which is the default reporting date. No Voyage key or search index is needed for these, only `ANTHROPIC_API_KEY`.
+
+- DuckDB attaches `poc-data/plg_records.db` read-only. The first query installs DuckDB's `sqlite` extension (a one-off download, then cached under `~/.duckdb`), so the first data question, and the first test run, need network access.
+- Every query is checked before it runs: a single SELECT, only PLG Records tables (not `staff`), no table functions, then an `EXPLAIN` dry run. Anything else is rejected and the agent is told why.
+- Each query is streamed as an `sql_trace` event: plan, SQL, result summary, the glossary term versions it relied on and any data-quality warnings (duplicate tenant T-10514/T-19807, duplicate payment PAY-00001235, impossible date INSP-2025-0125, outlier rent TA-2022-00400). The web app receives these events but does not show them yet.
+- The semantic layer (SQL bindings per glossary term version, table notes, example queries, known data-quality issues) is `ontology/semantic.yaml`. `make ontology` dry-runs every binding and writes `src/plg/ontology/generated/semantic_layer.json`.
+
 Each search is reranked by Voyage by default, which sends the candidate chunks' text to Voyage. If Voyage is unreachable, search keeps the unreranked hybrid order and logs a warning. With `PLG_RERANK_BACKEND=local` a knowledge answer takes 30 to 60 seconds, because each search is reranked on your CPU.
 
 ### Start the API
@@ -145,7 +159,7 @@ The ontology, vocabularies and glossary are edited in `ontology/`. After changin
 make ontology
 ```
 
-It validates everything first (including that each glossary term's `supersedes` chain is unbroken) and, on any problem, lists them and exits 1 without writing anything.
+It validates everything first (including that each glossary term's `supersedes` chain is unbroken, and that every SQL binding in `ontology/semantic.yaml` names a glossary term and dry-runs against PLG Records) and, on any problem, lists them and exits 1 without writing anything.
 
 #### Browsing the ontology
 

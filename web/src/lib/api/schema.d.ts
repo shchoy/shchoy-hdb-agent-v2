@@ -273,6 +273,24 @@ export interface components {
             /** Index */
             index: number;
         };
+        /**
+         * ConceptUsed
+         * @description A glossary term version a query relied on, with the dates it was in force.
+         */
+        ConceptUsed: {
+            /** Id */
+            id: string;
+            /** Concept */
+            concept: string;
+            /** Version */
+            version: number;
+            /** Label */
+            label: string;
+            /** Effective From */
+            effective_from: string | null;
+            /** Effective To */
+            effective_to: string | null;
+        };
         /** DoneEvent */
         DoneEvent: {
             /**
@@ -322,6 +340,17 @@ export interface components {
              */
             status: "started" | "finished";
         };
+        /** ResultSummary */
+        ResultSummary: {
+            /** Columns */
+            columns: string[];
+            /** Row Count */
+            row_count: number;
+            /** Truncated */
+            truncated: boolean;
+            /** Sample */
+            sample: (string | number | null)[][];
+        };
         /**
          * Span
          * @description Character offsets into the chunk's text: `text[start:end]` is the cited quote.
@@ -331,6 +360,42 @@ export interface components {
             start: number;
             /** End */
             end: number;
+        };
+        /**
+         * SqlTraceEvent
+         * @description One query the data agent sent: its plan, SQL, result summary and the glossary terms it relied on.
+         */
+        SqlTraceEvent: {
+            /** Plan */
+            plan: string;
+            /** Sql */
+            sql: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "rejected";
+            /** Error */
+            error: string | null;
+            result: components["schemas"]["ResultSummary"] | null;
+            /** Concepts */
+            concepts: components["schemas"]["ConceptUsed"][];
+            /** Warnings */
+            warnings: string[];
+            /** Explanation */
+            explanation: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "sql_trace";
+            /** Seq */
+            seq: number;
         };
         /** TokenEvent */
         TokenEvent: {
@@ -346,7 +411,7 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;

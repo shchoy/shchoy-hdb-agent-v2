@@ -12,7 +12,7 @@ from plg.agents.runtime import Citation
 from plg.identity import UserCtx
 from plg.llm import Message
 
-Intent = Literal["knowledge"]
+Intent = Literal["knowledge", "data"]
 """What kind of question it is. Grows with the specialists (data, drafting, defect, ...)."""
 
 
@@ -22,6 +22,8 @@ class Finding(BaseModel):
     specialist: str
     text: str
     citations: list[Citation]
+    traced: bool = False
+    """The finding rests on a query that ran (the data specialist's counterpart of a citation)."""
 
 
 def add_findings(left: list[Finding], right: list[Finding]) -> list[Finding]:

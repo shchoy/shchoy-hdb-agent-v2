@@ -15,6 +15,7 @@ from plg.config import Settings
 from plg.entities.open import LazyGraph, open_graph
 from plg.entities.spine import write_spine
 from plg.events import CitationEvent, ErrorEvent, TokenEvent
+from plg.data.warehouse import Warehouse
 from plg.graph.build import build_graph
 from plg.identity import load_personas
 from plg.llm import AnthropicLLMClient, LLMClient, ScriptedLLMClient
@@ -58,7 +59,7 @@ def main() -> None:
 def ask(question: str) -> None:
     """Ask a question and stream the answer."""
     settings = Settings.from_env()
-    graph = build_graph(make_llm(settings), LazySearcher(settings), entities=LazyGraph(settings))
+    graph = build_graph(make_llm(settings), LazySearcher(settings), entities=LazyGraph(settings), warehouse=Warehouse(settings.records_db))
 
     async def run() -> bool:
         citations: list[CitationEvent] = []

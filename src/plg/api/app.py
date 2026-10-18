@@ -17,6 +17,7 @@ from plg.documents import ChunkLocation, DocumentLibrary, DocumentView
 from plg.entities.open import LazyGraph
 from plg.entities.store import GraphStore
 from plg.events import RunEvent
+from plg.data.warehouse import Warehouse
 from plg.graph.build import build_graph
 from plg.identity import UserCtx, load_personas
 from plg.ingest.scans import SavedScans, TranscriptStore
@@ -57,7 +58,7 @@ def create_app(
     entities: GraphStore | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
-    graph = build_graph(llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings), entities=entities or LazyGraph(settings))
+    graph = build_graph(llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings), entities=entities or LazyGraph(settings), warehouse=Warehouse(settings.records_db))
     # Thread registry. Ownership and persistence across restarts arrive with later tickets.
     threads: set[str] = set()
 

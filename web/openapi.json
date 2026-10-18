@@ -756,6 +756,61 @@
         "title": "CitationEvent",
         "type": "object"
       },
+      "ConceptUsed": {
+        "description": "A glossary term version a query relied on, with the dates it was in force.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective To"
+          }
+        },
+        "required": [
+          "id",
+          "concept",
+          "version",
+          "label",
+          "effective_from",
+          "effective_to"
+        ],
+        "title": "ConceptUsed",
+        "type": "object"
+      },
       "DoneEvent": {
         "properties": {
           "type": {
@@ -844,6 +899,56 @@
         "title": "NodeEvent",
         "type": "object"
       },
+      "ResultSummary": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          },
+          "sample": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Sample",
+            "type": "array"
+          }
+        },
+        "required": [
+          "columns",
+          "row_count",
+          "truncated",
+          "sample"
+        ],
+        "title": "ResultSummary",
+        "type": "object"
+      },
       "Span": {
         "description": "Character offsets into the chunk's text: `text[start:end]` is the cited quote.",
         "properties": {
@@ -861,6 +966,95 @@
           "end"
         ],
         "title": "Span",
+        "type": "object"
+      },
+      "SqlTraceEvent": {
+        "description": "One query the data agent sent: its plan, SQL, result summary and the glossary terms it relied on.",
+        "properties": {
+          "plan": {
+            "title": "Plan",
+            "type": "string"
+          },
+          "sql": {
+            "title": "Sql",
+            "type": "string"
+          },
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResultSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/ConceptUsed"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "type": {
+            "const": "sql_trace",
+            "default": "sql_trace",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "plan",
+          "sql",
+          "as_of",
+          "status",
+          "error",
+          "result",
+          "concepts",
+          "warnings",
+          "explanation",
+          "seq"
+        ],
+        "title": "SqlTraceEvent",
         "type": "object"
       },
       "TokenEvent": {
@@ -899,6 +1093,7 @@
             "done": "#/components/schemas/DoneEvent",
             "error": "#/components/schemas/ErrorEvent",
             "node": "#/components/schemas/NodeEvent",
+            "sql_trace": "#/components/schemas/SqlTraceEvent",
             "token": "#/components/schemas/TokenEvent"
           },
           "propertyName": "type"
@@ -912,6 +1107,9 @@
           },
           {
             "$ref": "#/components/schemas/CitationEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SqlTraceEvent"
           },
           {
             "$ref": "#/components/schemas/DoneEvent"

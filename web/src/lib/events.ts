@@ -39,6 +39,35 @@ export const runEventSchema = z.discriminatedUnion("type", [
     quote: z.string(),
     span: z.object({ start: z.number().int(), end: z.number().int() }),
   }),
+  z.object({
+    type: z.literal("sql_trace"),
+    seq,
+    plan: z.string(),
+    sql: z.string(),
+    as_of: z.string(),
+    status: z.enum(["ok", "rejected"]),
+    error: z.string().nullable(),
+    result: z
+      .object({
+        columns: z.array(z.string()),
+        row_count: z.number().int(),
+        truncated: z.boolean(),
+        sample: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+      })
+      .nullable(),
+    concepts: z.array(
+      z.object({
+        id: z.string(),
+        concept: z.string(),
+        version: z.number().int(),
+        label: z.string(),
+        effective_from: z.string().nullable(),
+        effective_to: z.string().nullable(),
+      }),
+    ),
+    warnings: z.array(z.string()),
+    explanation: z.string(),
+  }),
   z.object({ type: z.literal("done"), seq, run_id: z.string() }),
   z.object({ type: z.literal("error"), seq, run_id: z.string(), message: z.string() }),
 ]);

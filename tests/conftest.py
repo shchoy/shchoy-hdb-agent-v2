@@ -14,6 +14,7 @@ from typer.testing import CliRunner, Result
 from plg import cli
 from plg.api.app import create_app
 from plg.config import REPO_ROOT, Settings
+from plg.entities.store import GraphStore
 from plg.ingest.scans import SCAN_NODE, SCAN_PROMPT
 from plg.llm import ScriptedLLMClient, tool_call, turn
 from plg.search.embed import HashingEmbedder
@@ -90,8 +91,13 @@ def llm() -> ScriptedLLMClient:
 def make_api(llm: ScriptedLLMClient) -> Iterator[Callable[..., Api]]:
     clients: list[TestClient] = []
 
-    def factory(searcher: Searcher | None = None, store: LanceSearchStore | None = None, **settings: object) -> Api:
-        app = create_app(Settings(**settings), llm=llm, searcher=searcher, store=store)  # type: ignore[arg-type]
+    def factory(
+        searcher: Searcher | None = None,
+        store: LanceSearchStore | None = None,
+        entities: GraphStore | None = None,
+        **settings: object,
+    ) -> Api:
+        app = create_app(Settings(**settings), llm=llm, searcher=searcher, store=store, entities=entities)  # type: ignore[arg-type]
         client = TestClient(app)
         clients.append(client.__enter__())
         return Api(client)

@@ -13,7 +13,9 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from plg.agents.entities import entity_tools
 from plg.agents.runtime import AgentResult, Source, Tool, run_agent
+from plg.entities.store import GraphStore
 from plg.llm import AgentMessage, LLMClient
 from plg.ontology.vocab import TermMatch, VocabIndex
 from plg.search.models import SearchFilter, SearchHit
@@ -27,7 +29,11 @@ from PLG's own documents: policies, SOPs, circulars, guides, FAQs, emails, notes
 
 Rules:
 - Search before answering. Search again with other words if the first results miss the point.
-- Answer only from the search results, and cite every factual claim.
+- Answer only from the search results and records you were shown, and cite every factual claim.
+- For a question about a tenant, unit or tenancy ("tell me about Golden Leaf", "what's on TA-2024-00542"), call \
+resolve_entities with the name, unit number or ID, then entity_context on the match. A tenant's context shows its \
+tenancies and letters; call entity_context on its unit as well for feedback, tickets and inspections. If several \
+entities match a name closely, say so and name them rather than guessing.
 - Give PLG's current stance: the version in force, its effective date, and what it superseded when the \
 sources say so. Searches return documents in force today unless you set `as_of` to ask about an earlier date.
 - If another document (an SOP, guide, FAQ or email) contradicts the current policy, say which one and that \
@@ -108,7 +114,12 @@ def search_tool(retriever: Retriever, vocab: VocabIndex, doc_types: list[str]) -
 
 
 async def answer(
-    llm: LLMClient, retriever: Retriever, vocab: VocabIndex, messages: list[AgentMessage], question: str
+    llm: LLMClient,
+    retriever: Retriever,
+    vocab: VocabIndex,
+    messages: list[AgentMessage],
+    question: str,
+    entities: GraphStore | None = None,
 ) -> AgentResult:
     doc_types = [c.notation for c in vocab.scheme("plg:document_types") if c.notation]
     return await run_agent(
@@ -116,6 +127,6 @@ async def answer(
         node=NODE,
         system=SYSTEM,
         context=describe_terms(vocab.find_terms(question)),
-        tools=[search_tool(retriever, vocab, doc_types)],
+        tools=[search_tool(retriever, vocab, doc_types), *(entity_tools(entities) if entities else [])],
         messages=messages,
     )

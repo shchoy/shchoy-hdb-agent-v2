@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 DocStatus = Literal["current", "superseded"]
-SourceSystem = Literal["sharepoint", "lotus_notes"]
+SourceSystem = Literal["sharepoint", "lotus_notes", "plg_records"]
 MemoryStatus = Literal["active", "pending_review", "retired"]
 
 

@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from plg.agents import knowledge
 from plg.agents.runtime import CACHE
+from plg.entities.store import GraphStore
 from plg.graph.state import Finding, Intent, PLGGraph, PLGState
 from plg.llm import AgentMessage, Block, LLMClient, Message
 from plg.ontology.vocab import VocabIndex, load_vocab
@@ -27,7 +28,7 @@ MERGE = "merge"
 
 ROUTE_SYSTEM = """\
 You route questions from officers of the Properties & Land Group (PLG) to specialists.
-- knowledge: anything answered from PLG's documents and records: policies, SOPs, circulars, procedures, \
+- knowledge: anything answered from PLG's documents and records, including what is known about a tenant, unit or tenancy: policies, SOPs, circulars, procedures, \
 rules, limits, deadlines, what a PLG term means, audit findings, incidents, letters, emails and notes.
 Choose no specialist for greetings, thanks and questions about how to use the assistant."""
 
@@ -74,7 +75,9 @@ class RouteDecision(BaseModel):
     intents: list[Intent]
 
 
-def build_graph(llm: LLMClient, retriever: Retriever, vocab: VocabIndex | None = None) -> PLGGraph:
+def build_graph(
+    llm: LLMClient, retriever: Retriever, vocab: VocabIndex | None = None, entities: GraphStore | None = None
+) -> PLGGraph:
     vocab = vocab or load_vocab()
 
     def conversation(state: PLGState) -> list[Message]:
@@ -100,7 +103,7 @@ def build_graph(llm: LLMClient, retriever: Retriever, vocab: VocabIndex | None =
         return state.get("intents") or [MERGE]
 
     async def knowledge_node(state: PLGState) -> PLGState:
-        result = await knowledge.answer(llm, retriever, vocab, agent_conversation(state), state["question"])
+        result = await knowledge.answer(llm, retriever, vocab, agent_conversation(state), state["question"], entities)
         write = get_stream_writer()
         for n, citation in enumerate(result.citations, start=1):
             write({"citation": citation.model_dump(), "index": n})

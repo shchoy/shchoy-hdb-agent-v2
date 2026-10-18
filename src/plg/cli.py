@@ -12,6 +12,8 @@ import typer
 from dotenv import find_dotenv, load_dotenv
 
 from plg.config import Settings
+from plg.entities.open import LazyGraph, open_graph
+from plg.entities.spine import write_spine
 from plg.events import CitationEvent, ErrorEvent, TokenEvent
 from plg.graph.build import build_graph
 from plg.identity import load_personas
@@ -25,6 +27,8 @@ from plg.search.rerank import LazySearcher, Reranker
 from plg.search.rerank import make_reranker as build_reranker
 
 app = typer.Typer(help="PLG Super-Librarian", no_args_is_help=True)
+graph_app = typer.Typer(help="Entity graph built from PLG Records.", no_args_is_help=True)
+app.add_typer(graph_app, name="graph")
 glossary_app = typer.Typer(help="Business glossary: versioned definitions.", no_args_is_help=True)
 app.add_typer(glossary_app, name="glossary")
 
@@ -54,7 +58,7 @@ def main() -> None:
 def ask(question: str) -> None:
     """Ask a question and stream the answer."""
     settings = Settings.from_env()
-    graph = build_graph(make_llm(settings), LazySearcher(settings))
+    graph = build_graph(make_llm(settings), LazySearcher(settings), entities=LazyGraph(settings))
 
     async def run() -> bool:
         citations: list[CitationEvent] = []
@@ -153,6 +157,34 @@ def openapi() -> None:
     # The contract doesn't depend on the model, so no API key is needed to print it.
     api = create_app(Settings.from_env(), llm=ScriptedLLMClient())
     typer.echo(json.dumps(api.openapi(), indent=2))
+
+
+@graph_app.command("build")
+def graph_build() -> None:
+    """Rebuild the entity spine (Neptune bulk-load CSVs) from PLG Records."""
+    settings = Settings.from_env()
+    spine = settings.graph_dir / "spine"
+    build = write_spine(settings.records_db, spine)
+    typer.echo(f"Wrote {len(build.data.nodes)} nodes and {len(build.data.edges)} edges to {spine}")
+    for problem in build.skipped:
+        typer.echo(f"Skipped: {problem}", err=True)
+
+
+@graph_app.command("show")
+def graph_show(entity: str, hops: int = 2) -> None:
+    """Resolve a name, unit number or ID and print what surrounds the best match."""
+    graph = open_graph(Settings.from_env())
+    matches = graph.resolve_entities(entity)
+    if not matches:
+        typer.echo("No entity matches.")
+        raise typer.Exit(1)
+    for m in matches:
+        typer.echo(f"{m.id} | {m.label} | {m.name}")
+    context = graph.entity_context(matches[0].id, hops)
+    if context:
+        typer.echo(f"\n{context.root.label} {context.root.id}: {len(context.nodes)} related, {len(context.edges)} links")
+        for edge in context.edges:
+            typer.echo(f"  {edge.start} -{edge.type}-> {edge.end}")
 
 
 @glossary_app.command("list")

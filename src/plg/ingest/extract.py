@@ -9,6 +9,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from email.message import EmailMessage
 from pathlib import Path
+from typing import Protocol
 
 TEXT_SUFFIXES = {".docx", ".pdf", ".pptx", ".eml", ".md", ".txt"}
 
@@ -19,6 +20,12 @@ CONTROL_KEYS = {"Document ID", "Version", "Effective date", "Effective", "Status
 # Numbered ("4.", "4.5 ") or ID-style ("PC-2023-041 - ", "IA-06 ") headings in text without styles.
 _HEADING = re.compile(r"^(?:(?P<num>\d+\.(?:\d+\.?)*)|[A-Z]{2,5}-\d{2,4}(?:-\d{2,4})?(?:\s+-)?)\s+[A-Z(]")
 _PAGE_NO = re.compile(r"^Page \d+ of \d+$")
+
+
+class ScanSource(Protocol):
+    """Where the text of an image-only PDF comes from (see `plg.ingest.scans`)."""
+
+    def read(self, scan: Path) -> ParsedDoc: ...
 
 
 @dataclass
@@ -37,12 +44,14 @@ class ParsedDoc:
     title: str | None = None
 
 
-def extract(path: Path) -> ParsedDoc:
+def extract(path: Path, scans: ScanSource | None = None) -> ParsedDoc:
+    """The document's blocks. An image-only PDF has none of its own: `scans` supplies its transcript."""
     match path.suffix.lower():
         case ".docx":
             return _docx(path)
         case ".pdf":
-            return _pdf(path)
+            parsed = _pdf(path)
+            return scans.read(path) if scans is not None and not parsed.blocks else parsed
         case ".pptx":
             return _pptx(path)
         case ".eml":

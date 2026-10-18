@@ -77,7 +77,7 @@ uv run plg sync                      # incremental; --full drops the index and r
 uv run plg search "letter of demand" # check what was indexed
 ```
 
-This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. With `PLG_RERANK_BACKEND=local`, the first search downloads the local cross-encoder into `.plg/models`.
+This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. Image-only scanned PDFs are transcribed by Claude (needs `ANTHROPIC_API_KEY`) the first time; the transcript is saved in `.plg/lancedb-transcripts/` and reused, so re-syncs and `--full` don't call Claude again for them. Delete that folder to force a re-read. With `PLG_RERANK_BACKEND=local`, the first search downloads the local cross-encoder into `.plg/models`.
 
 ### Ask from the command line
 

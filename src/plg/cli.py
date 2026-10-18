@@ -84,6 +84,7 @@ def sync(
 ) -> None:
     """Ingest changed corpus documents (SharePoint and Lotus Notes mocks) into the search index."""
     from plg.ingest.metadata import load_entity_spine
+    from plg.ingest.scans import ScanReader, TranscriptStore
     from plg.ingest.sources import DocumentSource, LotusNotesSource, SharePointSource
     from plg.ingest.sync import sync as run_sync
     from plg.search.lance import LanceSearchStore
@@ -95,7 +96,8 @@ def sync(
     store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
     entities, tagger = load_entity_spine(settings.records_db)
     sources: list[DocumentSource] = [SharePointSource(settings.corpus_dir), LotusNotesSource(settings.corpus_dir)]
-    report = run_sync(store, embedder, sources, entities, tagger)
+    scans = ScanReader(make_llm(settings), TranscriptStore(settings.transcripts_dir))
+    report = run_sync(store, embedder, sources, entities, tagger, scans)
 
     typer.echo(
         f"Added {len(report.added)}, updated {len(report.updated)}, unchanged {len(report.unchanged)}, "

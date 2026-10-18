@@ -42,6 +42,11 @@ class Settings(BaseModel):
     search_candidates: int = 50
     vector_weight: float = 0.7
 
+    @property
+    def transcripts_dir(self) -> Path:
+        """Saved transcripts of scanned PDFs, beside the index (`plg sync --full` keeps them)."""
+        return self.search_db.with_name(f"{self.search_db.name}-transcripts")
+
     def model_for(self, tier: Tier) -> str:
         return {"haiku": self.model_haiku, "sonnet": self.model_sonnet, "opus": self.model_opus}[tier]
 

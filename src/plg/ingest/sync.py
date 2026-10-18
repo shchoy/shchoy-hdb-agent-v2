@@ -11,8 +11,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from plg.ingest.chunking import location, sections, split
-from plg.ingest.extract import ParsedDoc, extract
+from plg.ingest.extract import ParsedDoc, ScanSource, extract
 from plg.ingest.metadata import EntityTagger, control_meta, doc_type_for, lifecycle
+from plg.ingest.scans import ScanError
 from plg.ingest.sources import DocumentSource, Skipped, SourceDocument
 from plg.ontology.vocab import load_vocab
 from plg.search.embed import Embedder
@@ -37,6 +38,7 @@ def sync(
     sources: Sequence[DocumentSource],
     entities: Sequence[EntityRecord],
     tagger: EntityTagger,
+    scans: ScanSource | None = None,
 ) -> SyncReport:
     report = SyncReport()
     indexed = {d.doc_id: d.content_hash for d in store.documents()}
@@ -49,7 +51,12 @@ def sync(
             if indexed.get(item.doc_id) == content_hash:
                 report.unchanged.append(item.rel_path)
                 continue
-            chunks = _chunks(item, extract(item.path), content_hash, embedder, tagger)
+            try:
+                parsed = extract(item.path, scans)
+            except ScanError as exc:  # a scan Claude could not read: report it, retry on the next sync
+                report.skipped.append(Skipped(item.rel_path, f"scan could not be read: {exc}"))
+                continue
+            chunks = _chunks(item, parsed, content_hash, embedder, tagger)
             if not chunks:
                 report.skipped.append(Skipped(item.rel_path, "no text layer (image-only scan)"))
                 continue

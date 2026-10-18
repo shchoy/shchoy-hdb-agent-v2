@@ -12,13 +12,15 @@ src/plg/
 │                    records_db (PLG Records SQLite), corpus_dir, search_db (LanceDB, default .plg/lancedb),
 │                    Voyage embed model/dim, rerank_backend (voyage|local), Voyage rerank model, local rerank model,
 │                    search_candidates, vector_weight.
+│                    transcripts_dir (saved scan transcripts, beside search_db).
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
-│                    returns AgentTurn = Messages API content blocks + stop_reason).
+│                    returns AgentTurn = Messages API content blocks + stop_reason; optional max_tokens override; messages may carry
+│                    document blocks, e.g. PDF input).
 │                    AnthropicLLMClient (real, traced with LangSmith @traceable) and ScriptedLLMClient (test double:
 │                    script() for streamed replies, script_turns() for complete() turns, keyed by (node, latest plain-
-│                    text user message); a turn may be a callable of the messages, e.g. to cite a search result it was
+│                    text user message, or the text block of a block message without tool results); a turn may be a callable of the messages, e.g. to cite a search result it was
 │                    shown; `sent` records messages, `requests` system+tools). Turn builders: turn, text, tool_call.
 ├── identity.py      UserCtx (staff_id, name, title, dept, role) loaded read-only from the `staff` table;
 │                    role is derived from the job title (role_for). POC identity, replaced by OIDC later.
@@ -50,6 +52,11 @@ src/plg/
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
 │                    structure-aware chunking with contextual headers, metadata + entity tagging from PLG Records,
 │                    incremental by content hash; superseded versions are marked, never deleted.
+│                    scans.py: image-only PDFs (no text layer) are read by Claude PDF input through LLMClient
+│                    (node ingest_scan, forced record_transcript tool: title, control fields, text per page); the
+│                    Transcript is saved by file hash (TranscriptStore) so unchanged scans, --full rebuilds and the
+│                    source viewer (SavedScans, read-only) never call Claude again. Page headings give page locations.
+│                    A scan Claude can't read is skipped with a reason. Application-bundle scans stay excluded.
 ├── search/          SearchStore protocol (store.py) and LanceSearchStore (lance.py): chunks / entities / memory,
 │                    hybrid FTS + vector search with metadata pre-filters (SearchFilter). Embedder (Voyage; hashing
 │                    embedder for tests). rerank.py: Reranker protocol; VoyageReranker (hosted, falls back to the hybrid order on any error or

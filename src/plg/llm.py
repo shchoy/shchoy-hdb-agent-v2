@@ -52,8 +52,11 @@ class LLMClient(Protocol):
         messages: list[AgentMessage],
         tools: list[Block],
         tool_choice: Block | None = None,
+        max_tokens: int | None = None,
     ) -> AgentTurn:
-        """One whole Claude reply that may call tools. System and tools are passed as blocks, cache marks included."""
+        """One whole Claude reply that may call tools. System and tools are passed as blocks, cache marks included.
+
+        `max_tokens` overrides the configured reply limit (e.g. for transcribing a long document)."""
         ...
 
 
@@ -101,11 +104,12 @@ class AnthropicLLMClient:
         messages: list[AgentMessage],
         tools: list[Block],
         tool_choice: Block | None = None,
+        max_tokens: int | None = None,
     ) -> AgentTurn:
         extra: dict[str, Any] = {"tool_choice": tool_choice} if tool_choice else {}
         response = await self._client.messages.create(
             model=self._settings.model_for(tier),
-            max_tokens=self._settings.max_tokens,
+            max_tokens=max_tokens or self._settings.max_tokens,
             system=system,  # type: ignore[arg-type]
             messages=messages,  # type: ignore[arg-type]
             tools=tools,  # type: ignore[arg-type]
@@ -153,8 +157,19 @@ ScriptedTurn = AgentTurn | Callable[[list[AgentMessage]], AgentTurn]
 
 
 def _latest_question(messages: Sequence[AgentMessage]) -> str:
-    """The latest user message written as plain text, i.e. the question rather than tool results."""
-    return str(next(m["content"] for m in reversed(messages) if m["role"] == "user" and isinstance(m["content"], str)))
+    """The latest user message written as plain text, i.e. the question rather than tool results.
+
+    A message of blocks counts if it carries a text block and no tool results (e.g. a PDF plus an instruction)."""
+    for m in reversed(messages):
+        if m["role"] != "user":
+            continue
+        content = m["content"]
+        if isinstance(content, str):
+            return content
+        if not any(b["type"] == "tool_result" for b in content):
+            if text_block := next((b for b in content if b["type"] == "text"), None):
+                return str(text_block["text"])
+    raise LookupError("No plain-text user message")
 
 
 @dataclass
@@ -193,6 +208,7 @@ class ScriptedLLMClient:
         messages: list[AgentMessage],
         tools: list[Block],
         tool_choice: Block | None = None,
+        max_tokens: int | None = None,
     ) -> AgentTurn:
         self.sent.append(list(messages))
         self.requests.append((system, tools))

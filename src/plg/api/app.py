@@ -13,6 +13,7 @@ from pydantic import BaseModel, TypeAdapter
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.config import Settings
+from plg.ingest.scans import SavedScans, TranscriptStore
 from plg.documents import ChunkLocation, DocumentLibrary, DocumentView
 from plg.events import RunEvent
 from plg.graph.build import build_graph
@@ -57,7 +58,9 @@ def create_app(
     # Thread registry. Ownership and persistence across restarts arrive with later tickets.
     threads: set[str] = set()
 
-    library = DocumentLibrary(lambda: store or _open_store(settings), settings.corpus_dir)
+    library = DocumentLibrary(
+        lambda: store or _open_store(settings), settings.corpus_dir, SavedScans(TranscriptStore(settings.transcripts_dir))
+    )
 
     app = FastAPI(title="plg-api", version="0.1.0")
 

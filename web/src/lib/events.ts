@@ -9,6 +9,7 @@ import type { components } from "@/lib/api/schema";
 
 type Schemas = components["schemas"];
 export type RunEvent = Schemas["RunEvent"];
+export type CitationEvent = Schemas["CitationEvent"];
 export type UserCtx = Schemas["UserCtx"];
 
 /** A role for display, e.g. "estate_manager" → "estate manager". */
@@ -26,6 +27,18 @@ export const runEventSchema = z.discriminatedUnion("type", [
     status: z.enum(["started", "finished"]),
   }),
   z.object({ type: z.literal("token"), seq, node: z.string(), text: z.string() }),
+  z.object({
+    type: z.literal("citation"),
+    seq,
+    index: z.number().int(),
+    doc_id: z.string(),
+    chunk_id: z.string(),
+    title: z.string(),
+    version: z.string().nullable(),
+    location: z.string(),
+    quote: z.string(),
+    span: z.object({ start: z.number().int(), end: z.number().int() }),
+  }),
   z.object({ type: z.literal("done"), seq, run_id: z.string() }),
   z.object({ type: z.literal("error"), seq, run_id: z.string(), message: z.string() }),
 ]);

@@ -6,6 +6,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from plg.agents.runtime import Citation
+
 
 class NodeEvent(BaseModel):
     """A graph node started or finished, for the trajectory view."""
@@ -21,6 +23,14 @@ class TokenEvent(BaseModel):
     seq: int
     node: str
     text: str
+
+
+class CitationEvent(Citation):
+    """A source the answer cites. `index` is the number of its `[n]` marker in the answer text."""
+
+    type: Literal["citation"] = "citation"
+    seq: int
+    index: int
 
 
 class DoneEvent(BaseModel):
@@ -39,5 +49,5 @@ class ErrorEvent(BaseModel):
 
 
 RunEvent = Annotated[
-    NodeEvent | TokenEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
+    NodeEvent | TokenEvent | CitationEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
 ]

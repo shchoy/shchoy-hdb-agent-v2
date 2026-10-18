@@ -35,6 +35,16 @@ describe("parseRunEvents", () => {
     ]);
   });
 
+  it("reads a citation with its document, chunk, location and span", async () => {
+    const citation = {
+      doc_id: "SP-1", chunk_id: "SP-1#009", title: "POL-003 (v2.0)", version: "2.0",
+      location: "4.5 Letter of Demand", quote: "60 days overdue", span: { start: 3, end: 18 },
+      type: "citation", seq: 1, index: 1,
+    };
+    const events = await collect(streamOf(`event: citation\ndata: ${JSON.stringify(citation)}\n\n`));
+    expect(events).toEqual([citation]);
+  });
+
   it("ignores heartbeat comments", async () => {
     const events = await collect(streamOf(`: ping\r\n\r\nevent: done\r\ndata: ${done}\r\n\r\n`));
     expect(events).toEqual([{ type: "done", seq: 2, run_id: "r1" }]);

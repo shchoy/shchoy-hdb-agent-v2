@@ -172,6 +172,10 @@ classes:
   UnitStatus:
     is_a: Concept
 
+  PlaceType:
+    is_a: Concept
+    description: Where a commercial unit sits, as PLG officers name it (e.g. NC, void deck).
+
   LetterType:
     is_a: Concept
     slots: [template_id]

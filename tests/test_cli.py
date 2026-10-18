@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 from plg import cli
 from plg.config import Settings
 from plg.llm import LLMClient, ScriptedLLMClient
+from tests.conftest import route
 
 
 @pytest.fixture
@@ -24,6 +25,7 @@ def llm(monkeypatch: pytest.MonkeyPatch) -> ScriptedLLMClient:
 
 
 def test_ask_prints_the_streamed_answer(llm: ScriptedLLMClient) -> None:
+    route(llm, "hello")
     llm.script("merge", "hello", "Hello! How can I help with PLG today?")
 
     result = CliRunner().invoke(cli.app, ["ask", "hello"])
@@ -33,6 +35,7 @@ def test_ask_prints_the_streamed_answer(llm: ScriptedLLMClient) -> None:
 
 
 def test_ask_reports_a_failure_mid_answer_and_exits_non_zero(llm: ScriptedLLMClient) -> None:
+    route(llm, "hello")
     llm.script("merge", "hello", "The letter of", error=ConnectionError("Claude unavailable"))
 
     result = CliRunner().invoke(cli.app, ["ask", "hello"])

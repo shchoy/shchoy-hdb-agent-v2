@@ -6,14 +6,14 @@ How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on 
 
 | Part | Status | How to run |
 |---|---|---|
-| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available | `uv run plg ask "..."` / `uv run plg serve` |
-| Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in and Ask screen | `cd web && npm run dev` |
+| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
+| Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in and Ask screen with citation chips | `cd web && npm run dev` |
 
 ## 1. Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) 0.8 or later. It installs Python 3.12 for you (pinned in `.python-version`).
 - Node.js 22 or later and npm, for the web app.
-- An Anthropic API key, for live answers. Tests don't need one.
+- An Anthropic API key, for live answers, and a Voyage AI API key, to index the corpus and embed questions. Tests need neither.
 
 ## 2. Install
 
@@ -38,6 +38,8 @@ Create a `.env` file at the repo root. It is git-ignored and loaded automaticall
 ```dotenv
 # Required for live answers
 ANTHROPIC_API_KEY=sk-ant-...
+# Required to index the corpus (`plg sync`) and to search it when answering
+VOYAGE_API_KEY=pa-...
 
 # Optional: LangSmith tracing of graph runs and Claude calls
 LANGSMITH_API_KEY=lsv2_...
@@ -66,13 +68,24 @@ The web app reads one server-only variable (set it in `web/.env.local` if you ne
 
 ## 4. Run the backend
 
+### Index the corpus (once, then after the corpus changes)
+
+```bash
+uv run plg sync                      # incremental; --full drops the index and re-ingests everything
+uv run plg search "letter of demand" # check what was indexed
+```
+
+This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. The first search downloads the local cross-encoder into `.plg/models`.
+
 ### Ask from the command line
 
 ```bash
 uv run plg ask "When do we issue a letter of demand?"
 ```
 
-The answer streams to the terminal. If the run fails partway, the CLI prints an error to stderr and exits with code 1.
+The answer streams to the terminal, then its sources: each `[n]` in the answer is listed with its document, section and the quoted sentence. Policy and records questions are answered only from the indexed documents (current versions unless you ask about an earlier date). If the sources don't cover the question, the answer says so. If the run fails partway, the CLI prints an error to stderr and exits with code 1.
+
+A knowledge answer takes 30 to 60 seconds: Claude searches several times, and each search is reranked locally.
 
 ### Start the API
 
@@ -155,7 +168,7 @@ cd web
 npm run dev        # http://localhost:3000
 ```
 
-Open http://localhost:3000. You're sent to the sign-in page. Pick any staff persona (mock sign-in: the persona is kept in an httpOnly cookie). Then ask a question on the Ask screen. The answer streams in, with the graph nodes it passes through shown as it runs. If the run fails partway, an alert says the answer is incomplete and offers a Retry.
+Open http://localhost:3000. You're sent to the sign-in page. Pick any staff persona (mock sign-in: the persona is kept in an httpOnly cookie). Then ask a question on the Ask screen. The answer streams in, with the graph nodes it passes through shown as it runs (route → knowledge → merge for a policy question). Under the answer, a Sources list has a chip for each `[n]` marker; open a chip to read the exact quoted span. If the run fails partway, an alert says the answer is incomplete and offers a Retry.
 
 The browser only talks to the Next.js BFF (`/api/...`). The BFF forwards your persona to `plg-api` as `X-PLG-User`. No API keys ever reach the browser.
 

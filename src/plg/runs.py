@@ -9,7 +9,7 @@ from typing import Any, cast
 
 from langchain_core.runnables import RunnableConfig
 
-from plg.events import DoneEvent, ErrorEvent, NodeEvent, RunEvent, TokenEvent
+from plg.events import CitationEvent, DoneEvent, ErrorEvent, NodeEvent, RunEvent, TokenEvent
 from plg.graph.state import PLGGraph, PLGState
 from plg.identity import UserCtx
 
@@ -48,6 +48,8 @@ async def stream_run(
                 )
             elif mode == "custom" and "token" in chunk:
                 yield TokenEvent(seq=next_seq(), node=chunk["node"], text=chunk["token"])
+            elif mode == "custom" and "citation" in chunk:
+                yield CitationEvent(seq=next_seq(), index=chunk["index"], **chunk["citation"])
     except Exception:
         logger.exception("Run %s on thread %s failed", run_id, thread_id)
         yield ErrorEvent(

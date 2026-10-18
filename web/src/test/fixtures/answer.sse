@@ -1,68 +1,92 @@
 id: 1
 event: node
-data: {"type":"node","seq":1,"node":"merge","status":"started"}
+data: {"type":"node","seq":1,"node":"route","status":"started"}
 
 id: 2
-event: token
-data: {"type":"token","seq":2,"node":"merge","text":"Under"}
+event: node
+data: {"type":"node","seq":2,"node":"route","status":"finished"}
 
 id: 3
-event: token
-data: {"type":"token","seq":3,"node":"merge","text":" **POL-003"}
+event: node
+data: {"type":"node","seq":3,"node":"knowledge","status":"started"}
 
 id: 4
-event: token
-data: {"type":"token","seq":4,"node":"merge","text":" v2.0**,"}
+event: citation
+data: {"doc_id":"SP-888995","chunk_id":"SP-888995#009","title":"PLG-POL-003 Rental Arrears Management Policy (v2.0)","version":"2.0","location":"4. Policy Statements > 4.5 Letter of Demand","quote":"A Letter of Demand shall be issued by HEB Legal when any amount is 60 days overdue and no approved instalment plan is in force.","span":{"start":0,"end":127},"type":"citation","seq":4,"index":1}
 
 id: 5
-event: token
-data: {"type":"token","seq":5,"node":"merge","text":" a"}
+event: node
+data: {"type":"node","seq":5,"node":"knowledge","status":"finished"}
 
 id: 6
-event: token
-data: {"type":"token","seq":6,"node":"merge","text":" letter"}
+event: node
+data: {"type":"node","seq":6,"node":"merge","status":"started"}
 
 id: 7
 event: token
-data: {"type":"token","seq":7,"node":"merge","text":" of"}
+data: {"type":"token","seq":7,"node":"merge","text":"Under"}
 
 id: 8
 event: token
-data: {"type":"token","seq":8,"node":"merge","text":" demand"}
+data: {"type":"token","seq":8,"node":"merge","text":" **POL-003"}
 
 id: 9
 event: token
-data: {"type":"token","seq":9,"node":"merge","text":" is"}
+data: {"type":"token","seq":9,"node":"merge","text":" v2.0**,"}
 
 id: 10
 event: token
-data: {"type":"token","seq":10,"node":"merge","text":" issued"}
+data: {"type":"token","seq":10,"node":"merge","text":" a"}
 
 id: 11
 event: token
-data: {"type":"token","seq":11,"node":"merge","text":" once"}
+data: {"type":"token","seq":11,"node":"merge","text":" letter"}
 
 id: 12
 event: token
-data: {"type":"token","seq":12,"node":"merge","text":" arrears"}
+data: {"type":"token","seq":12,"node":"merge","text":" of"}
 
 id: 13
 event: token
-data: {"type":"token","seq":13,"node":"merge","text":" reach"}
+data: {"type":"token","seq":13,"node":"merge","text":" demand"}
 
 id: 14
 event: token
-data: {"type":"token","seq":14,"node":"merge","text":" 60"}
+data: {"type":"token","seq":14,"node":"merge","text":" is"}
 
 id: 15
 event: token
-data: {"type":"token","seq":15,"node":"merge","text":" days."}
+data: {"type":"token","seq":15,"node":"merge","text":" issued"}
 
 id: 16
-event: node
-data: {"type":"node","seq":16,"node":"merge","status":"finished"}
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" once"}
 
 id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" arrears"}
+
+id: 18
+event: token
+data: {"type":"token","seq":18,"node":"merge","text":" reach"}
+
+id: 19
+event: token
+data: {"type":"token","seq":19,"node":"merge","text":" 60"}
+
+id: 20
+event: token
+data: {"type":"token","seq":20,"node":"merge","text":" days"}
+
+id: 21
+event: token
+data: {"type":"token","seq":21,"node":"merge","text":" [1]."}
+
+id: 22
+event: node
+data: {"type":"node","seq":22,"node":"merge","status":"finished"}
+
+id: 23
 event: done
-data: {"type":"done","seq":17,"run_id":"e8a2b8fb-a9b3-4a0a-9d21-ebd0732911b0"}
+data: {"type":"done","seq":23,"run_id":"1564214d-e514-4649-a1dd-db07ddb369a8"}
 

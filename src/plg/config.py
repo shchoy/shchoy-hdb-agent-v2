@@ -32,6 +32,9 @@ class Settings(BaseModel):
     embed_model: str = "voyage-3.5"
     embed_dim: int = 1024
     voyage_base_url: str = "https://api.voyageai.com/v1"
+    # Final rerank: Voyage's hosted reranker, or a local cross-encoder (below).
+    rerank_backend: Literal["voyage", "local"] = "voyage"
+    voyage_rerank_model: str = "rerank-2.5"
     # Local cross-encoder for the final rerank, cached under model_cache after the first download.
     rerank_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
     model_cache: Path = REPO_ROOT / ".plg" / "models"

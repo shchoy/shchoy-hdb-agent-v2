@@ -59,6 +59,8 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_API_HOST` | `127.0.0.1` | `plg-api` bind address |
 | `PLG_API_PORT` | `8000` | `plg-api` port |
 | `PLG_RECORDS_DB` | `poc-data/plg_records.db` | PLG Records SQLite database (read-only; source of the staff personas) |
+| `PLG_RERANK_BACKEND` | `voyage` | `voyage` reranks with Voyage's hosted reranker (uses `VOYAGE_API_KEY`); `local` runs a cross-encoder on this machine (no document text leaves it) |
+| `PLG_VOYAGE_RERANK_MODEL` | `rerank-2.5` | Voyage rerank model (e.g. `rerank-2.5-lite` for lower latency) |
 
 The web app reads one server-only variable (set it in `web/.env.local` if you need to change it). It is never sent to the browser:
 
@@ -75,7 +77,7 @@ uv run plg sync                      # incremental; --full drops the index and r
 uv run plg search "letter of demand" # check what was indexed
 ```
 
-This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. The first search downloads the local cross-encoder into `.plg/models`.
+This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. With `PLG_RERANK_BACKEND=local`, the first search downloads the local cross-encoder into `.plg/models`.
 
 ### Ask from the command line
 
@@ -85,7 +87,7 @@ uv run plg ask "When do we issue a letter of demand?"
 
 The answer streams to the terminal, then its sources: each `[n]` in the answer is listed with its document, section and the quoted sentence. Policy and records questions are answered only from the indexed documents (current versions unless you ask about an earlier date). If the sources don't cover the question, the answer says so. If the run fails partway, the CLI prints an error to stderr and exits with code 1.
 
-A knowledge answer takes 30 to 60 seconds: Claude searches several times, and each search is reranked locally.
+Each search is reranked by Voyage by default, which sends the candidate chunks' text to Voyage. If Voyage is unreachable, search keeps the unreranked hybrid order and logs a warning. With `PLG_RERANK_BACKEND=local` a knowledge answer takes 30 to 60 seconds, because each search is reranked on your CPU.
 
 ### Start the API
 

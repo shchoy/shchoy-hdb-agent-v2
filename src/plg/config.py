@@ -25,6 +25,19 @@ class Settings(BaseModel):
     api_port: int = 8000
     # PLG Records (SQLite). Read-only; the source of staff personas for mock sign-in.
     records_db: Path = REPO_ROOT / "poc-data" / "plg_records.db"
+    # The corpus `plg sync` reads through the SharePoint and Lotus Notes mocks.
+    corpus_dir: Path = REPO_ROOT / "poc-data"
+    # SearchStore (LanceDB) directory: chunks, entities and memory tables.
+    search_db: Path = REPO_ROOT / ".plg" / "lancedb"
+    embed_model: str = "voyage-3.5"
+    embed_dim: int = 1024
+    voyage_base_url: str = "https://api.voyageai.com/v1"
+    # Local cross-encoder for the final rerank, cached under model_cache after the first download.
+    rerank_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
+    model_cache: Path = REPO_ROOT / ".plg" / "models"
+    # Hybrid candidates passed to the cross-encoder, and the weight of the vector score in the hybrid mix.
+    search_candidates: int = 50
+    vector_weight: float = 0.7
 
     def model_for(self, tier: Tier) -> str:
         return {"haiku": self.model_haiku, "sonnet": self.model_sonnet, "opus": self.model_opus}[tier]

@@ -11,6 +11,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv sync
+      - name: Cache the local cross-encoder model
+        uses: actions/cache@v4
+        with:
+          path: .plg/models
+          key: rerank-models-${{ hashFiles('src/plg/config.py') }}
       - name: Regenerate ontology artefacts
         run: make ontology
       - name: Fail if the generated ontology artefacts drifted from ontology/

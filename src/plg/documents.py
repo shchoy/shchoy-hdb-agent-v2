@@ -12,7 +12,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from plg.ingest.extract import extract
+from plg.ingest.extract import ScanSource, extract
 from plg.search.models import Chunk
 from plg.search.store import SearchStore
 
@@ -77,8 +77,11 @@ class SourceFile:
 class DocumentLibrary:
     """Reads indexed documents back from the corpus. The store is opened on first use."""
 
-    def __init__(self, open_store: Callable[[], SearchStore], corpus_dir: Path) -> None:
+    def __init__(
+        self, open_store: Callable[[], SearchStore], corpus_dir: Path, scans: ScanSource | None = None
+    ) -> None:
         self._open_store = open_store
+        self._scans = scans
         self._store: SearchStore | None = None
         self._corpus = corpus_dir.resolve()
 
@@ -107,7 +110,7 @@ class DocumentLibrary:
         first = chunks[0]
         return DocumentView(
             doc_id=doc_id, title=first.title, version=first.version, kind=source.kind,
-            filename=source.filename, content_type=source.content_type, blocks=_blocks(source.path),
+            filename=source.filename, content_type=source.content_type, blocks=_blocks(source.path, self._scans),
         )
 
     def locate(self, doc_id: str, chunk_id: str, start: int | None, end: int | None) -> ChunkLocation | None:
@@ -119,7 +122,7 @@ class DocumentLibrary:
         begin = min(max(start or 0, 0), len(chunk.text))
         finish = min(max(len(chunk.text) if end is None else end, begin), len(chunk.text))
         quote = chunk.text[begin:finish]
-        blocks = _blocks(source.path)
+        blocks = _blocks(source.path, self._scans)
         highlights = _highlights(blocks, chunk, begin, finish)
         page = next((blocks[h.block].page for h in highlights if blocks[h.block].page is not None), None)
         return ChunkLocation(
@@ -128,8 +131,8 @@ class DocumentLibrary:
         )
 
 
-def _blocks(path: Path) -> list[DocumentBlock]:
-    return [DocumentBlock(text=b.text, level=b.level, page=b.page) for b in extract(path).blocks]
+def _blocks(path: Path, scans: ScanSource | None) -> list[DocumentBlock]:
+    return [DocumentBlock(text=b.text, level=b.level, page=b.page) for b in extract(path, scans).blocks]
 
 
 def _highlights(blocks: list[DocumentBlock], chunk: Chunk, begin: int, finish: int) -> list[Highlight]:

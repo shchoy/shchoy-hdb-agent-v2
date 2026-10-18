@@ -14,6 +14,7 @@ from typer.testing import CliRunner, Result
 from plg import cli
 from plg.api.app import create_app
 from plg.config import REPO_ROOT, Settings
+from plg.ingest.scans import SCAN_NODE, SCAN_PROMPT
 from plg.llm import ScriptedLLMClient, tool_call, turn
 from plg.search.embed import HashingEmbedder
 from plg.search.lance import LanceSearchStore
@@ -122,9 +123,31 @@ class CountingEmbedder(HashingEmbedder):
         return super().embed_documents(texts)
 
 
-def run_sync(embedder: HashingEmbedder, index: Path, corpus: Path = CORPUS, *args: str) -> Result:
+HENG_ANN_SCAN = "pdfs/Scan_TA_TA-2024-00451_HengAnn.pdf"
+
+
+def scan_llm() -> ScriptedLLMClient:
+    """A scripted reader for the corpus's one image-only library PDF, the Heng Ann tenancy agreement."""
+    llm = ScriptedLLMClient()
+    llm.script_turns(SCAN_NODE, SCAN_PROMPT, turn(tool_call(
+        "record_transcript",
+        title="Tenancy Agreement TA-2024-00451 (Heng Ann Confectionery)",
+        fields={"Date": "20 June 2024"},
+        pages=[
+            {"page": 1, "text": "TENANCY AGREEMENT\nTA-2024-00451\nBetween the Housing & Estates Board and Heng Ann Confectionery."},
+            {"page": 2, "text": "2. Rent\nThe monthly rent is S$4,580 payable in advance on the first day of each month."},
+            {"page": 3, "text": "Signed by the parties on 20 June 2024."},
+        ],
+    )))
+    return llm
+
+
+def run_sync(
+    embedder: HashingEmbedder, index: Path, corpus: Path = CORPUS, *args: str, llm: ScriptedLLMClient | None = None
+) -> Result:
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(cli, "make_embedder", lambda settings: embedder)
+        mp.setattr(cli, "make_llm", lambda settings: llm or scan_llm())
         env = {"PLG_SEARCH_DB": str(index), "PLG_CORPUS_DIR": str(corpus)}
         result = CliRunner().invoke(cli.app, ["sync", *args], env=env)
     assert result.exit_code == 0, result.output

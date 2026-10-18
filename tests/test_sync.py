@@ -22,7 +22,7 @@ from plg.ontology.vocab import load_vocab
 from plg.search.lance import LanceSearchStore
 from plg.search.models import Chunk, DocumentMeta
 
-from tests.conftest import CORPUS, CountingEmbedder, by_path, open_store, run_sync
+from tests.conftest import CORPUS, HENG_ANN_SCAN, CountingEmbedder, by_path, open_store, run_sync
 
 TEXT_TYPES = {"docx", "pdf", "pptx", "eml", "md", "txt"}
 
@@ -32,21 +32,24 @@ def manifest() -> list[dict[str, str]]:
         return list(csv.DictReader(f))
 
 
-def test_sync_indexes_every_text_bearing_library_document_except_image_only_scans(store: LanceSearchStore) -> None:
+def test_sync_indexes_every_text_bearing_library_document_including_the_library_scan(store: LanceSearchStore) -> None:
     expected = {
         row["path"] for row in manifest()
         if row["type"] in TEXT_TYPES
         and not row["path"].startswith("pdfs/submissions/")  # checked per application by doc-check
-        and "SCANNED" not in row["flags"]
+        and ("SCANNED" not in row["flags"] or row["path"] == HENG_ANN_SCAN)  # read by Claude PDF input
     }
 
     assert set(by_path(store)) == expected
 
 
-def test_sync_reports_the_image_only_scan_it_could_not_read(corpus_index: tuple[LanceSearchStore, str]) -> None:
-    output = corpus_index[1]
+def test_sync_reads_the_library_scan_and_leaves_application_scans_to_doc_check(
+    corpus_index: tuple[LanceSearchStore, str],
+) -> None:
+    store, output = corpus_index
 
-    assert "Skipped: pdfs/Scan_TA_TA-2024-00451_HengAnn.pdf (no text layer (image-only scan))" in output
+    assert HENG_ANN_SCAN in by_path(store)
+    assert "Skipped: pdfs/Scan_TA_TA-2024-00451_HengAnn.pdf" not in output
 
 
 @pytest.mark.parametrize(

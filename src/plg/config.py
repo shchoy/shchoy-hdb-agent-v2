@@ -29,6 +29,8 @@ class Settings(BaseModel):
     corpus_dir: Path = REPO_ROOT / "poc-data"
     # SearchStore (LanceDB) directory: chunks, entities and memory tables.
     search_db: Path = REPO_ROOT / ".plg" / "lancedb"
+    # Entity graph: spine CSVs (Neptune openCypher bulk-load format) and delta CSVs written by GraphWriter.
+    graph_dir: Path = REPO_ROOT / ".plg" / "graph"
     embed_model: str = "voyage-3.5"
     embed_dim: int = 1024
     voyage_base_url: str = "https://api.voyageai.com/v1"

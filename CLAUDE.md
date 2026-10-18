@@ -32,7 +32,9 @@ src/plg/
 │                    text block per sentence, citations enabled). Citation = doc_id, chunk_id, title, version,
 │                    location, quote, span (offsets into the chunk text). Citations of chunks the run didn't
 │                    retrieve are dropped.
-│   └── knowledge.py The knowledge agent: one tool, search_corpus(query, as_of?, doc_types?). Defaults to current
+│   ├── entities.py  Knowledge agent's graph tools: resolve_entities, entity_context (read-only). Context comes back as
+│   │                citable record passages (Chunk doc_type "record", source_system "plg_records", chunk_id `record:<id>`).
+│   └── knowledge.py The knowledge agent: search_corpus (+ the entity tools when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
 │                    documents; as_of = in force on that date (superseded versions included). Queries are expanded
 │                    with the preferred labels of PLG terms (VocabIndex.find_terms), which are also listed in the
 │                    agent's per-run context.
@@ -64,6 +66,14 @@ src/plg/
 │                    Searcher (embed → hybrid
 │                    → rerank), Retriever protocol, open_searcher(settings) and LazySearcher (opened on first search,
 │                    so plg-api starts and prints OpenAPI without the index or VOYAGE_API_KEY).
+├── entities/        Entity graph over PLG Records. ids.py (strict ID regexes, find_ids, search_name), model.py (Node/Edge/
+│                    GraphData), allow.py (ontology allow-list), csvio.py (Neptune openCypher bulk-load CSVs: nodes_<Label>.csv
+│                    + edges.csv), spine.py (deterministic build from the records DB, skips malformed IDs), store.py (GraphStore
+│                    protocol: resolve_entities, entity_context(id, hops<=2); EntityContext), cypher.py (matching parameterised
+│                    openCypher templates; HUB_LABELS are listed but not walked through), local.py (LocalGraphStore: frozen
+│                    networkx, swap()), writer.py (GraphWriter: allow-list validation, delta CSVs under a file lock, swaps in a
+│                    new frozen graph; no agent tool reaches it), open.py (open_graph builds the spine on first use; LazyGraph).
+│                    Holds entities/relationships only, no aggregates. graph_dir setting (.plg/graph).
 ├── ontology/        Runtime access to the GENERATED ontology artefacts (GENERATED = generated/ path).
 │   ├── vocab.py     VocabIndex (load_vocab): SKOS concepts by scheme (`concepts(scheme, cls)` → generated
 │                    model) and synonym/abbreviation lookup `resolve(text)` (LOD → letter of demand + plg:LodTrigger,
@@ -79,7 +89,7 @@ src/plg/
 │                    X-PLG-User header (staff ID) → UserCtx, else 401. RunEvent schemas are injected into
 │                    the OpenAPI 3.1 document. serve() is the plg-api entry point.
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]`,
-                     `plg search <query>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
+                     `plg search <query>`, `plg graph build | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
                      `plg glossary list [--all] | show <term>`. make_llm() builds the real LLMClient.
 
 ontology/            SOURCE of the ontology: plg.yaml (LinkML, ~25 node classes annotated `node`, ~30 relation

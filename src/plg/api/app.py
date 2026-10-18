@@ -13,11 +13,13 @@ from pydantic import BaseModel, TypeAdapter
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.config import Settings
-from plg.ingest.scans import SavedScans, TranscriptStore
 from plg.documents import ChunkLocation, DocumentLibrary, DocumentView
+from plg.entities.open import LazyGraph
+from plg.entities.store import GraphStore
 from plg.events import RunEvent
 from plg.graph.build import build_graph
 from plg.identity import UserCtx, load_personas
+from plg.ingest.scans import SavedScans, TranscriptStore
 from plg.llm import AnthropicLLMClient, LLMClient
 from plg.runs import stream_run
 from plg.search.rerank import LazySearcher, Retriever
@@ -52,9 +54,10 @@ def create_app(
     llm: LLMClient | None = None,
     searcher: Retriever | None = None,
     store: SearchStore | None = None,
+    entities: GraphStore | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
-    graph = build_graph(llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings))
+    graph = build_graph(llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings), entities=entities or LazyGraph(settings))
     # Thread registry. Ownership and persistence across restarts arrive with later tickets.
     threads: set[str] = set()
 

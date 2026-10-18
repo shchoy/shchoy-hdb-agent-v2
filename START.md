@@ -79,6 +79,15 @@ uv run plg search "letter of demand" # check what was indexed
 
 This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. Image-only scanned PDFs are transcribed by Claude (needs `ANTHROPIC_API_KEY`) the first time; the transcript is saved in `.plg/lancedb-transcripts/` and reused, so re-syncs and `--full` don't call Claude again for them. Delete that folder to force a re-read. With `PLG_RERANK_BACKEND=local`, the first search downloads the local cross-encoder into `.plg/models`.
 
+### Entity graph (tenants, units, tenancies)
+
+```
+uv run plg graph build                      # PLG Records -> Neptune-format CSVs in .plg/graph/spine (also built on first use)
+uv run plg graph show "Golden Leaf Minimart Pte Ltd"   # resolve a name, unit number or ID, then print its context
+```
+
+No API key needed. Override the location with `PLG_GRAPH_DIR`.
+
 ### Ask from the command line
 
 ```bash

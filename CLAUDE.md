@@ -36,7 +36,8 @@ src/plg/
 │   │                citable record passages (Chunk doc_type "record", source_system "plg_records", chunk_id `record:<id>`).
 │   ├── data.py      The data agent: tools get_definition (glossary version in force on as_of, or `version`, with its SQL
 │   │                binding) and run_sql (plan, sql with $as_of, glossary term IDs, as_of; default as_of = semantic layer's
-│   │                as_of_default 2026-09-30). Each run_sql leaves a SqlTrace, the last carries the agent's explanation.
+│   │                as_of_default 2026-09-30). Each run_sql leaves a SqlTrace; the last carries the agent's explanation, which always ends by naming the
+│   │                definition versions and effective dates used (with_definitions appends them if the agent left them out).
 │   └── knowledge.py The knowledge agent: search_corpus (+ the entity tools when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
 │                    documents; as_of = in force on that date (superseded versions included). Queries are expanded
 │                    with the preferred labels of PLG terms (VocabIndex.find_terms), which are also listed in the
@@ -52,7 +53,7 @@ src/plg/
 │   ├── state.py     PLGState (messages = completed exchanges only, question, user, intents, findings, answer) and
 │                    PLGGraph. A turn joins `messages` only when merge answers it, so a failed run leaves no trace.
 │                    findings fan in by appending; route's empty update resets them each turn.
-│   └── build.py     build_graph(llm, retriever): START → route → knowledge (if intended) → merge → END.
+│   └── build.py     build_graph(llm, retriever, ..., *, warehouse): START → route → knowledge (if intended) → merge → END.
 │                    route = Haiku, forced `route` tool → intents (knowledge, data; none = merge answers
 │                    directly, told not to state PLG facts without sources). knowledge streams `citation` chunks, data
 │                    streams `sql_trace` chunks.

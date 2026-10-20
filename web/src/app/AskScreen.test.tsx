@@ -234,4 +234,28 @@ describe("Ask screen", () => {
     await runFinished();
     expect(screen.getByText(/arrears reach 60 days/)).toBeInTheDocument();
   });
+
+  it("shows the draft preview with open slots and personal-data flags, and a DOCX download", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("draft"))),
+    );
+
+    await ask("Draft an update reply to the member of public who gave feedback FB-2025-00002");
+    await runFinished();
+
+    const preview = screen.getByRole("region", { name: "Draft preview" });
+    expect(preview).toHaveTextContent("Feedback Update Reply (TPL-FBK-03 v1.3). Nothing has been sent.");
+    const frame = within(preview).getByTitle("Preview of Feedback Update Reply");
+    expect(frame).toHaveAttribute("sandbox", "");
+    expect(frame.getAttribute("srcdoc")).toContain("a leaking ceiling");
+    const unfilled = within(preview).getByRole("list", { name: "Unfilled slots" });
+    expect(within(unfilled).getAllByRole("listitem").map((li) => li.querySelector("code")?.textContent)).toEqual(["action_taken"]);
+    const flags = within(preview).getByRole("list", { name: "Personal data flags" });
+    expect(flags).toHaveTextContent("next_steps");
+    expect(within(preview).getByRole("link", { name: "Download DOCX" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/api\/drafts\/[0-9a-f-]+\/file$/),
+    );
+  });
 });

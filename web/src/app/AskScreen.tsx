@@ -2,13 +2,20 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
-import { parseRunEvents, type CitationEvent } from "@/lib/events";
+import { parseRunEvents, type CitationEvent, type DraftEvent } from "@/lib/events";
+import { DraftPreview } from "./DraftPreview";
 import { SourceViewer } from "./SourceViewer";
 import styles from "./ask.module.css";
 
 type Step = { node: string; finished: boolean };
 
-type Answer = { question: string; answer: string; citations: CitationEvent[]; trajectory: Step[] };
+type Answer = {
+  question: string;
+  answer: string;
+  citations: CitationEvent[];
+  drafts: DraftEvent[];
+  trajectory: Step[];
+};
 
 type Run =
   | { status: "idle" }
@@ -42,8 +49,9 @@ export function AskScreen() {
     let trajectory: Step[] = [];
     let answer = "";
     let citations: CitationEvent[] = [];
+    let drafts: DraftEvent[] = [];
     const update = (status: "running" | "done") =>
-      setRun({ status, question: text, answer, citations, trajectory });
+      setRun({ status, question: text, answer, citations, drafts, trajectory });
     update("running");
     try {
       threadId.current ??= await createThread();
@@ -71,6 +79,10 @@ export function AskScreen() {
             break;
           case "citation":
             citations = [...citations, event];
+            update("running");
+            break;
+          case "draft":
+            drafts = [...drafts, event];
             update("running");
             break;
           case "error":
@@ -155,6 +167,9 @@ export function AskScreen() {
                 <ReactMarkdown skipHtml>{run.answer}</ReactMarkdown>
               </div>
               {run.citations.length > 0 && <Sources citations={run.citations} />}
+              {run.drafts.map((draft) => (
+                <DraftPreview key={draft.draft_id} draft={draft} />
+              ))}
             </section>
           )}
         </>

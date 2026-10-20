@@ -38,6 +38,9 @@ src/plg/
 │   │                binding) and run_sql (plan, sql with $as_of, glossary term IDs, as_of; default as_of = semantic layer's
 │   │                as_of_default 2026-09-30). Each run_sql leaves a SqlTrace; the last carries the agent's explanation, which always ends by naming the
 │   │                definition versions and effective dates used (with_definitions appends them if the agent left them out).
+│   ├── drafting.py  The drafting agent: tools get_template, lookup_records (read-only SELECT through the Warehouse) and submit_draft
+│   │                (records a Draft; the last submission wins and is stored for download). Unfilled slots are listed with reasons, never
+│   │                invented; the draft gets a PII check. Signing officer's email/phone come from `staff`, read directly (the Warehouse blocks it).
 │   └── knowledge.py The knowledge agent: search_corpus (+ the entity tools when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
 │                    documents; as_of = in force on that date (superseded versions included). Queries are expanded
 │                    with the preferred labels of PLG terms (VocabIndex.find_terms), which are also listed in the
@@ -49,18 +52,23 @@ src/plg/
 │   │                bindings keyed by versioned glossary term, table notes, examples, quality_issues → warnings(sql, result)),
 │   │                semantic_errors for `make ontology`. trace.py: SqlTrace (plan, sql, as_of, status ok|rejected, result
 │   │                summary, ConceptUsed glossary versions, warnings, explanation).
+├── drafting/        Letter drafting from approved templates. templates.py (TemplateLibrary: the approved `docs/TPL-*.docx` of corpus_dir; slots
+│   │                `{{ name }}`, [guidance] dropped, wording never changed), render.py (fill → paragraphs; open slots show as «slot»; to_html
+│   │                escapes everything; to_docx reuses the template file, open slots highlighted), pii.py (NRIC/FIN, non-officer phone/email,
+│   │                tenant names in replies to the public; findings point at slots, never repeat values), model.py (Draft, UnfilledSlot,
+│   │                PiiFinding), store.py (DraftStore: in memory, owner-checked). Nothing is sent and no outbox item is made.
 ├── graph/
 │   ├── state.py     PLGState (messages = completed exchanges only, question, user, intents, findings, answer) and
 │                    PLGGraph. A turn joins `messages` only when merge answers it, so a failed run leaves no trace.
 │                    findings fan in by appending; route's empty update resets them each turn.
-│   └── build.py     build_graph(llm, retriever, ..., *, warehouse): START → route → knowledge and/or data (if intended) → merge → END.
-│                    route = Haiku, forced `route` tool → intents (knowledge, data; none = merge answers
+│   └── build.py     build_graph(llm, retriever, ..., *, warehouse): START → route → knowledge, data and/or drafting (if intended) → merge → END.
+│                    route = Haiku, forced `route` tool → intents (knowledge, data, drafting; none = merge answers
 │                    directly, told not to state PLG facts without sources). knowledge streams `citation` chunks, data
 │                    streams `sql_trace` chunks.
 │                    merge fuses findings keeping [n] markers; findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
 │                    answer with no Claude call. merge is the only node that streams tokens. In-memory checkpointer.
 ├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace),
-│                    done (run_id), error (run_id).
+│                    draft (Draft: html preview, unfilled slots, pii flags), done (run_id), error (run_id).
 ├── runs.py          stream_run(graph, thread_id, message, user?): runs the graph, yields numbered RunEvents,
 │                    turns any failure into an error event. Shared by the API and the CLI.
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
@@ -97,7 +105,7 @@ src/plg/
 │                    plg.schema.json (tool I/O), extraction/{supersedes,overrides,applies}.json, allow_list.json
 │                    (node labels + typed edges), vocab_index.json, glossary_index.json, semantic_layer.json, ontology_card.md.
 ├── api/app.py       create_app(settings, llm, searcher): FastAPI. GET /personas, GET /me, POST /threads,
-│                    POST /threads/{id}/runs (SSE with heartbeat comments). All but /personas need the
+│                    POST /threads/{id}/runs (SSE with heartbeat comments), GET /drafts/{id}/file (DOCX; owner only, else 404). All but /personas need the
 │                    X-PLG-User header (staff ID) → UserCtx, else 401. RunEvent schemas are injected into
 │                    the OpenAPI 3.1 document. serve() is the plg-api entry point.
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]`,
@@ -127,9 +135,9 @@ scripts/record_sse_fixtures.py
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
                      /api/threads, /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through),
-                     /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints).
+                     /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay).
                      Pages: /sign-in, / (Ask screen: streamed answer, node trajectory, citation chips under the
-                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), error + Retry).
+                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview, unfilled slots, PII flags, DOCX download), error + Retry).
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.
                      Tests: Vitest + RTL + MSW replaying the recorded fixtures.

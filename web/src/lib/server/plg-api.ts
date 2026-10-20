@@ -103,6 +103,15 @@ export async function getChunkLocation(
   return { status: response.status, body: data ?? error };
 }
 
+/** A draft's DOCX file, unread, so the BFF can stream it through. */
+export function getDraftFile(staffId: string, draftId: string): Promise<Response> {
+  const path = "/drafts/{draft_id}/file";
+  return fetch(plgApiUrl() + path.replace("{draft_id}", encodeURIComponent(draftId)), {
+    headers: { [USER_HEADER]: staffId },
+    cache: "no-store",
+  });
+}
+
 /** The source file, unread, so the BFF can stream it through. */
 export function getDocumentFile(staffId: string, docId: string): Promise<Response> {
   const path = "/documents/{doc_id}/file";

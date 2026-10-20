@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from plg.agents.runtime import Citation
 from plg.data.trace import SqlTrace
+from plg.drafting.model import Draft
 
 
 class NodeEvent(BaseModel):
@@ -41,6 +42,13 @@ class SqlTraceEvent(SqlTrace):
     seq: int
 
 
+class DraftEvent(Draft):
+    """A letter drafted from an approved template: HTML preview, open slots and personal-data flags. Not sent."""
+
+    type: Literal["draft"] = "draft"
+    seq: int
+
+
 class DoneEvent(BaseModel):
     type: Literal["done"] = "done"
     seq: int
@@ -57,5 +65,5 @@ class ErrorEvent(BaseModel):
 
 
 RunEvent = Annotated[
-    NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
+    NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
 ]

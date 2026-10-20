@@ -10,6 +10,7 @@ import type { components } from "@/lib/api/schema";
 type Schemas = components["schemas"];
 export type RunEvent = Schemas["RunEvent"];
 export type CitationEvent = Schemas["CitationEvent"];
+export type DraftEvent = Schemas["DraftEvent"];
 export type UserCtx = Schemas["UserCtx"];
 
 /** A role for display, e.g. "estate_manager" → "estate manager". */
@@ -67,6 +68,18 @@ export const runEventSchema = z.discriminatedUnion("type", [
     ),
     warnings: z.array(z.string()),
     explanation: z.string(),
+  }),
+  z.object({
+    type: z.literal("draft"),
+    seq,
+    draft_id: z.string(),
+    template_id: z.string(),
+    template_title: z.string(),
+    template_version: z.string(),
+    slots: z.record(z.string(), z.string()),
+    unfilled: z.array(z.object({ slot: z.string(), reason: z.string() })),
+    pii: z.array(z.object({ kind: z.string(), slot: z.string(), message: z.string() })),
+    html: z.string(),
   }),
   z.object({ type: z.literal("done"), seq, run_id: z.string() }),
   z.object({ type: z.literal("error"), seq, run_id: z.string(), message: z.string() }),

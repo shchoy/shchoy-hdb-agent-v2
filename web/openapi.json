@@ -401,6 +401,60 @@
           }
         }
       }
+    },
+    "/drafts/{draft_id}/file": {
+      "get": {
+        "summary": "Get Draft File",
+        "description": "The draft as a DOCX file. Only the officer who asked for it can download it.",
+        "operationId": "get_draft_file_drafts__draft_id__file_get",
+        "parameters": [
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Draft Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The draft as a DOCX file.",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -835,6 +889,75 @@
         "title": "DoneEvent",
         "type": "object"
       },
+      "DraftEvent": {
+        "description": "A letter drafted from an approved template: HTML preview, open slots and personal-data flags. Not sent.",
+        "properties": {
+          "draft_id": {
+            "title": "Draft Id",
+            "type": "string"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "template_title": {
+            "title": "Template Title",
+            "type": "string"
+          },
+          "template_version": {
+            "title": "Template Version",
+            "type": "string"
+          },
+          "slots": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Slots",
+            "type": "object"
+          },
+          "unfilled": {
+            "items": {
+              "$ref": "#/components/schemas/UnfilledSlot"
+            },
+            "title": "Unfilled",
+            "type": "array"
+          },
+          "pii": {
+            "items": {
+              "$ref": "#/components/schemas/PiiFinding"
+            },
+            "title": "Pii",
+            "type": "array"
+          },
+          "html": {
+            "title": "Html",
+            "type": "string"
+          },
+          "type": {
+            "const": "draft",
+            "default": "draft",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "draft_id",
+          "template_id",
+          "template_title",
+          "template_version",
+          "slots",
+          "unfilled",
+          "pii",
+          "html",
+          "seq"
+        ],
+        "title": "DraftEvent",
+        "type": "object"
+      },
       "ErrorEvent": {
         "description": "The run failed. Any answer streamed so far is partial and must not be trusted.",
         "properties": {
@@ -897,6 +1020,30 @@
           "status"
         ],
         "title": "NodeEvent",
+        "type": "object"
+      },
+      "PiiFinding": {
+        "description": "Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.",
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "slot": {
+            "title": "Slot",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "slot",
+          "message"
+        ],
+        "title": "PiiFinding",
         "type": "object"
       },
       "ResultSummary": {
@@ -1086,11 +1233,30 @@
         "title": "TokenEvent",
         "type": "object"
       },
+      "UnfilledSlot": {
+        "properties": {
+          "slot": {
+            "title": "Slot",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot",
+          "reason"
+        ],
+        "title": "UnfilledSlot",
+        "type": "object"
+      },
       "RunEvent": {
         "discriminator": {
           "mapping": {
             "citation": "#/components/schemas/CitationEvent",
             "done": "#/components/schemas/DoneEvent",
+            "draft": "#/components/schemas/DraftEvent",
             "error": "#/components/schemas/ErrorEvent",
             "node": "#/components/schemas/NodeEvent",
             "sql_trace": "#/components/schemas/SqlTraceEvent",
@@ -1110,6 +1276,9 @@
           },
           {
             "$ref": "#/components/schemas/SqlTraceEvent"
+          },
+          {
+            "$ref": "#/components/schemas/DraftEvent"
           },
           {
             "$ref": "#/components/schemas/DoneEvent"

@@ -1,0 +1,72 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"route","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"route","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"drafting","status":"started"}
+
+id: 4
+event: draft
+data: {"draft_id":"a73dce47-601a-43db-aa72-9d05bb540286","template_id":"TPL-FBK-03","template_title":"Feedback Update Reply","template_version":"1.3","slots":{"feedback_id":"FB-2025-00002","reply_date":"30 September 2026","provider_name":"Sir/Madam","received_date":"2 October 2025","location":"Blk 675 #02-07","issue_summary":"a leaking ceiling","ticket_reference":"IEMS-2510-0002","next_steps":"If it recurs, call the shop on +65 9138 9404.","officer_name":"Siti Aishah Yusof"},"unfilled":[{"slot":"action_taken","reason":"The case record doesn't say what was done."}],"pii":[{"kind":"phone","slot":"next_steps","message":"Contains a phone number that isn't the signing officer's."}],"html":"<p>Case: FB-2025-00002</p>\n<p>30 September 2026</p>\n<p>Dear Sir/Madam,</p>\n<p>Thank you for your feedback received on 2 October 2025 regarding a leaking ceiling at Blk 675 #02-07.</p>\n<p>We have looked into the matter. <mark>«action_taken»</mark></p>\n<p>Reference: IEMS-2510-0002</p>\n<p>If it recurs, call the shop on +65 9138 9404.</p>\n<p>We appreciate you taking the time to help us keep our estates safe and pleasant.</p>\n<p>Yours sincerely,</p>\n<p>Siti Aishah Yusof</p>\n<p>Customer Relations</p>\n<p>Properties &amp; Land Group</p>","type":"draft","seq":4}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"drafting","status":"finished"}
+
+id: 6
+event: node
+data: {"type":"node","seq":6,"node":"merge","status":"started"}
+
+id: 7
+event: token
+data: {"type":"token","seq":7,"node":"merge","text":"I"}
+
+id: 8
+event: token
+data: {"type":"token","seq":8,"node":"merge","text":" drafted"}
+
+id: 9
+event: token
+data: {"type":"token","seq":9,"node":"merge","text":" the"}
+
+id: 10
+event: token
+data: {"type":"token","seq":10,"node":"merge","text":" reply"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":" from"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" TPL-FBK-03."}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" Nothing"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" has"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" been"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" sent."}
+
+id: 17
+event: node
+data: {"type":"node","seq":17,"node":"merge","status":"finished"}
+
+id: 18
+event: done
+data: {"type":"done","seq":18,"run_id":"a141b845-3d67-401c-be99-75ecbeeb672c"}
+

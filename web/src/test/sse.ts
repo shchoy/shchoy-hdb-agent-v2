@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { HttpResponse } from "msw";
 
 /** A recorded plg-api SSE stream (see scripts/record_sse_fixtures.py at the repo root). */
-export function fixture(name: "answer" | "not_covered" | "error"): string {
+export function fixture(name: "answer" | "not_covered" | "error" | "draft"): string {
   // Vitest runs from web/; import.meta.url is not a file URL under jsdom.
   return readFileSync(join(process.cwd(), "src/test/fixtures", `${name}.sse`), "utf8");
 }

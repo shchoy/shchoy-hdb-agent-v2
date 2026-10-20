@@ -6,7 +6,7 @@ How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on 
 
 | Part | Status | How to run |
 |---|---|---|
-| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations, data questions over PLG Records | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
+| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations, data questions over PLG Records, letter drafting | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
 | Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in and Ask screen with citation chips | `cd web && npm run dev` |
 
 ## 1. Prerequisites
@@ -95,6 +95,14 @@ uv run plg ask "When do we issue a letter of demand?"
 ```
 
 The answer streams to the terminal, then its sources: each `[n]` in the answer is listed with its document, section and the quoted sentence. Policy and records questions are answered only from the indexed documents (current versions unless you ask about an earlier date). If the sources don't cover the question, the answer says so. If the run fails partway, the CLI prints an error to stderr and exits with code 1.
+
+### Draft a letter (issue #17)
+
+```bash
+uv run plg ask "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
+```
+
+Requests for a standard letter go to the `drafting` agent. It picks an approved template (`poc-data/docs/TPL-REM-01`, `TPL-DOC-02`, `TPL-FBK-03`), fills the slots from PLG Records with read-only lookups, lists the slots it couldn't fill (e.g. `letter_ref`) and flags personal data. Only `ANTHROPIC_API_KEY` is needed, no index. In the web app the draft appears under the answer: an HTML preview, the open slots, any personal-data flags and a **Download DOCX** link (`GET /drafts/{id}/file`, only for the officer who asked). Nothing is sent. Drafts live in memory, so they are lost when `plg-api` restarts. In `plg ask` (CLI) the draft is not shown, only the answer. Where it lives: `src/plg/drafting/`, `src/plg/agents/drafting.py`, `tests/test_drafting_api.py`.
 
 ### Ask a data question (issue #12)
 

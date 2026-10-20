@@ -135,6 +135,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drafts/{draft_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Draft File
+         * @description The draft as a DOCX file. Only the officer who asked for it can download it.
+         */
+        get: operations["get_draft_file_drafts__draft_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -304,6 +324,37 @@ export interface components {
             run_id: string;
         };
         /**
+         * DraftEvent
+         * @description A letter drafted from an approved template: HTML preview, open slots and personal-data flags. Not sent.
+         */
+        DraftEvent: {
+            /** Draft Id */
+            draft_id: string;
+            /** Template Id */
+            template_id: string;
+            /** Template Title */
+            template_title: string;
+            /** Template Version */
+            template_version: string;
+            /** Slots */
+            slots: {
+                [key: string]: string;
+            };
+            /** Unfilled */
+            unfilled: components["schemas"]["UnfilledSlot"][];
+            /** Pii */
+            pii: components["schemas"]["PiiFinding"][];
+            /** Html */
+            html: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "draft";
+            /** Seq */
+            seq: number;
+        };
+        /**
          * ErrorEvent
          * @description The run failed. Any answer streamed so far is partial and must not be trusted.
          */
@@ -339,6 +390,18 @@ export interface components {
              * @enum {string}
              */
             status: "started" | "finished";
+        };
+        /**
+         * PiiFinding
+         * @description Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.
+         */
+        PiiFinding: {
+            /** Kind */
+            kind: string;
+            /** Slot */
+            slot: string;
+            /** Message */
+            message: string;
         };
         /** ResultSummary */
         ResultSummary: {
@@ -411,7 +474,14 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        /** UnfilledSlot */
+        UnfilledSlot: {
+            /** Slot */
+            slot: string;
+            /** Reason */
+            reason: string;
+        };
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;
@@ -636,6 +706,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChunkLocation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_draft_file_drafts__draft_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The draft as a DOCX file. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": unknown;
                 };
             };
             /** @description Validation Error */

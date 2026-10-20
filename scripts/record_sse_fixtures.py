@@ -30,6 +30,7 @@ from plg.search.rerank import CrossEncoderReranker, Searcher
 OUT = REPO_ROOT / "web" / "src" / "test" / "fixtures"
 USER = {"X-PLG-User": "S05"}
 QUESTION = "When do we issue a letter of demand?"
+DRAFT_QUESTION = "Draft an update reply to the member of public who gave feedback FB-2025-00002"
 
 
 def cite(phrase: str, answer: str) -> Callable[[list[AgentMessage]], AgentTurn]:
@@ -79,8 +80,25 @@ def error(llm: ScriptedLLMClient) -> None:
     llm.script("merge", QUESTION, "Under POL-003 v2.0, a letter of", error=ConnectionError("Claude unavailable"))
 
 
-SCRIPTS: dict[str, Callable[[ScriptedLLMClient], None]] = {
-    "answer": answer, "not_covered": not_covered, "error": error,
+def draft(llm: ScriptedLLMClient) -> None:
+    """A feedback reply with an open slot and a tenant's phone number in it, so the preview shows both flags."""
+    llm.script_turns("route", DRAFT_QUESTION, turn(tool_call("route", intents=["drafting"])))
+    llm.script_turns(
+        "drafting", DRAFT_QUESTION,
+        turn(tool_call("submit_draft", template_id="TPL-FBK-03", slots={
+            "feedback_id": "FB-2025-00002", "reply_date": "30 September 2026", "provider_name": "Sir/Madam",
+            "received_date": "2 October 2025", "location": "Blk 675 #02-07", "issue_summary": "a leaking ceiling",
+            "ticket_reference": "IEMS-2510-0002",
+            "next_steps": "If it recurs, call the shop on +65 9138 9404.", "officer_name": "Siti Aishah Yusof",
+        }, unfilled=[{"slot": "action_taken", "reason": "The case record doesn't say what was done."}])),
+        turn(text("Drafted the feedback reply.")),
+    )
+    llm.script("merge", DRAFT_QUESTION, "I drafted the reply from TPL-FBK-03. Nothing has been sent.")
+
+
+SCRIPTS: dict[str, tuple[str, Callable[[ScriptedLLMClient], None]]] = {
+    "answer": (QUESTION, answer), "not_covered": (QUESTION, not_covered), "error": (QUESTION, error),
+    "draft": (DRAFT_QUESTION, draft),
 }
 
 
@@ -121,13 +139,13 @@ def searcher(index: Path) -> tuple[Searcher, LanceSearchStore]:
     return Searcher(store, embedder, CrossEncoderReranker(settings), candidates=50), store
 
 
-def record(search: Searcher, script: Callable[[ScriptedLLMClient], None]) -> str:
+def record(search: Searcher, question: str, script: Callable[[ScriptedLLMClient], None]) -> str:
     llm = ScriptedLLMClient()
     script(llm)
     with TestClient(create_app(Settings(), llm=llm, searcher=search)) as client:
         thread_id = client.post("/threads", headers=USER).json()["thread_id"]
         with client.stream(
-            "POST", f"/threads/{thread_id}/runs", json={"message": QUESTION}, headers=USER
+            "POST", f"/threads/{thread_id}/runs", json={"message": question}, headers=USER
         ) as response:
             return response.read().decode()
 
@@ -136,9 +154,9 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as index:
         search, store = searcher(Path(index))
-        for name, script in SCRIPTS.items():
+        for name, (question, script) in SCRIPTS.items():
             path = OUT / f"{name}.sse"
-            path.write_text(record(search, script))
+            path.write_text(record(search, question, script))
             print(f"wrote {path.relative_to(REPO_ROOT)}")
         (OUT / "documents").mkdir(exist_ok=True)
         for kind, recorded in record_documents(store).items():

@@ -14,10 +14,13 @@ from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 
-from plg.agents import data, knowledge
+from plg.agents import data, drafting, knowledge
 from plg.agents.runtime import CACHE
+from plg.config import Settings
 from plg.data.semantic import SemanticLayer, load_semantic_layer
 from plg.data.warehouse import Warehouse
+from plg.drafting.store import DraftStore
+from plg.drafting.templates import TemplateLibrary
 from plg.entities.store import GraphStore
 from plg.graph.state import Finding, Intent, PLGGraph, PLGState
 from plg.llm import AgentMessage, Block, LLMClient, Message
@@ -28,6 +31,7 @@ from plg.search.rerank import Retriever
 ROUTE = "route"
 KNOWLEDGE = knowledge.NODE
 DATA = data.NODE
+DRAFTING = drafting.NODE
 MERGE = "merge"
 
 ROUTE_SYSTEM = """\
@@ -36,6 +40,8 @@ You route questions from officers of the Properties & Land Group (PLG) to specia
 rules, limits, deadlines, what a PLG term means, audit findings, incidents, letters, emails and notes.
 - data: numeric questions answered by querying PLG Records: counts, totals, rates and lists of units, tenancies, \
 arrears, invoices, inspections, feedback and tickets; and why two reported figures differ.
+- drafting: the officer asks for a standard letter or notice to be drafted: an arrears reminder, a missing-documents \
+notice, or an update reply to someone who gave feedback.
 A question can need both. Choose no specialist for greetings, thanks and questions about how to use the assistant."""
 
 ROUTE_TOOL: Block = {
@@ -45,7 +51,7 @@ ROUTE_TOOL: Block = {
         "type": "object",
         "properties": {
             "intents": {
-                "type": "array", "items": {"type": "string", "enum": ["knowledge", "data"]},
+                "type": "array", "items": {"type": "string", "enum": ["knowledge", "data", "drafting"]},
                 "description": "The specialists needed; empty if none.",
             }
         },
@@ -91,10 +97,14 @@ def build_graph(
     warehouse: Warehouse,
     glossary: Glossary | None = None,
     layer: SemanticLayer | None = None,
+    templates: TemplateLibrary | None = None,
+    drafts: DraftStore | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
     layer = layer or load_semantic_layer()
+    templates = templates or TemplateLibrary(Settings.from_env().corpus_dir)
+    drafts = drafts or DraftStore()
 
     def conversation(state: PLGState) -> list[Message]:
         return [*state.get("messages", []), {"role": "user", "content": state["question"]}]
@@ -135,6 +145,14 @@ def build_graph(
         ran = any(t.status == "ok" for t in result.traces)
         return {"findings": [Finding(specialist=DATA, text=result.text, citations=[], traced=ran)]}
 
+    async def drafting_node(state: PLGState) -> PLGState:
+        result = await drafting.answer(
+            llm, warehouse, layer, templates, drafts, agent_conversation(state), state.get("user")
+        )
+        if result.draft:
+            get_stream_writer()({"draft": result.draft.model_dump()})
+        return {"findings": [Finding(specialist=DRAFTING, text=result.text, citations=[], traced=result.draft is not None)]}
+
     async def merge(state: PLGState) -> PLGState:
         write = get_stream_writer()
         findings = state.get("findings", [])
@@ -150,11 +168,13 @@ def build_graph(
     graph.add_node(ROUTE, route)
     graph.add_node(KNOWLEDGE, knowledge_node)
     graph.add_node(DATA, data_node)
+    graph.add_node(DRAFTING, drafting_node)
     graph.add_node(MERGE, merge)
     graph.add_edge(START, ROUTE)
-    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, MERGE])
+    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, MERGE])
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
+    graph.add_edge(DRAFTING, MERGE)
     graph.add_edge(MERGE, END)
     return graph.compile(checkpointer=InMemorySaver())
 

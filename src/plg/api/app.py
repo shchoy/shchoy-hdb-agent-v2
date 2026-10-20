@@ -13,6 +13,8 @@ from pydantic import BaseModel, TypeAdapter
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.config import Settings
+from plg.drafting.store import DraftStore
+from plg.drafting.templates import TemplateLibrary
 from plg.documents import ChunkLocation, DocumentLibrary, DocumentView
 from plg.entities.open import LazyGraph
 from plg.entities.store import GraphStore
@@ -25,6 +27,9 @@ from plg.llm import AnthropicLLMClient, LLMClient
 from plg.runs import stream_run
 from plg.search.rerank import LazySearcher, Retriever
 from plg.search.store import SearchStore
+
+
+DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
 class ThreadCreated(BaseModel):
@@ -58,7 +63,11 @@ def create_app(
     entities: GraphStore | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
-    graph = build_graph(llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings), entities=entities or LazyGraph(settings), warehouse=Warehouse(settings.records_db))
+    drafts = DraftStore()
+    graph = build_graph(
+        llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings), entities=entities or LazyGraph(settings),
+        warehouse=Warehouse(settings.records_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
+    )
     # Thread registry. Ownership and persistence across restarts arrive with later tickets.
     threads: set[str] = set()
 
@@ -143,6 +152,21 @@ def create_app(
         if located is None:
             raise HTTPException(status_code=404, detail="Chunk not found")
         return located
+
+    @app.get(
+        "/drafts/{draft_id}/file",
+        response_class=Response,
+        responses={200: {"description": "The draft as a DOCX file.", "content": {DOCX: {}}}},
+    )
+    async def get_draft_file(draft_id: str, user: User) -> Response:
+        """The draft as a DOCX file. Only the officer who asked for it can download it."""
+        stored = drafts.get(draft_id, user.staff_id)
+        if stored is None:
+            raise HTTPException(status_code=404, detail="Draft not found")
+        return Response(
+            stored.docx, media_type=DOCX,
+            headers={"Content-Disposition": f'attachment; filename="{stored.filename}"', "X-Content-Type-Options": "nosniff"},
+        )
 
     def openapi() -> dict[str, Any]:
         if app.openapi_schema is None:

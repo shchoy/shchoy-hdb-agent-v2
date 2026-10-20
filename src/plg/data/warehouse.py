@@ -50,6 +50,10 @@ class Warehouse:
         self._connection: duckdb.DuckDBPyConnection | None = None
         self._tables: frozenset[str] = frozenset()
 
+    @property
+    def records_db(self) -> Path:
+        return self._records_db
+
     def _open(self) -> duckdb.DuckDBPyConnection:
         with self._lock:
             if self._connection is None:

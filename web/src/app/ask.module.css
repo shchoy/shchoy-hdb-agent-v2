@@ -165,3 +165,19 @@
 .sourceError {
   color: var(--danger);
 }
+
+.draft {
+  margin-top: 1rem;
+}
+
+.draftNote {
+  margin: 0.5rem 0;
+}
+
+.draftFrame {
+  width: 100%;
+  height: 26rem;
+  border: 1px solid var(--muted);
+  background: #fff;
+  margin: 0.5rem 0;
+}

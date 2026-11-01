@@ -55,7 +55,8 @@ class GraphWriter:
                 write_nodes(self.delta, label, [*before, *group])
             fresh = {e.id: e for e in edges if e.id not in current.edges}
             if fresh:
-                write_edges(self.delta, list(fresh.values()), append=True)
+                # Rewritten whole, like nodes, so a new edge property widens the header.
+                write_edges(self.delta, [*earlier.edges.values(), *fresh.values()])
             self.store.swap(freeze(read_graph(self.spine, self.delta)))
 
     def problems(self, current: GraphData, nodes: Sequence[Node], edges: Sequence[Edge]) -> list[str]:
@@ -76,6 +77,9 @@ class GraphWriter:
                 if not isinstance(value, str | int | float | bool):
                     problems.append(f"{node.id}.{key}: properties must be scalar")
         for edge in edges:
+            for key in edge.props:
+                if not re.fullmatch(r"[a-z][a-z0-9_]*", key):
+                    problems.append(f"{edge.id}.{key}: property names are lower_snake_case")
             start, end = labels.get(edge.start), labels.get(edge.end)
             if edge.type not in self.allow.edges:
                 problems.append(f"{edge.id}: {edge.type} is not an ontology edge type")

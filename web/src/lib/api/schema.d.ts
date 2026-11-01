@@ -392,16 +392,109 @@ export interface components {
             status: "started" | "finished";
         };
         /**
+         * Override
+         * @description A circular that replaces a clause of one version, possibly only for some units.
+         */
+        Override: {
+            /** Circular Id */
+            circular_id: string;
+            /** Circular Title */
+            circular_title: string;
+            /** Circular Doc Id */
+            circular_doc_id: string;
+            /** Clause Id */
+            clause_id: string;
+            /** Clause Number */
+            clause_number: string;
+            /** Policy Version */
+            policy_version: string;
+            /**
+             * Effective From
+             * @default null
+             */
+            effective_from: string | null;
+            /**
+             * Effective To
+             * @default null
+             */
+            effective_to: string | null;
+            /**
+             * Scope
+             * @default null
+             */
+            scope: string | null;
+            /** Evidence Chunk Id */
+            evidence_chunk_id: string;
+            /** Evidence Quote */
+            evidence_quote: string;
+        };
+        /**
          * PiiFinding
          * @description Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.
          */
         PiiFinding: {
-            /** Kind */
-            kind: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "nric" | "email" | "phone" | "tenant";
             /** Slot */
             slot: string;
             /** Message */
             message: string;
+        };
+        /**
+         * PolicyStanceEvent
+         * @description PLG's position on one policy: the version in force, the versions it superseded and the circulars overriding it.
+         */
+        PolicyStanceEvent: {
+            /** Policy Id */
+            policy_id: string;
+            /** Title */
+            title: string;
+            /** Current */
+            current: string | null;
+            /** Versions */
+            versions: components["schemas"]["PolicyVersion"][];
+            /** Supersessions */
+            supersessions: components["schemas"]["Supersession"][];
+            /** Overrides */
+            overrides: components["schemas"]["Override"][];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "policy_stance";
+            /** Seq */
+            seq: number;
+        };
+        /** PolicyVersion */
+        PolicyVersion: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
+            /** Doc Id */
+            doc_id: string;
+            /**
+             * Effective From
+             * @default null
+             */
+            effective_from: string | null;
+            /**
+             * Effective To
+             * @default null
+             */
+            effective_to: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "current" | "superseded";
         };
         /** ResultSummary */
         ResultSummary: {
@@ -460,6 +553,17 @@ export interface components {
             /** Seq */
             seq: number;
         };
+        /** Supersession */
+        Supersession: {
+            /** Newer */
+            newer: string;
+            /** Older */
+            older: string;
+            /** Evidence Chunk Id */
+            evidence_chunk_id: string;
+            /** Evidence Quote */
+            evidence_quote: string;
+        };
         /** TokenEvent */
         TokenEvent: {
             /**
@@ -481,7 +585,7 @@ export interface components {
             /** Reason */
             reason: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;

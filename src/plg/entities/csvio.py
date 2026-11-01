@@ -55,14 +55,29 @@ def write_nodes(path: Path, label: str, nodes: list[Node]) -> None:
         writer.writerows(node_row(n, header) for n in nodes)
 
 
-def write_edges(path: Path, edges: list[Edge], append: bool = False) -> None:
-    path = path / "edges.csv"
-    new = not (append and path.exists())
-    with path.open("w" if new else "a", newline="") as f:
+def edge_header(edges: list[Edge]) -> list[str]:
+    types: dict[str, str] = {}
+    for edge in edges:
+        for key, value in edge.props.items():
+            types.setdefault(key, column_type(value))
+    return [*EDGE_HEADER, *(f"{k}:{t}" for k, t in sorted(types.items()))]
+
+
+def edge_row(edge: Edge, header: list[str]) -> list[str]:
+    cells = [edge.id, edge.start, edge.end, edge.type]
+    for column in header[len(EDGE_HEADER):]:
+        value = edge.props.get(column.rsplit(":", 1)[0])
+        cells.append("" if value is None else str(value).lower() if isinstance(value, bool) else str(value))
+    return cells
+
+
+def write_edges(path: Path, edges: list[Edge]) -> None:
+    """Write `edges.csv`, replacing the file; edge properties become typed columns."""
+    header = edge_header(edges)
+    with (path / "edges.csv").open("w", newline="") as f:
         writer = csv.writer(f)
-        if new:
-            writer.writerow(EDGE_HEADER)
-        writer.writerows([e.id, e.start, e.end, e.type] for e in edges)
+        writer.writerow(header)
+        writer.writerows(edge_row(e, header) for e in edges)
 
 
 def write_graph(path: Path, data: GraphData) -> None:
@@ -102,5 +117,12 @@ def read_graph(*dirs: Path) -> GraphData:
         if edges.exists():
             with edges.open(newline="") as f:
                 for record in csv.DictReader(f):
-                    data.add_edge(Edge(type=record[":TYPE"], start=record[":START_ID"], end=record[":END_ID"]))
+                    props = {
+                        c.rsplit(":", 1)[0]: v
+                        for c in record
+                        if c not in EDGE_HEADER and (v := _coerce(record[c], c)) is not None
+                    }
+                    data.add_edge(
+                        Edge(type=record[":TYPE"], start=record[":START_ID"], end=record[":END_ID"], props=props)
+                    )
     return data

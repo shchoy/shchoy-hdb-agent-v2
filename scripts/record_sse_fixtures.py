@@ -9,7 +9,9 @@ LLMClient, and the knowledge agent searches the poc-data corpus synced into a te
 
 from __future__ import annotations
 
+import asyncio
 import json
+import re
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
@@ -19,6 +21,10 @@ from fastapi.testclient import TestClient
 
 from plg.api.app import create_app
 from plg.config import REPO_ROOT, Settings
+from plg.entities.local import LocalGraphStore
+from plg.entities.spine import write_spine
+from plg.entities.writer import GraphWriter
+from plg.ingest.lineage import NODE, extract_lineage
 from plg.ingest.metadata import load_entity_spine
 from plg.ingest.sources import LotusNotesSource, SharePointSource
 from plg.ingest.sync import sync
@@ -30,6 +36,7 @@ from plg.search.rerank import CrossEncoderReranker, Searcher
 OUT = REPO_ROOT / "web" / "src" / "test" / "fixtures"
 USER = {"X-PLG-User": "S05"}
 QUESTION = "When do we issue a letter of demand?"
+POLICY_QUESTION = "How far can a tenant display goods beyond the shopfront?"
 DRAFT_QUESTION = "Draft an update reply to the member of public who gave feedback FB-2025-00002"
 
 
@@ -96,9 +103,57 @@ def draft(llm: ScriptedLLMClient) -> None:
     llm.script("merge", DRAFT_QUESTION, "I drafted the reply from TPL-FBK-03. Nothing has been sent.")
 
 
+def policy_stance(llm: ScriptedLLMClient) -> None:
+    """The display-area limit (POL-001 v3.0 cl. 7.3 overridden for NC units by Circular 07/2026), plus POL-003, whose v1.0 was superseded."""
+    llm.script_turns("route", POLICY_QUESTION, turn(tool_call("route", intents=["knowledge"])))
+    llm.script_turns(
+        "knowledge", POLICY_QUESTION,
+        turn(tool_call("policy_lineage", policy_id="PLG-POL-001"), tool_call("policy_lineage", policy_id="PLG-POL-003")),
+        cite("overrides clause 7.3", "Circular 07/2026 raises the limit to 1.0 m for NC units from 1 August 2026."),
+    )
+    llm.script("merge", POLICY_QUESTION, "NC units: 1.0 m from 1 Aug 2026 [1]. Void-deck shops: still 0.6 m.")
+
+
+class LineageHaiku(ScriptedLLMClient):
+    """Scripted Haiku for lineage extraction: reads the supersedes line of POL-003 v2.0 and Circular 07's override."""
+
+    async def complete(self, *, node: str, **kwargs: Any) -> AgentTurn:
+        if node != NODE:
+            return await super().complete(node=node, **kwargs)
+        prompt = str(kwargs["messages"][-1]["content"])
+        title = prompt.split("\n", 1)[0]
+        shown = re.findall(r'<chunk id="([^"]+)" location="[^"]*">\n(.*?)\n</chunk>', prompt, flags=re.S)
+
+        def find(needle: str) -> tuple[str, str]:
+            return next((c, line.strip()) for c, t in shown for line in t.splitlines() if needle in line)
+
+        def edge(kind: str, src: tuple[str, str], dst: tuple[str, str], chunk: str, quote: str, **extra: str) -> dict[str, Any]:
+            return {"type": kind, "source_id": src[0], "source_label": src[1], "target_id": dst[0],
+                    "target_label": dst[1], "evidence_chunk_id": chunk, "evidence_quote": quote, **extra}
+
+        edges: list[dict[str, Any]] = []
+        if "Rental Arrears Management Policy (v2.0)" in title:
+            chunk, line = find("Supersedes")
+            edges = [edge("SUPERSEDES", ("PLG-POL-003 v2.0", "Policy"), ("PLG-POL-003 v1.0", "Policy"), chunk, line)]
+        elif "Circular 07" in title:
+            chunk, _ = find("replaces the 0.6 m limit")
+            quote = "replaces the 0.6 m limit in clause 7.3 of PLG-POL-001 Trade Mix & Usage Policy v3.0 for NC units"
+            edges = [edge("OVERRIDES", ("Circular 07/2026", "Circular"), ("PLG-POL-001 v3.0 cl. 7.3", "Clause"),
+                          chunk, quote, scope="NC units only")]
+        return turn(tool_call("record_edges", edges=edges))
+
+
+def lineage_graph(store: LanceSearchStore, graph_dir: Path) -> LocalGraphStore:
+    """The records spine plus lineage edges extracted (by the scripted Haiku) from the synced corpus."""
+    write_spine(Settings().records_db, graph_dir / "spine")
+    graph = LocalGraphStore.from_dirs(graph_dir / "spine")
+    asyncio.run(extract_lineage(LineageHaiku(), store, GraphWriter(graph_dir, graph)))
+    return graph
+
+
 SCRIPTS: dict[str, tuple[str, Callable[[ScriptedLLMClient], None]]] = {
     "answer": (QUESTION, answer), "not_covered": (QUESTION, not_covered), "error": (QUESTION, error),
-    "draft": (DRAFT_QUESTION, draft),
+    "draft": (DRAFT_QUESTION, draft), "policy_stance": (POLICY_QUESTION, policy_stance),
 }
 
 
@@ -139,10 +194,12 @@ def searcher(index: Path) -> tuple[Searcher, LanceSearchStore]:
     return Searcher(store, embedder, CrossEncoderReranker(settings), candidates=50), store
 
 
-def record(search: Searcher, question: str, script: Callable[[ScriptedLLMClient], None]) -> str:
+def record(
+    search: Searcher, question: str, script: Callable[[ScriptedLLMClient], None], graph: LocalGraphStore | None = None
+) -> str:
     llm = ScriptedLLMClient()
     script(llm)
-    with TestClient(create_app(Settings(), llm=llm, searcher=search)) as client:
+    with TestClient(create_app(Settings(), llm=llm, searcher=search, entities=graph)) as client:
         thread_id = client.post("/threads", headers=USER).json()["thread_id"]
         with client.stream(
             "POST", f"/threads/{thread_id}/runs", json={"message": question}, headers=USER
@@ -152,11 +209,12 @@ def record(search: Searcher, question: str, script: Callable[[ScriptedLLMClient]
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as index:
+    with tempfile.TemporaryDirectory() as index, tempfile.TemporaryDirectory() as graph_dir:
         search, store = searcher(Path(index))
+        graph = lineage_graph(store, Path(graph_dir))
         for name, (question, script) in SCRIPTS.items():
             path = OUT / f"{name}.sse"
-            path.write_text(record(search, question, script))
+            path.write_text(record(search, question, script, graph))
             print(f"wrote {path.relative_to(REPO_ROOT)}")
         (OUT / "documents").mkdir(exist_ok=True)
         for kind, recorded in record_documents(store).items():

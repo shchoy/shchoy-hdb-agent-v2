@@ -86,6 +86,7 @@ def _ns(namespace: tuple[str, ...]) -> str:
 
 class LanceSearchStore:
     def __init__(self, path: Path, *, dim: int, vector_weight: float = 0.7) -> None:
+        self.path = path
         self._vector_weight = vector_weight
         path.mkdir(parents=True, exist_ok=True)
         self._db = lancedb.connect(path)

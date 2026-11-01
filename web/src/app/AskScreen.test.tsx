@@ -258,4 +258,28 @@ describe("Ask screen", () => {
       expect.stringMatching(/^\/api\/drafts\/[0-9a-f-]+\/file$/),
     );
   });
+
+  it("shows the policy stance card in the Sources panel with scope, dates and superseded versions", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("policy_stance"))),
+    );
+
+    await ask("How far can a tenant display goods beyond the shopfront?");
+    await runFinished();
+
+    const sources = screen.getByRole("heading", { name: "Sources" }).parentElement as HTMLElement;
+    const pol001 = within(sources).getByRole("region", { name: /PLG-POL-001/ });
+    const overrides = within(pol001).getByRole("list", { name: "Overriding circulars" });
+    expect(overrides).toHaveTextContent("Circular 07/2026 overrides clause 7.3");
+    expect(overrides).toHaveTextContent("1 Aug 2026");
+    expect(within(overrides).getByText("NC units only")).toBeInTheDocument();
+    expect(overrides).toHaveTextContent("replaces the 0.6 m limit in clause 7.3");
+
+    const pol003 = within(sources).getByRole("region", { name: /PLG-POL-003/ });
+    expect(pol003).toHaveTextContent("In force: version 2.0, from 1 Apr 2026");
+    const superseded = within(pol003).getByRole("list", { name: "Superseded versions" });
+    expect(superseded).toHaveTextContent("Version 1.0 (superseded, ended 31 Mar 2026)");
+    expect(superseded).toHaveTextContent("Supersedes | v1.0 (1 Mar 2024)");
+  });
 });

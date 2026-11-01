@@ -28,6 +28,8 @@ class Edge(BaseModel):
     """`UPPER_SNAKE` relationship type from the allow-list."""
     start: str
     end: str
+    props: dict[str, Scalar] = {}
+    """Scalar properties of the relationship, e.g. the evidence an extracted edge was read from."""
 
     @property
     def id(self) -> str:

@@ -32,7 +32,8 @@ src/plg/
 │                    text block per sentence, citations enabled). Citation = doc_id, chunk_id, title, version,
 │                    location, quote, span (offsets into the chunk text). Citations of chunks the run didn't
 │                    retrieve are dropped.
-│   ├── entities.py  Knowledge agent's graph tools: resolve_entities, entity_context (read-only). Context comes back as
+│   ├── entities.py  Knowledge agent's graph tools: resolve_entities, entity_context, policy_lineage(policy_id, as_of?) (read-only; lineage is one
+│   │                citable passage `lineage:<policy_id>`; on_lineage callback feeds the policy_stance event). Context comes back as
 │   │                citable record passages (Chunk doc_type "record", source_system "plg_records", chunk_id `record:<id>`).
 │   ├── data.py      The data agent: tools get_definition (glossary version in force on as_of, or `version`, with its SQL
 │   │                binding) and run_sql (plan, sql with $as_of, glossary term IDs, as_of; default as_of = semantic layer's
@@ -67,13 +68,16 @@ src/plg/
 │                    streams `sql_trace` chunks.
 │                    merge fuses findings keeping [n] markers; findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
 │                    answer with no Claude call. merge is the only node that streams tokens. In-memory checkpointer.
-├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace),
+├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data),
 │                    draft (Draft: html preview, unfilled slots, pii flags), done (run_id), error (run_id).
 ├── runs.py          stream_run(graph, thread_id, message, user?): runs the graph, yields numbered RunEvents,
 │                    turns any failure into an error event. Shared by the API and the CLI.
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
 │                    structure-aware chunking with contextual headers, metadata + entity tagging from PLG Records,
 │                    incremental by content hash; superseded versions are marked, never deleted.
+│                    lineage.py: `plg graph lineage` - Policy/Sop/Circular/Clause/Precedent nodes from index metadata; Haiku (node extract_lineage,
+│                    forced record_edges tool built from generated/extraction/*.json) proposes SUPERSEDES/OVERRIDES/APPLIES; an edge is kept only with a
+│                    verbatim quote from a chunk of the batch read and known, allowed endpoints; written via GraphWriter. Idempotent.
 │                    scans.py: image-only PDFs (no text layer) are read by Claude PDF input through LLMClient
 │                    (node ingest_scan, forced record_transcript tool: title, control fields, text per page); the
 │                    Transcript is saved by file hash (TranscriptStore) so unchanged scans, --full rebuilds and the
@@ -94,6 +98,9 @@ src/plg/
 │                    networkx, swap()), writer.py (GraphWriter: allow-list validation, delta CSVs under a file lock, swaps in a
 │                    new frozen graph; no agent tool reaches it), open.py (open_graph builds the spine on first use; LazyGraph).
 │                    Holds entities/relationships only, no aggregates. graph_dir setting (.plg/graph).
+│                    policy.py: PolicyLineage (versions with effective dates, supersessions, circular overrides with scope + evidence) and
+│                    build_lineage; GraphStore.policy_lineage(policy_id, as_of?) + cypher POLICY_* templates (LocalGraphStore scans in memory).
+│                    Edge.props (scalars, typed CSV columns) carry evidence_chunk_id / evidence_quote / scope on extracted edges.
 ├── ontology/        Runtime access to the GENERATED ontology artefacts (GENERATED = generated/ path).
 │   ├── vocab.py     VocabIndex (load_vocab): SKOS concepts by scheme (`concepts(scheme, cls)` → generated
 │                    model) and synonym/abbreviation lookup `resolve(text)` (LOD → letter of demand + plg:LodTrigger,
@@ -109,7 +116,7 @@ src/plg/
 │                    X-PLG-User header (staff ID) → UserCtx, else 401. RunEvent schemas are injected into
 │                    the OpenAPI 3.1 document. serve() is the plg-api entry point.
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]`,
-                     `plg search <query>`, `plg graph build | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
+                     `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
                      `plg glossary list [--all] | show <term>`. make_llm() builds the real LLMClient.
 
 ontology/            SOURCE of the ontology (semantic.yaml = the semantic layer: SQL bindings per glossary term version, table
@@ -137,7 +144,7 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      /api/threads, /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through),
                      /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay).
                      Pages: /sign-in, / (Ask screen: streamed answer, node trajectory, citation chips under the
-                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview, unfilled slots, PII flags, DOCX download), error + Retry).
+                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), error + Retry).
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.
                      Tests: Vitest + RTL + MSW replaying the recorded fixtures.

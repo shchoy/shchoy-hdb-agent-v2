@@ -1,14 +1,18 @@
-"""The knowledge agent's entity tools: read-only lookups in the entity graph.
+"""The knowledge agent's graph tools: read-only lookups in the entity graph.
 
 `resolve_entities` turns a name, unit number or ID into entity IDs. `entity_context` returns what surrounds an
 entity as citable record passages (one per entity, a sentence per fact or relationship), so answers drawn from
-PLG Records carry citations like any document. Claude never writes a graph query, and no tool writes the graph.
+PLG Records carry citations like any document. `policy_lineage` does the same for a controlled document: its
+versions, what superseded what and the circulars overriding its clauses, each with the evidence it was read from.
+Claude never writes a graph query, and no tool writes the graph.
 """
 
 from __future__ import annotations
 
 import asyncio
 import hashlib
+from collections.abc import Callable
+from datetime import date
 from typing import Any
 
 from pydantic import BaseModel
@@ -16,6 +20,7 @@ from pydantic import BaseModel
 from plg.agents.runtime import Source, Tool
 from plg.entities.cypher import HUB_LABELS, MAX_HOPS
 from plg.entities.model import Edge, Node
+from plg.entities.policy import PolicyLineage
 from plg.entities.store import EntityContext, GraphStore
 from plg.search.models import Chunk
 
@@ -72,7 +77,78 @@ def context_sources(context: EntityContext) -> list[Source]:
     ]
 
 
-def entity_tools(graph: GraphStore) -> list[Tool]:
+class LineageInput(BaseModel):
+    policy_id: str
+    as_of: date | None = None
+
+
+def _period(start: object, end: object) -> str:
+    if start and end:
+        return f"{start} to {end}"
+    return f"from {start}" if start else "(no effective date recorded)"
+
+
+def lineage_chunk(found: PolicyLineage) -> Chunk:
+    """The lineage as one citable passage, a sentence per fact; evidence quotes are part of the sentence."""
+    lines = [f"{found.policy_id} {found.title} has {len(found.versions)} version(s)."]
+    for v in reversed(found.versions):
+        state = "the current version" if v.status == "current" else "superseded"
+        lines.append(f"{v.id} is {state}, in force {_period(v.effective_from, v.effective_to)}.")
+    for s in found.supersessions:
+        lines.append(f'{s.newer} supersedes {s.older}: "{s.evidence_quote}".')
+    for o in found.overrides:
+        limit = f" for {o.scope}" if o.scope else ""
+        lines.append(
+            f"{o.circular_id} (effective {_period(o.effective_from, o.effective_to)}) overrides clause "
+            f"{o.clause_number} of {found.policy_id} "
+            f'v{o.policy_version}{limit}: "{o.evidence_quote}".'
+        )
+        if o.scope:
+            lines.append(f"Clause {o.clause_number} of v{o.policy_version} still applies to everything outside {o.scope}.")
+    text = "\n".join(lines)
+    return Chunk(
+        doc_id=found.policy_id, doc_type="record", title=f"Policy lineage: {found.policy_id} {found.title}",
+        source_system="plg_records", source_path=f"plg_records/lineage/{found.policy_id}",
+        content_hash=hashlib.sha256(text.encode()).hexdigest(), chunk_id=f"lineage:{found.policy_id}", seq=0,
+        header="", text=text, location="Policy lineage", vector=[],
+    )
+
+
+def lineage_tool(graph: GraphStore, on_lineage: Callable[[PolicyLineage], None] | None = None) -> Tool:
+    async def run(raw: dict[str, Any]) -> str | list[Source]:
+        args = LineageInput.model_validate(raw)
+        found = await asyncio.to_thread(graph.policy_lineage, args.policy_id, args.as_of)
+        if found is None:
+            return f"No controlled document has the ID {args.policy_id!r}. Search the corpus for it instead."
+        if on_lineage:
+            on_lineage(found)
+        chunk = lineage_chunk(found)
+        return [Source(chunk, chunk.title)]
+
+    return Tool(
+        name="policy_lineage",
+        description=(
+            "The lineage of one policy or SOP: every version with its effective dates, which version superseded "
+            "which, and the circulars that override its clauses (and for which units). Use it for 'what is our "
+            "current position on X', 'what changed' and 'what was the rule on <date>'. Takes the document ID, e.g. "
+            "PLG-POL-003. Search the corpus for the clause wording itself."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "policy_id": {"type": "string", "description": "A policy or SOP ID such as PLG-POL-001."},
+                "as_of": {
+                    "type": "string", "format": "date",
+                    "description": "For a question about an earlier date: the version in force then is marked current.",
+                },
+            },
+            "required": ["policy_id"],
+        },
+        run=run,
+    )
+
+
+def entity_tools(graph: GraphStore, on_lineage: Callable[[PolicyLineage], None] | None = None) -> list[Tool]:
     async def resolve(raw: dict[str, Any]) -> str:
         args = ResolveInput.model_validate(raw)
         found = await asyncio.to_thread(graph.resolve_entities, args.text, args.labels)
@@ -123,4 +199,5 @@ def entity_tools(graph: GraphStore) -> list[Tool]:
             },
             run=context,
         ),
+        lineage_tool(graph, on_lineage),
     ]

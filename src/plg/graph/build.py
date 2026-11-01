@@ -21,6 +21,7 @@ from plg.data.semantic import SemanticLayer, load_semantic_layer
 from plg.data.warehouse import Warehouse
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
+from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
 from plg.graph.state import Finding, Intent, PLGGraph, PLGState
 from plg.llm import AgentMessage, Block, LLMClient, Message
@@ -129,8 +130,18 @@ def build_graph(
         return state.get("intents") or [MERGE]
 
     async def knowledge_node(state: PLGState) -> PLGState:
-        result = await knowledge.answer(llm, retriever, vocab, agent_conversation(state), state["question"], entities)
+        stances: dict[str, PolicyLineage] = {}
+
+        def remember(found: PolicyLineage) -> None:
+            stances.setdefault(found.policy_id, found)
+
+        result = await knowledge.answer(
+            llm, retriever, vocab, agent_conversation(state), state["question"], entities,
+            on_lineage=remember,
+        )
         write = get_stream_writer()
+        for stance in stances.values():
+            write({"policy_stance": stance.model_dump(mode="json")})
         for n, citation in enumerate(result.citations, start=1):
             write({"citation": citation.model_dump(), "index": n})
         return {"findings": [Finding(specialist=KNOWLEDGE, text=result.text, citations=result.citations)]}

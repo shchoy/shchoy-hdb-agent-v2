@@ -2,8 +2,9 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
-import { parseRunEvents, type CitationEvent, type DraftEvent } from "@/lib/events";
+import { parseRunEvents, type CitationEvent, type DraftEvent, type PolicyStanceEvent } from "@/lib/events";
 import { DraftPreview } from "./DraftPreview";
+import { PolicyStanceCard } from "./PolicyStanceCard";
 import { SourceViewer } from "./SourceViewer";
 import styles from "./ask.module.css";
 
@@ -14,6 +15,7 @@ type Answer = {
   answer: string;
   citations: CitationEvent[];
   drafts: DraftEvent[];
+  stances: PolicyStanceEvent[];
   trajectory: Step[];
 };
 
@@ -50,8 +52,9 @@ export function AskScreen() {
     let answer = "";
     let citations: CitationEvent[] = [];
     let drafts: DraftEvent[] = [];
+    let stances: PolicyStanceEvent[] = [];
     const update = (status: "running" | "done") =>
-      setRun({ status, question: text, answer, citations, drafts, trajectory });
+      setRun({ status, question: text, answer, citations, drafts, stances, trajectory });
     update("running");
     try {
       threadId.current ??= await createThread();
@@ -83,6 +86,10 @@ export function AskScreen() {
             break;
           case "draft":
             drafts = [...drafts, event];
+            update("running");
+            break;
+          case "policy_stance":
+            stances = [...stances, event];
             update("running");
             break;
           case "error":
@@ -166,7 +173,9 @@ export function AskScreen() {
               <div aria-live="polite" aria-busy={running}>
                 <ReactMarkdown skipHtml>{run.answer}</ReactMarkdown>
               </div>
-              {run.citations.length > 0 && <Sources citations={run.citations} />}
+              {(run.citations.length > 0 || run.stances.length > 0) && (
+                <Sources citations={run.citations} stances={run.stances} />
+              )}
               {run.drafts.map((draft) => (
                 <DraftPreview key={draft.draft_id} draft={draft} />
               ))}
@@ -179,12 +188,15 @@ export function AskScreen() {
 }
 
 /** Citation chips: the number used in the answer, the document and section; open one to read the quoted span. */
-function Sources({ citations }: { citations: CitationEvent[] }) {
+function Sources({ citations, stances }: { citations: CitationEvent[]; stances: PolicyStanceEvent[] }) {
   return (
     <>
       <h3 id="sources-heading" className={styles.sourcesHeading}>
         Sources
       </h3>
+      {stances.map((stance) => (
+        <PolicyStanceCard key={stance.policy_id} stance={stance} />
+      ))}
       <ol aria-labelledby="sources-heading" className={styles.sources}>
         {citations.map((c) => (
           <li key={c.index}>

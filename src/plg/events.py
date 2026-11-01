@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from plg.agents.runtime import Citation
 from plg.data.trace import SqlTrace
 from plg.drafting.model import Draft
+from plg.entities.policy import PolicyLineage
 
 
 class NodeEvent(BaseModel):
@@ -49,6 +50,13 @@ class DraftEvent(Draft):
     seq: int
 
 
+class PolicyStanceEvent(PolicyLineage):
+    """PLG's position on one policy: the version in force, the versions it superseded and the circulars overriding it."""
+
+    type: Literal["policy_stance"] = "policy_stance"
+    seq: int
+
+
 class DoneEvent(BaseModel):
     type: Literal["done"] = "done"
     seq: int
@@ -65,5 +73,5 @@ class ErrorEvent(BaseModel):
 
 
 RunEvent = Annotated[
-    NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
+    NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
 ]

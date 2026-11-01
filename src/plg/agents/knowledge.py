@@ -8,6 +8,7 @@ abbreviations in the question are resolved through the vocabulary index and adde
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from datetime import date
 from typing import Any
 
@@ -15,6 +16,7 @@ from pydantic import BaseModel
 
 from plg.agents.entities import entity_tools
 from plg.agents.runtime import AgentResult, Source, Tool, run_agent
+from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
 from plg.llm import AgentMessage, LLMClient
 from plg.ontology.vocab import TermMatch, VocabIndex
@@ -36,8 +38,14 @@ tenancies and letters; call entity_context on its unit as well for feedback, tic
 entities match a name closely, say so and name them rather than guessing.
 - Give PLG's current stance: the version in force, its effective date, and what it superseded when the \
 sources say so. Searches return documents in force today unless you set `as_of` to ask about an earlier date.
-- If another document (an SOP, guide, FAQ or email) contradicts the current policy, say which one and that \
-the policy prevails.
+- For a policy topic, call policy_lineage with the policy's ID (find it by searching if you don't know it). It lists \
+the versions with effective dates, what superseded what and the circulars overriding clauses, and for which \
+units. Where a circular overrides a clause only for some units (e.g. NC units), state the rule for each kind of \
+unit and the date it took effect; the original clause still governs the rest. For "what was the rule on <date>", \
+search with `as_of` set to that date and use the lineage to name the version then in force.
+- If another document (an SOP, guide, FAQ, training deck or email) contradicts the current policy or circular \
+(an older figure, deadline or period), say which document, what it says, and that the policy prevails. Check the \
+other documents your searches return against the current position before you answer.
 - If the results don't answer the question, say plainly that the indexed sources don't cover it. Never \
 answer from general knowledge.
 - Be concise and use PLG's own terms."""
@@ -120,6 +128,7 @@ async def answer(
     messages: list[AgentMessage],
     question: str,
     entities: GraphStore | None = None,
+    on_lineage: Callable[[PolicyLineage], None] | None = None,
 ) -> AgentResult:
     doc_types = [c.notation for c in vocab.scheme("plg:document_types") if c.notation]
     return await run_agent(
@@ -127,6 +136,6 @@ async def answer(
         node=NODE,
         system=SYSTEM,
         context=describe_terms(vocab.find_terms(question)),
-        tools=[search_tool(retriever, vocab, doc_types), *(entity_tools(entities) if entities else [])],
+        tools=[search_tool(retriever, vocab, doc_types), *(entity_tools(entities, on_lineage) if entities else [])],
         messages=messages,
     )

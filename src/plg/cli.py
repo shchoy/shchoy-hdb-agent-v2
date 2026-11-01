@@ -171,6 +171,23 @@ def graph_build() -> None:
         typer.echo(f"Skipped: {problem}", err=True)
 
 
+@graph_app.command("lineage")
+def graph_lineage() -> None:
+    """Have Haiku extract SUPERSEDES / OVERRIDES / APPLIES edges from the indexed corpus into the graph."""
+    from plg.entities.writer import GraphWriter
+    from plg.ingest.lineage import extract_lineage
+    from plg.search.lance import LanceSearchStore
+
+    settings = Settings.from_env()
+    embedder = make_embedder(settings)
+    store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
+    graph = open_graph(settings)
+    report = asyncio.run(extract_lineage(make_llm(settings), store, GraphWriter(settings.graph_dir, graph)))
+    typer.echo(f"Wrote {report.nodes} nodes and {report.edges} edges to {settings.graph_dir / 'delta'}")
+    for problem in report.dropped:
+        typer.echo(f"Dropped: {problem}", err=True)
+
+
 @graph_app.command("show")
 def graph_show(entity: str, hops: int = 2) -> None:
     """Resolve a name, unit number or ID and print what surrounds the best match."""

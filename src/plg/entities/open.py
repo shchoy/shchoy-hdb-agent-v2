@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import threading
+from datetime import date
 
 from plg.config import Settings
 from plg.entities.local import LocalGraphStore
 from plg.entities.spine import write_spine
+from plg.entities.policy import PolicyLineage
 from plg.entities.store import EntityContext, EntityRef
 
 
@@ -36,3 +38,6 @@ class LazyGraph:
 
     def entity_context(self, entity_id: str, hops: int = 2) -> EntityContext | None:
         return self._open().entity_context(entity_id, hops)
+
+    def policy_lineage(self, policy_id: str, as_of: date | None = None) -> PolicyLineage | None:
+        return self._open().policy_lineage(policy_id, as_of)

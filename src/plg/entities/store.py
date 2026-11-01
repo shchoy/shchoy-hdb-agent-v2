@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Protocol
 
 from pydantic import BaseModel
 
 from plg.entities.model import Edge, Node
+from plg.entities.policy import PolicyLineage
 
 
 class EntityRef(BaseModel):
@@ -33,4 +35,10 @@ class GraphStore(Protocol):
 
     def entity_context(self, entity_id: str, hops: int = 2) -> EntityContext | None:
         """The entity and its neighbourhood within `hops` (1 or 2) edges, or None for an unknown ID."""
+        ...
+
+    def policy_lineage(self, policy_id: str, as_of: date | None = None) -> PolicyLineage | None:
+        """Versions of a controlled document (e.g. `PLG-POL-003`), what superseded what, and the circulars
+        overriding its clauses; None when no such document is in the graph. With `as_of`, `current` is the version
+        in force on that date."""
         ...

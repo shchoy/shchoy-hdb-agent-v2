@@ -88,7 +88,7 @@ def llm() -> ScriptedLLMClient:
 
 
 @pytest.fixture
-def make_api(llm: ScriptedLLMClient) -> Iterator[Callable[..., Api]]:
+def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., Api]]:
     clients: list[TestClient] = []
 
     def factory(
@@ -97,6 +97,7 @@ def make_api(llm: ScriptedLLMClient) -> Iterator[Callable[..., Api]]:
         entities: GraphStore | None = None,
         **settings: object,
     ) -> Api:
+        settings.setdefault("threads_db", tmp_path / "threads.sqlite")
         app = create_app(Settings(**settings), llm=llm, searcher=searcher, store=store, entities=entities)  # type: ignore[arg-type]
         client = TestClient(app)
         clients.append(client.__enter__())

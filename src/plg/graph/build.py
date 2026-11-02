@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import re
 from collections.abc import AsyncIterator, Sequence
+from typing import Any
 
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
@@ -23,6 +25,7 @@ from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
 from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
+from plg.graph import summary as history
 from plg.graph.state import Finding, Intent, PLGGraph, PLGState
 from plg.llm import AgentMessage, Block, LLMClient, Message
 from plg.ontology.glossary import Glossary, load_glossary
@@ -34,6 +37,7 @@ KNOWLEDGE = knowledge.NODE
 DATA = data.NODE
 DRAFTING = drafting.NODE
 MERGE = "merge"
+SUMMARISE = history.NODE
 
 ROUTE_SYSTEM = """\
 You route questions from officers of the Properties & Land Group (PLG) to specialists.
@@ -100,15 +104,36 @@ def build_graph(
     layer: SemanticLayer | None = None,
     templates: TemplateLibrary | None = None,
     drafts: DraftStore | None = None,
+    checkpointer: BaseCheckpointSaver[Any] | None = None,
+    settings: Settings | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
     layer = layer or load_semantic_layer()
-    templates = templates or TemplateLibrary(Settings.from_env().corpus_dir)
+    settings = settings or Settings.from_env()
+    templates = templates or TemplateLibrary(settings.corpus_dir)
     drafts = drafts or DraftStore()
 
+    def unsummarised(state: PLGState) -> list[Message]:
+        return state.get("messages", [])[state.get("summarised", 0):]
+
     def conversation(state: PLGState) -> list[Message]:
-        return [*state.get("messages", []), {"role": "user", "content": state["question"]}]
+        recent = unsummarised(state)
+        earlier: list[Message] = (
+            [{"role": "user", "content": history.SUMMARY_LEAD + state["summary"]}] if state.get("summary") else []
+        )
+        return [*earlier, *recent, {"role": "user", "content": state["question"]}]
+
+    def start(state: PLGState) -> str:
+        recent = unsummarised(state)
+        too_long = history.estimate_tokens(recent, state.get("summary", "")) > settings.history_token_threshold
+        return SUMMARISE if too_long and len(recent) > settings.history_keep_messages else ROUTE
+
+    async def summarise_history(state: PLGState) -> PLGState:
+        recent = unsummarised(state)
+        cut = len(recent) - settings.history_keep_messages
+        folded = await history.fold(llm, recent[:cut], state.get("summary", ""))
+        return {"summary": folded, "summarised": state.get("summarised", 0) + cut}
 
     def agent_conversation(state: PLGState) -> list[AgentMessage]:
         return [{"role": m["role"], "content": m["content"]} for m in conversation(state)]
@@ -181,13 +206,15 @@ def build_graph(
     graph.add_node(DATA, data_node)
     graph.add_node(DRAFTING, drafting_node)
     graph.add_node(MERGE, merge)
-    graph.add_edge(START, ROUTE)
+    graph.add_node(SUMMARISE, summarise_history)
+    graph.add_conditional_edges(START, start, [SUMMARISE, ROUTE])
+    graph.add_edge(SUMMARISE, ROUTE)
     graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, MERGE])
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
     graph.add_edge(DRAFTING, MERGE)
     graph.add_edge(MERGE, END)
-    return graph.compile(checkpointer=InMemorySaver())
+    return graph.compile(checkpointer=checkpointer or InMemorySaver())
 
 
 async def _fuse(llm: LLMClient, messages: list[Message], findings: list[Finding]) -> AsyncIterator[str]:

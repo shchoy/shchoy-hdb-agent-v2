@@ -13,6 +13,8 @@ export type CitationEvent = Schemas["CitationEvent"];
 export type DraftEvent = Schemas["DraftEvent"];
 export type PolicyStanceEvent = Schemas["PolicyStanceEvent"];
 export type UserCtx = Schemas["UserCtx"];
+export type ThreadSummary = Schemas["ThreadSummary"];
+export type ThreadView = Schemas["ThreadView"];
 
 /** A role for display, e.g. "estate_manager" → "estate manager". */
 export function roleLabel(role: UserCtx["role"]): string {

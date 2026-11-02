@@ -218,3 +218,44 @@
 .stance details {
   margin-top: 0.25rem;
 }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(10rem, 16rem) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.threads {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.threads ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.threads li button {
+  width: 100%;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.threads li button[aria-current="true"] {
+  font-weight: bold;
+}
+
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  color: var(--muted);
+}

@@ -59,6 +59,9 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_API_HOST` | `127.0.0.1` | `plg-api` bind address |
 | `PLG_API_PORT` | `8000` | `plg-api` port |
 | `PLG_RECORDS_DB` | `poc-data/plg_records.db` | PLG Records SQLite database (read-only; source of the staff personas) |
+| `PLG_THREADS_DB` | `.plg/threads.sqlite` | Conversations: LangGraph checkpoints and thread owners; they survive a `plg-api` restart |
+| `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
+| `PLG_HISTORY_KEEP_MESSAGES` | `4` | Recent messages kept verbatim when folding |
 | `PLG_RERANK_BACKEND` | `voyage` | `voyage` reranks with Voyage's hosted reranker (uses `VOYAGE_API_KEY`); `local` runs a cross-encoder on this machine (no document text leaves it) |
 | `PLG_VOYAGE_RERANK_MODEL` | `rerank-2.5` | Voyage rerank model (e.g. `rerank-2.5-lite` for lower latency) |
 

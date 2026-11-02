@@ -35,6 +35,9 @@ class PLGState(TypedDict, total=False):
     # Completed exchanges only. A turn joins the history when it is answered, so a failed run leaves nothing
     # behind and retrying it doesn't repeat the question.
     messages: Annotated[list[Message], operator.add]
+    # Older turns folded by `summarise_history`: the first `summarised` messages are replaced by `summary`.
+    summary: str
+    summarised: int
     question: str
     user: UserCtx
     intents: list[Intent]

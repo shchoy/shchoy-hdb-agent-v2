@@ -50,6 +50,41 @@ export async function createThread(staffId: string): Promise<{ status: number; b
   return { status: response.status, body: data ?? error };
 }
 
+/** The officer's own conversations; plg-api's status and JSON body, for the BFF to relay. */
+export async function listThreads(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/threads", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** One conversation rebuilt from its checkpoint. */
+export async function getThread(staffId: string, threadId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/threads/{thread_id}", {
+    params: { path: { thread_id: threadId }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** Re-attaches to a thread's latest run, from after `lastEventId`. The SSE body is returned unread. */
+export function resumeRun(
+  staffId: string,
+  threadId: string,
+  lastEventId: string | null,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const path = "/threads/{thread_id}/runs/latest";
+  return fetch(plgApiUrl() + path.replace("{thread_id}", encodeURIComponent(threadId)), {
+    headers: {
+      Accept: "text/event-stream",
+      [USER_HEADER]: staffId,
+      ...(lastEventId ? { "Last-Event-ID": lastEventId } : {}),
+    },
+    cache: "no-store",
+    signal,
+  });
+}
+
 type RunPath = "/threads/{thread_id}/runs";
 type RunBody = paths[RunPath]["post"]["requestBody"]["content"]["application/json"];
 

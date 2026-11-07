@@ -51,6 +51,10 @@ class SearchStore(Protocol):
 
     def delete_memory(self, namespace: tuple[str, ...], key: str) -> None: ...
 
+    def list_memory(self, namespace_prefix: tuple[str, ...], *, now: datetime) -> list[MemoryItem]:
+        """Every unexpired item under the namespace prefix whatever its status, oldest first."""
+        ...
+
     def search_memory(
         self,
         namespace_prefix: tuple[str, ...],

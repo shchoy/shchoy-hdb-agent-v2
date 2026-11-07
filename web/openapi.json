@@ -122,6 +122,337 @@
             }
           }
         }
+      },
+      "get": {
+        "summary": "List Threads",
+        "description": "The officer's own conversations, most recent first.",
+        "operationId": "list_threads_threads_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ThreadSummary"
+                  },
+                  "title": "Response List Threads Threads Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threads/{thread_id}": {
+      "get": {
+        "summary": "Get Thread",
+        "operationId": "get_thread_threads__thread_id__get",
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory": {
+      "get": {
+        "summary": "List Memory",
+        "description": "The officer's own memories, with where each came from.",
+        "operationId": "list_memory_memory_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemoryView"
+                  },
+                  "title": "Response List Memory Memory Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/{memory_id}": {
+      "get": {
+        "summary": "Get Memory",
+        "operationId": "get_memory_memory__memory_id__get",
+        "parameters": [
+          {
+            "name": "memory_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Memory Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Edit Memory",
+        "operationId": "edit_memory_memory__memory_id__patch",
+        "parameters": [
+          {
+            "name": "memory_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Memory Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryEdit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Forget Memory",
+        "operationId": "forget_memory_memory__memory_id__delete",
+        "parameters": [
+          {
+            "name": "memory_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Memory Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/threads/{thread_id}/runs": {
@@ -167,6 +498,80 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events; each frame's data is one RunEvent.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunEvent"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threads/{thread_id}/runs/latest": {
+      "get": {
+        "summary": "Resume Run",
+        "description": "Re-attach to the latest run: its events after the `Last-Event-ID` the client last saw (default: all).",
+        "operationId": "resume_run_threads__thread_id__runs_latest_get",
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id"
+            }
+          },
+          {
+            "name": "last-event-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Last-Event-Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Server-Sent Events; each frame's data is one RunEvent.",
@@ -401,6 +806,60 @@
           }
         }
       }
+    },
+    "/drafts/{draft_id}/file": {
+      "get": {
+        "summary": "Get Draft File",
+        "description": "The draft as a DOCX file. Only the officer who asked for it can download it.",
+        "operationId": "get_draft_file_drafts__draft_id__file_get",
+        "parameters": [
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Draft Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The draft as a DOCX file.",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -582,6 +1041,133 @@
         "title": "Highlight",
         "description": "`blocks[block].text[start:end]` is part of the cited span."
       },
+      "MemoryEdit": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "retired"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "title": "MemoryEdit"
+      },
+      "MemoryView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "profile",
+              "preference",
+              "episode"
+            ],
+            "title": "Kind"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "pending_review",
+              "retired"
+            ],
+            "title": "Status"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "text",
+          "status",
+          "provenance",
+          "confidence",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MemoryView",
+        "description": "One memory as the officer sees it."
+      },
+      "Message": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "Message"
+      },
       "RunRequest": {
         "properties": {
           "message": {
@@ -607,6 +1193,72 @@
           "thread_id"
         ],
         "title": "ThreadCreated"
+      },
+      "ThreadSummary": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id",
+          "title",
+          "updated_at"
+        ],
+        "title": "ThreadSummary"
+      },
+      "ThreadView": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "type": "array",
+            "title": "Messages"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "running": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Running"
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id",
+          "title",
+          "messages",
+          "summary"
+        ],
+        "title": "ThreadView",
+        "description": "A conversation rebuilt from its checkpoint: every exchange, and the summary standing in for older turns."
       },
       "UserCtx": {
         "properties": {
@@ -756,6 +1408,61 @@
         "title": "CitationEvent",
         "type": "object"
       },
+      "ConceptUsed": {
+        "description": "A glossary term version a query relied on, with the dates it was in force.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective To"
+          }
+        },
+        "required": [
+          "id",
+          "concept",
+          "version",
+          "label",
+          "effective_from",
+          "effective_to"
+        ],
+        "title": "ConceptUsed",
+        "type": "object"
+      },
       "DoneEvent": {
         "properties": {
           "type": {
@@ -778,6 +1485,75 @@
           "run_id"
         ],
         "title": "DoneEvent",
+        "type": "object"
+      },
+      "DraftEvent": {
+        "description": "A letter drafted from an approved template: HTML preview, open slots and personal-data flags. Not sent.",
+        "properties": {
+          "draft_id": {
+            "title": "Draft Id",
+            "type": "string"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "template_title": {
+            "title": "Template Title",
+            "type": "string"
+          },
+          "template_version": {
+            "title": "Template Version",
+            "type": "string"
+          },
+          "slots": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Slots",
+            "type": "object"
+          },
+          "unfilled": {
+            "items": {
+              "$ref": "#/components/schemas/UnfilledSlot"
+            },
+            "title": "Unfilled",
+            "type": "array"
+          },
+          "pii": {
+            "items": {
+              "$ref": "#/components/schemas/PiiFinding"
+            },
+            "title": "Pii",
+            "type": "array"
+          },
+          "html": {
+            "title": "Html",
+            "type": "string"
+          },
+          "type": {
+            "const": "draft",
+            "default": "draft",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "draft_id",
+          "template_id",
+          "template_title",
+          "template_version",
+          "slots",
+          "unfilled",
+          "pii",
+          "html",
+          "seq"
+        ],
+        "title": "DraftEvent",
         "type": "object"
       },
       "ErrorEvent": {
@@ -844,6 +1620,307 @@
         "title": "NodeEvent",
         "type": "object"
       },
+      "Override": {
+        "description": "A circular that replaces a clause of one version, possibly only for some units.",
+        "properties": {
+          "circular_id": {
+            "title": "Circular Id",
+            "type": "string"
+          },
+          "circular_title": {
+            "title": "Circular Title",
+            "type": "string"
+          },
+          "circular_doc_id": {
+            "title": "Circular Doc Id",
+            "type": "string"
+          },
+          "clause_id": {
+            "title": "Clause Id",
+            "type": "string"
+          },
+          "clause_number": {
+            "title": "Clause Number",
+            "type": "string"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective To"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scope"
+          },
+          "evidence_chunk_id": {
+            "title": "Evidence Chunk Id",
+            "type": "string"
+          },
+          "evidence_quote": {
+            "title": "Evidence Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "circular_id",
+          "circular_title",
+          "circular_doc_id",
+          "clause_id",
+          "clause_number",
+          "policy_version",
+          "evidence_chunk_id",
+          "evidence_quote"
+        ],
+        "title": "Override",
+        "type": "object"
+      },
+      "PiiFinding": {
+        "description": "Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "nric",
+              "email",
+              "phone",
+              "tenant"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "slot": {
+            "title": "Slot",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "slot",
+          "message"
+        ],
+        "title": "PiiFinding",
+        "type": "object"
+      },
+      "PolicyStanceEvent": {
+        "description": "PLG's position on one policy: the version in force, the versions it superseded and the circulars overriding it.",
+        "properties": {
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyVersion"
+            },
+            "title": "Versions",
+            "type": "array"
+          },
+          "supersessions": {
+            "items": {
+              "$ref": "#/components/schemas/Supersession"
+            },
+            "title": "Supersessions",
+            "type": "array"
+          },
+          "overrides": {
+            "items": {
+              "$ref": "#/components/schemas/Override"
+            },
+            "title": "Overrides",
+            "type": "array"
+          },
+          "type": {
+            "const": "policy_stance",
+            "default": "policy_stance",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "policy_id",
+          "title",
+          "current",
+          "versions",
+          "supersessions",
+          "overrides",
+          "seq"
+        ],
+        "title": "PolicyStanceEvent",
+        "type": "object"
+      },
+      "PolicyVersion": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "doc_id": {
+            "title": "Doc Id",
+            "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective To"
+          },
+          "status": {
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "title",
+          "version",
+          "doc_id",
+          "status"
+        ],
+        "title": "PolicyVersion",
+        "type": "object"
+      },
+      "ResultSummary": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          },
+          "sample": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Sample",
+            "type": "array"
+          }
+        },
+        "required": [
+          "columns",
+          "row_count",
+          "truncated",
+          "sample"
+        ],
+        "title": "ResultSummary",
+        "type": "object"
+      },
       "Span": {
         "description": "Character offsets into the chunk's text: `text[start:end]` is the cited quote.",
         "properties": {
@@ -861,6 +1938,123 @@
           "end"
         ],
         "title": "Span",
+        "type": "object"
+      },
+      "SqlTraceEvent": {
+        "description": "One query the data agent sent: its plan, SQL, result summary and the glossary terms it relied on.",
+        "properties": {
+          "plan": {
+            "title": "Plan",
+            "type": "string"
+          },
+          "sql": {
+            "title": "Sql",
+            "type": "string"
+          },
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResultSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/ConceptUsed"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "type": {
+            "const": "sql_trace",
+            "default": "sql_trace",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "plan",
+          "sql",
+          "as_of",
+          "status",
+          "error",
+          "result",
+          "concepts",
+          "warnings",
+          "explanation",
+          "seq"
+        ],
+        "title": "SqlTraceEvent",
+        "type": "object"
+      },
+      "Supersession": {
+        "properties": {
+          "newer": {
+            "title": "Newer",
+            "type": "string"
+          },
+          "older": {
+            "title": "Older",
+            "type": "string"
+          },
+          "evidence_chunk_id": {
+            "title": "Evidence Chunk Id",
+            "type": "string"
+          },
+          "evidence_quote": {
+            "title": "Evidence Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newer",
+          "older",
+          "evidence_chunk_id",
+          "evidence_quote"
+        ],
+        "title": "Supersession",
         "type": "object"
       },
       "TokenEvent": {
@@ -892,13 +2086,34 @@
         "title": "TokenEvent",
         "type": "object"
       },
+      "UnfilledSlot": {
+        "properties": {
+          "slot": {
+            "title": "Slot",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot",
+          "reason"
+        ],
+        "title": "UnfilledSlot",
+        "type": "object"
+      },
       "RunEvent": {
         "discriminator": {
           "mapping": {
             "citation": "#/components/schemas/CitationEvent",
             "done": "#/components/schemas/DoneEvent",
+            "draft": "#/components/schemas/DraftEvent",
             "error": "#/components/schemas/ErrorEvent",
             "node": "#/components/schemas/NodeEvent",
+            "policy_stance": "#/components/schemas/PolicyStanceEvent",
+            "sql_trace": "#/components/schemas/SqlTraceEvent",
             "token": "#/components/schemas/TokenEvent"
           },
           "propertyName": "type"
@@ -912,6 +2127,15 @@
           },
           {
             "$ref": "#/components/schemas/CitationEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SqlTraceEvent"
+          },
+          {
+            "$ref": "#/components/schemas/DraftEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PolicyStanceEvent"
           },
           {
             "$ref": "#/components/schemas/DoneEvent"

@@ -10,7 +10,11 @@ import type { components } from "@/lib/api/schema";
 type Schemas = components["schemas"];
 export type RunEvent = Schemas["RunEvent"];
 export type CitationEvent = Schemas["CitationEvent"];
+export type DraftEvent = Schemas["DraftEvent"];
+export type PolicyStanceEvent = Schemas["PolicyStanceEvent"];
 export type UserCtx = Schemas["UserCtx"];
+export type ThreadSummary = Schemas["ThreadSummary"];
+export type ThreadView = Schemas["ThreadView"];
 
 /** A role for display, e.g. "estate_manager" → "estate manager". */
 export function roleLabel(role: UserCtx["role"]): string {
@@ -38,6 +42,89 @@ export const runEventSchema = z.discriminatedUnion("type", [
     location: z.string(),
     quote: z.string(),
     span: z.object({ start: z.number().int(), end: z.number().int() }),
+  }),
+  z.object({
+    type: z.literal("sql_trace"),
+    seq,
+    plan: z.string(),
+    sql: z.string(),
+    as_of: z.string(),
+    status: z.enum(["ok", "rejected"]),
+    error: z.string().nullable(),
+    result: z
+      .object({
+        columns: z.array(z.string()),
+        row_count: z.number().int(),
+        truncated: z.boolean(),
+        sample: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+      })
+      .nullable(),
+    concepts: z.array(
+      z.object({
+        id: z.string(),
+        concept: z.string(),
+        version: z.number().int(),
+        label: z.string(),
+        effective_from: z.string().nullable(),
+        effective_to: z.string().nullable(),
+      }),
+    ),
+    warnings: z.array(z.string()),
+    explanation: z.string(),
+  }),
+  z.object({
+    type: z.literal("draft"),
+    seq,
+    draft_id: z.string(),
+    template_id: z.string(),
+    template_title: z.string(),
+    template_version: z.string(),
+    slots: z.record(z.string(), z.string()),
+    unfilled: z.array(z.object({ slot: z.string(), reason: z.string() })),
+    pii: z.array(z.object({ kind: z.enum(["nric", "email", "phone", "tenant"]), slot: z.string(), message: z.string() })),
+    html: z.string(),
+  }),
+  z.object({
+    type: z.literal("policy_stance"),
+    seq,
+    policy_id: z.string(),
+    title: z.string(),
+    current: z.string().nullable(),
+    versions: z.array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+        title: z.string(),
+        version: z.string(),
+        doc_id: z.string(),
+        effective_from: z.string().nullable(),
+        effective_to: z.string().nullable(),
+        status: z.enum(["current", "superseded"]),
+      }),
+    ),
+    supersessions: z.array(
+      z.object({
+        newer: z.string(),
+        older: z.string(),
+        evidence_chunk_id: z.string(),
+        evidence_quote: z.string(),
+      }),
+    ),
+    overrides: z.array(
+      z.object({
+        circular_id: z.string(),
+        circular_title: z.string(),
+        circular_doc_id: z.string(),
+        clause_id: z.string(),
+        clause_number: z.string(),
+        policy_version: z.string(),
+        effective_from: z.string().nullable(),
+        effective_to: z.string().nullable(),
+        scope: z.string().nullable(),
+        evidence_chunk_id: z.string(),
+        evidence_quote: z.string(),
+      }),
+    ),
   }),
   z.object({ type: z.literal("done"), seq, run_id: z.string() }),
   z.object({ type: z.literal("error"), seq, run_id: z.string(), message: z.string() }),

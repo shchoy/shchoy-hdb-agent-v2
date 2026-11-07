@@ -9,7 +9,7 @@ from typing import Any, cast
 
 from langchain_core.runnables import RunnableConfig
 
-from plg.events import CitationEvent, DoneEvent, ErrorEvent, NodeEvent, RunEvent, TokenEvent
+from plg.events import CitationEvent, DoneEvent, DraftEvent, ErrorEvent, NodeEvent, PolicyStanceEvent, RunEvent, SqlTraceEvent, TokenEvent
 from plg.graph.state import PLGGraph, PLGState
 from plg.identity import UserCtx
 
@@ -50,6 +50,12 @@ async def stream_run(
                 yield TokenEvent(seq=next_seq(), node=chunk["node"], text=chunk["token"])
             elif mode == "custom" and "citation" in chunk:
                 yield CitationEvent(seq=next_seq(), index=chunk["index"], **chunk["citation"])
+            elif mode == "custom" and "sql_trace" in chunk:
+                yield SqlTraceEvent(seq=next_seq(), **chunk["sql_trace"])
+            elif mode == "custom" and "draft" in chunk:
+                yield DraftEvent(seq=next_seq(), **chunk["draft"])
+            elif mode == "custom" and "policy_stance" in chunk:
+                yield PolicyStanceEvent(seq=next_seq(), **chunk["policy_stance"])
     except Exception:
         logger.exception("Run %s on thread %s failed", run_id, thread_id)
         yield ErrorEvent(

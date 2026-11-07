@@ -37,8 +37,31 @@ MATCH (n)
 WHERE id(n) IN $ids
 RETURN id(n) AS id, labels(n)[0] AS label, n.name AS name, properties(n) AS props"""
 
+LINEAGE_LABELS = ("Policy", "Sop", "Template")
+"""Passed as `$lineage_labels` to `policy_versions`."""
+
+POLICY_VERSIONS = """\
+MATCH (v)
+WHERE labels(v)[0] IN $lineage_labels AND v.policy_id = $policy_id
+RETURN id(v) AS id, labels(v)[0] AS label, v.name AS name, properties(v) AS props"""
+
+POLICY_SUPERSEDES = """\
+MATCH (a)-[r:SUPERSEDES]->(b)
+WHERE a.policy_id = $policy_id AND b.policy_id = $policy_id
+RETURN id(a) AS newer, id(b) AS older, properties(r) AS props"""
+
+POLICY_OVERRIDES = """\
+MATCH (c:Circular)-[r:OVERRIDES]->(cl:Clause)
+WHERE cl.policy_id = $policy_id
+RETURN id(c) AS circular, properties(c) AS circular_props, id(cl) AS clause, properties(cl) AS clause_props,
+       properties(r) AS props
+ORDER BY clause, circular"""
+
 TEMPLATES: dict[str, str] = {
     "resolve_entities": RESOLVE_ENTITIES,
     **{f"entity_context_{hops}": text for hops, text in ENTITY_CONTEXT.items()},
     "node_properties": NODE_PROPERTIES,
+    "policy_versions": POLICY_VERSIONS,
+    "policy_supersedes": POLICY_SUPERSEDES,
+    "policy_overrides": POLICY_OVERRIDES,
 }

@@ -31,6 +31,12 @@ class Settings(BaseModel):
     search_db: Path = REPO_ROOT / ".plg" / "lancedb"
     # Entity graph: spine CSVs (Neptune openCypher bulk-load format) and delta CSVs written by GraphWriter.
     graph_dir: Path = REPO_ROOT / ".plg" / "graph"
+    # Conversations: LangGraph checkpoints and thread ownership (SQLite).
+    threads_db: Path = REPO_ROOT / ".plg" / "threads.sqlite"
+    # Above this many (estimated) tokens of history, older turns are folded into a summary, keeping the last
+    # `history_keep_messages` messages verbatim.
+    history_token_threshold: int = 6000
+    history_keep_messages: int = 4
     embed_model: str = "voyage-3.5"
     embed_dim: int = 1024
     voyage_base_url: str = "https://api.voyageai.com/v1"

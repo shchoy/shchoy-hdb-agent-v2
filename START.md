@@ -6,7 +6,7 @@ How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on 
 
 | Part | Status | How to run |
 |---|---|---|
-| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
+| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations, data questions over PLG Records, letter drafting | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
 | Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in and Ask screen with citation chips | `cd web && npm run dev` |
 
 ## 1. Prerequisites
@@ -59,6 +59,9 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_API_HOST` | `127.0.0.1` | `plg-api` bind address |
 | `PLG_API_PORT` | `8000` | `plg-api` port |
 | `PLG_RECORDS_DB` | `poc-data/plg_records.db` | PLG Records SQLite database (read-only; source of the staff personas) |
+| `PLG_THREADS_DB` | `.plg/threads.sqlite` | Conversations: LangGraph checkpoints and thread owners; they survive a `plg-api` restart |
+| `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
+| `PLG_HISTORY_KEEP_MESSAGES` | `4` | Recent messages kept verbatim when folding |
 | `PLG_RERANK_BACKEND` | `voyage` | `voyage` reranks with Voyage's hosted reranker (uses `VOYAGE_API_KEY`); `local` runs a cross-encoder on this machine (no document text leaves it) |
 | `PLG_VOYAGE_RERANK_MODEL` | `rerank-2.5` | Voyage rerank model (e.g. `rerank-2.5-lite` for lower latency) |
 
@@ -84,6 +87,7 @@ This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/l
 ```
 uv run plg graph build                      # PLG Records -> Neptune-format CSVs in .plg/graph/spine (also built on first use)
 uv run plg graph show "Golden Leaf Minimart Pte Ltd"   # resolve a name, unit number or ID, then print its context
+uv run plg graph lineage                    # Haiku extracts SUPERSEDES/OVERRIDES/APPLIES edges (needs ANTHROPIC_API_KEY and a synced index: `plg sync` first)
 ```
 
 No API key needed. Override the location with `PLG_GRAPH_DIR`.
@@ -95,6 +99,30 @@ uv run plg ask "When do we issue a letter of demand?"
 ```
 
 The answer streams to the terminal, then its sources: each `[n]` in the answer is listed with its document, section and the quoted sentence. Policy and records questions are answered only from the indexed documents (current versions unless you ask about an earlier date). If the sources don't cover the question, the answer says so. If the run fails partway, the CLI prints an error to stderr and exits with code 1.
+
+### Draft a letter (issue #17)
+
+```bash
+uv run plg ask "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
+```
+
+Requests for a standard letter go to the `drafting` agent. It picks an approved template (`poc-data/docs/TPL-REM-01`, `TPL-DOC-02`, `TPL-FBK-03`), fills the slots from PLG Records with read-only lookups, lists the slots it couldn't fill (e.g. `letter_ref`) and flags personal data. Only `ANTHROPIC_API_KEY` is needed, no index. In the web app the draft appears under the answer: an HTML preview, the open slots, any personal-data flags and a **Download DOCX** link (`GET /drafts/{id}/file`, only for the officer who asked). Nothing is sent. Drafts live in memory, so they are lost when `plg-api` restarts. In `plg ask` (CLI) the draft is not shown, only the answer. Where it lives: `src/plg/drafting/`, `src/plg/agents/drafting.py`, `tests/test_drafting_api.py`.
+
+### Ask a data question (issue #12)
+
+```bash
+uv run plg ask "Which tenancies have arrears above 3 months' rent?"
+uv run plg ask "Why does the QBR say 52 vacant and the monthly report 47?"
+```
+
+Numeric questions go to the `data` agent, which looks up the glossary definition in force on the reporting date, writes one read-only SQL query over PLG Records, and explains the result. The data is a snapshot as at 2026-09-30, which is the default reporting date. No Voyage key or search index is needed for these, only `ANTHROPIC_API_KEY`.
+
+- DuckDB attaches `poc-data/plg_records.db` read-only. The first query installs DuckDB's `sqlite` extension (a one-off download, then cached under `~/.duckdb`), so the first data question, and the first test run, need network access.
+- Every query is checked before it runs: a single SELECT, only PLG Records tables (not `staff`), no table functions, then an `EXPLAIN` dry run. Anything else is rejected and the agent is told why.
+- Each query is streamed as an `sql_trace` event: plan, SQL, result summary, the glossary term versions it relied on and any data-quality warnings (duplicate tenant T-10514/T-19807, duplicate payment PAY-00001235, impossible date INSP-2025-0125, outlier rent TA-2022-00400). The web app receives these events but does not show them yet.
+- Every answer's explanation names the definition versions and effective dates it used; if the agent leaves them out they are appended as "Definitions used: …".
+- Where it lives (issue #12): `src/plg/data/` (`warehouse.py` DuckDB over SQLite, `sqlcheck.py` validator, `semantic.py` semantic layer and warnings, `trace.py` trace models), `src/plg/agents/data.py` (the agent and its `get_definition` / `run_sql` tools), the `data` node in `src/plg/graph/build.py`, `SqlTraceEvent` in `src/plg/events.py`, and tests in `tests/test_data_api.py`.
+- The semantic layer (SQL bindings per glossary term version, table notes, example queries, known data-quality issues) is `ontology/semantic.yaml`. `make ontology` dry-runs every binding and writes `src/plg/ontology/generated/semantic_layer.json`.
 
 Each search is reranked by Voyage by default, which sends the candidate chunks' text to Voyage. If Voyage is unreachable, search keeps the unreranked hybrid order and logs a warning. With `PLG_RERANK_BACKEND=local` a knowledge answer takes 30 to 60 seconds, because each search is reranked on your CPU.
 
@@ -129,6 +157,23 @@ Each SSE event has a sequence number (`id:`) and a JSON payload of type `node`, 
 
 Threads are held in memory for now, so they are lost when the server restarts.
 
+### Personal memory (issue #24)
+
+Through `plg-api` and the web app, the assistant remembers each officer across sessions: the profile from the `staff` table, the towns and preferences they mention, and what they're working on (episodes, kept 180 days). After each answer, Haiku reads only the officer's own question and the verified findings, in the background. It masks NRIC/FIN, phone numbers and emails, and merges near-duplicates. Notes are private to the officer, are never cited, and lose to policy: a note that a verified answer contradicts is flagged (`pending_review`) and left out of the prompt. Asking about an entity ID (e.g. `T-19807`) also records a `WORKED_ON` edge in the entity graph (`.plg/graph/delta`). Memory lives in the LanceDB `memory` table beside the search index, so embedding a note needs `VOYAGE_API_KEY`. If the key is missing, memory is skipped and the answer still works. `plg ask` neither reads nor writes memory.
+
+```bash
+uv run plg memory list --user S05                # what's remembered, where each note came from, flagged notes
+uv run plg memory show <id> -u S05
+uv run plg memory edit <id> "Prefers short bullet lists" -u S05
+uv run plg memory forget <id> -u S05
+
+curl -s http://127.0.0.1:8000/memory -H 'X-PLG-User: S05'
+curl -s -X PATCH http://127.0.0.1:8000/memory/<id> -H 'X-PLG-User: S05' -H 'content-type: application/json' -d '{"status":"retired"}'
+curl -s -X DELETE http://127.0.0.1:8000/memory/<id> -H 'X-PLG-User: S05'
+```
+
+In the web app, the **Memory** link in the header opens `/memory`: list, edit and forget your notes. A flagged note can't be switched back on: edit it to make the exception clear (e.g. "for NC units, 1.0 m under Circular 07/2026"), which clears the flag, or forget it. `PATCH` with `{"status":"active"}` on a flagged note returns 409. Another officer's notes return 404.
+
 ### Business glossary
 
 ```bash
@@ -145,7 +190,7 @@ The ontology, vocabularies and glossary are edited in `ontology/`. After changin
 make ontology
 ```
 
-It validates everything first (including that each glossary term's `supersedes` chain is unbroken) and, on any problem, lists them and exits 1 without writing anything.
+It validates everything first (including that each glossary term's `supersedes` chain is unbroken, and that every SQL binding in `ontology/semantic.yaml` names a glossary term and dry-runs against PLG Records) and, on any problem, lists them and exits 1 without writing anything.
 
 #### Browsing the ontology
 

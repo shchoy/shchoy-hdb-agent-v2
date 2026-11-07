@@ -45,6 +45,21 @@ describe("parseRunEvents", () => {
     expect(events).toEqual([citation]);
   });
 
+  it("reads an sql_trace with its plan, SQL, result summary and glossary terms", async () => {
+    const trace = {
+      type: "sql_trace", seq: 3, plan: "Count vacant units", sql: "SELECT COUNT(*) FROM units",
+      as_of: "2026-08-31", status: "ok", error: null,
+      result: { columns: ["n"], row_count: 1, truncated: false, sample: [[47]] },
+      concepts: [{
+        id: "plg:Vacant_v2", concept: "plg:Vacant", version: 2, label: "Vacant unit",
+        effective_from: "2026-04-15", effective_to: null,
+      }],
+      warnings: [], explanation: "47 under Vacant v2.",
+    };
+    const events = await collect(streamOf(`event: sql_trace\ndata: ${JSON.stringify(trace)}\n\n`));
+    expect(events).toEqual([trace]);
+  });
+
   it("ignores heartbeat comments", async () => {
     const events = await collect(streamOf(`: ping\r\n\r\nevent: done\r\ndata: ${done}\r\n\r\n`));
     expect(events).toEqual([{ type: "done", seq: 2, run_id: "r1" }]);

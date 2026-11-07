@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { roleLabel } from "@/lib/events";
 import { currentUser } from "@/lib/server/session";
@@ -16,6 +17,7 @@ export default async function AskPage() {
         <p>
           Signed in as <strong>{user.name}</strong> ({roleLabel(user.role)})
         </p>
+        <Link href="/memory">Memory</Link>
         <SignOutButton />
       </header>
       <main>

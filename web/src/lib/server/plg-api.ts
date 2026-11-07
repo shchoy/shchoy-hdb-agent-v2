@@ -50,6 +50,41 @@ export async function createThread(staffId: string): Promise<{ status: number; b
   return { status: response.status, body: data ?? error };
 }
 
+/** The officer's own conversations; plg-api's status and JSON body, for the BFF to relay. */
+export async function listThreads(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/threads", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** One conversation rebuilt from its checkpoint. */
+export async function getThread(staffId: string, threadId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/threads/{thread_id}", {
+    params: { path: { thread_id: threadId }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** Re-attaches to a thread's latest run, from after `lastEventId`. The SSE body is returned unread. */
+export function resumeRun(
+  staffId: string,
+  threadId: string,
+  lastEventId: string | null,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const path = "/threads/{thread_id}/runs/latest";
+  return fetch(plgApiUrl() + path.replace("{thread_id}", encodeURIComponent(threadId)), {
+    headers: {
+      Accept: "text/event-stream",
+      [USER_HEADER]: staffId,
+      ...(lastEventId ? { "Last-Event-ID": lastEventId } : {}),
+    },
+    cache: "no-store",
+    signal,
+  });
+}
+
 type RunPath = "/threads/{thread_id}/runs";
 type RunBody = paths[RunPath]["post"]["requestBody"]["content"]["application/json"];
 
@@ -103,6 +138,15 @@ export async function getChunkLocation(
   return { status: response.status, body: data ?? error };
 }
 
+/** A draft's DOCX file, unread, so the BFF can stream it through. */
+export function getDraftFile(staffId: string, draftId: string): Promise<Response> {
+  const path = "/drafts/{draft_id}/file";
+  return fetch(plgApiUrl() + path.replace("{draft_id}", encodeURIComponent(draftId)), {
+    headers: { [USER_HEADER]: staffId },
+    cache: "no-store",
+  });
+}
+
 /** The source file, unread, so the BFF can stream it through. */
 export function getDocumentFile(staffId: string, docId: string): Promise<Response> {
   const path = "/documents/{doc_id}/file";
@@ -110,4 +154,33 @@ export function getDocumentFile(staffId: string, docId: string): Promise<Respons
     headers: { [USER_HEADER]: staffId },
     cache: "no-store",
   });
+}
+
+export type MemoryEdit = components["schemas"]["MemoryEdit"];
+
+/** The officer's own memories; plg-api's status and JSON body, for the BFF to relay. */
+export async function listMemory(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/memory", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+export async function editMemory(
+  staffId: string,
+  memoryId: string,
+  edit: MemoryEdit,
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PATCH("/memory/{memory_id}", {
+    params: { path: { memory_id: memoryId }, header: { "x-plg-user": staffId } },
+    body: edit,
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+export async function forgetMemory(staffId: string, memoryId: string): Promise<{ status: number; body: unknown }> {
+  const { error, response } = await client().DELETE("/memory/{memory_id}", {
+    params: { path: { memory_id: memoryId }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: error ?? null };
 }

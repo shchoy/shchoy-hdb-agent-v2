@@ -1,0 +1,112 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"load_memory","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"load_memory","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"route","status":"started"}
+
+id: 4
+event: node
+data: {"type":"node","seq":4,"node":"route","status":"finished"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"knowledge","status":"started"}
+
+id: 6
+event: policy_stance
+data: {"policy_id":"PLG-POL-003","title":"PLG-POL-003 Rental Arrears Management Policy (v2.0)","current":"PLG-POL-003 v2.0","versions":[{"id":"PLG-POL-003 v1.0","label":"Policy","title":"PLG-POL-003 Rental Arrears Management Policy (v1.0)","version":"1.0","doc_id":"SP-905529","effective_from":"2024-03-01","effective_to":"2026-03-31","status":"superseded"},{"id":"PLG-POL-003 v2.0","label":"Policy","title":"PLG-POL-003 Rental Arrears Management Policy (v2.0)","version":"2.0","doc_id":"SP-888995","effective_from":"2026-04-01","effective_to":null,"status":"current"}],"supersessions":[{"newer":"PLG-POL-003 v2.0","older":"PLG-POL-003 v1.0","evidence_chunk_id":"SP-888995#000","evidence_quote":"Supersedes | v1.0 (1 Mar 2024)"}],"overrides":[],"type":"policy_stance","seq":6}
+
+id: 7
+event: policy_stance
+data: {"policy_id":"PLG-POL-001","title":"PLG-POL-001 Trade Mix & Usage Policy (v3.0)","current":"PLG-POL-001 v3.0","versions":[{"id":"PLG-POL-001 v3.0","label":"Policy","title":"PLG-POL-001 Trade Mix & Usage Policy (v3.0)","version":"3.0","doc_id":"SP-608457","effective_from":"2025-07-01","effective_to":null,"status":"current"}],"supersessions":[],"overrides":[{"circular_id":"Circular 07/2026","circular_title":"PLG Circular 07/2026 - Display Area at NCs (Pilot)","circular_doc_id":"SP-398077","clause_id":"PLG-POL-001 v3.0 cl. 7.3","clause_number":"7.3","policy_version":"3.0","effective_from":"2026-08-01","effective_to":"2027-07-31","scope":"NC units only","evidence_chunk_id":"SP-398077#000","evidence_quote":"replaces the 0.6 m limit in clause 7.3 of PLG-POL-001 Trade Mix & Usage Policy v3.0 for NC units"}],"type":"policy_stance","seq":7}
+
+id: 8
+event: citation
+data: {"doc_id":"PLG-POL-001","chunk_id":"lineage:PLG-POL-001","title":"Policy lineage: PLG-POL-001 PLG-POL-001 Trade Mix & Usage Policy (v3.0)","version":null,"location":"Policy lineage","quote":"Circular 07/2026 (effective 2026-08-01 to 2027-07-31) overrides clause 7.3 of PLG-POL-001 v3.0 for NC units only: \"replaces the 0.6 m limit in clause 7.3 of PLG-POL-001 Trade Mix & Usage Policy v3.0 for NC units\".","span":{"start":141,"end":354},"type":"citation","seq":8,"index":1}
+
+id: 9
+event: node
+data: {"type":"node","seq":9,"node":"knowledge","status":"finished"}
+
+id: 10
+event: node
+data: {"type":"node","seq":10,"node":"merge","status":"started"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":"NC"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" units:"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" 1.0"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" m"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" from"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" 1"}
+
+id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" Aug"}
+
+id: 18
+event: token
+data: {"type":"token","seq":18,"node":"merge","text":" 2026"}
+
+id: 19
+event: token
+data: {"type":"token","seq":19,"node":"merge","text":" [1]."}
+
+id: 20
+event: token
+data: {"type":"token","seq":20,"node":"merge","text":" Void-deck"}
+
+id: 21
+event: token
+data: {"type":"token","seq":21,"node":"merge","text":" shops:"}
+
+id: 22
+event: token
+data: {"type":"token","seq":22,"node":"merge","text":" still"}
+
+id: 23
+event: token
+data: {"type":"token","seq":23,"node":"merge","text":" 0.6"}
+
+id: 24
+event: token
+data: {"type":"token","seq":24,"node":"merge","text":" m."}
+
+id: 25
+event: node
+data: {"type":"node","seq":25,"node":"merge","status":"finished"}
+
+id: 26
+event: node
+data: {"type":"node","seq":26,"node":"write_memory","status":"started"}
+
+id: 27
+event: node
+data: {"type":"node","seq":27,"node":"write_memory","status":"finished"}
+
+id: 28
+event: done
+data: {"type":"done","seq":28,"run_id":"9c8433bc-82d0-489f-a7ce-6922ac254164"}
+

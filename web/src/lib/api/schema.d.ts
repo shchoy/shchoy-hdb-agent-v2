@@ -48,7 +48,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Threads
+         * @description The officer's own conversations, most recent first.
+         */
+        get: operations["list_threads_threads_get"];
         put?: never;
         /** Create Thread */
         post: operations["create_thread_threads_post"];
@@ -56,6 +60,62 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/threads/{thread_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Thread */
+        get: operations["get_thread_threads__thread_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/memory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Memory
+         * @description The officer's own memories, with where each came from.
+         */
+        get: operations["list_memory_memory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/memory/{memory_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Memory */
+        get: operations["get_memory_memory__memory_id__get"];
+        put?: never;
+        post?: never;
+        /** Forget Memory */
+        delete: operations["forget_memory_memory__memory_id__delete"];
+        options?: never;
+        head?: never;
+        /** Edit Memory */
+        patch: operations["edit_memory_memory__memory_id__patch"];
         trace?: never;
     };
     "/threads/{thread_id}/runs": {
@@ -69,6 +129,26 @@ export interface paths {
         put?: never;
         /** Create Run */
         post: operations["create_run_threads__thread_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/threads/{thread_id}/runs/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resume Run
+         * @description Re-attach to the latest run: its events after the `Last-Event-ID` the client last saw (default: all).
+         */
+        get: operations["resume_run_threads__thread_id__runs_latest_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -127,6 +207,26 @@ export interface paths {
          * @description Where the span `start:end` of a chunk's text (default: the whole chunk) sits in its document.
          */
         get: operations["get_chunk_location_documents__doc_id__chunks__chunk_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drafts/{draft_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Draft File
+         * @description The draft as a DOCX file. Only the officer who asked for it can download it.
+         */
+        get: operations["get_draft_file_drafts__draft_id__file_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -203,6 +303,59 @@ export interface components {
             /** End */
             end: number;
         };
+        /** MemoryEdit */
+        MemoryEdit: {
+            /** Text */
+            text?: string | null;
+            /** Status */
+            status?: ("active" | "retired") | null;
+        };
+        /**
+         * MemoryView
+         * @description One memory as the officer sees it.
+         */
+        MemoryView: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "profile" | "preference" | "episode";
+            /** Text */
+            text: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "pending_review" | "retired";
+            /** Provenance */
+            provenance: string;
+            /** Confidence */
+            confidence: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Expires At */
+            expires_at?: string | null;
+        };
+        /** Message */
+        Message: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
+        };
         /** RunRequest */
         RunRequest: {
             /** Message */
@@ -212,6 +365,31 @@ export interface components {
         ThreadCreated: {
             /** Thread Id */
             thread_id: string;
+        };
+        /** ThreadSummary */
+        ThreadSummary: {
+            /** Thread Id */
+            thread_id: string;
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at: string;
+        };
+        /**
+         * ThreadView
+         * @description A conversation rebuilt from its checkpoint: every exchange, and the summary standing in for older turns.
+         */
+        ThreadView: {
+            /** Thread Id */
+            thread_id: string;
+            /** Title */
+            title: string;
+            /** Messages */
+            messages: components["schemas"]["Message"][];
+            /** Summary */
+            summary: string;
+            /** Running */
+            running?: string | null;
         };
         /**
          * UserCtx
@@ -273,6 +451,24 @@ export interface components {
             /** Index */
             index: number;
         };
+        /**
+         * ConceptUsed
+         * @description A glossary term version a query relied on, with the dates it was in force.
+         */
+        ConceptUsed: {
+            /** Id */
+            id: string;
+            /** Concept */
+            concept: string;
+            /** Version */
+            version: number;
+            /** Label */
+            label: string;
+            /** Effective From */
+            effective_from: string | null;
+            /** Effective To */
+            effective_to: string | null;
+        };
         /** DoneEvent */
         DoneEvent: {
             /**
@@ -284,6 +480,37 @@ export interface components {
             seq: number;
             /** Run Id */
             run_id: string;
+        };
+        /**
+         * DraftEvent
+         * @description A letter drafted from an approved template: HTML preview, open slots and personal-data flags. Not sent.
+         */
+        DraftEvent: {
+            /** Draft Id */
+            draft_id: string;
+            /** Template Id */
+            template_id: string;
+            /** Template Title */
+            template_title: string;
+            /** Template Version */
+            template_version: string;
+            /** Slots */
+            slots: {
+                [key: string]: string;
+            };
+            /** Unfilled */
+            unfilled: components["schemas"]["UnfilledSlot"][];
+            /** Pii */
+            pii: components["schemas"]["PiiFinding"][];
+            /** Html */
+            html: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "draft";
+            /** Seq */
+            seq: number;
         };
         /**
          * ErrorEvent
@@ -323,6 +550,122 @@ export interface components {
             status: "started" | "finished";
         };
         /**
+         * Override
+         * @description A circular that replaces a clause of one version, possibly only for some units.
+         */
+        Override: {
+            /** Circular Id */
+            circular_id: string;
+            /** Circular Title */
+            circular_title: string;
+            /** Circular Doc Id */
+            circular_doc_id: string;
+            /** Clause Id */
+            clause_id: string;
+            /** Clause Number */
+            clause_number: string;
+            /** Policy Version */
+            policy_version: string;
+            /**
+             * Effective From
+             * @default null
+             */
+            effective_from: string | null;
+            /**
+             * Effective To
+             * @default null
+             */
+            effective_to: string | null;
+            /**
+             * Scope
+             * @default null
+             */
+            scope: string | null;
+            /** Evidence Chunk Id */
+            evidence_chunk_id: string;
+            /** Evidence Quote */
+            evidence_quote: string;
+        };
+        /**
+         * PiiFinding
+         * @description Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.
+         */
+        PiiFinding: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "nric" | "email" | "phone" | "tenant";
+            /** Slot */
+            slot: string;
+            /** Message */
+            message: string;
+        };
+        /**
+         * PolicyStanceEvent
+         * @description PLG's position on one policy: the version in force, the versions it superseded and the circulars overriding it.
+         */
+        PolicyStanceEvent: {
+            /** Policy Id */
+            policy_id: string;
+            /** Title */
+            title: string;
+            /** Current */
+            current: string | null;
+            /** Versions */
+            versions: components["schemas"]["PolicyVersion"][];
+            /** Supersessions */
+            supersessions: components["schemas"]["Supersession"][];
+            /** Overrides */
+            overrides: components["schemas"]["Override"][];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "policy_stance";
+            /** Seq */
+            seq: number;
+        };
+        /** PolicyVersion */
+        PolicyVersion: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
+            /** Doc Id */
+            doc_id: string;
+            /**
+             * Effective From
+             * @default null
+             */
+            effective_from: string | null;
+            /**
+             * Effective To
+             * @default null
+             */
+            effective_to: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "current" | "superseded";
+        };
+        /** ResultSummary */
+        ResultSummary: {
+            /** Columns */
+            columns: string[];
+            /** Row Count */
+            row_count: number;
+            /** Truncated */
+            truncated: boolean;
+            /** Sample */
+            sample: (string | number | null)[][];
+        };
+        /**
          * Span
          * @description Character offsets into the chunk's text: `text[start:end]` is the cited quote.
          */
@@ -331,6 +674,53 @@ export interface components {
             start: number;
             /** End */
             end: number;
+        };
+        /**
+         * SqlTraceEvent
+         * @description One query the data agent sent: its plan, SQL, result summary and the glossary terms it relied on.
+         */
+        SqlTraceEvent: {
+            /** Plan */
+            plan: string;
+            /** Sql */
+            sql: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "rejected";
+            /** Error */
+            error: string | null;
+            result: components["schemas"]["ResultSummary"] | null;
+            /** Concepts */
+            concepts: components["schemas"]["ConceptUsed"][];
+            /** Warnings */
+            warnings: string[];
+            /** Explanation */
+            explanation: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "sql_trace";
+            /** Seq */
+            seq: number;
+        };
+        /** Supersession */
+        Supersession: {
+            /** Newer */
+            newer: string;
+            /** Older */
+            older: string;
+            /** Evidence Chunk Id */
+            evidence_chunk_id: string;
+            /** Evidence Quote */
+            evidence_quote: string;
         };
         /** TokenEvent */
         TokenEvent: {
@@ -346,7 +736,14 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        /** UnfilledSlot */
+        UnfilledSlot: {
+            /** Slot */
+            slot: string;
+            /** Reason */
+            reason: string;
+        };
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;
@@ -408,6 +805,38 @@ export interface operations {
             };
         };
     };
+    list_threads_threads_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_thread_threads_post: {
         parameters: {
             query?: never;
@@ -440,6 +869,176 @@ export interface operations {
             };
         };
     };
+    get_thread_threads__thread_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_memory_memory_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_memory_memory__memory_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    forget_memory_memory__memory_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_memory_memory__memory_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemoryEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_run_threads__thread_id__runs_post: {
         parameters: {
             query?: never;
@@ -457,6 +1056,41 @@ export interface operations {
                 "application/json": components["schemas"]["RunRequest"];
             };
         };
+        responses: {
+            /** @description Server-Sent Events; each frame's data is one RunEvent. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["RunEvent"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_run_threads__thread_id__runs_latest_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "last-event-id"?: string | null;
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Server-Sent Events; each frame's data is one RunEvent. */
             200: {
@@ -571,6 +1205,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChunkLocation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_draft_file_drafts__draft_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The draft as a DOCX file. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": unknown;
                 };
             };
             /** @description Validation Error */

@@ -12,7 +12,7 @@ from plg.agents.runtime import Citation
 from plg.identity import UserCtx
 from plg.llm import Message
 
-Intent = Literal["knowledge"]
+Intent = Literal["knowledge", "data", "drafting"]
 """What kind of question it is. Grows with the specialists (data, drafting, defect, ...)."""
 
 
@@ -22,6 +22,8 @@ class Finding(BaseModel):
     specialist: str
     text: str
     citations: list[Citation]
+    traced: bool = False
+    """The finding rests on a query that ran (the data specialist's counterpart of a citation)."""
 
 
 def add_findings(left: list[Finding], right: list[Finding]) -> list[Finding]:
@@ -33,11 +35,16 @@ class PLGState(TypedDict, total=False):
     # Completed exchanges only. A turn joins the history when it is answered, so a failed run leaves nothing
     # behind and retrying it doesn't repeat the question.
     messages: Annotated[list[Message], operator.add]
+    # Older turns folded by `summarise_history`: the first `summarised` messages are replaced by `summary`.
+    summary: str
+    summarised: int
     question: str
     user: UserCtx
     intents: list[Intent]
     findings: Annotated[list[Finding], add_findings]
     answer: str
+    # The labelled block of the officer's private notes for this turn (see plg.memory).
+    memory: str
 
 
 PLGGraph = CompiledStateGraph[PLGState, Any, PLGState, PLGState]

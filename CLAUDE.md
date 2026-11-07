@@ -12,7 +12,8 @@ src/plg/
 │                    records_db (PLG Records SQLite), corpus_dir, search_db (LanceDB, default .plg/lancedb),
 │                    Voyage embed model/dim, rerank_backend (voyage|local), Voyage rerank model, local rerank model,
 │                    search_candidates, vector_weight.
-│                    transcripts_dir (saved scan transcripts, beside search_db).
+│                    transcripts_dir (saved scan transcripts, beside search_db). threads_db (.plg/threads.sqlite: checkpoints + thread owners),
+│                    history_token_threshold / history_keep_messages (when older turns are folded into a summary).
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
@@ -32,28 +33,66 @@ src/plg/
 │                    text block per sentence, citations enabled). Citation = doc_id, chunk_id, title, version,
 │                    location, quote, span (offsets into the chunk text). Citations of chunks the run didn't
 │                    retrieve are dropped.
-│   ├── entities.py  Knowledge agent's graph tools: resolve_entities, entity_context (read-only). Context comes back as
+│   ├── entities.py  Knowledge agent's graph tools: resolve_entities, entity_context, policy_lineage(policy_id, as_of?) (read-only; lineage is one
+│   │                citable passage `lineage:<policy_id>`; on_lineage callback feeds the policy_stance event). Context comes back as
 │   │                citable record passages (Chunk doc_type "record", source_system "plg_records", chunk_id `record:<id>`).
+│   ├── data.py      The data agent: tools get_definition (glossary version in force on as_of, or `version`, with its SQL
+│   │                binding) and run_sql (plan, sql with $as_of, glossary term IDs, as_of; default as_of = semantic layer's
+│   │                as_of_default 2026-09-30). Each run_sql leaves a SqlTrace; the last carries the agent's explanation, which always ends by naming the
+│   │                definition versions and effective dates used (with_definitions appends them if the agent left them out).
+│   ├── drafting.py  The drafting agent: tools get_template, lookup_records (read-only SELECT through the Warehouse) and submit_draft
+│   │                (records a Draft; the last submission wins and is stored for download). Unfilled slots are listed with reasons, never
+│   │                invented; the draft gets a PII check. Signing officer's email/phone come from `staff`, read directly (the Warehouse blocks it).
 │   └── knowledge.py The knowledge agent: search_corpus (+ the entity tools when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
 │                    documents; as_of = in force on that date (superseded versions included). Queries are expanded
 │                    with the preferred labels of PLG terms (VocabIndex.find_terms), which are also listed in the
 │                    agent's per-run context.
+├── data/            Data questions over PLG Records. warehouse.py: Warehouse (DuckDB, SQLite attached READ_ONLY, opened on first
+│   │                use, then locked: no external access); run() = check_sql → EXPLAIN dry run → execute (MAX_ROWS), raises
+│   │                SqlRejected. sqlcheck.py: check_sql parses with DuckDB json_serialize_sql (SELECT only), rejects several
+│   │                statements, table functions, other catalogs, `staff`. semantic.py: SemanticLayer (load_semantic_layer;
+│   │                bindings keyed by versioned glossary term, table notes, examples, quality_issues → warnings(sql, result)),
+│   │                semantic_errors for `make ontology`. trace.py: SqlTrace (plan, sql, as_of, status ok|rejected, result
+│   │                summary, ConceptUsed glossary versions, warnings, explanation).
+├── drafting/        Letter drafting from approved templates. templates.py (TemplateLibrary: the approved `docs/TPL-*.docx` of corpus_dir; slots
+│   │                `{{ name }}`, [guidance] dropped, wording never changed), render.py (fill → paragraphs; open slots show as «slot»; to_html
+│   │                escapes everything; to_docx reuses the template file, open slots highlighted), pii.py (NRIC/FIN, non-officer phone/email,
+│   │                tenant names in replies to the public; findings point at slots, never repeat values), model.py (Draft, UnfilledSlot,
+│   │                PiiFinding), store.py (DraftStore: in memory, owner-checked). Nothing is sent and no outbox item is made.
 ├── graph/
 │   ├── state.py     PLGState (messages = completed exchanges only, question, user, intents, findings, answer) and
 │                    PLGGraph. A turn joins `messages` only when merge answers it, so a failed run leaves no trace.
-│                    findings fan in by appending; route's empty update resets them each turn.
-│   └── build.py     build_graph(llm, retriever): START → route → knowledge (if intended) → merge → END.
-│                    route = Haiku, forced `route` tool → intents (only "knowledge" so far; none = merge answers
-│                    directly, told not to state PLG facts without sources). knowledge streams `citation` chunks.
-│                    merge fuses findings keeping [n] markers; findings without any citation → fixed NOT_COVERED
-│                    answer with no Claude call. merge is the only node that streams tokens. In-memory checkpointer.
-├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]),
-│                    done (run_id), error (run_id).
+│                    findings fan in by appending; route's empty update resets them each turn. `memory` = this turn's labelled notes block.
+│   ├── summary.py   summarise_history: fold(llm, older messages, previous summary) (Haiku, node summarise_history); entity IDs missing from the reply are re-appended verbatim.
+│   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → (summarise_history if history > threshold) → load_memory → route → knowledge, data and/or drafting (if intended) → merge → write_memory → END
+│                    (load_memory/write_memory only when a MemoryService is given: plg-api yes, `plg ask` no). The memory block is appended to merge's system prompt.
+│                    route = Haiku, forced `route` tool → intents (knowledge, data, drafting; none = merge answers
+│                    directly, told not to state PLG facts without sources). knowledge streams `citation` chunks, data
+│                    streams `sql_trace` chunks.
+│                    merge fuses findings keeping [n] markers; findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
+│                    answer with no Claude call. merge is the only node that streams tokens. Checkpointer: InMemorySaver by default (CLI); plg-api swaps in AsyncSqliteSaver (threads_db) in its lifespan. State keeps the full `messages` plus `summary`/`summarised` (offset folded).
+├── memory/          Personal long-term memory (issue #24). store.py: MemoryStore, a LangGraph BaseStore over the LanceDB `memory`
+│   │                table (namespace ("memory", staff_id, profile|preference|episode)); typed API remember (PII masked with
+│   │                drafting/pii.py patterns; near-duplicates (cosine >= 0.9 or same key) merged; a retired note is never revived),
+│   │                items/find/edit/forget (always scoped to one staff ID), seed_profile (from `staff`, provenance "Staff records"),
+│   │                recall (active profile + preferences + nearest episodes); episodes expire after 180 days. MemoryView = API shape.
+│   │                service.py: MemoryService. context() → labelled <memory> block (private, never a source, policy wins);
+│   │                learn_in_background() after a turn: Haiku (node extract_memory, forced record_memory tool) reads only the
+│   │                officer's question + verified findings, saves notes and flags `conflicts` (status pending_review, dropped from
+│   │                recall); WORKED_ON edges for IDs in the question via a WorkLinker (entities/open.py work_linker → GraphWriter).
+│   │                drain() awaits pending writes (plg-api lifespan shutdown). Memory never yields citations.
+├── threads.py       ThreadStore (SQLite plg_threads: owner + title; a thread is listed once asked), RunBuffer (every event of a run, follow(after=seq)) and
+│                    RunRegistry (latest run per thread, runs as background tasks so they outlive the client; 409 while one is answering).
+├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data),
+│                    draft (Draft: html preview, unfilled slots, pii flags), done (run_id), error (run_id).
 ├── runs.py          stream_run(graph, thread_id, message, user?): runs the graph, yields numbered RunEvents,
 │                    turns any failure into an error event. Shared by the API and the CLI.
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
 │                    structure-aware chunking with contextual headers, metadata + entity tagging from PLG Records,
 │                    incremental by content hash; superseded versions are marked, never deleted.
+│                    lineage.py: `plg graph lineage` - Policy/Sop/Circular/Clause/Precedent nodes from index metadata; Haiku (node extract_lineage,
+│                    forced record_edges tool built from generated/extraction/*.json) proposes SUPERSEDES/OVERRIDES/APPLIES; an edge is kept only with a
+│                    verbatim quote from a chunk of the batch read and known, allowed endpoints; written via GraphWriter. Idempotent.
 │                    scans.py: image-only PDFs (no text layer) are read by Claude PDF input through LLMClient
 │                    (node ingest_scan, forced record_transcript tool: title, control fields, text per page); the
 │                    Transcript is saved by file hash (TranscriptStore) so unchanged scans, --full rebuilds and the
@@ -72,8 +111,11 @@ src/plg/
 │                    protocol: resolve_entities, entity_context(id, hops<=2); EntityContext), cypher.py (matching parameterised
 │                    openCypher templates; HUB_LABELS are listed but not walked through), local.py (LocalGraphStore: frozen
 │                    networkx, swap()), writer.py (GraphWriter: allow-list validation, delta CSVs under a file lock, swaps in a
-│                    new frozen graph; no agent tool reaches it), open.py (open_graph builds the spine on first use; LazyGraph).
+│                    new frozen graph; no agent tool reaches it; memory's write_memory adds WORKED_ON staff → entity edges), open.py (open_graph builds the spine on first use; LazyGraph).
 │                    Holds entities/relationships only, no aggregates. graph_dir setting (.plg/graph).
+│                    policy.py: PolicyLineage (versions with effective dates, supersessions, circular overrides with scope + evidence) and
+│                    build_lineage; GraphStore.policy_lineage(policy_id, as_of?) + cypher POLICY_* templates (LocalGraphStore scans in memory).
+│                    Edge.props (scalars, typed CSV columns) carry evidence_chunk_id / evidence_quote / scope on extracted edges.
 ├── ontology/        Runtime access to the GENERATED ontology artefacts (GENERATED = generated/ path).
 │   ├── vocab.py     VocabIndex (load_vocab): SKOS concepts by scheme (`concepts(scheme, cls)` → generated
 │                    model) and synonym/abbreviation lookup `resolve(text)` (LOD → letter of demand + plg:LodTrigger,
@@ -83,22 +125,28 @@ src/plg/
 │                    proposals supersede the current version; only v1 may lack effective_from).
 │   └── generated/   GENERATED by `make ontology`, committed: models.py (LinkML Pydantic, mypy-ignored),
 │                    plg.schema.json (tool I/O), extraction/{supersedes,overrides,applies}.json, allow_list.json
-│                    (node labels + typed edges), vocab_index.json, glossary_index.json, ontology_card.md.
-├── api/app.py       create_app(settings, llm, searcher): FastAPI. GET /personas, GET /me, POST /threads,
-│                    POST /threads/{id}/runs (SSE with heartbeat comments). All but /personas need the
+│                    (node labels + typed edges), vocab_index.json, glossary_index.json, semantic_layer.json, ontology_card.md.
+├── api/app.py       create_app(settings, llm, searcher): FastAPI. GET /personas, GET /me, POST /threads, GET /threads (own only), GET /threads/{id} (history, summary, `running` question),
+│                    POST /threads/{id}/runs (SSE with heartbeat comments; 409 if still answering), GET /threads/{id}/runs/latest (SSE replay after Last-Event-ID); other users' threads are 404, GET /drafts/{id}/file (DOCX; owner only, else 404). All but /personas need the
 │                    X-PLG-User header (staff ID) → UserCtx, else 401. RunEvent schemas are injected into
 │                    the OpenAPI 3.1 document. serve() is the plg-api entry point.
+│                    GET /memory (own memories, profile seeded on first look), GET/PATCH/DELETE /memory/{id} (PATCH: text and/or status
+│                    active|retired; a policy-flagged note can't be set active (409, FlaggedByPolicy): rewording it clears the flag;
+│                    other users' memories are 404).
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]`,
-                     `plg search <query>`, `plg graph build | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
-                     `plg glossary list [--all] | show <term>`. make_llm() builds the real LLMClient.
+                     `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
+                     `plg glossary list [--all] | show <term>`, `plg memory list | show | edit | forget --user <staff ID>`. make_llm() builds the real LLMClient.
 
-ontology/            SOURCE of the ontology: plg.yaml (LinkML, ~25 node classes annotated `node`, ~30 relation
+ontology/            SOURCE of the ontology (semantic.yaml = the semantic layer: SQL bindings per glossary term version, table
+                     notes, examples, known data-quality issues; `make ontology` dry-runs every binding): plg.yaml (LinkML, ~25 node classes annotated `node`, ~30 relation
                      slots annotated `edge`, `extracted` for Haiku-extracted edges, `vocabulary` for coded values),
                      vocab/*.yaml (SKOS-style schemes seeded from _master taxonomy/checklists + PLG Records, with
                      hand-curated alt_labels; place_types = NC / void deck), glossary.yaml (versioned GlossaryTerms; never delete, supersede).
 
 tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLLMClient (conftest.py; requests
-                     carry USER = X-PLG-User S05; route(llm, question, *intents) scripts the router). The poc-data
+                     carry USER = X-PLG-User S05; route(llm, question, *intents) scripts the router; make_api gives each test
+                     a temp threads_db, graph_dir and HashingEmbedder memory store). `llm.streamed` records merge's system + messages
+                     (use it, not `sent[-1]`, which the background extract_memory call can win). The poc-data
                      corpus is synced once per session (hashing embedder) for search and knowledge_api tests
                      (real local cross-encoder; each search costs seconds). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
@@ -109,14 +157,15 @@ scripts/build_ontology.py
                      problem lists them, exits 1, writes nothing. --source/--out for testing. Needs dev deps (linkml).
 scripts/record_sse_fixtures.py
                      Records real SSE streams (answer with citations, not_covered, error) from the in-process API,
-                     with the corpus synced into a temp index, into web/src/test/fixtures/*.sse, plus the source
+                     with the corpus synced into a temp index (threads, memory and graph writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
-                     /api/threads, /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through),
-                     /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints).
-                     Pages: /sign-in, / (Ask screen: streamed answer, node trajectory, citation chips under the
-                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), error + Retry).
+                     /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
+                     /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay),
+                     /api/memory (GET list), /api/memory/[id] (PATCH, DELETE).
+                     Pages: /sign-in, /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer, node trajectory, citation chips under the
+                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), error + Retry).
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.
                      Tests: Vitest + RTL + MSW replaying the recorded fixtures.
@@ -149,6 +198,8 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 - Test at the HTTP seam and assert on received SSE events, not on internals. Web tests assert on rendered UI
   and BFF responses, with MSW standing in for plg-api.
 - The browser never talks to plg-api and holds no credentials: PLG_API_URL is server-only, never NEXT_PUBLIC_*.
+- The data agent only runs one read-only SELECT over PLG Records (not `staff`), validated and EXPLAIN-dry-run first; business
+  terms use the glossary version in force on the reporting date. The DuckDB `sqlite` extension is downloaded on first use.
 - Every claim in a knowledge answer is cited through the Messages API search_result citations; an answer
   with no surviving citation becomes the fixed "not covered" answer. Agent tools are read-only.
 - `wrap_anthropic` is not used for streaming: langsmith 0.14.8's stream reducer crashes with anthropic 1.13.

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import re
 import threading
+from datetime import date
 from pathlib import Path
 
 import networkx as nx
@@ -11,6 +13,7 @@ from plg.entities import cypher
 from plg.entities.csvio import read_graph
 from plg.entities.ids import find_ids, search_name
 from plg.entities.model import Edge, GraphData, Node
+from plg.entities.policy import PolicyLineage, build_lineage
 from plg.entities.store import EntityContext, EntityRef
 
 
@@ -96,3 +99,22 @@ class LocalGraphStore:
             root=graph.nodes[entity_id]["node"], nodes=nodes, edges=sorted(edges.values(), key=lambda e: e.id),
             truncated=truncated,
         )
+
+    def policy_lineage(self, policy_id: str, as_of: date | None = None) -> PolicyLineage | None:
+        graph = self._graph
+        wanted = policy_id.strip().upper()
+        if re.fullmatch(r"(POL|SOP)-\d{3}", wanted):
+            wanted = f"PLG-{wanted}"
+        versions = [
+            a["node"] for _, a in graph.nodes(data=True)
+            if a["node"].label in cypher.LINEAGE_LABELS and a["node"].props.get("policy_id") == wanted
+        ]
+        if not versions:
+            return None
+        edges = [e for _, _, e in graph.edges(data="edge") if e.type in {"SUPERSEDES", "OVERRIDES"}]
+        clauses = {
+            a["node"].id: a["node"] for _, a in graph.nodes(data=True)
+            if a["node"].label == "Clause" and a["node"].props.get("policy_id") == wanted
+        }
+        circulars = {n.id: n for n in (graph.nodes[e.start]["node"] for e in edges if e.type == "OVERRIDES" and e.end in clauses)}
+        return build_lineage(wanted, versions, edges, circulars, clauses, as_of)

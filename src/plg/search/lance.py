@@ -86,6 +86,7 @@ def _ns(namespace: tuple[str, ...]) -> str:
 
 class LanceSearchStore:
     def __init__(self, path: Path, *, dim: int, vector_weight: float = 0.7) -> None:
+        self.path = path
         self._vector_weight = vector_weight
         path.mkdir(parents=True, exist_ok=True)
         self._db = lancedb.connect(path)
@@ -198,6 +199,16 @@ class LanceSearchStore:
 
     def delete_memory(self, namespace: tuple[str, ...], key: str) -> None:
         self._memory.delete(self._memory_where(namespace, key))
+
+    def list_memory(self, namespace_prefix: tuple[str, ...], *, now: datetime) -> list[MemoryItem]:
+        prefix = _ns(namespace_prefix)
+        stamp = f"timestamp {_q(now.isoformat())}"
+        where = (
+            f"(namespace = {_q(prefix)} OR starts_with(namespace, {_q(prefix + '/')})) "
+            f"AND (expires_at IS NULL OR expires_at > {stamp})"
+        )
+        rows = self._memory.search().where(where).limit(None).to_arrow().to_pylist()
+        return sorted((self._to_memory(r) for r in rows), key=lambda m: (m.created_at, m.key))
 
     def search_memory(
         self,

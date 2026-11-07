@@ -250,3 +250,13 @@ def test_generated_models_reject_values_outside_the_ontology() -> None:
 def test_generated_files_are_marked_generated() -> None:
     for path in [GENERATED / "models.py", GENERATED / "ontology_card.md"]:
         assert "make ontology" in Path(path).read_text().splitlines()[0]
+
+
+def test_generated_artefacts_hold_no_machine_specific_paths() -> None:
+    """CI regenerates the artefacts and fails on any diff, so they must not record where they were built."""
+    models = (GENERATED / "models.py").read_text()
+    assert "'source_file': 'ontology/plg.yaml'" in models
+    for path in GENERATED.rglob("*"):
+        if path.suffix in {".py", ".json", ".md"}:
+            text = path.read_text()
+            assert str(REPO_ROOT) not in text and "/Users/" not in text and "/home/" not in text, path

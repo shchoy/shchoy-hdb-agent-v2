@@ -23,10 +23,14 @@ async function ask(question = QUESTION) {
   return user;
 }
 
-/** Waits until the run is over: Ask is enabled again. */
+/**
+ * Waits until the run is over: Ask is enabled again. A whole replayed run (plus, for the file's first test,
+ * the cold start) can outlast waitFor's 1s default on a slow CI runner, so allow longer.
+ */
 async function runFinished() {
-  await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Ask" })).toBeEnabled(),
+  await waitFor(
+    () => expect(screen.getByRole("button", { name: "Ask" })).toBeEnabled(),
+    { timeout: 5000 },
   );
 }
 

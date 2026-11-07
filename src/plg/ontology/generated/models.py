@@ -79,7 +79,7 @@ linkml_meta = LinkMLMeta({'default_prefix': 'plg',
                           'prefix_reference': 'https://w3id.org/heb/plg/'},
                   'skos': {'prefix_prefix': 'skos',
                            'prefix_reference': 'http://www.w3.org/2004/02/skos/core#'}},
-     'source_file': '/Users/shchoy/Documents/DevProjects/agent-hdb-v2/ontology/plg.yaml',
+     'source_file': 'ontology/plg.yaml',
      'title': 'PLG Super-Librarian ontology'} )
 
 class Severity(str, Enum):

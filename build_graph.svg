@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 780" width="780" height="780" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <style>
+      .t{font-size:14px;font-weight:bold;fill:#1a1a1a;text-anchor:middle}
+      .s{font-size:11px;fill:#444;text-anchor:middle}
+      .l{font-size:11px;fill:#666;font-style:italic}
+      .e{stroke:#444;stroke-width:1.6;fill:none;marker-end:url(#a)}
+      .d{stroke:#888;stroke-width:1.4;fill:none;stroke-dasharray:5 4;marker-end:url(#a)}
+    </style>
+  </defs>
+  <rect width="780" height="780" fill="#fafafa"/>
+  <text x="390" y="24" class="t" style="font-size:17px">build_graph: PLG LangGraph</text>
+
+  <!-- START -->
+  <ellipse cx="390" cy="62" rx="48" ry="17" fill="#222"/>
+  <text x="390" y="67" class="t" style="fill:#fff">START</text>
+
+  <!-- decision -->
+  <polygon points="390,100 520,138 390,176 260,138" fill="#fff4cc" stroke="#c9a400" stroke-width="1.5"/>
+  <text x="390" y="134" class="t" style="font-size:12px">history too long?</text>
+  <text x="390" y="150" class="s">tokens &gt; threshold</text>
+
+  <!-- summarise -->
+  <rect x="40" y="205" width="200" height="56" rx="8" fill="#e3f0ff" stroke="#3b7dd8" stroke-width="1.5"/>
+  <text x="140" y="228" class="t">summarise_history</text>
+  <text x="140" y="246" class="s">Haiku · writes summary</text>
+
+  <!-- load_memory -->
+  <rect x="280" y="290" width="220" height="56" rx="8" fill="#efe6ff" stroke="#7a4fd0" stroke-width="1.5"/>
+  <text x="390" y="313" class="t">load_memory</text>
+  <text x="390" y="331" class="s">optional · writes memory</text>
+
+  <!-- route -->
+  <rect x="280" y="375" width="220" height="56" rx="8" fill="#e3f0ff" stroke="#3b7dd8" stroke-width="1.5"/>
+  <text x="390" y="398" class="t">route</text>
+  <text x="390" y="416" class="s">Haiku · writes intents</text>
+
+  <!-- specialists -->
+  <rect x="40" y="490" width="200" height="60" rx="8" fill="#e6f7e6" stroke="#3a9a3a" stroke-width="1.5"/>
+  <text x="140" y="513" class="t">knowledge</text>
+  <text x="140" y="531" class="s">citations · policy_stance</text>
+
+  <rect x="290" y="490" width="200" height="60" rx="8" fill="#e6f7e6" stroke="#3a9a3a" stroke-width="1.5"/>
+  <text x="390" y="513" class="t">data</text>
+  <text x="390" y="531" class="s">SQL over PLG Records · sql_trace</text>
+
+  <rect x="540" y="490" width="200" height="60" rx="8" fill="#e6f7e6" stroke="#3a9a3a" stroke-width="1.5"/>
+  <text x="640" y="513" class="t">drafting</text>
+  <text x="640" y="531" class="s">approved templates · draft</text>
+
+  <!-- merge -->
+  <rect x="280" y="595" width="220" height="56" rx="8" fill="#ffe9d6" stroke="#d9772b" stroke-width="1.5"/>
+  <text x="390" y="618" class="t">merge</text>
+  <text x="390" y="636" class="s">Sonnet · streams tokens · writes answer</text>
+
+  <!-- write_memory -->
+  <rect x="280" y="675" width="220" height="40" rx="8" fill="#efe6ff" stroke="#7a4fd0" stroke-width="1.5"/>
+  <text x="390" y="699" class="t">write_memory (optional)</text>
+
+  <!-- END -->
+  <ellipse cx="390" cy="749" rx="40" ry="16" fill="#222"/>
+  <text x="390" y="754" class="t" style="fill:#fff">END</text>
+
+  <!-- edges -->
+  <line x1="390" y1="79" x2="390" y2="99" class="e"/>
+  <path d="M290,148 L140,148 L140,204" class="e"/>
+  <text x="170" y="142" class="l">yes</text>
+  <path d="M390,176 L390,289" class="e"/>
+  <text x="398" y="215" class="l">no</text>
+  <path d="M140,261 L140,318 L279,318" class="e"/>
+  <line x1="390" y1="346" x2="390" y2="374" class="e"/>
+  <path d="M340,431 L140,431 L140,489" class="e"/>
+  <line x1="390" y1="431" x2="390" y2="489" class="e"/>
+  <path d="M440,431 L640,431 L640,489" class="e"/>
+  <text x="402" y="462" class="l">parallel</text>
+  <path d="M140,550 L140,623 L279,623" class="e"/>
+  <line x1="390" y1="550" x2="390" y2="594" class="e"/>
+  <path d="M640,550 L640,623 L501,623" class="e"/>
+  <!-- no specialist needed -->
+  <path d="M500,403 L740,403 L740,590 L560,590 L560,623 L501,623" class="d"/>
+  <text x="745" y="500" class="l" transform="rotate(90 745 500)">no specialist needed</text>
+  <line x1="390" y1="651" x2="390" y2="674" class="e"/>
+  <line x1="390" y1="715" x2="390" y2="732" class="e"/>
+  <!-- no memory shortcut -->
+  <path d="M280,630 L250,630 L250,749 L349,749" class="d"/>
+  <text x="68" y="700" class="l">no memory service:</text>
+  <text x="68" y="714" class="l">merge goes straight to END</text>
+
+  <!-- legend -->
+  <text x="40" y="100" class="l">solid: always taken</text>
+  <text x="40" y="115" class="l">dashed: alternate path</text>
+</svg>

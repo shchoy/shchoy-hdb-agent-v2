@@ -7,6 +7,7 @@ import os
 import shutil
 import uuid
 from datetime import date
+from typing import Annotated
 
 import typer
 from dotenv import find_dotenv, load_dotenv
@@ -17,7 +18,8 @@ from plg.entities.spine import write_spine
 from plg.events import CitationEvent, ErrorEvent, TokenEvent
 from plg.data.warehouse import Warehouse
 from plg.graph.build import build_graph
-from plg.identity import load_personas
+from plg.identity import UserCtx, load_personas
+from plg.memory.store import MemoryStore, view
 from plg.llm import AnthropicLLMClient, LLMClient, ScriptedLLMClient
 from plg.ontology.generated.models import GlossaryTerm
 from plg.ontology.glossary import load_glossary
@@ -32,6 +34,8 @@ graph_app = typer.Typer(help="Entity graph built from PLG Records.", no_args_is_
 app.add_typer(graph_app, name="graph")
 glossary_app = typer.Typer(help="Business glossary: versioned definitions.", no_args_is_help=True)
 app.add_typer(glossary_app, name="glossary")
+memory_app = typer.Typer(help="An officer's personal long-term memory.", no_args_is_help=True)
+app.add_typer(memory_app, name="memory")
 
 
 def make_llm(settings: Settings) -> LLMClient:
@@ -261,3 +265,66 @@ def glossary_show(term: str) -> None:
 
 def _period(t: GlossaryTerm) -> str:
     return f"{t.effective_from or 'unrecorded'} -> {t.effective_to or 'now'}"
+
+
+def make_memory(settings: Settings) -> MemoryStore:
+    from plg.search.embed import LazyEmbedder
+    from plg.search.lance import LanceSearchStore
+
+    return MemoryStore(
+        lambda: LanceSearchStore(settings.search_db, dim=settings.embed_dim, vector_weight=settings.vector_weight),
+        LazyEmbedder(settings),
+    )
+
+
+def _memory_for(staff_id: str) -> tuple[MemoryStore, UserCtx]:
+    settings = Settings.from_env()
+    user = load_personas(settings.records_db).get(staff_id)
+    if user is None:
+        typer.echo(f"Unknown staff ID {staff_id}.", err=True)
+        raise typer.Exit(code=1)
+    return make_memory(settings), user
+
+
+StaffOption = Annotated[str, typer.Option("--user", "-u", help="Staff ID whose memory this is, e.g. S05.")]
+
+
+@memory_app.command("list")
+def memory_list(user: StaffOption) -> None:
+    """List what the assistant remembers about an officer, and where each note came from."""
+    store, who = _memory_for(user)
+    store.seed_profile(who)
+    for item in store.items(who.staff_id):
+        flag = " [flagged: conflicts with current policy]" if item.status == "pending_review" else ""
+        typer.echo(f"{item.key}  ({item.namespace[2]}){flag}\n    {item.text}\n    from: {item.provenance}")
+
+
+@memory_app.command("show")
+def memory_show(memory_id: str, user: StaffOption) -> None:
+    """Show one memory."""
+    store, who = _memory_for(user)
+    item = store.find(who.staff_id, memory_id)
+    if item is None:
+        typer.echo("Memory not found.", err=True)
+        raise typer.Exit(code=1)
+    typer.echo(view(item).model_dump_json(indent=2))
+
+
+@memory_app.command("edit")
+def memory_edit(memory_id: str, text: str, user: StaffOption) -> None:
+    """Reword a memory."""
+    store, who = _memory_for(user)
+    if store.edit(who.staff_id, memory_id, text=text, status=None) is None:
+        typer.echo("Memory not found.", err=True)
+        raise typer.Exit(code=1)
+    typer.echo("Updated.")
+
+
+@memory_app.command("forget")
+def memory_forget(memory_id: str, user: StaffOption) -> None:
+    """Forget a memory."""
+    store, who = _memory_for(user)
+    if not store.forget(who.staff_id, memory_id):
+        typer.echo("Memory not found.", err=True)
+        raise typer.Exit(code=1)
+    typer.echo("Forgotten.")

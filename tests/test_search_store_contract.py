@@ -207,3 +207,14 @@ def test_memory_search_is_scoped_to_the_namespace_and_skips_inactive_or_expired(
     found = store.search_memory(("user", "S05"), EMBED.embed_query("golden leaf arrears"), now=NOW)
 
     assert [m.key for m in found] == ["a"]
+
+
+def test_memory_list_includes_every_status_but_not_expired_or_other_users(store: SearchStore) -> None:
+    store.put_memory(memory(("memory", "S05", "episode"), "a", "first", status="pending_review"))
+    store.put_memory(memory(("memory", "S05", "profile"), "b", "second", created_at=NOW + timedelta(hours=1)))
+    store.put_memory(memory(("memory", "S05", "episode"), "c", "gone", expires_at=NOW - timedelta(days=1)))
+    store.put_memory(memory(("memory", "S050", "profile"), "d", "other user"))
+
+    listed = store.list_memory(("memory", "S05"), now=NOW)
+
+    assert [m.key for m in listed] == ["a", "b"]

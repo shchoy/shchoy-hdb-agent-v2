@@ -29,6 +29,7 @@ from plg.ingest.metadata import load_entity_spine
 from plg.ingest.sources import LotusNotesSource, SharePointSource
 from plg.ingest.sync import sync
 from plg.llm import AgentMessage, AgentTurn, ScriptedLLMClient, text, tool_call, turn
+from plg.memory.store import MemoryStore
 from plg.search.embed import HashingEmbedder
 from plg.search.lance import LanceSearchStore
 from plg.search.rerank import CrossEncoderReranker, Searcher
@@ -194,12 +195,26 @@ def searcher(index: Path) -> tuple[Searcher, LanceSearchStore]:
     return Searcher(store, embedder, CrossEncoderReranker(settings), candidates=50), store
 
 
+def scratch_memory(directory: Path) -> MemoryStore:
+    """A throwaway memory store, so recording never needs Voyage."""
+    embedder = HashingEmbedder(dim=128)
+    return MemoryStore(LanceSearchStore(directory, dim=embedder.dim), embedder)
+
+
 def record(
     search: Searcher, question: str, script: Callable[[ScriptedLLMClient], None], graph: LocalGraphStore | None = None
 ) -> str:
     llm = ScriptedLLMClient()
     script(llm)
-    with TestClient(create_app(Settings(), llm=llm, searcher=search, entities=graph)) as client:
+    with tempfile.TemporaryDirectory() as scratch:
+        # Threads, memory and WORKED_ON links go to scratch space, never the real .plg stores.
+        settings = Settings(graph_dir=Path(scratch) / "graph", threads_db=Path(scratch) / "threads.sqlite")
+        app = create_app(settings, llm=llm, searcher=search, entities=graph, memory=scratch_memory(Path(scratch) / "memory"))
+        return _stream(app, question)
+
+
+def _stream(app: Any, question: str) -> str:
+    with TestClient(app) as client:
         thread_id = client.post("/threads", headers=USER).json()["thread_id"]
         with client.stream(
             "POST", f"/threads/{thread_id}/runs", json={"message": question}, headers=USER

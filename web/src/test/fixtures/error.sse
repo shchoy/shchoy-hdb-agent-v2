@@ -1,40 +1,48 @@
 id: 1
 event: node
-data: {"type":"node","seq":1,"node":"route","status":"started"}
+data: {"type":"node","seq":1,"node":"load_memory","status":"started"}
 
 id: 2
 event: node
-data: {"type":"node","seq":2,"node":"route","status":"finished"}
+data: {"type":"node","seq":2,"node":"load_memory","status":"finished"}
 
 id: 3
 event: node
-data: {"type":"node","seq":3,"node":"merge","status":"started"}
+data: {"type":"node","seq":3,"node":"route","status":"started"}
 
 id: 4
-event: token
-data: {"type":"token","seq":4,"node":"merge","text":"Under"}
+event: node
+data: {"type":"node","seq":4,"node":"route","status":"finished"}
 
 id: 5
-event: token
-data: {"type":"token","seq":5,"node":"merge","text":" POL-003"}
+event: node
+data: {"type":"node","seq":5,"node":"merge","status":"started"}
 
 id: 6
 event: token
-data: {"type":"token","seq":6,"node":"merge","text":" v2.0,"}
+data: {"type":"token","seq":6,"node":"merge","text":"Under"}
 
 id: 7
 event: token
-data: {"type":"token","seq":7,"node":"merge","text":" a"}
+data: {"type":"token","seq":7,"node":"merge","text":" POL-003"}
 
 id: 8
 event: token
-data: {"type":"token","seq":8,"node":"merge","text":" letter"}
+data: {"type":"token","seq":8,"node":"merge","text":" v2.0,"}
 
 id: 9
 event: token
-data: {"type":"token","seq":9,"node":"merge","text":" of"}
+data: {"type":"token","seq":9,"node":"merge","text":" a"}
 
 id: 10
+event: token
+data: {"type":"token","seq":10,"node":"merge","text":" letter"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":" of"}
+
+id: 12
 event: error
-data: {"type":"error","seq":10,"run_id":"c0d83a8b-f9d6-455d-a977-31623e2a7e40","message":"The run failed before the answer was complete. Please retry."}
+data: {"type":"error","seq":12,"run_id":"f6470b1c-6a00-438e-9739-5dbf1e694227","message":"The run failed before the answer was complete. Please retry."}
 

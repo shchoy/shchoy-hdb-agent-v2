@@ -157,6 +157,23 @@ Each SSE event has a sequence number (`id:`) and a JSON payload of type `node`, 
 
 Threads are held in memory for now, so they are lost when the server restarts.
 
+### Personal memory (issue #24)
+
+Through `plg-api` and the web app, the assistant remembers each officer across sessions: the profile from the `staff` table, the towns and preferences they mention, and what they're working on (episodes, kept 180 days). After each answer, Haiku reads only the officer's own question and the verified findings, in the background. It masks NRIC/FIN, phone numbers and emails, and merges near-duplicates. Notes are private to the officer, are never cited, and lose to policy: a note that a verified answer contradicts is flagged (`pending_review`) and left out of the prompt. Asking about an entity ID (e.g. `T-19807`) also records a `WORKED_ON` edge in the entity graph (`.plg/graph/delta`). Memory lives in the LanceDB `memory` table beside the search index, so embedding a note needs `VOYAGE_API_KEY`. If the key is missing, memory is skipped and the answer still works. `plg ask` neither reads nor writes memory.
+
+```bash
+uv run plg memory list --user S05                # what's remembered, where each note came from, flagged notes
+uv run plg memory show <id> -u S05
+uv run plg memory edit <id> "Prefers short bullet lists" -u S05
+uv run plg memory forget <id> -u S05
+
+curl -s http://127.0.0.1:8000/memory -H 'X-PLG-User: S05'
+curl -s -X PATCH http://127.0.0.1:8000/memory/<id> -H 'X-PLG-User: S05' -H 'content-type: application/json' -d '{"status":"retired"}'
+curl -s -X DELETE http://127.0.0.1:8000/memory/<id> -H 'X-PLG-User: S05'
+```
+
+In the web app, the **Memory** link in the header opens `/memory`: list, edit and forget your notes. A flagged note can't be switched back on: edit it to make the exception clear (e.g. "for NC units, 1.0 m under Circular 07/2026"), which clears the flag, or forget it. `PATCH` with `{"status":"active"}` on a flagged note returns 409. Another officer's notes return 404.
+
 ### Business glossary
 
 ```bash

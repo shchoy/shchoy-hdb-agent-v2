@@ -100,7 +100,9 @@ def test_arrears_reminder_is_filled_from_the_records(api: Api, llm: ScriptedLLMC
     assert "Approved wording" not in html  # the template's document-control tables are not part of the letter
     assert any(r[0] in "\n".join(tool_results(llm)) for r in rows)  # the lookup ran against real records
     assert stream.of_type("done") and not stream.of_type("error")
-    assert [e["node"] for e in stream.of_type("node") if e["status"] == "started"] == ["route", "drafting", "merge"]
+    assert [e["node"] for e in stream.of_type("node") if e["status"] == "started"] == [
+        "load_memory", "route", "drafting", "merge", "write_memory"
+    ]
 
 
 def test_slots_that_cannot_be_filled_are_listed(api: Api, llm: ScriptedLLMClient) -> None:

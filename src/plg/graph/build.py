@@ -6,10 +6,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.config import get_stream_writer
@@ -27,6 +29,7 @@ from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
 from plg.graph import summary as history
 from plg.graph.state import Finding, Intent, PLGGraph, PLGState
+from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
 from plg.ontology.glossary import Glossary, load_glossary
 from plg.ontology.vocab import VocabIndex, load_vocab
@@ -38,6 +41,8 @@ DATA = data.NODE
 DRAFTING = drafting.NODE
 MERGE = "merge"
 SUMMARISE = history.NODE
+LOAD_MEMORY = "load_memory"
+WRITE_MEMORY = "write_memory"
 
 ROUTE_SYSTEM = """\
 You route questions from officers of the Properties & Land Group (PLG) to specialists.
@@ -106,6 +111,7 @@ def build_graph(
     drafts: DraftStore | None = None,
     checkpointer: BaseCheckpointSaver[Any] | None = None,
     settings: Settings | None = None,
+    memory: MemoryService | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
@@ -113,6 +119,7 @@ def build_graph(
     settings = settings or Settings.from_env()
     templates = templates or TemplateLibrary(settings.corpus_dir)
     drafts = drafts or DraftStore()
+    first = LOAD_MEMORY if memory else ROUTE  # memory is recalled before routing when the graph has one
 
     def unsummarised(state: PLGState) -> list[Message]:
         return state.get("messages", [])[state.get("summarised", 0):]
@@ -127,7 +134,7 @@ def build_graph(
     def start(state: PLGState) -> str:
         recent = unsummarised(state)
         too_long = history.estimate_tokens(recent, state.get("summary", "")) > settings.history_token_threshold
-        return SUMMARISE if too_long and len(recent) > settings.history_keep_messages else ROUTE
+        return SUMMARISE if too_long and len(recent) > settings.history_keep_messages else first
 
     async def summarise_history(state: PLGState) -> PLGState:
         recent = unsummarised(state)
@@ -137,6 +144,12 @@ def build_graph(
 
     def agent_conversation(state: PLGState) -> list[AgentMessage]:
         return [{"role": m["role"], "content": m["content"]} for m in conversation(state)]
+
+    async def load_memory(state: PLGState) -> PLGState:
+        """The officer's private notes for this turn, as one labelled block (never a source)."""
+        user = state.get("user")
+        notes = await asyncio.to_thread(memory.context, user, state["question"]) if memory and user else ""
+        return {"memory": notes}
 
     async def route(state: PLGState) -> PLGState:
         reply = await llm.complete(
@@ -193,12 +206,21 @@ def build_graph(
         write = get_stream_writer()
         findings = state.get("findings", [])
         parts: list[str] = []
-        async for text in _fuse(llm, conversation(state), findings):
+        async for text in _fuse(llm, conversation(state), findings, state.get("memory", "")):
             parts.append(text)
             write({"node": MERGE, "token": text})
         answer = "".join(parts)
         question: Message = {"role": "user", "content": state["question"]}
         return {"answer": answer, "messages": [question, {"role": "assistant", "content": answer}]}
+
+    async def write_memory(state: PLGState, config: RunnableConfig) -> PLGState:
+        """Learn from the answered turn in the background: only the officer's own words and verified findings."""
+        user = state.get("user")
+        if memory and user:
+            verified = "\n".join(f.text for f in state.get("findings", []) if f.citations or f.traced)
+            thread_id = str(config.get("configurable", {}).get("thread_id", ""))
+            memory.learn_in_background(user, thread_id, state["question"], verified)
+        return {}
 
     graph = StateGraph(PLGState)
     graph.add_node(ROUTE, route)
@@ -207,17 +229,27 @@ def build_graph(
     graph.add_node(DRAFTING, drafting_node)
     graph.add_node(MERGE, merge)
     graph.add_node(SUMMARISE, summarise_history)
-    graph.add_conditional_edges(START, start, [SUMMARISE, ROUTE])
-    graph.add_edge(SUMMARISE, ROUTE)
+    graph.add_conditional_edges(START, start, [SUMMARISE, first])
+    graph.add_edge(SUMMARISE, first)
+    if memory:
+        graph.add_node(LOAD_MEMORY, load_memory)
+        graph.add_node(WRITE_MEMORY, write_memory)
+        graph.add_edge(LOAD_MEMORY, ROUTE)
     graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, MERGE])
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
     graph.add_edge(DRAFTING, MERGE)
-    graph.add_edge(MERGE, END)
+    if memory:
+        graph.add_edge(MERGE, WRITE_MEMORY)
+        graph.add_edge(WRITE_MEMORY, END)
+    else:
+        graph.add_edge(MERGE, END)
     return graph.compile(checkpointer=checkpointer or InMemorySaver())
 
 
-async def _fuse(llm: LLMClient, messages: list[Message], findings: list[Finding]) -> AsyncIterator[str]:
+async def _fuse(
+    llm: LLMClient, messages: list[Message], findings: list[Finding], memory: str = ""
+) -> AsyncIterator[str]:
     """The answer's tokens. Findings without a single citation are not an answer: say the sources don't
     cover the question rather than let Claude fill the gap."""
     if findings and not any(f.citations or f.traced for f in findings):
@@ -229,5 +261,7 @@ async def _fuse(llm: LLMClient, messages: list[Message], findings: list[Finding]
         system = MERGE_SYSTEM + MERGE_FINDINGS.format(findings=blocks)
     else:
         system = MERGE_SYSTEM + MERGE_NO_SOURCES
+    if memory:
+        system += "\n\n" + memory
     async for text in llm.stream_text(node=MERGE, tier="sonnet", system=system, messages=messages):
         yield text

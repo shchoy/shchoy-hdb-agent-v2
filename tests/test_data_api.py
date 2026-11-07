@@ -88,7 +88,9 @@ def test_vacancy_47_vs_52_is_explained_by_the_definition_change(api: Api, llm: S
     assert (v1["id"], v1["version"], v1["effective_to"]) == ("plg:Vacant_v1", 1, "2026-04-14")
     assert all(t["as_of"] == "2026-08-31" and t["plan"] and t["sql"] for t in traces)
     assert traces[-1]["explanation"] == explanation
-    assert [e["node"] for e in stream.of_type("node") if e["status"] == "started"] == ["route", "data", "merge"]
+    assert [e["node"] for e in stream.of_type("node") if e["status"] == "started"] == [
+        "load_memory", "route", "data", "merge", "write_memory"
+    ]
     assert stream.of_type("done") and not stream.of_type("error")
     # The definition in force on that date, and the superseded one, were put in front of the agent.
     shown = "\n".join(tool_results(llm))

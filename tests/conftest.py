@@ -17,6 +17,7 @@ from plg.config import REPO_ROOT, Settings
 from plg.entities.store import GraphStore
 from plg.ingest.scans import SCAN_NODE, SCAN_PROMPT
 from plg.llm import ScriptedLLMClient, tool_call, turn
+from plg.memory.store import MemoryStore
 from plg.search.embed import HashingEmbedder
 from plg.search.lance import LanceSearchStore
 from plg.search.models import DocumentMeta
@@ -95,10 +96,16 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         searcher: Searcher | None = None,
         store: LanceSearchStore | None = None,
         entities: GraphStore | None = None,
+        memory: MemoryStore | None = None,
         **settings: object,
     ) -> Api:
         settings.setdefault("threads_db", tmp_path / "threads.sqlite")
-        app = create_app(Settings(**settings), llm=llm, searcher=searcher, store=store, entities=entities)  # type: ignore[arg-type]
+        settings.setdefault("graph_dir", tmp_path / "graph")  # WORKED_ON links never reach the real graph
+        embedder = HashingEmbedder(dim=128)
+        memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
+        app = create_app(  # type: ignore[arg-type]
+            Settings(**settings), llm=llm, searcher=searcher, store=store, entities=entities, memory=memory
+        )
         client = TestClient(app)
         clients.append(client.__enter__())
         return Api(client)

@@ -155,3 +155,32 @@ export function getDocumentFile(staffId: string, docId: string): Promise<Respons
     cache: "no-store",
   });
 }
+
+export type MemoryEdit = components["schemas"]["MemoryEdit"];
+
+/** The officer's own memories; plg-api's status and JSON body, for the BFF to relay. */
+export async function listMemory(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/memory", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+export async function editMemory(
+  staffId: string,
+  memoryId: string,
+  edit: MemoryEdit,
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PATCH("/memory/{memory_id}", {
+    params: { path: { memory_id: memoryId }, header: { "x-plg-user": staffId } },
+    body: edit,
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+export async function forgetMemory(staffId: string, memoryId: string): Promise<{ status: number; body: unknown }> {
+  const { error, response } = await client().DELETE("/memory/{memory_id}", {
+    params: { path: { memory_id: memoryId }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: error ?? null };
+}

@@ -81,7 +81,7 @@ def test_thread_survives_an_api_restart(
     llm.script("merge", "and?", "That's all.")
     second.run(thread_id, "and?")
 
-    assert llm.sent[-1] == [
+    assert llm.streamed[-1].messages == [
         {"role": "user", "content": "hello"},
         {"role": "assistant", "content": "Hi there, officer."},
         {"role": "user", "content": "and?"},
@@ -106,7 +106,7 @@ def test_long_history_is_folded_into_a_summary_keeping_entity_ids(
 
     api.run(thread_id, "and for Cendana?")
 
-    sent = llm.sent[-1]
+    sent = llm.streamed[-1].messages
     assert "TA-2024-00451" in str(sent[0]["content"])
     assert "Cendana" in str(sent[0]["content"])
     assert sent[-1] == {"role": "user", "content": "and for Cendana?"}

@@ -79,6 +79,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/memory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Memory
+         * @description The officer's own memories, with where each came from.
+         */
+        get: operations["list_memory_memory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/memory/{memory_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Memory */
+        get: operations["get_memory_memory__memory_id__get"];
+        put?: never;
+        post?: never;
+        /** Forget Memory */
+        delete: operations["forget_memory_memory__memory_id__delete"];
+        options?: never;
+        head?: never;
+        /** Edit Memory */
+        patch: operations["edit_memory_memory__memory_id__patch"];
+        trace?: never;
+    };
     "/threads/{thread_id}/runs": {
         parameters: {
             query?: never;
@@ -263,6 +302,49 @@ export interface components {
             start: number;
             /** End */
             end: number;
+        };
+        /** MemoryEdit */
+        MemoryEdit: {
+            /** Text */
+            text?: string | null;
+            /** Status */
+            status?: ("active" | "retired") | null;
+        };
+        /**
+         * MemoryView
+         * @description One memory as the officer sees it.
+         */
+        MemoryView: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "profile" | "preference" | "episode";
+            /** Text */
+            text: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "pending_review" | "retired";
+            /** Provenance */
+            provenance: string;
+            /** Confidence */
+            confidence: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Expires At */
+            expires_at?: string | null;
         };
         /** Message */
         Message: {
@@ -808,6 +890,142 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ThreadView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_memory_memory_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_memory_memory__memory_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    forget_memory_memory__memory_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_memory_memory__memory_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemoryEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"];
                 };
             };
             /** @description Validation Error */

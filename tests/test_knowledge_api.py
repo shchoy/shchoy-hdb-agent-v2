@@ -101,7 +101,7 @@ def test_knowledge_question_runs_route_then_knowledge_then_merge(knowledge_api: 
     stream = knowledge_api.run(knowledge_api.create_thread(), LOD_QUESTION)
 
     started = [e["node"] for e in stream.of_type("node") if e["status"] == "started"]
-    assert started == ["route", "knowledge", "merge"]
+    assert started == ["load_memory", "route", "knowledge", "merge", "write_memory"]
     first_token = next(i for i, e in enumerate(stream.events) if e["type"] == "token")
     assert all(i < first_token for i, e in enumerate(stream.events) if e["type"] == "citation")
 
@@ -143,7 +143,8 @@ def test_tool_calls_in_one_turn_all_run_and_return_together(
 
     knowledge_api.run(knowledge_api.create_thread(), question)
 
-    results = llm.sent[-1][-1]["content"]
+    *_, last = (m for m in llm.sent if isinstance(m[-1]["content"], list))  # the agent's turn after its tools ran
+    results = last[-1]["content"]
     assert [r["type"] for r in results] == ["tool_result", "tool_result"]
     assert {POL_003_V1, POL_003_V2} <= shown_sources(llm, store)
 
@@ -156,7 +157,7 @@ def test_agent_system_prompt_and_tools_are_marked_for_prompt_caching(
 
     knowledge_api.run(knowledge_api.create_thread(), LOD_QUESTION)
 
-    system, tools = llm.requests[-1]
+    system, tools = next(r for r in reversed(llm.requests) if any(t["name"] == "search_corpus" for t in r[1]))
     assert system[0]["cache_control"] == {"type": "ephemeral"}
     assert tools[-1]["cache_control"] == {"type": "ephemeral"}
 

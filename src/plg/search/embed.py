@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import re
 from collections.abc import Sequence
 from typing import Literal, Protocol
@@ -78,3 +79,26 @@ class HashingEmbedder:
             vector[bucket] += 1.0 if digest[4] & 1 else -1.0
         norm = math.sqrt(sum(x * x for x in vector)) or 1.0
         return [x / norm for x in vector]
+
+
+class LazyEmbedder:
+    """Voyage embeddings, set up on first use so plg-api starts without `VOYAGE_API_KEY`."""
+
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
+        self.dim = settings.embed_dim
+        self._embedder: VoyageEmbedder | None = None
+
+    def _open(self) -> VoyageEmbedder:
+        if self._embedder is None:
+            api_key = os.environ.get("VOYAGE_API_KEY")
+            if not api_key:
+                raise RuntimeError("VOYAGE_API_KEY is not set. Add it to .env at the repo root.")
+            self._embedder = VoyageEmbedder(self._settings, api_key)
+        return self._embedder
+
+    def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+        return self._open().embed_documents(texts)
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._open().embed_query(text)

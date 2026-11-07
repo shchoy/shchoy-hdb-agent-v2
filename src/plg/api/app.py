@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse
@@ -17,7 +17,9 @@ from plg.config import Settings
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
 from plg.documents import ChunkLocation, DocumentLibrary, DocumentView
-from plg.entities.open import LazyGraph
+from plg.entities.local import LocalGraphStore
+from plg.entities.open import LazyGraph, work_linker
+from plg.entities.writer import GraphWriter
 from plg.entities.store import GraphStore
 from plg.events import RunEvent
 from plg.data.warehouse import Warehouse
@@ -25,6 +27,9 @@ from plg.graph.build import build_graph
 from plg.identity import UserCtx, load_personas
 from plg.ingest.scans import SavedScans, TranscriptStore
 from plg.llm import AnthropicLLMClient, LLMClient, Message
+from plg.memory.service import MemoryService
+from plg.memory.store import FlaggedByPolicy, MemoryStore, MemoryView, view
+from plg.search.embed import LazyEmbedder
 from plg.search.rerank import LazySearcher, Retriever
 from plg.search.store import SearchStore
 from plg.threads import RunBuffer, RunInProgress, RunRegistry, ThreadStore, ThreadSummary
@@ -52,6 +57,14 @@ class RunRequest(BaseModel):
     message: str
 
 
+class MemoryEdit(BaseModel):
+    text: str | None = None
+    """New wording. Editing makes the note yours and re-embeds it."""
+    status: Literal["active", "retired"] | None = None
+    """`retired` keeps the note but stops using it; `active` uses it again. A note flagged as conflicting with
+    policy can't be switched back on (409): reword it (which clears the flag) or forget it."""
+
+
 def current_user(
     request: Request,
     x_plg_user: Annotated[str | None, Header(description="Staff ID forwarded by the BFF")] = None,
@@ -73,15 +86,26 @@ def create_app(
     searcher: Retriever | None = None,
     store: SearchStore | None = None,
     entities: GraphStore | None = None,
+    memory: MemoryStore | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
+    llm = llm or AnthropicLLMClient(settings)
+    entities = entities or LazyGraph(settings)
+    memory = memory or MemoryStore(lambda: _open_store(settings), LazyEmbedder(settings))
+    link_work = None
+    if isinstance(entities, LazyGraph):
+        link_work = work_linker(entities.writer)
+    elif isinstance(entities, LocalGraphStore):
+        local = entities
+        link_work = work_linker(lambda: GraphWriter(settings.graph_dir, local))
+    learner = MemoryService(memory, llm, link_work)
     drafts = DraftStore()
     threads = ThreadStore(settings.threads_db)
     runs = RunRegistry()
     graph = build_graph(
-        llm or AnthropicLLMClient(settings), searcher or LazySearcher(settings), entities=entities or LazyGraph(settings),
+        llm, searcher or LazySearcher(settings), entities=entities,
         warehouse=Warehouse(settings.records_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
-        settings=settings,
+        settings=settings, memory=learner,
     )
 
     @asynccontextmanager
@@ -90,6 +114,7 @@ def create_app(
         async with AsyncSqliteSaver.from_conn_string(str(settings.threads_db)) as saver:
             graph.checkpointer = saver
             yield
+            await learner.drain()
 
     library = DocumentLibrary(
         lambda: store or _open_store(settings), settings.corpus_dir, SavedScans(TranscriptStore(settings.transcripts_dir))
@@ -132,6 +157,39 @@ def create_app(
             thread_id=thread_id, title=title, messages=values.get("messages", []), summary=values.get("summary", ""),
             running=latest.question if latest and not latest.finished else None,
         )
+
+    def memory_of(memory_id: str, user: UserCtx) -> MemoryView:
+        """Someone else's memory looks exactly like one that doesn't exist."""
+        item = memory.find(user.staff_id, memory_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Memory not found")
+        return view(item)
+
+    @app.get("/memory")
+    async def list_memory(user: User) -> list[MemoryView]:
+        """The officer's own memories, with where each came from."""
+        memory.seed_profile(user)
+        return [view(i) for i in memory.items(user.staff_id)]
+
+    @app.get("/memory/{memory_id}")
+    async def get_memory(memory_id: str, user: User) -> MemoryView:
+        return memory_of(memory_id, user)
+
+    @app.patch("/memory/{memory_id}")
+    async def edit_memory(memory_id: str, body: MemoryEdit, user: User) -> MemoryView:
+        memory_of(memory_id, user)
+        try:
+            edited = memory.edit(user.staff_id, memory_id, text=body.text, status=body.status)
+        except FlaggedByPolicy as flagged:
+            raise HTTPException(status_code=409, detail=str(flagged)) from None
+        assert edited is not None
+        return view(edited)
+
+    @app.delete("/memory/{memory_id}", status_code=204)
+    async def forget_memory(memory_id: str, user: User) -> Response:
+        memory_of(memory_id, user)
+        memory.forget(user.staff_id, memory_id)
+        return Response(status_code=204)
 
     def sse(buffer: RunBuffer, after: int = 0) -> EventSourceResponse:
         async def frames() -> AsyncIterator[ServerSentEvent]:

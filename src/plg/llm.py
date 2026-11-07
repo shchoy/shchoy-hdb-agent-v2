@@ -7,7 +7,7 @@ import itertools
 import re
 from collections.abc import AsyncIterator, Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Literal, Protocol, TypedDict
+from typing import Any, Literal, NamedTuple, Protocol, TypedDict
 
 import httpx2
 from anthropic import AsyncAnthropic
@@ -172,6 +172,11 @@ def _latest_question(messages: Sequence[AgentMessage]) -> str:
     raise LookupError("No plain-text user message")
 
 
+class Streamed(NamedTuple):
+    system: str
+    messages: list[Message]
+
+
 @dataclass
 class ScriptedLLMClient:
     """Deterministic `LLMClient` for tests, keyed by node and the latest user message."""
@@ -182,6 +187,8 @@ class ScriptedLLMClient:
     sent: list[list[AgentMessage]] = field(default_factory=list)
     # The system blocks and tools sent on each `complete` call, in order.
     requests: list[tuple[list[Block], list[Block]]] = field(default_factory=list)
+    # Each `stream_text` call (the answer), in order: its system prompt and messages.
+    streamed: list[Streamed] = field(default_factory=list)
 
     def script(
         self,
@@ -223,6 +230,7 @@ class ScriptedLLMClient:
         self, *, node: str, tier: Tier, system: str, messages: list[Message]
     ) -> AsyncIterator[str]:
         self.sent.append(list(messages))  # type: ignore[arg-type]
+        self.streamed.append(Streamed(system, list(messages)))
         user_input = _latest_question(messages)  # type: ignore[arg-type]
         try:
             reply = self.replies[(node, user_input)]

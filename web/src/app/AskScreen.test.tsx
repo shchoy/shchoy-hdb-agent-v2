@@ -60,7 +60,13 @@ describe("Ask screen", () => {
       within(trajectory)
         .getAllByRole("listitem")
         .map((li) => li.textContent),
-    ).toEqual(["route ✓ finished", "knowledge ✓ finished", "merge ✓ finished"]);
+    ).toEqual([
+      "load_memory ✓ finished",
+      "route ✓ finished",
+      "knowledge ✓ finished",
+      "merge ✓ finished",
+      "write_memory ✓ finished",
+    ]);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 

@@ -43,6 +43,8 @@ class PLGState(TypedDict, total=False):
     intents: list[Intent]
     findings: Annotated[list[Finding], add_findings]
     answer: str
+    # The labelled block of the officer's private notes for this turn (see plg.memory).
+    memory: str
 
 
 PLGGraph = CompiledStateGraph[PLGState, Any, PLGState, PLGState]

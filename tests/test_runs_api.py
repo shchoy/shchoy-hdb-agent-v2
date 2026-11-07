@@ -74,7 +74,7 @@ def test_every_event_carries_an_increasing_sequence_number(
     assert stream.ids == [str(s) for s in seqs]
 
 
-def test_node_events_trace_route_then_merge_around_the_streamed_answer(
+def test_node_events_trace_memory_route_and_merge_around_the_streamed_answer(
     api: Api, llm: ScriptedLLMClient
 ) -> None:
     route(llm, "hello")
@@ -84,11 +84,15 @@ def test_node_events_trace_route_then_merge_around_the_streamed_answer(
     trajectory = [(e["type"], e.get("node"), e.get("status")) for e in stream.events]
     tokens = [("token", "merge", None)] * len(stream.of_type("token"))
     assert trajectory == [
+        ("node", "load_memory", "started"),
+        ("node", "load_memory", "finished"),
         ("node", "route", "started"),
         ("node", "route", "finished"),
         ("node", "merge", "started"),
         *tokens,
         ("node", "merge", "finished"),
+        ("node", "write_memory", "started"),
+        ("node", "write_memory", "finished"),
         ("done", None, None),
     ]
 
@@ -106,7 +110,7 @@ def test_retrying_a_failed_question_asks_claude_it_only_once(
     retried = api.run(thread_id, "hello")
 
     assert retried.text == "Hi there, officer."
-    assert llm.sent[-1] == [{"role": "user", "content": "hello"}]
+    assert llm.streamed[-1].messages == [{"role": "user", "content": "hello"}]
 
 
 def test_follow_up_question_carries_the_earlier_exchange(
@@ -121,7 +125,7 @@ def test_follow_up_question_carries_the_earlier_exchange(
 
     api.run(thread_id, "and?")
 
-    assert llm.sent[-1] == [
+    assert llm.streamed[-1].messages == [
         {"role": "user", "content": "hello"},
         {"role": "assistant", "content": "Hi there, officer."},
         {"role": "user", "content": "and?"},

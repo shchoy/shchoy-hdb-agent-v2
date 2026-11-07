@@ -40,6 +40,12 @@ from plg.ontology.validate import supersedes_errors  # noqa: E402
 from plg.ontology.vocab import normalise  # noqa: E402
 
 
+def portable(path: Path) -> str:
+    """`path` relative to the repo root (just its name outside it), never machine-specific."""
+    resolved = path.resolve()
+    return str(resolved.relative_to(ROOT)) if resolved.is_relative_to(ROOT) else resolved.name
+
+
 def annotations(element: Any) -> dict[str, Any]:
     return {tag: a["value"] if isinstance(a, dict) else a.value for tag, a in as_dict(element.annotations).items()}
 
@@ -100,6 +106,8 @@ class Ontology:
     def models(self) -> tuple[str, types.ModuleType]:
         """The generated Pydantic models: source to write, and the module loaded from it to validate with."""
         source = f"# {HEADER}\n" + PydanticGenerator(str(self.schema)).serialize()
+        # LinkML records the schema's path; keep it repo-relative so the output is the same on every machine.
+        source = source.replace(repr(str(self.schema)), repr(portable(self.schema)))
         module = types.ModuleType("_plg_ontology_models")
         sys.modules[module.__name__] = module  # Pydantic resolves forward references through sys.modules.
         exec(compile(source, "models.py", "exec"), module.__dict__)

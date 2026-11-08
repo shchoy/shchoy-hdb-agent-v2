@@ -1068,6 +1068,12 @@
         "id": {
           "type": "string"
         },
+        "in_nc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "label": {
           "description": "Human-readable name.",
           "type": [

@@ -14,6 +14,7 @@ from plg.entities.csvio import read_graph
 from plg.entities.ids import find_ids, search_name
 from plg.entities.model import Edge, GraphData, Node
 from plg.entities.policy import PolicyLineage, build_lineage
+from plg.entities.precedent import PrecedentMatch, Situation, precedent, rank_precedents
 from plg.entities.store import EntityContext, EntityRef
 
 
@@ -118,3 +119,30 @@ class LocalGraphStore:
         }
         circulars = {n.id: n for n in (graph.nodes[e.start]["node"] for e in edges if e.type == "OVERRIDES" and e.end in clauses)}
         return build_lineage(wanted, versions, edges, circulars, clauses, as_of)
+
+    def _resolve(self, text: str | None, label: str) -> str | None:
+        if not text or not text.strip():
+            return None
+        found = self.resolve_entities(text, [label], limit=1)
+        return found[0].id if found else text.strip()
+
+    def find_precedents(
+        self, trade: str | None = None, nc: str | None = None, issue: str | None = None, limit: int = 8
+    ) -> list[PrecedentMatch]:
+        graph = self._graph
+        trade_id, nc_id = self._resolve(trade, "Trade"), self._resolve(nc, "NeighbourhoodCentre")
+        town = next(
+            (graph.nodes[e.end]["node"].name for _, _, e in graph.out_edges(nc_id, data="edge") if e.type == "IN_TOWN"),
+            None,
+        ) if nc_id in graph else None
+        cases = []
+        for node_id, attrs in graph.nodes(data=True):
+            node: Node = attrs["node"]
+            if node.label != "Precedent":
+                continue
+            out = [e for _, _, e in graph.out_edges(node_id, data="edge")]
+            trades = [e.end for e in out if e.type == "CONCERNS_TRADE"]
+            ncs = [e.end for e in out if e.type == "IN_NC"]
+            cases.append(precedent(node, trades, ncs[0] if ncs else None))
+        situation = Situation(trade=trade_id, nc=nc_id, town=town, issue=issue.strip() if issue else None)
+        return rank_precedents(cases, situation, limit)

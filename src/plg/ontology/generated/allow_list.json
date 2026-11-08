@@ -569,6 +569,21 @@
       ]
     },
     {
+      "type": "IN_NC",
+      "slot": "in_nc",
+      "domain": "Precedent",
+      "range": "NeighbourhoodCentre",
+      "cardinality": "0..1",
+      "extracted": false,
+      "description": null,
+      "domain_labels": [
+        "Precedent"
+      ],
+      "range_labels": [
+        "NeighbourhoodCentre"
+      ]
+    },
+    {
       "type": "HANDLED_BY",
       "slot": "handled_by",
       "domain": "DefectCategory",

@@ -10,6 +10,7 @@ from plg.config import Settings
 from plg.entities.local import LocalGraphStore
 from plg.entities.spine import write_spine
 from plg.entities.policy import PolicyLineage
+from plg.entities.precedent import PrecedentMatch
 from plg.entities.writer import GraphWriteError, GraphWriter
 from plg.entities.model import Edge
 from plg.entities.store import EntityContext, EntityRef
@@ -44,6 +45,11 @@ class LazyGraph:
 
     def policy_lineage(self, policy_id: str, as_of: date | None = None) -> PolicyLineage | None:
         return self._open().policy_lineage(policy_id, as_of)
+
+    def find_precedents(
+        self, trade: str | None = None, nc: str | None = None, issue: str | None = None, limit: int = 8
+    ) -> list[PrecedentMatch]:
+        return self._open().find_precedents(trade, nc, issue, limit)
 
     def writer(self) -> GraphWriter:
         return GraphWriter(self._settings.graph_dir, self._open())

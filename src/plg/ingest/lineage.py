@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
+from datetime import datetime
 from functools import cache
 from typing import Any
 
@@ -156,14 +157,65 @@ def clause_nodes(doc: DocumentMeta, chunks: Sequence[Chunk]) -> list[Node]:
     ]
 
 
+_PAGE = re.compile(r" \(p\. \d+\)$")
+_FIELDS = {
+    "Date of decision": "decided_on", "Category": "category", "Town": "town", "Facts": "facts",
+    "Decision": "decision", "Reasoning and policy basis": "reasoning", "Outcome / lessons": "outcome",
+}
+"""Rows of a compendium case table, as they read in the chunk text, and the property each becomes."""
+
+
+def case_fields(text: str) -> dict[str, str]:
+    """The case table of a compendium chunk: one value per row label, lines rejoined."""
+    fields: dict[str, list[str]] = {}
+    current: str | None = None
+    for line in text.splitlines():
+        line = line.strip()
+        if line in _FIELDS:
+            current = _FIELDS[line]
+            fields.setdefault(current, [])
+        elif current and line and line not in {"Item", "Detail"}:
+            fields[current].append(line)
+    joined = {k: " ".join(v) for k, v in fields.items()}
+    if decided := joined.get("decided_on"):
+        try:
+            joined["decided_on"] = datetime.strptime(decided, "%d %B %Y").date().isoformat()
+        except ValueError:
+            del joined["decided_on"]
+    return joined
+
+
 def precedent_nodes(doc: DocumentMeta, chunks: Sequence[Chunk]) -> list[Node]:
+    """One node per compendium case, holding the case as its page states it and the chunk it was read from."""
     if doc.doc_type != "precedent_compendium":
         return []
-    found: dict[str, Node] = {}
-    for chunk in chunks:
+    texts: dict[str, list[Chunk]] = {}
+    names: dict[str, str] = {}
+    for chunk in sorted(chunks, key=lambda c: c.seq):
         if m := _PRECEDENT.match(chunk.location.split(" > ")[0]):
-            found.setdefault(m[1], Node(id=m[1], label="Precedent", name=f"{m[1]} {m[2]}", props={"doc_id": doc.doc_id}))
-    return list(found.values())
+            texts.setdefault(m[1], []).append(chunk)
+            names.setdefault(m[1], _PAGE.sub("", m[2]))
+    nodes = []
+    for case_id, parts in texts.items():
+        props: dict[str, str | int | float | bool] = {
+            "doc_id": doc.doc_id, "chunk_id": parts[0].chunk_id, "location": parts[0].location,
+            **case_fields("\n".join(c.text for c in parts)),
+        }
+        nodes.append(Node(id=case_id, label="Precedent", name=f"{case_id} {names[case_id]}", props=props))
+    return nodes
+
+
+def precedent_edges(precedents: Sequence[Node], chunks: Sequence[Chunk], known: Callable[[str], bool]) -> list[Edge]:
+    """CONCERNS_TRADE to every trade a case's chunks are tagged with, IN_NC to its NC when it names exactly one."""
+    edges = []
+    for node in precedents:
+        own = [c for c in chunks if node.id in c.entity_ids and c.location.startswith(node.id)]
+        trades = dict.fromkeys(t for c in own for t in c.trade)
+        ncs = dict.fromkeys(n for c in own for n in c.nc)
+        edges += [Edge(type="CONCERNS_TRADE", start=node.id, end=t) for t in trades if known(t)]
+        if len(ncs) == 1 and known(nc := next(iter(ncs))):
+            edges.append(Edge(type="IN_NC", start=node.id, end=nc))
+    return edges
 
 
 def has_clause_edges(clauses: Sequence[Node], policy_node_id: str) -> list[Edge]:
@@ -235,6 +287,7 @@ async def extract_lineage(llm: LLMClient, store: SearchStore, writer: GraphWrite
         precedents = precedent_nodes(doc, chunks_of[doc.doc_id])
         if found:
             structural += has_clause_edges(clauses, found[0].id)
+        structural += precedent_edges(precedents, chunks_of[doc.doc_id], lambda i: writer.store.node(i) is not None)
         if found or precedents:
             sources.append(doc)
         nodes.update((n.id, n) for n in [*found, *clauses, *precedents])

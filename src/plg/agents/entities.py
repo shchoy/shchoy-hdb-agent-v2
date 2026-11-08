@@ -21,8 +21,10 @@ from plg.agents.runtime import Source, Tool
 from plg.entities.cypher import HUB_LABELS, MAX_HOPS
 from plg.entities.model import Edge, Node
 from plg.entities.policy import PolicyLineage
+from plg.entities.precedent import PrecedentMatch
 from plg.entities.store import EntityContext, GraphStore
-from plg.search.models import Chunk
+from plg.search.models import Chunk, SearchFilter
+from plg.search.rerank import Retriever
 
 MAX_RECORDS = 60
 """Entities shown per context; the ones nearest the root come first."""
@@ -146,6 +148,102 @@ def lineage_tool(graph: GraphStore, on_lineage: Callable[[PolicyLineage], None] 
         },
         run=run,
     )
+
+
+class PrecedentInput(BaseModel):
+    trade: str | None = None
+    nc: str | None = None
+    issue: str | None = None
+
+
+MAX_PRECEDENTS = 5
+PASSAGES_PER_PRECEDENT = 6
+"""Search results per precedent: its compendium page and the emails and notes that name it."""
+
+
+def match_note(match: PrecedentMatch, asked: PrecedentInput, asked_nc_id: str | None) -> str:
+    """One line on a precedent: what it shares with the case asked about and how it differs. What was decided is
+    left to its compendium page, so it is only ever cited from there."""
+    shared = []
+    differs = []
+    if "trade" in match.matched_on:
+        shared.append(f"same trade ({asked.trade})")
+    elif asked.trade:
+        differs.append(f"different trade: {', '.join(match.trades) or 'none recorded'}")
+    if "nc" in match.matched_on:
+        shared.append(f"same NC ({match.nc_id})")
+    elif asked.nc:
+        where = f"NC: {match.nc_id}" if match.nc_id else "NC: not named"
+        differs.append(f"different {where}, not {asked_nc_id or asked.nc}" + (" (same town)" if "town" in match.matched_on else ""))
+    if "issue" in match.matched_on:
+        shared.append(f"same issue ({match.category})")
+    elif asked.issue:
+        differs.append(f"different issue: {match.category}")
+    decided = match.decided_on.isoformat() if match.decided_on else "undated"
+    line = f"- {match.title}, decided {decided}, {match.location}: {'; '.join(shared)}"
+    if differs:
+        line += f"; {'; '.join(differs)}"
+    return f"{line}."
+
+
+def precedent_tool(graph: GraphStore, retriever: Retriever) -> Tool:
+    async def run(raw: dict[str, Any]) -> str | list[Source | str]:
+        args = PrecedentInput.model_validate(raw)
+        matches = await asyncio.to_thread(graph.find_precedents, args.trade, args.nc, args.issue, MAX_PRECEDENTS)
+        if not matches:
+            return (
+                "No precedent in the compendium shares that trade, NC or issue. Search the corpus (e.g. emails and "
+                "notes) for similar past cases instead."
+            )
+
+        def passages(match: PrecedentMatch) -> list[Source]:
+            hits = retriever.search(
+                f"{match.title} {match.decision}", filters=SearchFilter(entity_ids=[match.precedent_id]),
+                k=PASSAGES_PER_PRECEDENT,
+            )
+            # The case's own page first; other compendium chunks (the index) only repeat it.
+            page = [h for h in hits if h.chunk.chunk_id == match.chunk_id]
+            elsewhere = [h for h in hits if h.chunk.doc_id != match.doc_id]
+            return [Source(h.chunk, passage_title(h.chunk)) for h in [*page, *elsewhere]]
+
+        found = await asyncio.gather(*(asyncio.to_thread(passages, m) for m in matches))
+        asked_nc_id = next((m.nc_id for m in matches if "nc" in m.matched_on), None)
+        note = "Precedents, best match first (cite their compendium pages or emails below, not this list):\n" + "\n".join(
+            match_note(m, args, asked_nc_id) for m in matches
+        )
+        output: list[Source | str] = [note]
+        seen: set[str] = set()
+        for sources in found:
+            for source in sources:
+                if source.chunk.chunk_id not in seen:
+                    seen.add(source.chunk.chunk_id)
+                    output.append(source)
+        return output
+
+    return Tool(
+        name="find_precedents",
+        description=(
+            "Past cases from the precedent compendium that match a situation by trade, NC and issue, best match "
+            "first: what each shares with the case and how it differs, its decision and reasoning, then its "
+            "compendium page and the emails that discuss it, to cite. Give whatever parts of the situation are known."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "trade": {"type": "string", "description": "The trade concerned, e.g. Bubble Tea (the new trade for a change of trade)."},
+                "nc": {"type": "string", "description": "The neighbourhood centre: an ID such as NC-PI-1, or its name."},
+                "issue": {
+                    "type": "string",
+                    "description": "The kind of case in a few words, e.g. change of trade, late renewal, fire rent rebate, unauthorised subletting.",
+                },
+            },
+        },
+        run=run,
+    )
+
+
+def passage_title(chunk: Chunk) -> str:
+    return f"{chunk.title} ({chunk.doc_type}) - {chunk.location}"
 
 
 def entity_tools(graph: GraphStore, on_lineage: Callable[[PolicyLineage], None] | None = None) -> list[Tool]:

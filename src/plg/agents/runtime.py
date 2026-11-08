@@ -71,7 +71,8 @@ class Source:
         }
 
 
-ToolOutput = str | list[Source]
+ToolOutput = str | Sequence[Source | str]
+"""Plain text, or passages to cite, possibly with notes (plain strings, shown to Claude but never citable)."""
 
 
 @dataclass
@@ -135,8 +136,10 @@ async def run_agent(
             if isinstance(output, str):
                 content: str | list[Block] = output
             else:
-                retrieved.update((s.chunk.chunk_id, s) for s in output)
-                content = [s.block() for s in output] or "No matching sources."
+                sources = [s for s in output if isinstance(s, Source)]
+                retrieved.update((s.chunk.chunk_id, s) for s in sources)
+                blocks = [{"type": "text", "text": s} if isinstance(s, str) else s.block() for s in output]
+                content = blocks if sources else "No matching sources."
             results.append({"type": "tool_result", "tool_use_id": call["id"], "content": content})
         scratchpad += [{"role": "assistant", "content": reply.content}, {"role": "user", "content": results}]
     raise RuntimeError(f"{node} did not answer within {MAX_TURNS} tool rounds")

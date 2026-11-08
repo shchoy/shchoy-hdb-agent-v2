@@ -87,7 +87,7 @@ This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/l
 ```
 uv run plg graph build                      # PLG Records -> Neptune-format CSVs in .plg/graph/spine (also built on first use)
 uv run plg graph show "Golden Leaf Minimart Pte Ltd"   # resolve a name, unit number or ID, then print its context
-uv run plg graph lineage                    # Haiku extracts SUPERSEDES/OVERRIDES/APPLIES edges (needs ANTHROPIC_API_KEY and a synced index: `plg sync` first)
+uv run plg graph lineage                    # Haiku extracts SUPERSEDES/OVERRIDES/APPLIES edges; precedent cases for find_precedents (needs ANTHROPIC_API_KEY and a synced index: `plg sync` first)
 ```
 
 No API key needed. Override the location with `PLG_GRAPH_DIR`.

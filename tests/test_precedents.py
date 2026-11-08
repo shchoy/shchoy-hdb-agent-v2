@@ -7,6 +7,7 @@ test_policy_lineage). Expected cases come from `_master/key_entities.json` (bubb
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from plg.entities import cypher
@@ -74,5 +75,14 @@ def test_nothing_matches_an_unrelated_situation(lineage: Lineage) -> None:  # no
     assert graph.find_precedents() == []
 
 
-def test_the_precedent_cypher_is_fixed_text() -> None:
-    assert cypher.TEMPLATES["find_precedents"].lstrip().startswith("MATCH (p:Precedent)")
+def test_a_sublet_salon_finds_the_unauthorised_subletting_precedent(lineage: Lineage) -> None:  # noqa: F811
+    graph, _, _ = lineage
+    [first, *_] = graph.find_precedents(trade="Hair Salon", issue="sublet")
+    assert first.precedent_id == "PC-2024-021"
+    assert first.decision == "Composition fee S$500; ordered to regularise within 14 days."
+
+
+def test_the_precedent_cypher_takes_the_resolved_trade_and_nc() -> None:
+    text = cypher.TEMPLATES["find_precedents"]
+    assert {"$trade", "$nc", "$issue_given"} <= set(re.findall(r"\$\w+", text))
+    assert "$nc" in cypher.TEMPLATES["nc_town"]

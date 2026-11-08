@@ -23,7 +23,11 @@ WEIGHTS: dict[Criterion, int] = {"trade": 2, "nc": 2, "issue": 2, "town": 1}
 """Same NC and same trade weigh as much as the same issue; the same town only breaks ties."""
 
 ISSUE_OVERLAP = 0.5
-"""Share of the words of the issue and the case category, taken together, that both must use."""
+"""Share of the words of the issue and the case category, taken together, that both must use, unless every word
+of the issue is in the category ("sublet" is an "Unauthorised subletting" case)."""
+
+STEM = 6
+"""Words are compared on their first letters, so "sublet" and "subletting" are the same word."""
 
 _STOP = {"a", "an", "and", "the", "of", "to", "for", "in", "on", "at", "by", "with", "after", "case", "cases"}
 
@@ -66,12 +70,14 @@ class Situation:
 
 
 def words(text: str) -> set[str]:
-    return {w.removesuffix("s") for w in re.findall(r"[a-z0-9]+", text.casefold()) if w not in _STOP}
+    return {w.removesuffix("s")[:STEM] for w in re.findall(r"[a-z0-9]+", text.casefold()) if w not in _STOP}
 
 
 def same_issue(issue: str, category: str) -> bool:
     asked, filed = words(issue), words(category)
-    return bool(asked and filed) and len(asked & filed) / len(asked | filed) >= ISSUE_OVERLAP
+    if not (asked and filed):
+        return False
+    return asked <= filed or len(asked & filed) / len(asked | filed) >= ISSUE_OVERLAP
 
 
 def precedent(node: Node, trades: Iterable[str], nc_id: str | None) -> Precedent:

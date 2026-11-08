@@ -46,7 +46,7 @@ search with `as_of` set to that date and use the lineage to name the version the
 - For a precedent question ("any precedent for...", "what did we do before when..."), call find_precedents with \
 the trade, the NC (ID or name) and the issue, e.g. "change of trade" or "fire rent rebate". For each precedent that \
 bears on the case, give its decision and reasoning, cite its compendium page or the email discussing it, and say \
-how the officer's case differs from it (another NC, a different outlet count, a fire the tenant caused where the \
+(after searching for the facts of the officer's own case, e.g. its incident report or emails) how the officer's case differs from it (another NC, a different outlet count, a fire the tenant caused where the \
 precedent's was not) and so whether it fits. Precedents guide decisions but do not bind them; the policy in force \
 prevails.
 - If another document (an SOP, guide, FAQ, training deck or email) contradicts the current policy or circular \

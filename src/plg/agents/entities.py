@@ -161,8 +161,9 @@ PASSAGES_PER_PRECEDENT = 6
 """Search results per precedent: its compendium page and the emails and notes that name it."""
 
 
-def match_note(match: PrecedentMatch, asked: PrecedentInput, nc_id: str | None) -> str:
-    """One line on a precedent: what it shares with the case asked about, how it differs, and what was decided."""
+def match_note(match: PrecedentMatch, asked: PrecedentInput, asked_nc_id: str | None) -> str:
+    """One line on a precedent: what it shares with the case asked about and how it differs. What was decided is
+    left to its compendium page, so it is only ever cited from there."""
     shared = []
     differs = []
     if "trade" in match.matched_on:
@@ -173,7 +174,7 @@ def match_note(match: PrecedentMatch, asked: PrecedentInput, nc_id: str | None) 
         shared.append(f"same NC ({match.nc_id})")
     elif asked.nc:
         where = f"NC: {match.nc_id}" if match.nc_id else "NC: not named"
-        differs.append(f"different {where}, not {nc_id or asked.nc}" + (" (same town)" if "town" in match.matched_on else ""))
+        differs.append(f"different {where}, not {asked_nc_id or asked.nc}" + (" (same town)" if "town" in match.matched_on else ""))
     if "issue" in match.matched_on:
         shared.append(f"same issue ({match.category})")
     elif asked.issue:
@@ -182,13 +183,13 @@ def match_note(match: PrecedentMatch, asked: PrecedentInput, nc_id: str | None) 
     line = f"- {match.title}, decided {decided}, {match.location}: {'; '.join(shared)}"
     if differs:
         line += f"; {'; '.join(differs)}"
-    return f"{line}. Decision: {match.decision} Reasoning: {match.reasoning}"
+    return f"{line}."
 
 
 def precedent_tool(graph: GraphStore, retriever: Retriever) -> Tool:
     async def run(raw: dict[str, Any]) -> str | list[Source | str]:
         args = PrecedentInput.model_validate(raw)
-        matches = (await asyncio.to_thread(graph.find_precedents, args.trade, args.nc, args.issue))[:MAX_PRECEDENTS]
+        matches = await asyncio.to_thread(graph.find_precedents, args.trade, args.nc, args.issue, MAX_PRECEDENTS)
         if not matches:
             return (
                 "No precedent in the compendium shares that trade, NC or issue. Search the corpus (e.g. emails and "
@@ -201,14 +202,14 @@ def precedent_tool(graph: GraphStore, retriever: Retriever) -> Tool:
                 k=PASSAGES_PER_PRECEDENT,
             )
             # The case's own page first; other compendium chunks (the index) only repeat it.
-            own = [h for h in hits if h.chunk.chunk_id == match.chunk_id]
-            rest = [h for h in hits if h.chunk.doc_id != match.doc_id]
-            return [Source(h.chunk, title(h.chunk)) for h in [*own, *rest]]
+            page = [h for h in hits if h.chunk.chunk_id == match.chunk_id]
+            elsewhere = [h for h in hits if h.chunk.doc_id != match.doc_id]
+            return [Source(h.chunk, passage_title(h.chunk)) for h in [*page, *elsewhere]]
 
         found = await asyncio.gather(*(asyncio.to_thread(passages, m) for m in matches))
-        nc_id = next((m.nc_id for m in matches if "nc" in m.matched_on), None)
+        asked_nc_id = next((m.nc_id for m in matches if "nc" in m.matched_on), None)
         note = "Precedents, best match first (cite their compendium pages or emails below, not this list):\n" + "\n".join(
-            match_note(m, args, nc_id) for m in matches
+            match_note(m, args, asked_nc_id) for m in matches
         )
         output: list[Source | str] = [note]
         seen: set[str] = set()
@@ -241,7 +242,7 @@ def precedent_tool(graph: GraphStore, retriever: Retriever) -> Tool:
     )
 
 
-def title(chunk: Chunk) -> str:
+def passage_title(chunk: Chunk) -> str:
     return f"{chunk.title} ({chunk.doc_type}) - {chunk.location}"
 
 

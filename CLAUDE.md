@@ -32,10 +32,13 @@ src/plg/
 │                    Tools are read-only `Tool`s; search tools return `Source`s, sent as search_result blocks (one
 │                    text block per sentence, citations enabled). Citation = doc_id, chunk_id, title, version,
 │                    location, quote, span (offsets into the chunk text). Citations of chunks the run didn't
-│                    retrieve are dropped.
+│                    retrieve are dropped. A tool may also return plain-text notes next to its Sources (shown, never citable).
 │   ├── entities.py  Knowledge agent's graph tools: resolve_entities, entity_context, policy_lineage(policy_id, as_of?) (read-only; lineage is one
 │   │                citable passage `lineage:<policy_id>`; on_lineage callback feeds the policy_stance event). Context comes back as
 │   │                citable record passages (Chunk doc_type "record", source_system "plg_records", chunk_id `record:<id>`).
+│   │                precedent_tool (find_precedents(trade?, nc?, issue?), needs the Retriever): a note per match (what it shares
+│   │                with the case, how it differs; no decision text) + each case's compendium page and the emails naming its PC ID
+│   │                (search filtered on entity_ids), so precedents are cited to the page or email.
 │   ├── data.py      The data agent: tools get_definition (glossary version in force on as_of, or `version`, with its SQL
 │   │                binding) and run_sql (plan, sql with $as_of, glossary term IDs, as_of; default as_of = semantic layer's
 │   │                as_of_default 2026-09-30). Each run_sql leaves a SqlTrace; the last carries the agent's explanation, which always ends by naming the
@@ -43,7 +46,7 @@ src/plg/
 │   ├── drafting.py  The drafting agent: tools get_template, lookup_records (read-only SELECT through the Warehouse) and submit_draft
 │   │                (records a Draft; the last submission wins and is stored for download). Unfilled slots are listed with reasons, never
 │   │                invented; the draft gets a PII check. Signing officer's email/phone come from `staff`, read directly (the Warehouse blocks it).
-│   └── knowledge.py The knowledge agent: search_corpus (+ the entity tools when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
+│   └── knowledge.py The knowledge agent: search_corpus (+ the entity tools and find_precedents when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
 │                    documents; as_of = in force on that date (superseded versions included). Queries are expanded
 │                    with the preferred labels of PLG terms (VocabIndex.find_terms), which are also listed in the
 │                    agent's per-run context.
@@ -93,6 +96,8 @@ src/plg/
 │                    lineage.py: `plg graph lineage` - Policy/Sop/Circular/Clause/Precedent nodes from index metadata; Haiku (node extract_lineage,
 │                    forced record_edges tool built from generated/extraction/*.json) proposes SUPERSEDES/OVERRIDES/APPLIES; an edge is kept only with a
 │                    verbatim quote from a chunk of the batch read and known, allowed endpoints; written via GraphWriter. Idempotent.
+│                    Precedent nodes are parsed deterministically from the compendium chunks (decided_on, category, town, facts,
+│                    decision, reasoning, outcome, chunk_id, location) with CONCERNS_TRADE / IN_NC edges from the chunk tags.
 │                    scans.py: image-only PDFs (no text layer) are read by Claude PDF input through LLMClient
 │                    (node ingest_scan, forced record_transcript tool: title, control fields, text per page); the
 │                    Transcript is saved by file hash (TranscriptStore) so unchanged scans, --full rebuilds and the
@@ -116,6 +121,9 @@ src/plg/
 │                    policy.py: PolicyLineage (versions with effective dates, supersessions, circular overrides with scope + evidence) and
 │                    build_lineage; GraphStore.policy_lineage(policy_id, as_of?) + cypher POLICY_* templates (LocalGraphStore scans in memory).
 │                    Edge.props (scalars, typed CSV columns) carry evidence_chunk_id / evidence_quote / scope on extracted edges.
+│                    precedent.py: Precedent / PrecedentMatch (case fields + matched_on trade|nc|issue|town), rank_precedents (shared by
+│                    both stores: trade, NC, issue weigh 2, same town 1 as tie-break; issue = word overlap with the case category);
+│                    GraphStore.find_precedents(trade?, nc?, issue?, limit) resolves names, cypher FIND_PRECEDENTS + NC_TOWN.
 ├── ontology/        Runtime access to the GENERATED ontology artefacts (GENERATED = generated/ path).
 │   ├── vocab.py     VocabIndex (load_vocab): SKOS concepts by scheme (`concepts(scheme, cls)` → generated
 │                    model) and synonym/abbreviation lookup `resolve(text)` (LOD → letter of demand + plg:LodTrigger,

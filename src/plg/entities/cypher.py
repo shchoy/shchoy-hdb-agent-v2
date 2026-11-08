@@ -62,10 +62,12 @@ MATCH (p:Precedent)
 OPTIONAL MATCH (p)-[:CONCERNS_TRADE]->(t:Trade)
 OPTIONAL MATCH (p)-[:IN_NC]->(nc:NeighbourhoodCentre)
 WITH p, collect(DISTINCT id(t)) AS trades, head(collect(DISTINCT id(nc))) AS nc
-WHERE (size($trades) > 0 AND ANY(x IN trades WHERE x IN $trades)) OR nc IN $ncs OR $issue_given
+WHERE $trade IN trades OR nc = $nc OR $issue_given
 RETURN id(p) AS id, p.name AS name, properties(p) AS props, trades, nc"""
-"""Candidates for `find_precedents`: every case sharing the trade or NC, or all of them when an issue is given
-(the issue is matched against the category in Python, by `plg.entities.precedent.rank_precedents`)."""
+"""`find_precedents`, after `resolve_entities` has turned `trade` and `nc` into IDs (null when not given) and
+`nc_town` has read the NC's town: the cases sharing the trade or the NC, or every case when an issue is given.
+`plg.entities.precedent.rank_precedents` then matches the issue against each category and ranks, as in
+`LocalGraphStore`."""
 
 NC_TOWN = """\
 MATCH (nc:NeighbourhoodCentre)-[:IN_TOWN]->(t:Town)

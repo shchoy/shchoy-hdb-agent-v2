@@ -101,17 +101,21 @@ def test_the_agent_is_told_what_each_precedent_shares_with_the_case_and_how_it_d
     first, second = shown.index("PC-2024-009"), shown.index("PC-2025-014")
     assert first < second
     same_nc = shown[first:second]
-    assert "same trade (Bubble Tea)" in same_nc and "same NC (NC-PI-1" in same_nc and "Rejected." in same_nc
+    assert "same trade (Bubble Tea)" in same_nc and "same NC (NC-PI-1" in same_nc
+    assert "Rejected." not in shown  # decisions are cited from the compendium page, never from the note
     assert "different NC: NC-BV-3" in shown[second:].split("\n")[0]
 
 
 def test_the_fire_precedent_is_shown_with_its_reasoning_so_the_differences_can_be_explained(
-    precedent_api: Api, llm: ScriptedLLMClient
+    precedent_api: Api, llm: ScriptedLLMClient, store: LanceSearchStore
 ) -> None:
     route(llm, FIRE, "knowledge")
     llm.script_turns(
         "knowledge", FIRE,
-        turn(tool_call("find_precedents", issue="fire rent rebate")),
+        turn(
+            tool_call("find_precedents", issue="fire rent rebate"),
+            tool_call("search_corpus", query="Sin Hock fire cause and rent rebate"),
+        ),
         answer_citing(
             "did not result from tenant negligence",
             "No: PC-2025-019's rebate was given because the fire was not the tenant's fault; Sin Hock's was.",
@@ -123,6 +127,9 @@ def test_the_fire_precedent_is_shown_with_its_reasoning_so_the_differences_can_b
 
     [citation] = stream.of_type("citation")
     assert citation["location"] == "PC-2025-019 - Fire incident / rent rebate (Kebun Raya) (p. 9)"
+    shown = {c.source_path for c in shown_chunks(llm, store)}
+    # The precedent's page and the current case's own evidence, so the two causes can be set side by side.
+    assert "pdfs/Incident_Report_PLG-INC-2026-011_Fire_Sin_Hock.pdf" in shown
     tools = {t["name"] for _, tools in llm.requests for t in tools}
     assert "find_precedents" in tools
     system = " ".join(b["text"] for blocks, _ in llm.requests for b in blocks)

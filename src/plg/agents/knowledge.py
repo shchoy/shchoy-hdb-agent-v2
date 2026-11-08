@@ -14,7 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from plg.agents.entities import entity_tools
+from plg.agents.entities import entity_tools, precedent_tool
 from plg.agents.runtime import AgentResult, Source, Tool, run_agent
 from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
@@ -43,6 +43,12 @@ the versions with effective dates, what superseded what and the circulars overri
 units. Where a circular overrides a clause only for some units (e.g. NC units), state the rule for each kind of \
 unit and the date it took effect; the original clause still governs the rest. For "what was the rule on <date>", \
 search with `as_of` set to that date and use the lineage to name the version then in force.
+- For a precedent question ("any precedent for...", "what did we do before when..."), call find_precedents with \
+the trade, the NC (ID or name) and the issue, e.g. "change of trade" or "fire rent rebate". For each precedent that \
+bears on the case, give its decision and reasoning, cite its compendium page or the email discussing it, and say \
+how the officer's case differs from it (another NC, a different outlet count, a fire the tenant caused where the \
+precedent's was not) and so whether it fits. Precedents guide decisions but do not bind them; the policy in force \
+prevails.
 - If another document (an SOP, guide, FAQ, training deck or email) contradicts the current policy or circular \
 (an older figure, deadline or period), say which document, what it says, and that the policy prevails. Check the \
 other documents your searches return against the current position before you answer.
@@ -136,6 +142,9 @@ async def answer(
         node=NODE,
         system=SYSTEM,
         context=describe_terms(vocab.find_terms(question)),
-        tools=[search_tool(retriever, vocab, doc_types), *(entity_tools(entities, on_lineage) if entities else [])],
+        tools=[
+            search_tool(retriever, vocab, doc_types),
+            *([*entity_tools(entities, on_lineage), precedent_tool(entities, retriever)] if entities else []),
+        ],
         messages=messages,
     )

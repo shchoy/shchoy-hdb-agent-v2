@@ -60,6 +60,7 @@
 - Circular -OVERRIDES-> Clause [0..*]*
 - Precedent -APPLIES-> Clause [0..*]*
 - Precedent -CONCERNS_TRADE-> Trade [0..*]
+- Precedent -IN_NC-> NeighbourhoodCentre [0..1]
 - DefectCategory -HANDLED_BY-> Team [1]
 - DefectCategory -DEFAULT_VENDOR-> Vendor [0..1]
 - GlossaryTerm -OWNED_BY-> Staff [1]

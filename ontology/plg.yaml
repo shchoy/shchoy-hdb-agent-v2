@@ -145,7 +145,7 @@ classes:
     is_a: Entity
     description: A decided case in the precedent compendium.
     annotations: {node: true}
-    slots: [decision, applies, concerns_trade]
+    slots: [decision, applies, concerns_trade, in_nc]
 
   # ---------------------------------------------------------------- vocabulary concepts
   Trade:

@@ -47,7 +47,7 @@ WRITE_MEMORY = "write_memory"
 ROUTE_SYSTEM = """\
 You route questions from officers of the Properties & Land Group (PLG) to specialists.
 - knowledge: anything answered from PLG's documents and records, including what is known about a tenant, unit or tenancy: policies, SOPs, circulars, procedures, \
-rules, limits, deadlines, what a PLG term means, audit findings, incidents, letters, emails and notes.
+rules, limits, deadlines, what a PLG term means, precedents (past cases and decisions), audit findings, incidents, letters, emails and notes.
 - data: numeric questions answered by querying PLG Records: counts, totals, rates and lists of units, tenancies, \
 arrears, invoices, inspections, feedback and tickets; and why two reported figures differ.
 - drafting: the officer asks for a standard letter or notice to be drafted: an arrears reminder, a missing-documents \

@@ -57,6 +57,21 @@ RETURN id(c) AS circular, properties(c) AS circular_props, id(cl) AS clause, pro
        properties(r) AS props
 ORDER BY clause, circular"""
 
+FIND_PRECEDENTS = """\
+MATCH (p:Precedent)
+OPTIONAL MATCH (p)-[:CONCERNS_TRADE]->(t:Trade)
+OPTIONAL MATCH (p)-[:IN_NC]->(nc:NeighbourhoodCentre)
+WITH p, collect(DISTINCT id(t)) AS trades, head(collect(DISTINCT id(nc))) AS nc
+WHERE (size($trades) > 0 AND ANY(x IN trades WHERE x IN $trades)) OR nc IN $ncs OR $issue_given
+RETURN id(p) AS id, p.name AS name, properties(p) AS props, trades, nc"""
+"""Candidates for `find_precedents`: every case sharing the trade or NC, or all of them when an issue is given
+(the issue is matched against the category in Python, by `plg.entities.precedent.rank_precedents`)."""
+
+NC_TOWN = """\
+MATCH (nc:NeighbourhoodCentre)-[:IN_TOWN]->(t:Town)
+WHERE id(nc) = $nc
+RETURN t.name AS town"""
+
 TEMPLATES: dict[str, str] = {
     "resolve_entities": RESOLVE_ENTITIES,
     **{f"entity_context_{hops}": text for hops, text in ENTITY_CONTEXT.items()},
@@ -64,4 +79,6 @@ TEMPLATES: dict[str, str] = {
     "policy_versions": POLICY_VERSIONS,
     "policy_supersedes": POLICY_SUPERSEDES,
     "policy_overrides": POLICY_OVERRIDES,
+    "find_precedents": FIND_PRECEDENTS,
+    "nc_town": NC_TOWN,
 }

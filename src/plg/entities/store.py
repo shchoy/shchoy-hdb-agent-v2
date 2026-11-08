@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from plg.entities.model import Edge, Node
 from plg.entities.policy import PolicyLineage
+from plg.entities.precedent import PrecedentMatch
 
 
 class EntityRef(BaseModel):
@@ -41,4 +42,11 @@ class GraphStore(Protocol):
         """Versions of a controlled document (e.g. `PLG-POL-003`), what superseded what, and the circulars
         overriding its clauses; None when no such document is in the graph. With `as_of`, `current` is the version
         in force on that date."""
+        ...
+
+    def find_precedents(
+        self, trade: str | None = None, nc: str | None = None, issue: str | None = None, limit: int = 8
+    ) -> list[PrecedentMatch]:
+        """Decided cases sharing the trade, the NC or the issue (the case category) of a situation, best match
+        first. `trade` and `nc` take an ID or a name; a case in the NC's town ranks above one elsewhere."""
         ...

@@ -193,7 +193,7 @@ class Block(Entity):
          'from_schema': 'https://w3id.org/heb/plg'})
 
     in_nc: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'IN_NC'}},
-         'domain_of': ['Block']} })
+         'domain_of': ['Block', 'Precedent']} })
     id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
 
@@ -486,6 +486,8 @@ class Precedent(Entity):
          'domain_of': ['Precedent']} })
     concerns_trade: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'CONCERNS_TRADE'}},
          'domain_of': ['Precedent']} })
+    in_nc: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'IN_NC'}},
+         'domain_of': ['Block', 'Precedent']} })
     id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
 

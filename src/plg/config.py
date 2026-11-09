@@ -27,6 +27,8 @@ class Settings(BaseModel):
     records_db: Path = REPO_ROOT / "poc-data" / "plg_records.db"
     # The corpus `plg sync` reads through the SharePoint and Lotus Notes mocks.
     corpus_dir: Path = REPO_ROOT / "poc-data"
+    # The corpus's Excel trackers, cleaned into DuckDB tables by `plg sync`; the data agent reads them as trackers.<table>.
+    trackers_db: Path = REPO_ROOT / ".plg" / "trackers.duckdb"
     # SearchStore (LanceDB) directory: chunks, entities and memory tables.
     search_db: Path = REPO_ROOT / ".plg" / "lancedb"
     # Entity graph: spine CSVs (Neptune openCypher bulk-load format) and delta CSVs written by GraphWriter.

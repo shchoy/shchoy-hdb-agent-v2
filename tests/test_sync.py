@@ -52,6 +52,13 @@ def test_sync_reads_the_library_scan_and_leaves_application_scans_to_doc_check(
     assert "Skipped: pdfs/Scan_TA_TA-2024-00451_HengAnn.pdf" not in output
 
 
+def test_sync_loads_every_excel_tracker(corpus_index: tuple[LanceSearchStore, str]) -> None:
+    # 8 workbooks (_report.md); their summary sheets of formulas are left out (see test_trackers_api).
+    _, output = corpus_index
+
+    assert "Loaded 8 trackers into 14 tables" in output
+
+
 @pytest.mark.parametrize(
     ("path", "policy_id", "version", "effective_from", "effective_to", "status"),
     [

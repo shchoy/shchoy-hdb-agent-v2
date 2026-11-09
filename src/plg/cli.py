@@ -63,7 +63,7 @@ def main() -> None:
 def ask(question: str) -> None:
     """Ask a question and stream the answer."""
     settings = Settings.from_env()
-    graph = build_graph(make_llm(settings), LazySearcher(settings), entities=LazyGraph(settings), warehouse=Warehouse(settings.records_db))
+    graph = build_graph(make_llm(settings), LazySearcher(settings), entities=LazyGraph(settings), warehouse=Warehouse(settings.records_db, settings.trackers_db))
 
     async def run() -> bool:
         citations: list[CitationEvent] = []
@@ -91,7 +91,9 @@ def ask(question: str) -> None:
 def sync(
     full: bool = typer.Option(False, "--full", help="Drop the index and re-ingest everything."),
 ) -> None:
-    """Ingest changed corpus documents (SharePoint and Lotus Notes mocks) into the search index."""
+    """Ingest changed corpus documents (SharePoint and Lotus Notes mocks) into the search index, and load the Excel
+    trackers into DuckDB for data questions."""
+    from plg.data.trackers import load_trackers
     from plg.ingest.metadata import load_entity_spine
     from plg.ingest.scans import ScanReader, TranscriptStore
     from plg.ingest.sources import DocumentSource, LotusNotesSource, SharePointSource
@@ -116,6 +118,13 @@ def sync(
         typer.echo(f"Superseded: {path}")
     for skipped in report.skipped:
         typer.echo(f"Skipped: {skipped.rel_path} ({skipped.reason})")
+
+    workbooks = load_trackers(settings.corpus_dir, settings.trackers_db)
+    tables = [t for wb in workbooks for t in wb.tables]
+    typer.echo(
+        f"Loaded {len(workbooks)} trackers into {len(tables)} tables ({sum(t.rows for t in tables)} rows); "
+        f"restart plg-api to query them."
+    )
 
 
 @app.command()

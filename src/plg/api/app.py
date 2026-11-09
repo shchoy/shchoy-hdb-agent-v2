@@ -104,7 +104,7 @@ def create_app(
     runs = RunRegistry()
     graph = build_graph(
         llm, searcher or LazySearcher(settings), entities=entities,
-        warehouse=Warehouse(settings.records_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
+        warehouse=Warehouse(settings.records_db, settings.trackers_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
         settings=settings, memory=learner,
     )
 

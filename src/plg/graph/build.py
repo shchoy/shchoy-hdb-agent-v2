@@ -48,8 +48,10 @@ ROUTE_SYSTEM = """\
 You route questions from officers of the Properties & Land Group (PLG) to specialists.
 - knowledge: anything answered from PLG's documents and records, including what is known about a tenant, unit or tenancy: policies, SOPs, circulars, procedures, \
 rules, limits, deadlines, what a PLG term means, precedents (past cases and decisions), audit findings, incidents, letters, emails and notes.
-- data: numeric questions answered by querying PLG Records: counts, totals, rates and lists of units, tenancies, \
-arrears, invoices, inspections, feedback and tickets; and why two reported figures differ.
+- data: numeric questions answered by querying PLG Records and the Excel trackers (vacancy report, arrears ageing, \
+rent roll, renewals pipeline, inspection and officer task trackers, trade mix, feedback statistics): counts, totals, \
+rates and lists of units, tenancies, arrears, invoices, inspections, feedback, tickets and tasks; and why two \
+reported figures differ.
 - drafting: the officer asks for a standard letter or notice to be drafted: an arrears reminder, a missing-documents \
 notice, or an update reply to someone who gave feedback.
 A question can need both. Choose no specialist for greetings, thanks and questions about how to use the assistant."""

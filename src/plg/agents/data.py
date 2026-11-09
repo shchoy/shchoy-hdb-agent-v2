@@ -64,13 +64,14 @@ Tables (all columns are in the database; DESCRIBE is not available, so use the s
 Example queries:
 {examples}{trackers}"""
 
-TRACKERS = """
+TRACKERS_PROMPT = """
 
 Excel trackers: hand-maintained spreadsheets, loaded at ingestion as tables you query as trackers.<table> (they \
 join with PLG Records on IDs). Use them when the question is about a tracker or report, or PLG Records lacks the \
 figure; otherwise prefer PLG Records and say when a tracker disagrees. Tracker dates are DATE values. The \
 spreadsheets' formulas had no saved values, so formula columns and summary sheets were not loaded: compute those \
-figures in SQL from the formula shown, over the loaded rows. Title and note rows are the preparer's words; a \
+figures in SQL from the formula shown, over the loaded rows; round a computed ratio to 2 decimals before comparing \
+it with a threshold (amounts are floats: exactly 3.00 months must not count as over 3). Title and note rows are the preparer's words; a \
 "Static check" note is their own total, for checking your figure, not a substitute for querying.
 {trackers}"""
 
@@ -271,7 +272,7 @@ async def answer(
     tables = "\n".join(f"- {name}: {note}" for name, note in layer.tables.items())
     examples = "\n".join(f"Q: {e.question}\n{e.sql.strip()}" for e in layer.examples)
     workbooks = await asyncio.to_thread(lambda: warehouse.trackers)
-    trackers = TRACKERS.format(trackers=describe(workbooks, TRACKERS_SCHEMA)) if workbooks else ""
+    trackers = TRACKERS_PROMPT.format(trackers=describe(workbooks, TRACKERS_SCHEMA)) if workbooks else ""
     result = await run_agent(
         llm,
         node=NODE,

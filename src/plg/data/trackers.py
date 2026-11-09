@@ -365,9 +365,8 @@ def tracker_files(corpus_dir: Path) -> list[Path]:
     )
 
 
-def load_trackers(corpus_dir: Path, db_path: Path, files: Sequence[Path] | None = None) -> list[Workbook]:
+def load_trackers(corpus_dir: Path, db_path: Path) -> list[Workbook]:
     """Clean the corpus's trackers into a fresh DuckDB database at `db_path` (replacing it). Returns what was loaded."""
-    files = tracker_files(corpus_dir) if files is None else files
     db_path.parent.mkdir(parents=True, exist_ok=True)
     tmp = db_path.with_name(f".{db_path.name}.tmp")
     tmp.unlink(missing_ok=True)
@@ -376,7 +375,7 @@ def load_trackers(corpus_dir: Path, db_path: Path, files: Sequence[Path] | None 
     try:
         con.execute(f"CREATE TABLE {CATALOG_TABLE} (path VARCHAR PRIMARY KEY, spec JSON)")
         names: set[str] = set()
-        for path in files:
+        for path in tracker_files(corpus_dir):
             workbook, tables = read_workbook(path, path.relative_to(corpus_dir).as_posix())
             for table in tables:
                 if table.name in names:

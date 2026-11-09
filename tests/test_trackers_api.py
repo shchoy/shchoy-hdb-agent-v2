@@ -152,3 +152,21 @@ def test_without_trackers_the_data_agent_is_told_of_none(api: Api, llm: Scripted
     (trace,) = stream.of_type("sql_trace")
     assert trace["status"] == "rejected"
     assert "Excel trackers" not in data_system(llm)
+
+
+def test_arrears_above_three_months_from_the_tracker_match_ground_truth(trackers_api: Api, llm: ScriptedLLMClient) -> None:
+    # _report.md question 10: 22 tenancies owe more than 3 x rent x 1.09. Four owe exactly 3 months; the agent is
+    # told to round the computed ratio before comparing, which keeps them out.
+    question = "Per the arrears ageing tracker, which tenancies owe more than 3 months' rent?"
+    stream = ask(
+        trackers_api, llm, question,
+        sql_turn("Months of rent from the tracker formula, over 3", (
+            "SELECT COUNT(*) AS tenancies FROM trackers.arrears_ageing_sep2026_data "
+            "WHERE ROUND(arrears_incl_gst / (monthly_rent * 1.09), 2) > 3"
+        )),
+        turn(text("22.")),
+    )
+
+    (trace,) = stream.of_type("sql_trace")
+    assert rows(trace) == [{"tenancies": 22}]
+    assert "round a computed ratio to 2 decimals before comparing" in data_system(llm)

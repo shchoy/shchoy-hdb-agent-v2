@@ -1,6 +1,7 @@
 """Validation of agent-written SQL, before anything runs.
 
-Only a single SELECT is accepted, reading only tables of PLG Records that the data agent may see. DuckDB parses
+Only a single SELECT is accepted, reading only tables of PLG Records that the data agent may see, and the Excel
+trackers (`trackers.<table>`). DuckDB parses
 the statement (`json_serialize_sql` accepts SELECT statements alone, which rejects writes, PRAGMA, COPY, ATTACH
 and the like); the parsed tree is then walked for every table it reads.
 """
@@ -15,6 +16,9 @@ import duckdb
 CATALOG = "rec"
 """Where the SQLite records database is attached."""
 
+TRACKERS = "trackers"
+"""Where the trackers database is attached. Its tables are named `trackers.<table>` in the allowed set."""
+
 BLOCKED_TABLES = frozenset({"staff"})
 """Tables of PLG Records the data agent may not read (staff contact details are not for analysis)."""
 
@@ -24,7 +28,8 @@ class SqlRejected(ValueError):
 
 
 def check_sql(sql: str, tables: frozenset[str]) -> frozenset[str]:
-    """The tables `sql` reads. Raises SqlRejected unless it is one SELECT over only `tables`."""
+    """The tables `sql` reads. Raises SqlRejected unless it is one SELECT over only `tables` (PLG Records tables by
+    name, trackers as `trackers.<table>`)."""
     if not sql.strip():
         raise SqlRejected("The SQL is empty.")
     parsed = json.loads(duckdb.connect(":memory:").execute("SELECT json_serialize_sql(?)", [sql]).fetchone()[0])  # type: ignore[index]
@@ -64,8 +69,11 @@ def _check_table(node: dict[str, Any], tables: frozenset[str], read: set[str], c
     catalog, schema = node["catalog_name"].lower(), node["schema_name"].lower()
     if not catalog and not schema and name in ctes:
         return
-    if catalog not in ("", CATALOG) or schema not in ("", "main"):
-        raise SqlRejected(f"Table {'.'.join(p for p in (catalog, schema, name) if p)} is not available.")
+    shown = ".".join(p for p in (catalog, schema, name) if p)
+    if (not catalog and schema == TRACKERS) or (catalog == TRACKERS and schema in ("", "main")):
+        name = f"{TRACKERS}.{name}"
+    elif catalog not in ("", CATALOG) or schema not in ("", "main"):
+        raise SqlRejected(f"Table {shown} is not available.")
     if name in BLOCKED_TABLES or name not in tables:
-        raise SqlRejected(f"Table {name} is not available. Available tables: {', '.join(sorted(tables))}.")
+        raise SqlRejected(f"Table {shown} is not available. Available tables: {', '.join(sorted(tables))}.")
     read.add(name)

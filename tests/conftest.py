@@ -101,6 +101,7 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
     ) -> Api:
         settings.setdefault("threads_db", tmp_path / "threads.sqlite")
         settings.setdefault("graph_dir", tmp_path / "graph")  # WORKED_ON links never reach the real graph
+        settings.setdefault("trackers_db", tmp_path / "trackers.duckdb")  # none unless a test passes the synced ones
         embedder = HashingEmbedder(dim=128)
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]
@@ -162,10 +163,15 @@ def run_sync(
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(cli, "make_embedder", lambda settings: embedder)
         mp.setattr(cli, "make_llm", lambda settings: llm or scan_llm())
-        env = {"PLG_SEARCH_DB": str(index), "PLG_CORPUS_DIR": str(corpus)}
+        env = {"PLG_SEARCH_DB": str(index), "PLG_CORPUS_DIR": str(corpus), "PLG_TRACKERS_DB": str(trackers_path(index))}
         result = CliRunner().invoke(cli.app, ["sync", *args], env=env)
     assert result.exit_code == 0, result.output
     return result
+
+
+def trackers_path(index: Path) -> Path:
+    """Where a test sync of `index` loads the Excel trackers."""
+    return index.with_name(f"{index.name}-trackers.duckdb")
 
 
 def open_store(index: Path, embedder: HashingEmbedder) -> LanceSearchStore:
@@ -177,12 +183,24 @@ def by_path(store: LanceSearchStore) -> dict[str, DocumentMeta]:
 
 
 @pytest.fixture(scope="session")
-def corpus_index(tmp_path_factory: pytest.TempPathFactory) -> tuple[LanceSearchStore, str]:
-    """The whole poc-data corpus, synced once per test session."""
+def synced_corpus(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, CountingEmbedder, str]:
+    """The whole poc-data corpus, synced once per test session: the index, its embedder and the sync output."""
     embedder = CountingEmbedder()
     index = tmp_path_factory.mktemp("index")
     result = run_sync(embedder, index)
-    return open_store(index, embedder), result.output
+    return index, embedder, result.output
+
+
+@pytest.fixture(scope="session")
+def corpus_index(synced_corpus: tuple[Path, CountingEmbedder, str]) -> tuple[LanceSearchStore, str]:
+    index, embedder, output = synced_corpus
+    return open_store(index, embedder), output
+
+
+@pytest.fixture(scope="session")
+def trackers_db(synced_corpus: tuple[Path, CountingEmbedder, str]) -> Path:
+    """The poc-data Excel trackers, as `plg sync` loaded them."""
+    return trackers_path(synced_corpus[0])
 
 
 @pytest.fixture

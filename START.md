@@ -6,7 +6,7 @@ How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on 
 
 | Part | Status | How to run |
 |---|---|---|
-| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations, data questions over PLG Records, letter drafting | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
+| Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations, data questions over PLG Records and the Excel trackers, letter drafting | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
 | Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in and Ask screen with citation chips | `cd web && npm run dev` |
 
 ## 1. Prerequisites
@@ -59,6 +59,7 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_API_HOST` | `127.0.0.1` | `plg-api` bind address |
 | `PLG_API_PORT` | `8000` | `plg-api` port |
 | `PLG_RECORDS_DB` | `poc-data/plg_records.db` | PLG Records SQLite database (read-only; source of the staff personas) |
+| `PLG_TRACKERS_DB` | `.plg/trackers.duckdb` | The Excel trackers (`poc-data/sheets/*.xlsx`), cleaned into DuckDB tables by `plg sync`; the data agent queries them as `trackers.<table>` |
 | `PLG_THREADS_DB` | `.plg/threads.sqlite` | Conversations: LangGraph checkpoints and thread owners; they survive a `plg-api` restart |
 | `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
 | `PLG_HISTORY_KEEP_MESSAGES` | `4` | Recent messages kept verbatim when folding |
@@ -81,6 +82,8 @@ uv run plg search "letter of demand" # check what was indexed
 ```
 
 This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. Image-only scanned PDFs are transcribed by Claude (needs `ANTHROPIC_API_KEY`) the first time; the transcript is saved in `.plg/lancedb-transcripts/` and reused, so re-syncs and `--full` don't call Claude again for them. Delete that folder to force a re-read. With `PLG_RERANK_BACKEND=local`, the first search downloads the local cross-encoder into `.plg/models`.
+
+`plg sync` also loads the Excel trackers into `.plg/trackers.duckdb`, rebuilt from scratch on every run, which needs no API key. Their formulas have no saved values, so formula columns and summary sheets are not loaded; the data agent computes those figures in SQL. Restart `plg-api` after a sync to query the new tables.
 
 ### Entity graph (tenants, units, tenancies)
 

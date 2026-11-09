@@ -9,7 +9,7 @@ PLG "Super-Librarian" POC: a LangGraph agent that answers PLG officers' question
 ```
 src/plg/
 ├── config.py        Settings: model ID per tier (haiku/sonnet/opus), max tokens, SSE heartbeat, API host/port,
-│                    records_db (PLG Records SQLite), corpus_dir, search_db (LanceDB, default .plg/lancedb),
+│                    records_db (PLG Records SQLite), trackers_db (.plg/trackers.duckdb, Excel trackers), corpus_dir, search_db (LanceDB, default .plg/lancedb),
 │                    Voyage embed model/dim, rerank_backend (voyage|local), Voyage rerank model, local rerank model,
 │                    search_candidates, vector_weight.
 │                    transcripts_dir (saved scan transcripts, beside search_db). threads_db (.plg/threads.sqlite: checkpoints + thread owners),
@@ -50,13 +50,20 @@ src/plg/
 │                    documents; as_of = in force on that date (superseded versions included). Queries are expanded
 │                    with the preferred labels of PLG terms (VocabIndex.find_terms), which are also listed in the
 │                    agent's per-run context.
-├── data/            Data questions over PLG Records. warehouse.py: Warehouse (DuckDB, SQLite attached READ_ONLY, opened on first
-│   │                use, then locked: no external access); run() = check_sql → EXPLAIN dry run → execute (MAX_ROWS), raises
+├── data/            Data questions over PLG Records and the Excel trackers. warehouse.py: Warehouse (DuckDB, SQLite attached READ_ONLY,
+│   │                trackers_db attached READ_ONLY as catalog `trackers` when present, opened on first use, then locked: no external
+│   │                access; `trackers` = loaded Workbooks); run() = check_sql → EXPLAIN dry run → execute (MAX_ROWS), raises
 │   │                SqlRejected. sqlcheck.py: check_sql parses with DuckDB json_serialize_sql (SELECT only), rejects several
-│   │                statements, table functions, other catalogs, `staff`. semantic.py: SemanticLayer (load_semantic_layer;
+│   │                statements, table functions, other catalogs, `staff`, `trackers._workbooks`; tracker tables are `trackers.<table>`. semantic.py: SemanticLayer (load_semantic_layer;
 │   │                bindings keyed by versioned glossary term, table notes, examples, quality_issues → warnings(sql, result)),
 │   │                semantic_errors for `make ontology`. trace.py: SqlTrace (plan, sql, as_of, status ok|rejected, result
 │   │                summary, ConceptUsed glossary versions, warnings, explanation).
+│   │                trackers.py: load_trackers(corpus_dir, db) (`plg sync`): every *.xlsx outside `_` folders → typed tables in a fresh
+│   │                DuckDB file (replaced atomically) + `_workbooks` catalog (Workbook JSON). Merged multi-row headers → one snake_case
+│   │                name per column (reserved words get `_`); title/note rows ("Static check: ...") kept as notes; text dates read
+│   │                day-first; same-header tabs combined with a `sheet` column. Formula cells have no cached values: formula columns
+│   │                (formula kept, in column names), formula-only rows (TOTAL) and mostly-formula sheets are NOT loaded. describe()
+│   │                renders them for the data agent's system prompt (which says to compute formulas in SQL, rounding ratios before thresholds).
 ├── drafting/        Letter drafting from approved templates. templates.py (TemplateLibrary: the approved `docs/TPL-*.docx` of corpus_dir; slots
 │   │                `{{ name }}`, [guidance] dropped, wording never changed), render.py (fill → paragraphs; open slots show as «slot»; to_html
 │   │                escapes everything; to_docx reuses the template file, open slots highlighted), pii.py (NRIC/FIN, non-officer phone/email,
@@ -141,7 +148,7 @@ src/plg/
 │                    GET /memory (own memories, profile seeded on first look), GET/PATCH/DELETE /memory/{id} (PATCH: text and/or status
 │                    active|retired; a policy-flagged note can't be set active (409, FlaggedByPolicy): rewording it clears the flag;
 │                    other users' memories are 404).
-└── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]`,
+└── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers),
                      `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
                      `plg glossary list [--all] | show <term>`, `plg memory list | show | edit | forget --user <staff ID>`. make_llm() builds the real LLMClient.
 
@@ -156,7 +163,8 @@ tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLL
                      a temp threads_db, graph_dir and HashingEmbedder memory store). `llm.streamed` records merge's system + messages
                      (use it, not `sent[-1]`, which the background extract_memory call can win). The poc-data
                      corpus is synced once per session (hashing embedder) for search and knowledge_api tests
-                     (real local cross-encoder; each search costs seconds). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
+                     (real local cross-encoder; each search costs seconds). That sync also loads the trackers (`trackers_db` fixture);
+                     test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).
 scripts/build_ontology.py
@@ -206,7 +214,7 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 - Test at the HTTP seam and assert on received SSE events, not on internals. Web tests assert on rendered UI
   and BFF responses, with MSW standing in for plg-api.
 - The browser never talks to plg-api and holds no credentials: PLG_API_URL is server-only, never NEXT_PUBLIC_*.
-- The data agent only runs one read-only SELECT over PLG Records (not `staff`), validated and EXPLAIN-dry-run first; business
+- The data agent only runs one read-only SELECT over PLG Records (not `staff`) and the Excel trackers (`trackers.<table>`), validated and EXPLAIN-dry-run first; business
   terms use the glossary version in force on the reporting date. The DuckDB `sqlite` extension is downloaded on first use.
 - Every claim in a knowledge answer is cited through the Messages API search_result citations; an answer
   with no surviving citation becomes the fixed "not covered" answer. Agent tools are read-only.

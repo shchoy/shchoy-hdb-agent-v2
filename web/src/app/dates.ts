@@ -4,3 +4,11 @@ const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", 
 export function day(iso: string): string {
   return DATE.format(new Date(`${iso}T00:00:00Z`));
 }
+
+/** When something applied: "1 Aug 2026 to 31 Dec 2026", "from 1 Aug 2026", "until ...", or `undated`. */
+export function period(from: string | null, to: string | null, undated: string): string {
+  if (from && to) return `${day(from)} to ${day(to)}`;
+  if (from) return `from ${day(from)}`;
+  if (to) return `until ${day(to)}`;
+  return undated;
+}

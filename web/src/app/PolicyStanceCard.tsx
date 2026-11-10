@@ -1,14 +1,11 @@
 import type { PolicyStanceEvent } from "@/lib/events";
-import { day } from "./dates";
+import { day, period as span } from "./dates";
 import styles from "./ask.module.css";
 
 type Stance = PolicyStanceEvent;
 
 function period(from: string | null, to: string | null): string {
-  if (from && to) return `${day(from)} to ${day(to)}`;
-  if (from) return `from ${day(from)}`;
-  if (to) return `until ${day(to)}`;
-  return "dates not recorded";
+  return span(from, to, "dates not recorded");
 }
 
 function Evidence({ quote }: { quote: string }) {

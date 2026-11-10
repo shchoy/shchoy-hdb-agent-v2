@@ -36,6 +36,10 @@ type Run =
   | ({ status: "done" } & Answer)
   | { status: "failed"; question: string; reason: string; trajectory: Step[] };
 
+function emptyAnswer(question: string): Answer {
+  return { question, answer: "", citations: [], drafts: [], stances: [], traces: [], trajectory: [] };
+}
+
 /** The run failed or was cut short: whatever was streamed is partial and not to be trusted. */
 class RunFailed extends Error {}
 
@@ -78,15 +82,7 @@ export function AskScreen() {
     open: (lastSeq: number) => Promise<Response>,
     prior?: Answer,
   ) {
-    const acc: Answer = prior ?? {
-      question: text,
-      answer: "",
-      citations: [],
-      drafts: [],
-      stances: [],
-      traces: [],
-      trajectory: [],
-    };
+    const acc: Answer = prior ?? emptyAnswer(text);
     let lastSeq = 0;
     const update = (status: "running" | "done") => setRun({ status, ...acc });
     update("running");
@@ -179,16 +175,7 @@ export function AskScreen() {
         { role: "assistant", content: run.answer },
       ]);
     }
-    setRun({
-      status: "running",
-      question: text,
-      answer: "",
-      citations: [],
-      drafts: [],
-      stances: [],
-      traces: [],
-      trajectory: [],
-    });
+    setRun({ status: "running", ...emptyAnswer(text) });
     try {
       if (threadId.current === null) {
         threadId.current = await createThread();

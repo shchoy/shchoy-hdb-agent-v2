@@ -17,11 +17,11 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-import yaml
 from fastapi.testclient import TestClient
 
 from plg.api.app import create_app
 from plg.config import REPO_ROOT, Settings
+from plg.data.semantic import load_semantic_layer
 from plg.entities.local import LocalGraphStore
 from plg.entities.spine import write_spine
 from plg.entities.writer import GraphWriter
@@ -108,8 +108,9 @@ def draft(llm: ScriptedLLMClient) -> None:
 
 def data(llm: ScriptedLLMClient) -> None:
     """A rejected query, then the corrected one over the Arrears binding, so the Reasoning panel shows both."""
-    bindings = yaml.safe_load((REPO_ROOT / "ontology" / "semantic.yaml").read_text())["bindings"]
-    arrears = next(b["sql"] for b in bindings if "plg:Arrears_v1" in b["concepts"])
+    binding = load_semantic_layer().binding("plg:Arrears_v1")
+    assert binding is not None
+    arrears = binding.sql
     concepts = ["plg:Arrears_v1", "plg:MonthsOfArrears_v1"]
     llm.script_turns("route", DATA_QUESTION, turn(tool_call("route", intents=["data"])))
     llm.script_turns(

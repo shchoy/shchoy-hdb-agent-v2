@@ -320,3 +320,8 @@
 .sqlFigure {
   margin: 0.5rem 0;
 }
+.queryStatus {
+  color: #555;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}

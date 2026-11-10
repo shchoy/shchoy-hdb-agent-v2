@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import type { SqlTraceEvent } from "@/lib/events";
-import { day } from "./dates";
+import { day, period } from "./dates";
 import styles from "./ask.module.css";
 
 type Result = NonNullable<SqlTraceEvent["result"]>;
@@ -10,13 +10,10 @@ type Cell = Result["rows"][number][number];
 type Concept = SqlTraceEvent["concepts"][number];
 
 /** Rows shown in a query's result table; the CSV export has them all. */
-const SHOWN_ROWS = 10;
+const TABLE_ROWS = 10;
 
 function inForce({ effective_from: from, effective_to: to }: Concept): string {
-  if (from && to) return `in force from ${day(from)} to ${day(to)}`;
-  if (from) return `in force from ${day(from)}`;
-  if (to) return `in force until ${day(to)}`;
-  return "in force since before records began";
+  return `in force ${period(from, to, "since before records began")}`;
 }
 
 /**
@@ -36,26 +33,34 @@ function csvHref(result: Result): string {
   return `data:text/csv;charset=utf-8,${encodeURIComponent(`﻿${lines.join("\r\n")}\r\n`)}`;
 }
 
+/** Copies the SQL; says so, or says to copy it by hand when the clipboard is unavailable (e.g. plain HTTP). */
 function CopySql({ sql }: { sql: string }) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(sql);
+      setState("copied");
+    } catch {
+      setState("failed");
+    }
+  }
   return (
-    <button
-      type="button"
-      onClick={() =>
-        void navigator.clipboard.writeText(sql).then(
-          () => setCopied(true),
-          () => setCopied(false),
-        )
-      }
-    >
-      {copied ? "Copied" : "Copy SQL"}
-    </button>
+    <>
+      <button type="button" onClick={() => void copy()} onBlur={() => setState("idle")}>
+        {state === "copied" ? "Copied" : "Copy SQL"}
+      </button>
+      <span role="status" className={styles.hint}>
+        {state === "failed" && " Could not copy. Select the SQL and copy it by hand."}
+      </span>
+    </>
   );
 }
 
-function ResultTable({ result, n }: { result: Result; n: number }) {
-  const shown = result.rows.slice(0, SHOWN_ROWS);
+/** Memoised: a trace's result never changes, so the CSV is built once, not on every streamed token. */
+const ResultTable = memo(function ResultTable({ result, queryNumber }: { result: Result; queryNumber: number }) {
+  const shown = result.rows.slice(0, TABLE_ROWS);
   const total = `${result.row_count}${result.truncated ? "+" : ""} rows`;
+  const csv = csvHref(result);
   return (
     <>
       <div className={styles.resultScroll}>
@@ -86,16 +91,15 @@ function ResultTable({ result, n }: { result: Result; n: number }) {
       </div>
       {result.rows.length > shown.length && (
         <p className={styles.hint}>
-          Showing the first {shown.length} of {result.row_count}
-          {result.truncated ? "+" : ""} rows. Export CSV for all of them.
+          Showing the first {shown.length} of {total}. Export CSV for all of them.
         </p>
       )}
-      <a href={csvHref(result)} download={`query-${n}.csv`}>
+      <a href={csv} download={`query-${queryNumber}.csv`}>
         Export CSV
       </a>
     </>
   );
-}
+});
 
 /**
  * How a data answer was reached: each query the data agent ran (plan, SQL, result or the reason it was rejected,
@@ -113,7 +117,7 @@ export function ReasoningPanel({ traces }: { traces: SqlTraceEvent[] }) {
               <h4>
                 Query {i + 1}: {t.plan}
               </h4>
-              <p className={styles.location}>
+              <p className={styles.queryStatus}>
                 As of {day(t.as_of)} · {t.status === "ok" ? "Ran" : "Rejected"}
               </p>
               <figure aria-label="SQL" className={styles.sqlFigure}>
@@ -123,7 +127,7 @@ export function ReasoningPanel({ traces }: { traces: SqlTraceEvent[] }) {
               </figure>
               <CopySql sql={t.sql} />
               {t.error && <p className={styles.queryError}>{t.error}</p>}
-              {t.concepts.length > 0 && (
+              {t.status === "ok" && t.concepts.length > 0 && (
                 <>
                   <h5>Definitions used</h5>
                   <ul aria-label="Definitions used">
@@ -142,7 +146,7 @@ export function ReasoningPanel({ traces }: { traces: SqlTraceEvent[] }) {
                   ))}
                 </ul>
               )}
-              {t.result && <ResultTable result={t.result} n={i + 1} />}
+              {t.result && <ResultTable result={t.result} queryNumber={i + 1} />}
             </li>
           ))}
         </ol>

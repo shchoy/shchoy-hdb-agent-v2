@@ -390,6 +390,8 @@ describe("Reasoning panel", () => {
     expect(rejected).toHaveTextContent("Rejected");
     expect(rejected).toHaveTextContent('Referenced column "months_in_arrears" not found');
     expect(within(rejected).queryByRole("table")).not.toBeInTheDocument();
+    // A rejected query applied no definition, so none is named for it.
+    expect(within(rejected).queryByRole("list", { name: "Definitions used" })).not.toBeInTheDocument();
 
     expect(ok).toHaveTextContent("Arrears per tenancy from the Arrears binding, over 3 months of rent");
     expect(within(ok).getByRole("figure", { name: "SQL" })).toHaveTextContent("WHERE months_of_rent > 3 ORDER BY arrears DESC");
@@ -432,6 +434,17 @@ describe("Reasoning panel", () => {
     expect(copied).toMatch(/^SELECT tenancy_id, tenant_name, arrears, days_overdue, months_of_rent FROM \(/);
     expect(copied).toMatch(/WHERE months_of_rent > 3 ORDER BY arrears DESC$/);
     expect(within(ok).getByRole("button", { name: "Copied" })).toBeInTheDocument();
+  });
+
+  it("says when the SQL could not be copied", async () => {
+    const { user, ok } = await openReasoning();
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+
+    await user.click(within(ok).getByRole("button", { name: "Copy SQL" }));
+
+    expect(within(ok).getByRole("status")).toHaveTextContent(
+      "Could not copy. Select the SQL and copy it by hand.",
+    );
   });
 
   it("exports every row of a result to CSV, not just the rows shown", async () => {

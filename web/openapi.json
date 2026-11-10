@@ -1888,7 +1888,7 @@
             "title": "Truncated",
             "type": "boolean"
           },
-          "sample": {
+          "rows": {
             "items": {
               "items": {
                 "anyOf": [
@@ -1908,7 +1908,7 @@
               },
               "type": "array"
             },
-            "title": "Sample",
+            "title": "Rows",
             "type": "array"
           }
         },
@@ -1916,7 +1916,7 @@
           "columns",
           "row_count",
           "truncated",
-          "sample"
+          "rows"
         ],
         "title": "ResultSummary",
         "type": "object"

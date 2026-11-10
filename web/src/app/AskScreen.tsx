@@ -8,11 +8,13 @@ import {
   type CitationEvent,
   type DraftEvent,
   type PolicyStanceEvent,
+  type SqlTraceEvent,
   type ThreadSummary,
   type ThreadView,
 } from "@/lib/events";
 import { DraftPreview } from "./DraftPreview";
 import { PolicyStanceCard } from "./PolicyStanceCard";
+import { ReasoningPanel } from "./ReasoningPanel";
 import { SourceViewer } from "./SourceViewer";
 import styles from "./ask.module.css";
 
@@ -24,6 +26,7 @@ type Answer = {
   citations: CitationEvent[];
   drafts: DraftEvent[];
   stances: PolicyStanceEvent[];
+  traces: SqlTraceEvent[];
   trajectory: Step[];
 };
 
@@ -81,6 +84,7 @@ export function AskScreen() {
       citations: [],
       drafts: [],
       stances: [],
+      traces: [],
       trajectory: [],
     };
     let lastSeq = 0;
@@ -116,6 +120,9 @@ export function AskScreen() {
                 break;
               case "policy_stance":
                 acc.stances = [...acc.stances, event];
+                break;
+              case "sql_trace":
+                acc.traces = [...acc.traces, event];
                 break;
               case "error":
                 throw new RunFailed(event.message);
@@ -179,6 +186,7 @@ export function AskScreen() {
       citations: [],
       drafts: [],
       stances: [],
+      traces: [],
       trajectory: [],
     });
     try {
@@ -361,6 +369,7 @@ export function AskScreen() {
                 {(run.citations.length > 0 || run.stances.length > 0) && (
                   <Sources citations={run.citations} stances={run.stances} />
                 )}
+                {run.traces.length > 0 && <ReasoningPanel traces={run.traces} />}
                 {run.drafts.map((draft) => (
                   <DraftPreview key={draft.draft_id} draft={draft} />
                 ))}

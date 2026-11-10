@@ -28,8 +28,6 @@ from plg.ontology.vocab import VocabIndex
 
 NODE = "data"
 
-SAMPLE_ROWS = 10
-"""Rows of a result kept in the trace."""
 SHOWN_ROWS = 60
 """Rows of a result shown to the agent."""
 
@@ -199,7 +197,7 @@ def sql_tool(warehouse: Warehouse, glossary: Glossary, layer: SemanticLayer, tra
         trace.warnings = layer.warnings(args.sql, result)
         trace.result = ResultSummary(
             columns=result.columns, row_count=len(result.rows), truncated=result.truncated,
-            sample=result.rows[:SAMPLE_ROWS],
+            rows=result.rows,
         )
         traces.append(trace)
         return result_text(result, trace.warnings)

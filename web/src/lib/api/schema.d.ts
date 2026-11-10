@@ -662,8 +662,8 @@ export interface components {
             row_count: number;
             /** Truncated */
             truncated: boolean;
-            /** Sample */
-            sample: (string | number | null)[][];
+            /** Rows */
+            rows: (string | number | null)[][];
         };
         /**
          * Span

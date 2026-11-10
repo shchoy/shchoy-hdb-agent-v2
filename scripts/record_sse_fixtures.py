@@ -17,6 +17,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import yaml
 from fastapi.testclient import TestClient
 
 from plg.api.app import create_app
@@ -38,6 +39,7 @@ OUT = REPO_ROOT / "web" / "src" / "test" / "fixtures"
 USER = {"X-PLG-User": "S05"}
 QUESTION = "When do we issue a letter of demand?"
 POLICY_QUESTION = "How far can a tenant display goods beyond the shopfront?"
+DATA_QUESTION = "Which tenancies have arrears above 3 months' rent?"
 DRAFT_QUESTION = "Draft an update reply to the member of public who gave feedback FB-2025-00002"
 
 
@@ -104,6 +106,25 @@ def draft(llm: ScriptedLLMClient) -> None:
     llm.script("merge", DRAFT_QUESTION, "I drafted the reply from TPL-FBK-03. Nothing has been sent.")
 
 
+def data(llm: ScriptedLLMClient) -> None:
+    """A rejected query, then the corrected one over the Arrears binding, so the Reasoning panel shows both."""
+    bindings = yaml.safe_load((REPO_ROOT / "ontology" / "semantic.yaml").read_text())["bindings"]
+    arrears = next(b["sql"] for b in bindings if "plg:Arrears_v1" in b["concepts"])
+    concepts = ["plg:Arrears_v1", "plg:MonthsOfArrears_v1"]
+    llm.script_turns("route", DATA_QUESTION, turn(tool_call("route", intents=["data"])))
+    llm.script_turns(
+        "data", DATA_QUESTION,
+        turn(tool_call("get_definition", concept="plg:Arrears")),
+        turn(tool_call("run_sql", plan="Tenancies whose arrears exceed 3 months of rent", concepts=concepts,
+                       sql="SELECT tenancy_id, months_in_arrears FROM tenancies WHERE months_in_arrears > 3")),
+        turn(tool_call("run_sql", plan="Arrears per tenancy from the Arrears binding, over 3 months of rent", concepts=concepts,
+                       sql=f"SELECT tenancy_id, tenant_name, arrears, days_overdue, months_of_rent FROM ({arrears}) "
+                           "WHERE months_of_rent > 3 ORDER BY arrears DESC")),
+        turn(text("22 tenancies owe more than 3 months of rent, Golden Leaf Minimart among them.")),
+    )
+    llm.script("merge", DATA_QUESTION, "**22 tenancies** have arrears above 3 months' rent.")
+
+
 def policy_stance(llm: ScriptedLLMClient) -> None:
     """The display-area limit (POL-001 v3.0 cl. 7.3 overridden for NC units by Circular 07/2026), plus POL-003, whose v1.0 was superseded."""
     llm.script_turns("route", POLICY_QUESTION, turn(tool_call("route", intents=["knowledge"])))
@@ -154,7 +175,7 @@ def lineage_graph(store: LanceSearchStore, graph_dir: Path) -> LocalGraphStore:
 
 SCRIPTS: dict[str, tuple[str, Callable[[ScriptedLLMClient], None]]] = {
     "answer": (QUESTION, answer), "not_covered": (QUESTION, not_covered), "error": (QUESTION, error),
-    "draft": (DRAFT_QUESTION, draft), "policy_stance": (POLICY_QUESTION, policy_stance),
+    "draft": (DRAFT_QUESTION, draft), "data": (DATA_QUESTION, data), "policy_stance": (POLICY_QUESTION, policy_stance),
 }
 
 

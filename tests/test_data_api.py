@@ -82,7 +82,7 @@ def test_vacancy_47_vs_52_is_explained_by_the_definition_change(api: Api, llm: S
 
     traces = stream.of_type("sql_trace")
     assert [t["status"] for t in traces] == ["ok", "ok"]
-    assert [t["result"]["sample"] for t in traces] == [[[47]], [[52]]]  # type: ignore[index]
+    assert [t["result"]["rows"] for t in traces] == [[[47]], [[52]]]  # type: ignore[index]
     v2, v1 = (t["concepts"][0] for t in traces)  # type: ignore[index]
     assert (v2["id"], v2["version"], v2["effective_from"]) == ("plg:Vacant_v2", 2, "2026-04-15")
     assert (v1["id"], v1["version"], v1["effective_to"]) == ("plg:Vacant_v1", 1, "2026-04-14")
@@ -120,6 +120,8 @@ def test_arrears_above_three_months_match_ground_truth(api: Api, llm: ScriptedLL
     (trace,) = stream.of_type("sql_trace")
     assert trace["status"] == "ok"
     assert trace["result"]["row_count"] == len(truth)  # type: ignore[index]
+    # Every row reaches the client (for the Reasoning panel's CSV export), not just the first few.
+    assert {row[0] for row in trace["result"]["rows"]} == set(truth)  # type: ignore[index]
     assert {c["id"] for c in trace["concepts"]} == {"plg:Arrears_v1", "plg:MonthsOfArrears_v1"}  # type: ignore[attr-defined]
     shown = tool_results(llm)[0]
     for tenancy_id in truth:
@@ -133,7 +135,7 @@ def test_golden_leaf_arrears_match_ground_truth(api: Api, llm: ScriptedLLMClient
     stream = ask(api, llm, GOLDEN_LEAF_QUESTION, sql_turn("Arrears of Golden Leaf Minimart", sql, ["plg:Arrears_v1"]), turn(text("x")))
 
     (trace,) = stream.of_type("sql_trace")
-    row = dict(zip(trace["result"]["columns"], trace["result"]["sample"][0], strict=True))  # type: ignore[index]
+    row = dict(zip(trace["result"]["columns"], trace["result"]["rows"][0], strict=True))  # type: ignore[index]
     assert (row["tenancy_id"], row["arrears"], row["days_overdue"], row["months_of_rent"]) == (
         truth["tenancy_id"], truth["amount"], truth["days_overdue"], truth["months_of_rent"],
     )
@@ -184,7 +186,7 @@ def test_a_rejected_query_can_be_corrected_in_the_same_run(api: Api, llm: Script
     )
 
     assert [t["status"] for t in stream.of_type("sql_trace")] == ["rejected", "ok"]
-    assert stream.of_type("sql_trace")[1]["result"]["sample"] == [[47]]  # type: ignore[index]
+    assert stream.of_type("sql_trace")[1]["result"]["rows"] == [[47]]  # type: ignore[index]
     assert [e["seq"] for e in stream.events] == sorted(e["seq"] for e in stream.events)  # type: ignore[type-var]
 
 

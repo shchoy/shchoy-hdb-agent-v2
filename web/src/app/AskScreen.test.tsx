@@ -364,6 +364,101 @@ describe("Ask screen", () => {
   });
 });
 
+const DATA_QUESTION = "Which tenancies have arrears above 3 months' rent?";
+
+/** Asks the recorded data question and opens the Reasoning panel. */
+async function openReasoning() {
+  server.use(
+    threadsApi(),
+    http.post("/api/threads/:id/runs", () => sseResponse(fixture("data"))),
+  );
+  const user = await ask(DATA_QUESTION);
+  await runFinished();
+  await user.click(screen.getByText("Reasoning"));
+  const queries = screen.getByRole("list", { name: "Queries" });
+  const [rejected, ok] = within(queries)
+    .getAllByRole("listitem")
+    .filter((li) => li.parentElement === queries);
+  return { user, rejected, ok };
+}
+
+describe("Reasoning panel", () => {
+  it("shows each query's plan, SQL, result table and the explanation", async () => {
+    const { rejected, ok } = await openReasoning();
+
+    expect(rejected).toHaveTextContent("Tenancies whose arrears exceed 3 months of rent");
+    expect(rejected).toHaveTextContent("Rejected");
+    expect(rejected).toHaveTextContent('Referenced column "months_in_arrears" not found');
+    expect(within(rejected).queryByRole("table")).not.toBeInTheDocument();
+
+    expect(ok).toHaveTextContent("Arrears per tenancy from the Arrears binding, over 3 months of rent");
+    expect(within(ok).getByRole("figure", { name: "SQL" })).toHaveTextContent("WHERE months_of_rent > 3 ORDER BY arrears DESC");
+    expect(ok).toHaveTextContent(/As of 30 Sept? 2026/);
+    const table = within(ok).getByRole("table", { name: /22 rows/ });
+    expect(
+      within(table).getAllByRole("columnheader").map((th) => th.textContent),
+    ).toEqual(["tenancy_id", "tenant_name", "arrears", "days_overdue", "months_of_rent"]);
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(10);
+    expect(
+      within(rows[0]).getAllByRole("cell").map((td) => td.textContent),
+    ).toEqual(["TA-2024-00319", "Barakah Boba Bar Pte Ltd", "33037.9", "213", "7"]);
+    expect(ok).toHaveTextContent("Showing the first 10 of 22 rows.");
+    expect(ok).toHaveTextContent("The payment export repeats PAY-00001235.");
+
+    expect(screen.getByRole("region", { name: "Reasoning" })).toHaveTextContent(
+      "22 tenancies owe more than 3 months of rent, Golden Leaf Minimart among them.",
+    );
+  });
+
+  it("names the glossary definitions used and the dates they are in force", async () => {
+    const { ok } = await openReasoning();
+
+    const definitions = within(ok).getByRole("list", { name: "Definitions used" });
+    expect(
+      within(definitions).getAllByRole("listitem").map((li) => li.textContent),
+    ).toEqual([
+      "Arrears v1 (plg:Arrears_v1), in force from 15 Apr 2026",
+      "Months of arrears v1 (plg:MonthsOfArrears_v1), in force from 1 Mar 2024",
+    ]);
+  });
+
+  it("copies a query's SQL to the clipboard", async () => {
+    const { user, ok } = await openReasoning();
+
+    await user.click(within(ok).getByRole("button", { name: "Copy SQL" }));
+
+    const copied = await navigator.clipboard.readText();
+    expect(copied).toMatch(/^SELECT tenancy_id, tenant_name, arrears, days_overdue, months_of_rent FROM \(/);
+    expect(copied).toMatch(/WHERE months_of_rent > 3 ORDER BY arrears DESC$/);
+    expect(within(ok).getByRole("button", { name: "Copied" })).toBeInTheDocument();
+  });
+
+  it("exports every row of a result to CSV, not just the rows shown", async () => {
+    const { rejected, ok } = await openReasoning();
+
+    expect(within(rejected).queryByRole("link", { name: "Export CSV" })).not.toBeInTheDocument();
+    const link = within(ok).getByRole("link", { name: "Export CSV" });
+    expect(link).toHaveAttribute("download", "query-2.csv");
+    const href = link.getAttribute("href") ?? "";
+    expect(href.startsWith("data:text/csv;charset=utf-8,")).toBe(true);
+    const lines = decodeURIComponent(href.slice(href.indexOf(",") + 1)).replace(/^\uFEFF/, "").split("\r\n");
+    expect(lines[0]).toBe("tenancy_id,tenant_name,arrears,days_overdue,months_of_rent");
+    expect(lines[1]).toBe("TA-2024-00319,Barakah Boba Bar Pte Ltd,33037.9,213,7");
+    expect(lines.filter(Boolean)).toHaveLength(23);
+  });
+
+  it("shows no Reasoning panel for a knowledge answer", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
+    );
+    await ask();
+    await runFinished();
+    expect(screen.queryByText("Reasoning")).not.toBeInTheDocument();
+  });
+});
+
 describe("Conversations", () => {
   const PAST = {
     thread_id: "t9",

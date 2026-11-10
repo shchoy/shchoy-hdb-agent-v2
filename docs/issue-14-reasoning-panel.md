@@ -61,7 +61,8 @@ Issue #12 made the data agent stream an `sql_trace` for every query, but the web
 
 ```
 officer asks a numeric question
-  → BFF /api/threads/{id}/runs → plg-api POST /threads/{id}/runs → graph: route → data
+  → BFF (Backend for Frontend: the web app's Next.js route handlers, which add X-PLG-User and relay to plg-api)
+    /api/threads/{id}/runs → plg-api POST /threads/{id}/runs → graph: route → data
       data agent: get_definition → run_sql (check_sql → EXPLAIN → execute, ≤500 rows)
         → SqlTrace(plan, sql, as_of, status, result{columns,row_count,truncated,rows}, concepts, warnings, explanation)
         → streamed as sql_trace events → merge streams the answer tokens

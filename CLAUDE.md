@@ -57,7 +57,7 @@ src/plg/
 │   │                statements, table functions, other catalogs, `staff`, `trackers._workbooks`; tracker tables are `trackers.<table>`. semantic.py: SemanticLayer (load_semantic_layer;
 │   │                bindings keyed by versioned glossary term, table notes, examples, quality_issues → warnings(sql, result)),
 │   │                semantic_errors for `make ontology`. trace.py: SqlTrace (plan, sql, as_of, status ok|rejected, result
-│   │                summary, ConceptUsed glossary versions, warnings, explanation).
+│   │                summary: columns, row_count, truncated, every fetched row (<= MAX_ROWS 500, for the CSV export), ConceptUsed glossary versions, warnings, explanation).
 │   │                trackers.py: load_trackers(corpus_dir, db) (`plg sync`): every *.xlsx outside `_` folders → typed tables in a fresh
 │   │                DuckDB file (replaced atomically) + `_workbooks` catalog (Workbook JSON). Merged multi-row headers → one snake_case
 │   │                name per column (reserved words get `_`); title/note rows ("Static check: ...") kept as notes; text dates read
@@ -172,7 +172,7 @@ scripts/build_ontology.py
                      references, supersedes chains and glossary owners (staff table) BEFORE writing; on any
                      problem lists them, exits 1, writes nothing. --source/--out for testing. Needs dev deps (linkml).
 scripts/record_sse_fixtures.py
-                     Records real SSE streams (answer with citations, not_covered, error) from the in-process API,
+                     Records real SSE streams (answer with citations, not_covered, error, draft, policy_stance, data: a rejected then a successful run_sql) from the in-process API,
                      with the corpus synced into a temp index (threads, memory and graph writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
@@ -181,7 +181,8 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay),
                      /api/memory (GET list), /api/memory/[id] (PATCH, DELETE).
                      Pages: /sign-in, /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer, node trajectory, citation chips under the
-                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), error + Retry).
+                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry).
+                     dates.ts: day() / period() date formatting shared by the cards.
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.
                      Tests: Vitest + RTL + MSW replaying the recorded fixtures.

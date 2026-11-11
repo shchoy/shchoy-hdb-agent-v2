@@ -1,20 +1,11 @@
 import type { PolicyStanceEvent } from "@/lib/events";
+import { day, period as span } from "./dates";
 import styles from "./ask.module.css";
 
 type Stance = PolicyStanceEvent;
 
-const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-
-/** "2026-08-01" → "1 Aug 2026". */
-function day(iso: string): string {
-  return DATE.format(new Date(`${iso}T00:00:00Z`));
-}
-
 function period(from: string | null, to: string | null): string {
-  if (from && to) return `${day(from)} to ${day(to)}`;
-  if (from) return `from ${day(from)}`;
-  if (to) return `until ${day(to)}`;
-  return "dates not recorded";
+  return span(from, to, "dates not recorded");
 }
 
 function Evidence({ quote }: { quote: string }) {

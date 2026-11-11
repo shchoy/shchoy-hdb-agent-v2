@@ -49,7 +49,7 @@ describe("parseRunEvents", () => {
     const trace = {
       type: "sql_trace", seq: 3, plan: "Count vacant units", sql: "SELECT COUNT(*) FROM units",
       as_of: "2026-08-31", status: "ok", error: null,
-      result: { columns: ["n"], row_count: 1, truncated: false, sample: [[47]] },
+      result: { columns: ["n"], row_count: 1, truncated: false, rows: [[47]] },
       concepts: [{
         id: "plg:Vacant_v2", concept: "plg:Vacant", version: 2, label: "Vacant unit",
         effective_from: "2026-04-15", effective_to: null,

@@ -259,3 +259,69 @@
   gap: 0.5rem;
   color: var(--muted);
 }
+
+.reasoning {
+  margin-top: 1rem;
+  border: 1px solid #c9ced6;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+}
+.reasoning > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.queries {
+  padding-left: 0;
+  list-style: none;
+}
+.queries > li {
+  border-top: 1px solid #e3e6ea;
+  padding: 0.75rem 0;
+}
+.queries h4 {
+  margin: 0 0 0.25rem;
+}
+.sql {
+  background: #f5f6f8;
+  padding: 0.5rem 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+}
+.queryError {
+  color: #a4161a;
+}
+.warnings {
+  background: #fff8e1;
+  padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+}
+.resultScroll {
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+.result {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.result caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.25rem;
+}
+.result th,
+.result td {
+  border: 1px solid #d5d9df;
+  padding: 0.2rem 0.5rem;
+  text-align: left;
+}
+.explanation {
+  white-space: pre-wrap;
+}
+.sqlFigure {
+  margin: 0.5rem 0;
+}
+.queryStatus {
+  color: #555;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}

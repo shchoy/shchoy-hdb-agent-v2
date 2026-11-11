@@ -26,8 +26,8 @@ class ResultSummary(BaseModel):
     row_count: int
     truncated: bool
     """True when the result had more rows than are fetched; row_count is then a lower bound."""
-    sample: list[list[Cell]]
-    """The first rows."""
+    rows: list[list[Cell]]
+    """Every fetched row (at most the warehouse's MAX_ROWS), for display and CSV export."""
 
 
 class SqlTrace(BaseModel):

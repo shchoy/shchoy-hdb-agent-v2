@@ -1,0 +1,84 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"load_memory","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"load_memory","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"route","status":"started"}
+
+id: 4
+event: node
+data: {"type":"node","seq":4,"node":"route","status":"finished"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"data","status":"started"}
+
+id: 6
+event: sql_trace
+data: {"plan":"Tenancies whose arrears exceed 3 months of rent","sql":"SELECT tenancy_id, months_in_arrears FROM tenancies WHERE months_in_arrears > 3","as_of":"2026-09-30","status":"rejected","error":"The query does not plan: Binder Error: Referenced column \"months_in_arrears\" not found in FROM clause!","result":null,"concepts":[{"id":"plg:Arrears_v1","concept":"plg:Arrears","version":1,"label":"Arrears","effective_from":"2026-04-15","effective_to":null},{"id":"plg:MonthsOfArrears_v1","concept":"plg:MonthsOfArrears","version":1,"label":"Months of arrears","effective_from":"2024-03-01","effective_to":null}],"warnings":[],"explanation":"","type":"sql_trace","seq":6}
+
+id: 7
+event: sql_trace
+data: {"plan":"Arrears per tenancy from the Arrears binding, over 3 months of rent","sql":"SELECT tenancy_id, tenant_name, arrears, days_overdue, months_of_rent FROM (SELECT te.tenancy_id, te.tenant_id, tn.name AS tenant_name, te.unit_id,\n       ROUND(SUM(i.total_amount), 2) AS arrears,\n       COUNT(*) AS unpaid_invoices,\n       MIN(i.due_date) AS oldest_due,\n       date_diff('day', CAST(MIN(i.due_date) AS DATE), CAST($as_of AS DATE)) AS days_overdue,\n       ROUND(SUM(i.total_amount) / (te.monthly_rent * 1.09), 1) AS months_of_rent,\n       CASE WHEN date_diff('day', CAST(MIN(i.due_date) AS DATE), CAST($as_of AS DATE)) <= 30 THEN '0-30'\n            WHEN date_diff('day', CAST(MIN(i.due_date) AS DATE), CAST($as_of AS DATE)) <= 60 THEN '31-60'\n            WHEN date_diff('day', CAST(MIN(i.due_date) AS DATE), CAST($as_of AS DATE)) <= 90 THEN '61-90'\n            ELSE '>90' END AS ageing_bucket\nFROM rent_invoices i\nJOIN tenancies te ON te.tenancy_id = i.tenancy_id\nJOIN tenants tn ON tn.tenant_id = te.tenant_id\nWHERE i.due_date < $as_of\n  AND NOT EXISTS (SELECT 1 FROM payments p WHERE p.invoice_id = i.invoice_id AND p.paid_date <= $as_of)\nGROUP BY te.tenancy_id, te.tenant_id, tn.name, te.unit_id, te.monthly_rent\n) WHERE months_of_rent > 3 ORDER BY arrears DESC","as_of":"2026-09-30","status":"ok","error":null,"result":{"columns":["tenancy_id","tenant_name","arrears","days_overdue","months_of_rent"],"row_count":22,"truncated":false,"rows":[["TA-2024-00319","Barakah Boba Bar Pte Ltd",33037.9,213,7.0],["TA-2024-00185","Hup Seng Learning Centre Pte Ltd",25560.5,213,7.0],["TA-2024-00542","Golden Leaf Minimart Pte Ltd",22672.0,121,4.0],["TA-2025-00548","Little Sprouts Family Clinic",20928.0,182,6.0],["TA-2025-00106","Smart Kids Bookstore",20056.0,152,5.0],["TA-2026-00054","Treasure Mart Pte Ltd",19532.8,213,7.0],["TA-2025-00623","Sejahtera Minimart Pte Ltd",18693.5,152,5.0],["TA-2025-00669","Thye Hin Mart",18257.5,152,5.0],["TA-2024-00228","Cosy Hair Studio",17265.6,182,6.0],["TA-2024-00612","Jade Garden Accounting Services Pte Ltd",17058.5,152,5.0],["TA-2025-00422","Old Town Money Changer",16698.8,121,4.0],["TA-2025-00213","Old Town Pharmacy",16459.0,152,5.0],["TA-2026-00284","Cosy Supermarket Pte Ltd",16001.2,121,4.0],["TA-2024-00194","Pinnacle Beauty & Hair Pte Ltd",15521.6,121,4.0],["TA-2024-00236","Chin Lee Beauty & Hair Pte Ltd",13734.0,121,4.0],["TA-2025-00305","Wisdom Education Hub Pte Ltd",12644.0,152,5.0],["TA-2025-00047","Cosy Minimart Pte Ltd",12556.8,121,4.0],["TA-2024-00455","Seri Murni Hardware",10420.4,121,4.0],["TA-2026-00370","Smart Kids Stationery Pte Ltd",10115.2,121,4.0],["TA-2023-00045","Peng Kee Fruit Trading",4905.0,152,5.0],["TA-2026-00338","Fresh Valley Telecom",4905.0,152,5.0],["TA-2023-00537","Hock Lee Flowers & Gifts Pte Ltd",4687.0,182,5.0]]},"concepts":[{"id":"plg:Arrears_v1","concept":"plg:Arrears","version":1,"label":"Arrears","effective_from":"2026-04-15","effective_to":null},{"id":"plg:MonthsOfArrears_v1","concept":"plg:MonthsOfArrears","version":1,"label":"Months of arrears","effective_from":"2024-03-01","effective_to":null}],"warnings":["The payment export repeats PAY-00001235. The duplicate row was skipped when PLG Records was loaded, so totals here count it once; check the source export if payment totals are being reconciled."],"explanation":"22 tenancies owe more than 3 months of rent, Golden Leaf Minimart among them.\n\nDefinitions used: Arrears v1 (plg:Arrears_v1, in force from 2026-04-15); Months of arrears v1 (plg:MonthsOfArrears_v1, in force from 2024-03-01).","type":"sql_trace","seq":7}
+
+id: 8
+event: node
+data: {"type":"node","seq":8,"node":"data","status":"finished"}
+
+id: 9
+event: node
+data: {"type":"node","seq":9,"node":"merge","status":"started"}
+
+id: 10
+event: token
+data: {"type":"token","seq":10,"node":"merge","text":"**22"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":" tenancies**"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" have"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" arrears"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" above"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" 3"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" months'"}
+
+id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" rent."}
+
+id: 18
+event: node
+data: {"type":"node","seq":18,"node":"merge","status":"finished"}
+
+id: 19
+event: node
+data: {"type":"node","seq":19,"node":"write_memory","status":"started"}
+
+id: 20
+event: node
+data: {"type":"node","seq":20,"node":"write_memory","status":"finished"}
+
+id: 21
+event: done
+data: {"type":"done","seq":21,"run_id":"dd998f7e-8a66-431d-8ab9-769fdfbb6d78"}
+

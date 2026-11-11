@@ -12,6 +12,7 @@ export type RunEvent = Schemas["RunEvent"];
 export type CitationEvent = Schemas["CitationEvent"];
 export type DraftEvent = Schemas["DraftEvent"];
 export type PolicyStanceEvent = Schemas["PolicyStanceEvent"];
+export type SqlTraceEvent = Schemas["SqlTraceEvent"];
 export type UserCtx = Schemas["UserCtx"];
 export type ThreadSummary = Schemas["ThreadSummary"];
 export type ThreadView = Schemas["ThreadView"];
@@ -56,7 +57,7 @@ export const runEventSchema = z.discriminatedUnion("type", [
         columns: z.array(z.string()),
         row_count: z.number().int(),
         truncated: z.boolean(),
-        sample: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+        rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
       })
       .nullable(),
     concepts: z.array(

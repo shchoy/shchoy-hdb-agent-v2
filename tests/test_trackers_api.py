@@ -25,7 +25,7 @@ def trackers_api(make_api: Callable[..., Api], trackers_db: Path) -> Api:
 
 def rows(trace: Any) -> list[dict[str, Any]]:
     result = trace["result"]
-    return [dict(zip(result["columns"], row, strict=True)) for row in result["sample"]]
+    return [dict(zip(result["columns"], row, strict=True)) for row in result["rows"]]
 
 
 def test_vacant_units_by_town_come_from_the_vacancy_report(trackers_api: Api, llm: ScriptedLLMClient) -> None:

@@ -8,11 +8,13 @@ import {
   type CitationEvent,
   type DraftEvent,
   type PolicyStanceEvent,
+  type SqlTraceEvent,
   type ThreadSummary,
   type ThreadView,
 } from "@/lib/events";
 import { DraftPreview } from "./DraftPreview";
 import { PolicyStanceCard } from "./PolicyStanceCard";
+import { ReasoningPanel } from "./ReasoningPanel";
 import { SourceViewer } from "./SourceViewer";
 import styles from "./ask.module.css";
 
@@ -24,6 +26,7 @@ type Answer = {
   citations: CitationEvent[];
   drafts: DraftEvent[];
   stances: PolicyStanceEvent[];
+  traces: SqlTraceEvent[];
   trajectory: Step[];
 };
 
@@ -32,6 +35,10 @@ type Run =
   | ({ status: "running" } & Answer)
   | ({ status: "done" } & Answer)
   | { status: "failed"; question: string; reason: string; trajectory: Step[] };
+
+function emptyAnswer(question: string): Answer {
+  return { question, answer: "", citations: [], drafts: [], stances: [], traces: [], trajectory: [] };
+}
 
 /** The run failed or was cut short: whatever was streamed is partial and not to be trusted. */
 class RunFailed extends Error {}
@@ -75,14 +82,7 @@ export function AskScreen() {
     open: (lastSeq: number) => Promise<Response>,
     prior?: Answer,
   ) {
-    const acc: Answer = prior ?? {
-      question: text,
-      answer: "",
-      citations: [],
-      drafts: [],
-      stances: [],
-      trajectory: [],
-    };
+    const acc: Answer = prior ?? emptyAnswer(text);
     let lastSeq = 0;
     const update = (status: "running" | "done") => setRun({ status, ...acc });
     update("running");
@@ -116,6 +116,9 @@ export function AskScreen() {
                 break;
               case "policy_stance":
                 acc.stances = [...acc.stances, event];
+                break;
+              case "sql_trace":
+                acc.traces = [...acc.traces, event];
                 break;
               case "error":
                 throw new RunFailed(event.message);
@@ -172,15 +175,7 @@ export function AskScreen() {
         { role: "assistant", content: run.answer },
       ]);
     }
-    setRun({
-      status: "running",
-      question: text,
-      answer: "",
-      citations: [],
-      drafts: [],
-      stances: [],
-      trajectory: [],
-    });
+    setRun({ status: "running", ...emptyAnswer(text) });
     try {
       if (threadId.current === null) {
         threadId.current = await createThread();
@@ -361,6 +356,7 @@ export function AskScreen() {
                 {(run.citations.length > 0 || run.stances.length > 0) && (
                   <Sources citations={run.citations} stances={run.stances} />
                 )}
+                {run.traces.length > 0 && <ReasoningPanel traces={run.traces} />}
                 {run.drafts.map((draft) => (
                   <DraftPreview key={draft.draft_id} draft={draft} />
                 ))}

@@ -78,9 +78,10 @@ class Api:
             return parse_sse(r.read().decode())
 
 
-def route(llm: ScriptedLLMClient, question: str, *intents: str) -> None:
-    """Script the router: `question` confidently goes to these specialists (none: merge answers it directly)."""
-    scored = [{"intent": i, "confidence": 0.9} for i in intents]
+def route(llm: ScriptedLLMClient, question: str, *intents: str, confidence: float = 0.9) -> None:
+    """Script the router: `question` goes to these specialists, each named with `confidence` (none: merge answers it
+    directly)."""
+    scored = [{"intent": i, "confidence": confidence} for i in intents]
     llm.script_turns("route", question, turn(tool_call("route", intents=scored)))
 
 

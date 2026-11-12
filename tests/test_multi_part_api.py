@@ -115,6 +115,54 @@ def test_ambiguous_request_gets_a_clarifying_question_and_no_specialist_runs(
     assert stream.events[-1]["type"] == "done"
 
 
+def test_unsure_router_without_a_question_of_its_own_asks_a_generic_one(api: Api, llm: ScriptedLLMClient) -> None:
+    question = "And the other one?"
+    route(llm, question, "data", confidence=0.2)
+
+    stream = api.run(api.create_thread(), question)
+
+    assert "which unit, tenant or document" in stream.text
+    assert stream.of_type("sql_trace") == []
+
+
+def test_a_weak_extra_label_is_dropped_without_losing_the_confident_route(api: Api, llm: ScriptedLLMClient) -> None:
+    question = "How many units are vacant now?"
+    llm.script_turns("route", question, turn(tool_call(
+        "route", intents=[{"intent": "data", "confidence": 0.9}, {"intent": "drafting", "confidence": 0.3}],
+        clarifying_question="Do you also want a letter drafted?",
+    )))
+    llm.script_turns(
+        "data", question,
+        turn(tool_call("run_sql", plan="Count vacant units", sql="SELECT COUNT(*) AS n FROM units WHERE status = 'Vacant'",
+                       concepts=["plg:Vacant_v2"])),
+        turn(text("Some units are vacant.")),
+    )
+    llm.script("merge", question, "Some units are vacant.")
+
+    stream = api.run(api.create_thread(), question)
+
+    assert {e["node"] for e in stream.of_type("node")} >= {"data", "merge"}
+    assert "drafting" not in {e["node"] for e in stream.of_type("node")}
+    assert stream.text == "Some units are vacant."
+
+
+def test_sections_count_only_findings_backed_by_a_citation_or_a_query(api: Api, llm: ScriptedLLMClient) -> None:
+    question = "How many units are vacant, and what does the vacancy SOP say?"
+    route(llm, question, "knowledge", "data")
+    llm.script_turns("knowledge", question, turn(text("The sources don't say.")))
+    llm.script_turns(
+        "data", question,
+        turn(tool_call("run_sql", plan="Count vacant units", sql="SELECT COUNT(*) AS n FROM units WHERE status = 'Vacant'",
+                       concepts=["plg:Vacant_v2"])),
+        turn(text("Some units are vacant.")),
+    )
+    llm.script("merge", question, "Some units are vacant.")
+
+    api.run(api.create_thread(), question)
+
+    assert "section" not in llm.streamed[-1].system.lower()
+
+
 def test_answer_to_a_clarifying_question_is_routed_with_it_in_the_conversation(
     api: Api, llm: ScriptedLLMClient
 ) -> None:

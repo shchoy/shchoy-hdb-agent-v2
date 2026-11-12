@@ -414,7 +414,7 @@ describe("Multi-part answer", () => {
             {
               role: "assistant",
               content:
-                "## Vacant units in Bayshore Vale\n\n9 units.\n\n## How vacancy is defined\n\nNo tenancy [1].",
+                "## Vacant units in Bayshore Vale\n\n9 units.\n\n```sql\n## not a heading\n```\n\n## How vacancy is defined\n\nNo tenancy [1].",
             },
           ],
           summary: "",
@@ -433,6 +433,13 @@ describe("Multi-part answer", () => {
     expect(
       within(history).getByRole("region", { name: "How vacancy is defined" }),
     ).toHaveTextContent("No tenancy [1].");
+    // A heading-like line inside a code block stays in its section.
+    expect(
+      within(history).getByRole("region", {
+        name: "Vacant units in Bayshore Vale",
+      }),
+    ).toHaveTextContent("## not a heading");
+    expect(within(history).getAllByRole("region")).toHaveLength(2);
   });
 });
 

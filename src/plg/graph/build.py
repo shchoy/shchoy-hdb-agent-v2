@@ -112,7 +112,7 @@ records from memory; if the officer asks about them, say you couldn't look that 
 as a question about PLG's documents."""
 
 CLARIFY = "Could you tell me a bit more about what you need, and which unit, tenant or document it is about?"
-"""Asked when `route` is unsure but didn't say what it would ask."""
+"""Asked when `route` named no specialist confidently and didn't say what it would ask."""
 
 NOT_COVERED = (
     "The indexed PLG sources don't cover this question, so I can't give you a sourced answer. "
@@ -129,11 +129,14 @@ class RouteDecision(BaseModel):
     intents: list[ScoredIntent]
     clarifying_question: str = ""
 
-    def unsure(self, threshold: float) -> bool:
-        """Some specialist was named without confidence, or none was and the router had a question to ask."""
-        if self.intents:
-            return any(i.confidence < threshold for i in self.intents)
-        return bool(self.clarifying_question.strip())
+    def confident(self, threshold: float) -> list[Intent]:
+        """The specialists named with at least `threshold` confidence; weaker labels are dropped."""
+        return list(dict.fromkeys(i.intent for i in self.intents if i.confidence >= threshold))
+
+    def needs_clarification(self, threshold: float) -> bool:
+        """No specialist was named with confidence, though the router named some or had a question to ask."""
+        unsure = bool(self.intents) or bool(self.clarifying_question.strip())
+        return unsure and not self.confident(threshold)
 
 
 def build_graph(
@@ -200,10 +203,10 @@ def build_graph(
         )
         call = next(b for b in reply.content if b["type"] == "tool_use")
         decision = RouteDecision.model_validate(call["input"])
-        if decision.unsure(settings.route_min_confidence):
+        threshold = settings.route_min_confidence
+        if decision.needs_clarification(threshold):
             return {"intents": [], "clarification": decision.clarifying_question.strip() or CLARIFY, "findings": []}
-        intents = list(dict.fromkeys(i.intent for i in decision.intents))
-        return {"intents": intents, "clarification": "", "findings": []}
+        return {"intents": decision.confident(threshold), "clarification": "", "findings": []}
 
     def fan_out(state: PLGState) -> Sequence[Send | str]:
         """One task per specialist, run in parallel; none (or a clarifying question) goes straight to merge."""
@@ -296,14 +299,15 @@ async def _fuse(
 ) -> AsyncIterator[str]:
     """The answer's tokens. Findings without a single citation are not an answer: say the sources don't
     cover the question rather than let Claude fill the gap."""
-    if findings and not any(f.citations or f.traced for f in findings):
+    supported = [f for f in findings if f.citations or f.traced]
+    if findings and not supported:
         async for token in _words(NOT_COVERED):
             yield token
         return
     if findings:
         blocks = "\n\n".join(f"<{f.specialist}>\n{f.text}\n</{f.specialist}>" for f in findings)
         system = MERGE_SYSTEM + MERGE_FINDINGS.format(findings=blocks)
-        if len(findings) > 1:
+        if len(supported) > 1:  # one section per part that has a sourced answer
             system += MERGE_SECTIONS
     else:
         system = MERGE_SYSTEM + MERGE_NO_SOURCES

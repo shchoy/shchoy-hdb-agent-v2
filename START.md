@@ -56,6 +56,7 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_MODEL_OPUS` | `claude-opus-5-5` | Model for hard analysis and judges |
 | `PLG_MAX_TOKENS` | `2048` | Max tokens per Claude reply |
 | `PLG_HEARTBEAT_SECONDS` | `15` | Interval between SSE heartbeat comments |
+| `PLG_ROUTE_MIN_CONFIDENCE` | `0.6` | Below this routing confidence (0-1) a specialist is dropped; with none left, the assistant asks a clarifying question |
 | `PLG_API_HOST` | `127.0.0.1` | `plg-api` bind address |
 | `PLG_API_PORT` | `8000` | `plg-api` port |
 | `PLG_RECORDS_DB` | `poc-data/plg_records.db` | PLG Records SQLite database (read-only; source of the staff personas) |
@@ -227,7 +228,7 @@ cd web
 npm run dev        # http://localhost:3000
 ```
 
-Open http://localhost:3000. You're sent to the sign-in page. Pick any staff persona (mock sign-in: the persona is kept in an httpOnly cookie). Then ask a question on the Ask screen. The answer streams in, with the graph nodes it passes through shown as it runs (route → knowledge → merge for a policy question). Under the answer, a Sources list has a chip for each `[n]` marker; open a chip to read the exact quoted span. If the run fails partway, an alert says the answer is incomplete and offers a Retry.
+Open http://localhost:3000. You're sent to the sign-in page. Pick any staff persona (mock sign-in: the persona is kept in an httpOnly cookie). Then ask a question on the Ask screen. The answer streams in, with the graph nodes it passes through shown as it runs (route → knowledge → merge for a policy question). Under the answer, a Sources list has a chip for each `[n]` marker; open a chip to read the exact quoted span. If the run fails partway, an alert says the answer is incomplete and offers a Retry. A question with several parts (e.g. "How many vacant units are there in Bayshore Vale, and how is vacancy defined?") runs the specialists it needs in parallel (knowledge and data side by side in the trajectory) and comes back as one answer with a section per part. If the router can't tell what you mean, you get a clarifying question instead of an answer; reply to it in the same conversation.
 
 The browser only talks to the Next.js BFF (`/api/...`). The BFF forwards your persona to `plg-api` as `X-PLG-User`. No API keys ever reach the browser.
 

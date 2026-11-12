@@ -364,6 +364,85 @@ describe("Ask screen", () => {
   });
 });
 
+const MULTI_QUESTION =
+  "How many vacant units are there in Bayshore Vale, and how is vacancy defined?";
+
+describe("Multi-part answer", () => {
+  it("shows one section per part, with the sources and the reasoning behind them", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () =>
+        sseResponse(fixture("multi_part")),
+      ),
+    );
+
+    await ask(MULTI_QUESTION);
+    await runFinished();
+
+    const answer = screen.getByRole("region", { name: "Answer" });
+    const vacant = within(answer).getByRole("region", {
+      name: "Vacant units in Bayshore Vale",
+    });
+    expect(vacant).toHaveTextContent(
+      "9 units were vacant on 30 Sep 2026 under Vacant v2",
+    );
+    expect(within(vacant).getByText("9 units").tagName).toBe("STRONG");
+    const defined = within(answer).getByRole("region", {
+      name: "How vacancy is defined",
+    });
+    expect(defined).toHaveTextContent("excluding units under tender. [1]");
+    expect(defined).not.toHaveTextContent("Bayshore Vale");
+    expect(
+      within(answer).getByRole("list", { name: "Sources" }),
+    ).toHaveTextContent("[1]");
+    expect(screen.getByText("Reasoning")).toBeInTheDocument();
+  });
+
+  it("shows an earlier multi-part answer in its sections too", async () => {
+    server.use(
+      http.get("/api/threads", () =>
+        HttpResponse.json([
+          { thread_id: "t7", title: MULTI_QUESTION, updated_at: "x" },
+        ]),
+      ),
+      http.get("/api/threads/t7", () =>
+        HttpResponse.json({
+          thread_id: "t7",
+          title: MULTI_QUESTION,
+          messages: [
+            { role: "user", content: MULTI_QUESTION },
+            {
+              role: "assistant",
+              content:
+                "## Vacant units in Bayshore Vale\n\n9 units.\n\n```sql\n## not a heading\n```\n\n## How vacancy is defined\n\nNo tenancy [1].",
+            },
+          ],
+          summary: "",
+          running: null,
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<AskScreen />);
+
+    await user.click(await screen.findByRole("button", { name: MULTI_QUESTION }));
+
+    const history = await screen.findByRole("list", {
+      name: "Earlier in this conversation",
+    });
+    expect(
+      within(history).getByRole("region", { name: "How vacancy is defined" }),
+    ).toHaveTextContent("No tenancy [1].");
+    // A heading-like line inside a code block stays in its section.
+    expect(
+      within(history).getByRole("region", {
+        name: "Vacant units in Bayshore Vale",
+      }),
+    ).toHaveTextContent("## not a heading");
+    expect(within(history).getAllByRole("region")).toHaveLength(2);
+  });
+});
+
 const DATA_QUESTION = "Which tenancies have arrears above 3 months' rent?";
 
 /** Asks the recorded data question and opens the Reasoning panel. */

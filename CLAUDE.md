@@ -14,6 +14,7 @@ src/plg/
 │                    search_candidates, vector_weight.
 │                    transcripts_dir (saved scan transcripts, beside search_db). threads_db (.plg/threads.sqlite: checkpoints + thread owners),
 │                    history_token_threshold / history_keep_messages (when older turns are folded into a summary).
+│                    route_min_confidence (0.6: weaker routing labels are dropped; none left → clarifying question).
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
@@ -72,14 +73,17 @@ src/plg/
 ├── graph/
 │   ├── state.py     PLGState (messages = completed exchanges only, question, user, intents, findings, answer) and
 │                    PLGGraph. A turn joins `messages` only when merge answers it, so a failed run leaves no trace.
-│                    findings fan in by appending; route's empty update resets them each turn. `memory` = this turn's labelled notes block.
+│                    findings fan in by appending; route's empty update resets them each turn. `clarification` = route's question back (reset each turn). `memory` = this turn's labelled notes block.
 │   ├── summary.py   summarise_history: fold(llm, older messages, previous summary) (Haiku, node summarise_history); entity IDs missing from the reply are re-appended verbatim.
 │   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → (summarise_history if history > threshold) → load_memory → route → knowledge, data and/or drafting (if intended) → merge → write_memory → END
 │                    (load_memory/write_memory only when a MemoryService is given: plg-api yes, `plg ask` no). The memory block is appended to merge's system prompt.
-│                    route = Haiku, forced `route` tool → intents (knowledge, data, drafting; none = merge answers
-│                    directly, told not to state PLG facts without sources). knowledge streams `citation` chunks, data
+│                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting) + optional
+│                    clarifying_question (RouteDecision). Labels below route_min_confidence are dropped; if none is left but some were
+│                    named (or a question was given), `clarification` is set: no fan-out, merge streams it word by word with no Claude
+│                    call, and it joins `messages` so the officer's reply is routed with it. Otherwise fan_out sends one
+│                    Send(intent, state) per intent (run in parallel); none = merge answers directly, told not to state PLG facts without sources. knowledge streams `citation` chunks, data
 │                    streams `sql_trace` chunks.
-│                    merge fuses findings keeping [n] markers; findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
+│                    merge fuses findings keeping [n] markers (with 2+ supported findings, cited or traced, in one `## ` section per part); findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
 │                    answer with no Claude call. merge is the only node that streams tokens. Checkpointer: InMemorySaver by default (CLI); plg-api swaps in AsyncSqliteSaver (threads_db) in its lifespan. State keeps the full `messages` plus `summary`/`summarised` (offset folded).
 ├── memory/          Personal long-term memory (issue #24). store.py: MemoryStore, a LangGraph BaseStore over the LanceDB `memory`
 │   │                table (namespace ("memory", staff_id, profile|preference|episode)); typed API remember (PII masked with
@@ -172,7 +176,7 @@ scripts/build_ontology.py
                      references, supersedes chains and glossary owners (staff table) BEFORE writing; on any
                      problem lists them, exits 1, writes nothing. --source/--out for testing. Needs dev deps (linkml).
 scripts/record_sse_fixtures.py
-                     Records real SSE streams (answer with citations, not_covered, error, draft, policy_stance, data: a rejected then a successful run_sql) from the in-process API,
+                     Records real SSE streams (answer with citations, not_covered, error, draft, policy_stance, data: a rejected then a successful run_sql, multi_part: knowledge + data fused in sections) from the in-process API,
                      with the corpus synced into a temp index (threads, memory and graph writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
@@ -180,7 +184,7 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
                      /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay),
                      /api/memory (GET list), /api/memory/[id] (PATCH, DELETE).
-                     Pages: /sign-in, /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer, node trajectory, citation chips under the
+                     Pages: /sign-in, /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
                      answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry).
                      dates.ts: day() / period() date formatting shared by the cards.
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames

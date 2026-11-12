@@ -1,0 +1,236 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"load_memory","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"load_memory","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"route","status":"started"}
+
+id: 4
+event: node
+data: {"type":"node","seq":4,"node":"route","status":"finished"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"knowledge","status":"started"}
+
+id: 6
+event: node
+data: {"type":"node","seq":6,"node":"data","status":"started"}
+
+id: 7
+event: sql_trace
+data: {"plan":"Count vacant units in Bayshore Vale","sql":"SELECT COUNT(*) AS vacant_units FROM units u JOIN blocks b ON b.block_id = u.block_id WHERE u.status = 'Vacant' AND u.vacant_since <= $as_of AND b.town_code = 'BV'","as_of":"2026-09-30","status":"ok","error":null,"result":{"columns":["vacant_units"],"row_count":1,"truncated":false,"rows":[[9]]},"concepts":[{"id":"plg:Vacant_v2","concept":"plg:Vacant","version":2,"label":"Vacant unit","effective_from":"2026-04-15","effective_to":null}],"warnings":[],"explanation":"9 units in Bayshore Vale were vacant on 2026-09-30 under Vacant v2 (effective 2026-04-15).","type":"sql_trace","seq":7}
+
+id: 8
+event: node
+data: {"type":"node","seq":8,"node":"data","status":"finished"}
+
+id: 9
+event: citation
+data: {"doc_id":"SP-642795","chunk_id":"SP-642795#002","title":"PLG Monthly Operations Report - July 2026","version":null,"location":"2. Portfolio and Vacancy (p. 1)","quote":"Definition (wef Apr 2026): Vacant = lettable unit with no active or committed tenancy, excluding units under tender.","span":{"start":0,"end":116},"type":"citation","seq":9,"index":1}
+
+id: 10
+event: node
+data: {"type":"node","seq":10,"node":"knowledge","status":"finished"}
+
+id: 11
+event: node
+data: {"type":"node","seq":11,"node":"merge","status":"started"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":"##"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" Vacant"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" units"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" in"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" Bayshore"}
+
+id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" Vale"}
+
+id: 18
+event: token
+data: {"type":"token","seq":18,"node":"merge","text":"\n\n**9"}
+
+id: 19
+event: token
+data: {"type":"token","seq":19,"node":"merge","text":" units**"}
+
+id: 20
+event: token
+data: {"type":"token","seq":20,"node":"merge","text":" were"}
+
+id: 21
+event: token
+data: {"type":"token","seq":21,"node":"merge","text":" vacant"}
+
+id: 22
+event: token
+data: {"type":"token","seq":22,"node":"merge","text":" on"}
+
+id: 23
+event: token
+data: {"type":"token","seq":23,"node":"merge","text":" 30"}
+
+id: 24
+event: token
+data: {"type":"token","seq":24,"node":"merge","text":" Sep"}
+
+id: 25
+event: token
+data: {"type":"token","seq":25,"node":"merge","text":" 2026"}
+
+id: 26
+event: token
+data: {"type":"token","seq":26,"node":"merge","text":" under"}
+
+id: 27
+event: token
+data: {"type":"token","seq":27,"node":"merge","text":" Vacant"}
+
+id: 28
+event: token
+data: {"type":"token","seq":28,"node":"merge","text":" v2"}
+
+id: 29
+event: token
+data: {"type":"token","seq":29,"node":"merge","text":" (effective"}
+
+id: 30
+event: token
+data: {"type":"token","seq":30,"node":"merge","text":" 15"}
+
+id: 31
+event: token
+data: {"type":"token","seq":31,"node":"merge","text":" Apr"}
+
+id: 32
+event: token
+data: {"type":"token","seq":32,"node":"merge","text":" 2026)."}
+
+id: 33
+event: token
+data: {"type":"token","seq":33,"node":"merge","text":"\n\n##"}
+
+id: 34
+event: token
+data: {"type":"token","seq":34,"node":"merge","text":" How"}
+
+id: 35
+event: token
+data: {"type":"token","seq":35,"node":"merge","text":" vacancy"}
+
+id: 36
+event: token
+data: {"type":"token","seq":36,"node":"merge","text":" is"}
+
+id: 37
+event: token
+data: {"type":"token","seq":37,"node":"merge","text":" defined"}
+
+id: 38
+event: token
+data: {"type":"token","seq":38,"node":"merge","text":"\n\nA"}
+
+id: 39
+event: token
+data: {"type":"token","seq":39,"node":"merge","text":" vacant"}
+
+id: 40
+event: token
+data: {"type":"token","seq":40,"node":"merge","text":" unit"}
+
+id: 41
+event: token
+data: {"type":"token","seq":41,"node":"merge","text":" is"}
+
+id: 42
+event: token
+data: {"type":"token","seq":42,"node":"merge","text":" a"}
+
+id: 43
+event: token
+data: {"type":"token","seq":43,"node":"merge","text":" lettable"}
+
+id: 44
+event: token
+data: {"type":"token","seq":44,"node":"merge","text":" unit"}
+
+id: 45
+event: token
+data: {"type":"token","seq":45,"node":"merge","text":" with"}
+
+id: 46
+event: token
+data: {"type":"token","seq":46,"node":"merge","text":" no"}
+
+id: 47
+event: token
+data: {"type":"token","seq":47,"node":"merge","text":" active"}
+
+id: 48
+event: token
+data: {"type":"token","seq":48,"node":"merge","text":" or"}
+
+id: 49
+event: token
+data: {"type":"token","seq":49,"node":"merge","text":" committed"}
+
+id: 50
+event: token
+data: {"type":"token","seq":50,"node":"merge","text":" tenancy,"}
+
+id: 51
+event: token
+data: {"type":"token","seq":51,"node":"merge","text":" excluding"}
+
+id: 52
+event: token
+data: {"type":"token","seq":52,"node":"merge","text":" units"}
+
+id: 53
+event: token
+data: {"type":"token","seq":53,"node":"merge","text":" under"}
+
+id: 54
+event: token
+data: {"type":"token","seq":54,"node":"merge","text":" tender."}
+
+id: 55
+event: token
+data: {"type":"token","seq":55,"node":"merge","text":" [1]"}
+
+id: 56
+event: node
+data: {"type":"node","seq":56,"node":"merge","status":"finished"}
+
+id: 57
+event: node
+data: {"type":"node","seq":57,"node":"write_memory","status":"started"}
+
+id: 58
+event: node
+data: {"type":"node","seq":58,"node":"write_memory","status":"finished"}
+
+id: 59
+event: done
+data: {"type":"done","seq":59,"run_id":"8a0538e2-5dcf-4bfa-ad99-20e877c30c66"}
+

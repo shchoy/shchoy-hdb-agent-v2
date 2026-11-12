@@ -41,6 +41,8 @@ class PLGState(TypedDict, total=False):
     question: str
     user: UserCtx
     intents: list[Intent]
+    # The question `route` asks back when it can't tell what the officer needs; empty when it routed the question.
+    clarification: str
     findings: Annotated[list[Finding], add_findings]
     answer: str
     # The labelled block of the officer's private notes for this turn (see plg.memory).

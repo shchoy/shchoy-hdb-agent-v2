@@ -40,7 +40,13 @@ USER = {"X-PLG-User": "S05"}
 QUESTION = "When do we issue a letter of demand?"
 POLICY_QUESTION = "How far can a tenant display goods beyond the shopfront?"
 DATA_QUESTION = "Which tenancies have arrears above 3 months' rent?"
+MULTI_QUESTION = "How many vacant units are there in Bayshore Vale, and how is vacancy defined?"
 DRAFT_QUESTION = "Draft an update reply to the member of public who gave feedback FB-2025-00002"
+
+
+def routed(*intents: str) -> AgentTurn:
+    """The router's turn: the question confidently goes to these specialists (none: merge answers it)."""
+    return turn(tool_call("route", intents=[{"intent": i, "confidence": 0.9} for i in intents]))
 
 
 def cite(phrase: str, answer: str) -> Callable[[list[AgentMessage]], AgentTurn]:
@@ -67,7 +73,7 @@ def cite(phrase: str, answer: str) -> Callable[[list[AgentMessage]], AgentTurn]:
 
 
 def answer(llm: ScriptedLLMClient) -> None:
-    llm.script_turns("route", QUESTION, turn(tool_call("route", intents=["knowledge"])))
+    llm.script_turns("route", QUESTION, routed("knowledge"))
     llm.script_turns(
         "knowledge", QUESTION,
         turn(tool_call("search_corpus", query="letter of demand arrears")),
@@ -77,7 +83,7 @@ def answer(llm: ScriptedLLMClient) -> None:
 
 
 def not_covered(llm: ScriptedLLMClient) -> None:
-    llm.script_turns("route", QUESTION, turn(tool_call("route", intents=["knowledge"])))
+    llm.script_turns("route", QUESTION, routed("knowledge"))
     llm.script_turns(
         "knowledge", QUESTION,
         turn(tool_call("search_corpus", query="letter of demand arrears")),
@@ -86,13 +92,13 @@ def not_covered(llm: ScriptedLLMClient) -> None:
 
 
 def error(llm: ScriptedLLMClient) -> None:
-    llm.script_turns("route", QUESTION, turn(tool_call("route", intents=[])))
+    llm.script_turns("route", QUESTION, routed())
     llm.script("merge", QUESTION, "Under POL-003 v2.0, a letter of", error=ConnectionError("Claude unavailable"))
 
 
 def draft(llm: ScriptedLLMClient) -> None:
     """A feedback reply with an open slot and a tenant's phone number in it, so the preview shows both flags."""
-    llm.script_turns("route", DRAFT_QUESTION, turn(tool_call("route", intents=["drafting"])))
+    llm.script_turns("route", DRAFT_QUESTION, routed("drafting"))
     llm.script_turns(
         "drafting", DRAFT_QUESTION,
         turn(tool_call("submit_draft", template_id="TPL-FBK-03", slots={
@@ -112,7 +118,7 @@ def data(llm: ScriptedLLMClient) -> None:
     assert binding is not None
     arrears = binding.sql
     concepts = ["plg:Arrears_v1", "plg:MonthsOfArrears_v1"]
-    llm.script_turns("route", DATA_QUESTION, turn(tool_call("route", intents=["data"])))
+    llm.script_turns("route", DATA_QUESTION, routed("data"))
     llm.script_turns(
         "data", DATA_QUESTION,
         turn(tool_call("get_definition", concept="plg:Arrears")),
@@ -128,13 +134,34 @@ def data(llm: ScriptedLLMClient) -> None:
 
 def policy_stance(llm: ScriptedLLMClient) -> None:
     """The display-area limit (POL-001 v3.0 cl. 7.3 overridden for NC units by Circular 07/2026), plus POL-003, whose v1.0 was superseded."""
-    llm.script_turns("route", POLICY_QUESTION, turn(tool_call("route", intents=["knowledge"])))
+    llm.script_turns("route", POLICY_QUESTION, routed("knowledge"))
     llm.script_turns(
         "knowledge", POLICY_QUESTION,
         turn(tool_call("policy_lineage", policy_id="PLG-POL-001"), tool_call("policy_lineage", policy_id="PLG-POL-003")),
         cite("overrides clause 7.3", "Circular 07/2026 raises the limit to 1.0 m for NC units from 1 August 2026."),
     )
     llm.script("merge", POLICY_QUESTION, "NC units: 1.0 m from 1 Aug 2026 [1]. Void-deck shops: still 0.6 m.")
+
+
+def multi_part(llm: ScriptedLLMClient) -> None:
+    """Knowledge and data in parallel, fused into one section per part."""
+    definition = "A vacant unit is a lettable unit with no active or committed tenancy, excluding units under tender."
+    count = "9 units in Bayshore Vale were vacant on 2026-09-30 under Vacant v2 (effective 2026-04-15)."
+    llm.script_turns("route", MULTI_QUESTION, routed("knowledge", "data"))
+    llm.script_turns(
+        "knowledge", MULTI_QUESTION,
+        turn(tool_call("search_corpus", query="vacant unit definition")),
+        cite("excluding units under tender", definition),
+    )
+    llm.script_turns(
+        "data", MULTI_QUESTION,
+        turn(tool_call("run_sql", plan="Count vacant units in Bayshore Vale", concepts=["plg:Vacant_v2"],
+                       sql="SELECT COUNT(*) AS vacant_units FROM units u JOIN blocks b ON b.block_id = u.block_id "
+                           "WHERE u.status = 'Vacant' AND u.vacant_since <= $as_of AND b.town_code = 'BV'")),
+        turn(text(count)),
+    )
+    llm.script("merge", MULTI_QUESTION, f"## Vacant units in Bayshore Vale\n\n**9 units** were vacant on 30 Sep 2026 "
+               f"under Vacant v2 (effective 15 Apr 2026).\n\n## How vacancy is defined\n\n{definition} [1]")
 
 
 class LineageHaiku(ScriptedLLMClient):
@@ -177,6 +204,7 @@ def lineage_graph(store: LanceSearchStore, graph_dir: Path) -> LocalGraphStore:
 SCRIPTS: dict[str, tuple[str, Callable[[ScriptedLLMClient], None]]] = {
     "answer": (QUESTION, answer), "not_covered": (QUESTION, not_covered), "error": (QUESTION, error),
     "draft": (DRAFT_QUESTION, draft), "data": (DATA_QUESTION, data), "policy_stance": (POLICY_QUESTION, policy_stance),
+    "multi_part": (MULTI_QUESTION, multi_part),
 }
 
 

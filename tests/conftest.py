@@ -79,8 +79,9 @@ class Api:
 
 
 def route(llm: ScriptedLLMClient, question: str, *intents: str) -> None:
-    """Script the router: `question` goes to these specialists (none: merge answers it directly)."""
-    llm.script_turns("route", question, turn(tool_call("route", intents=list(intents))))
+    """Script the router: `question` confidently goes to these specialists (none: merge answers it directly)."""
+    scored = [{"intent": i, "confidence": 0.9} for i in intents]
+    llm.script_turns("route", question, turn(tool_call("route", intents=scored)))
 
 
 @pytest.fixture

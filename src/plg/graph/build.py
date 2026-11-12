@@ -16,6 +16,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import Send
 from pydantic import BaseModel
 
 from plg.agents import data, drafting, knowledge
@@ -54,7 +55,11 @@ rates and lists of units, tenancies, arrears, invoices, inspections, feedback, t
 reported figures differ.
 - drafting: the officer asks for a standard letter or notice to be drafted: an arrears reminder, a missing-documents \
 notice, or an update reply to someone who gave feedback.
-A question can need both. Choose no specialist for greetings, thanks and questions about how to use the assistant."""
+A question can have several parts, each needing a different specialist: name every specialist needed. Choose no \
+specialist for greetings, thanks and questions about how to use the assistant.
+Give each specialist your confidence (0 to 1) that the question needs it. If you can't tell what the officer is asking \
+for (which unit, tenant or document they mean, or what they want to know about it), give low confidence and write \
+the one short question you would ask them to clear it up; earlier messages of the conversation may already say."""
 
 ROUTE_TOOL: Block = {
     "name": ROUTE,
@@ -63,9 +68,21 @@ ROUTE_TOOL: Block = {
         "type": "object",
         "properties": {
             "intents": {
-                "type": "array", "items": {"type": "string", "enum": ["knowledge", "data", "drafting"]},
-                "description": "The specialists needed; empty if none.",
-            }
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting"]},
+                        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                    },
+                    "required": ["intent", "confidence"],
+                },
+                "description": "The specialists needed, each with your confidence that it is; empty if none.",
+            },
+            "clarifying_question": {
+                "type": "string",
+                "description": "The question to ask the officer when the request is too unclear to route.",
+            },
         },
         "required": ["intents"],
     },
@@ -85,10 +102,17 @@ effective date it names. Do not add facts the findings don't contain.
 
 {findings}"""
 
+MERGE_SECTIONS = """
+The question has several parts. Answer each part in its own section, in the order the officer asked them, each \
+headed `## ` and a few words naming the part. Put nothing before the first section."""
+
 MERGE_NO_SOURCES = """
 No specialist searched PLG's sources for this message. Don't state PLG policies, rules, figures, dates or \
 records from memory; if the officer asks about them, say you couldn't look that up and ask them to rephrase it \
 as a question about PLG's documents."""
+
+CLARIFY = "Could you tell me a bit more about what you need, and which unit, tenant or document it is about?"
+"""Asked when `route` is unsure but didn't say what it would ask."""
 
 NOT_COVERED = (
     "The indexed PLG sources don't cover this question, so I can't give you a sourced answer. "
@@ -96,8 +120,20 @@ NOT_COVERED = (
 )
 
 
+class ScoredIntent(BaseModel):
+    intent: Intent
+    confidence: float
+
+
 class RouteDecision(BaseModel):
-    intents: list[Intent]
+    intents: list[ScoredIntent]
+    clarifying_question: str = ""
+
+    def unsure(self, threshold: float) -> bool:
+        """Some specialist was named without confidence, or none was and the router had a question to ask."""
+        if self.intents:
+            return any(i.confidence < threshold for i in self.intents)
+        return bool(self.clarifying_question.strip())
 
 
 def build_graph(
@@ -164,10 +200,14 @@ def build_graph(
         )
         call = next(b for b in reply.content if b["type"] == "tool_use")
         decision = RouteDecision.model_validate(call["input"])
-        return {"intents": list(dict.fromkeys(decision.intents)), "findings": []}
+        if decision.unsure(settings.route_min_confidence):
+            return {"intents": [], "clarification": decision.clarifying_question.strip() or CLARIFY, "findings": []}
+        intents = list(dict.fromkeys(i.intent for i in decision.intents))
+        return {"intents": intents, "clarification": "", "findings": []}
 
-    def fan_out(state: PLGState) -> Sequence[str]:
-        return state.get("intents") or [MERGE]
+    def fan_out(state: PLGState) -> Sequence[Send | str]:
+        """One task per specialist, run in parallel; none (or a clarifying question) goes straight to merge."""
+        return [Send(intent, state) for intent in state.get("intents", [])] or [MERGE]
 
     async def knowledge_node(state: PLGState) -> PLGState:
         stances: dict[str, PolicyLineage] = {}
@@ -208,7 +248,9 @@ def build_graph(
         write = get_stream_writer()
         findings = state.get("findings", [])
         parts: list[str] = []
-        async for text in _fuse(llm, conversation(state), findings, state.get("memory", "")):
+        clarification = state.get("clarification", "")
+        tokens = _words(clarification) if clarification else _fuse(llm, conversation(state), findings, state.get("memory", ""))
+        async for text in tokens:
             parts.append(text)
             write({"node": MERGE, "token": text})
         answer = "".join(parts)
@@ -255,15 +297,23 @@ async def _fuse(
     """The answer's tokens. Findings without a single citation are not an answer: say the sources don't
     cover the question rather than let Claude fill the gap."""
     if findings and not any(f.citations or f.traced for f in findings):
-        for token in re.findall(r"\s*\S+", NOT_COVERED):
+        async for token in _words(NOT_COVERED):
             yield token
         return
     if findings:
         blocks = "\n\n".join(f"<{f.specialist}>\n{f.text}\n</{f.specialist}>" for f in findings)
         system = MERGE_SYSTEM + MERGE_FINDINGS.format(findings=blocks)
+        if len(findings) > 1:
+            system += MERGE_SECTIONS
     else:
         system = MERGE_SYSTEM + MERGE_NO_SOURCES
     if memory:
         system += "\n\n" + memory
     async for text in llm.stream_text(node=MERGE, tier="sonnet", system=system, messages=messages):
         yield text
+
+
+async def _words(text: str) -> AsyncIterator[str]:
+    """A fixed reply, streamed word by word like Claude's."""
+    for token in re.findall(r"\s*\S+", text):
+        yield token

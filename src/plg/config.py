@@ -39,6 +39,9 @@ class Settings(BaseModel):
     # `history_keep_messages` messages verbatim.
     history_token_threshold: int = 6000
     history_keep_messages: int = 4
+    # `route` asks a clarifying question instead of fanning out when it is less sure than this (0-1) that a
+    # question needs one of the specialists it named.
+    route_min_confidence: float = 0.6
     embed_model: str = "voyage-3.5"
     embed_dim: int = 1024
     voyage_base_url: str = "https://api.voyageai.com/v1"

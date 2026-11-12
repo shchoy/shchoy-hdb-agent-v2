@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import ReactMarkdown from "react-markdown";
 import {
   InvalidFrameError,
   parseRunEvents,
@@ -12,6 +11,7 @@ import {
   type ThreadSummary,
   type ThreadView,
 } from "@/lib/events";
+import { AnswerText } from "./AnswerText";
 import { DraftPreview } from "./DraftPreview";
 import { PolicyStanceCard } from "./PolicyStanceCard";
 import { ReasoningPanel } from "./ReasoningPanel";
@@ -285,7 +285,7 @@ export function AskScreen() {
                 <span className={styles.label}>
                   {m.role === "user" ? "You asked:" : "Answer:"}
                 </span>
-                <ReactMarkdown skipHtml>{m.content}</ReactMarkdown>
+                <AnswerText markdown={m.content} />
               </li>
             ))}
           </ol>
@@ -351,7 +351,7 @@ export function AskScreen() {
               >
                 <h2 id="answer-heading">Answer</h2>
                 <div aria-live="polite" aria-busy={running}>
-                  <ReactMarkdown skipHtml>{run.answer}</ReactMarkdown>
+                  <AnswerText markdown={run.answer} />
                 </div>
                 {(run.citations.length > 0 || run.stances.length > 0) && (
                   <Sources citations={run.citations} stances={run.stances} />

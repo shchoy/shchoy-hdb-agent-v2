@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 from plg.actions.model import Decision, ProposedAction
+from plg.defects.classify import Classification
 from plg.agents.runtime import Citation
 from plg.identity import Role
 from plg.data.trace import SqlTrace
@@ -59,6 +60,13 @@ class PolicyStanceEvent(PolicyLineage):
     seq: int
 
 
+class ClassificationEvent(Classification):
+    """Feedback classified into the defect taxonomy: category, severity, routing team and vendor, confidence, rationale."""
+
+    type: Literal["classification"] = "classification"
+    seq: int
+
+
 class ProposedActionEvent(ProposedAction):
     """Something the assistant proposes to do outside the system. It waits for the officer's decision."""
 
@@ -77,7 +85,7 @@ class InterruptEvent(BaseModel):
 
 
 class ActionResultEvent(BaseModel):
-    """A decision was carried out: the outbox item sent (approve, edit) or nothing (reject)."""
+    """A decision was carried out: the outbox item sent or i-EMS ticket raised (approve, edit), or nothing (reject)."""
 
     type: Literal["action_result"] = "action_result"
     seq: int
@@ -86,6 +94,7 @@ class ActionResultEvent(BaseModel):
     """The version sent: one above the approved version after an edit."""
     decision: Decision
     outbox_id: str | None
+    ticket_id: str | None
 
 
 class DoneEvent(BaseModel):
@@ -104,6 +113,7 @@ class ErrorEvent(BaseModel):
 
 
 RunEvent = Annotated[
-    NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | ProposedActionEvent
+    NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | ClassificationEvent
+    | ProposedActionEvent
     | InterruptEvent | ActionResultEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
 ]

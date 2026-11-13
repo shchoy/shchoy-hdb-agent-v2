@@ -29,7 +29,9 @@ class AuditEntry(BaseModel):
     run_id: str
     """The LangSmith run ID of the run that carried the decision out."""
     outbox_id: str | None
-    """The outbox item sent, or None for a rejection."""
+    """The outbox item sent, or None for a rejection or a ticket."""
+    ticket_id: str | None = None
+    """The i-EMS ticket raised, or None for a rejection or a letter."""
 
 
 class AuditLog:

@@ -3,13 +3,13 @@ import { join } from "node:path";
 import { HttpResponse } from "msw";
 
 /** A recorded plg-api SSE stream (see scripts/record_sse_fixtures.py at the repo root). */
-export function fixture(name: "answer" | "not_covered" | "error" | "draft" | "policy_stance" | "data" | "multi_part"): string {
+export function fixture(name: "answer" | "not_covered" | "error" | "draft" | "policy_stance" | "data" | "multi_part" | "defect"): string {
   // Vitest runs from web/; import.meta.url is not a file URL under jsdom.
   return readFileSync(join(process.cwd(), "src/test/fixtures", `${name}.sse`), "utf8");
 }
 
-/** A recorded approvals response: `pending.json`, `audit.json` (parsed) or a resume stream `edit.sse` / `reject.sse`. */
-export function approvalsFixture(name: "edit.sse" | "reject.sse"): string;
+/** A recorded approvals response: `pending.json`, `audit.json` (parsed) or a resume stream `edit.sse` / `reject.sse` / `ticket_edit.sse`. */
+export function approvalsFixture(name: "edit.sse" | "reject.sse" | "ticket_edit.sse"): string;
 export function approvalsFixture(name: "pending.json" | "audit.json"): Record<string, unknown>[];
 export function approvalsFixture(name: string): unknown {
   const raw = readFileSync(join(process.cwd(), "src/test/fixtures/approvals", name), "utf8");

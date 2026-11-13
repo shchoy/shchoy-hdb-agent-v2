@@ -113,6 +113,7 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         settings.setdefault("trackers_db", tmp_path / "trackers.duckdb")  # none unless a test passes the synced ones
         settings.setdefault("outbox_dir", tmp_path / "outbox")  # approved actions land here, never in .plg/
         settings.setdefault("audit_log", tmp_path / "audit.jsonl")
+        settings.setdefault("iems_dir", tmp_path / "iems")  # raised i-EMS tickets land here
         embedder = HashingEmbedder(dim=128)
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]

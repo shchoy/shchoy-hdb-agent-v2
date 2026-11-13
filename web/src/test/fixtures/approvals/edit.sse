@@ -12,7 +12,7 @@ data: {"type":"node","seq":3,"node":"execute_action","status":"started"}
 
 id: 4
 event: action_result
-data: {"type":"action_result","seq":4,"action_id":"f1737c97-dcfe-4655-99e8-dd2f860c8356","version":2,"decision":"edit","outbox_id":"f1737c97-dcfe-4655-99e8-dd2f860c8356-v2"}
+data: {"type":"action_result","seq":4,"action_id":"d6dc54eb-84fc-416c-94e9-390ba1f367e3","version":2,"decision":"edit","outbox_id":"d6dc54eb-84fc-416c-94e9-390ba1f367e3-v2","ticket_id":null}
 
 id: 5
 event: node
@@ -20,5 +20,5 @@ data: {"type":"node","seq":5,"node":"execute_action","status":"finished"}
 
 id: 6
 event: done
-data: {"type":"done","seq":6,"run_id":"deaa9674-ec40-44d7-aa0b-228a529193b0"}
+data: {"type":"done","seq":6,"run_id":"fa9de716-230f-4664-bea5-67d9fa06cdc6"}
 

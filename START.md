@@ -63,6 +63,7 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_TRACKERS_DB` | `.plg/trackers.duckdb` | The Excel trackers (`poc-data/sheets/*.xlsx`), cleaned into DuckDB tables by `plg sync`; the data agent queries them as `trackers.<table>` |
 | `PLG_THREADS_DB` | `.plg/threads.sqlite` | Conversations: LangGraph checkpoints and thread owners; they survive a `plg-api` restart (so do pending approvals) |
 | `PLG_OUTBOX_DIR` | `.plg/outbox` | Local Outbox: one JSON file per approved letter (nothing is delivered) |
+| `PLG_IEMS_DIR` | `.plg/iems` | i-EMS mock: one JSON file per approved defect ticket (`IEMS-<yymm>-<id>`, linked to its feedback case) |
 | `PLG_AUDIT_LOG` | `.plg/audit.jsonl` | Append-only audit log: one line per decided action (approver, time, LangSmith `run_id`) |
 | `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
 | `PLG_HISTORY_KEEP_MESSAGES` | `4` | Recent messages kept verbatim when folding |
@@ -137,6 +138,31 @@ curl -s http://127.0.0.1:8000/audit -H 'X-PLG-User: S05'   # your decisions, new
 ```
 
 Where it lives: `web/src/app/approvals/`, BFF `web/src/app/api/{approvals,audit}/`, `web/src/app/api/threads/[id]/resume/`, `src/plg/api/app.py` (`/audit`).
+
+### Classify feedback and raise an i-EMS ticket (issue #20)
+
+Paste public or tenant feedback (or name a case, e.g. `FB-2025-00003`) and ask for it to be classified:
+
+```bash
+curl -N -X POST http://127.0.0.1:8000/threads/$T/runs -H 'X-PLG-User: S11' -H 'Content-Type: application/json' \
+  -d '{"message": "Classify: Ceiling near the shop wet and lights flickering, scared got short circuit"}'
+```
+
+The `defect` specialist (Haiku) streams a `classification` event: category, severity, team, vendor, SLA, confidence and
+rationale. When the feedback could belong to several categories, the result is flagged low confidence and the most
+severe category is chosen. In this example that is Electrical (High) over Water Seepage (Medium). A maintenance defect
+(STR, SEP, PLB, ELE, FIR, PST) gets a proposed `raise_ticket` action for the category's team and vendor. Its SLA comes
+from the severity: Critical 1 day, High 3, Medium 7, Low 14.
+
+Non-defects (hygiene, encroachment, noise, common area, enquiries) get no ticket.
+
+The ticket appears in the Approvals inbox. You can edit its category (which re-routes the team and vendor), priority
+(which resets the SLA), unit, description and feedback case. Analysts and Legal can't raise tickets. Nothing is
+written to `PLG_IEMS_DIR` until you approve. The raised ticket carries its feedback case ID. Pasted feedback without
+a case gets a new `FB-NEW-…` ID. `GET /audit` shows the raised ticket.
+
+Where it lives: `src/plg/defects/` (taxonomy, classify, `defect_flow`, `TicketSystem`), `src/plg/actions/tickets.py`,
+`web/src/app/ClassificationCard.tsx`, `web/src/app/approvals/`, `tests/test_defect_api.py`.
 
 ### Ask a data question (issue #12)
 

@@ -1,4 +1,4 @@
-"""StateGraph wiring: START → route → specialists (fan-out) → merge → (approval → execute_action)* → END.
+"""StateGraph wiring: START → route → specialists (fan-out; `defect` runs the `defect_flow` subgraph) → merge → (approval → execute_action)* → END.
 
 `route` (Haiku) decides which specialists a question needs; none means `merge` answers it directly.
 `merge` fuses the specialists' findings into one answer and is the only node that streams tokens.
@@ -21,13 +21,17 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send, interrupt
 from pydantic import BaseModel
 
-from plg.actions import letters
+from plg.actions import letters, tickets
 from plg.actions.audit import AuditEntry, AuditLog
-from plg.actions.model import ApprovalDecision, ProposedAction, pending
+from plg.actions.model import ApprovalDecision, LetterPayload, ProposedAction, TicketPayload, pending
 from plg.actions.outbox import LocalOutbox, Outbox, OutboxItem
 from plg.agents import data, drafting, knowledge
 from plg.agents.runtime import CACHE
 from plg.config import Settings
+from plg.defects.classify import NODE as DEFECT_NODE
+from plg.defects.flow import DefectInput, build_defect_flow
+from plg.defects.taxonomy import Taxonomy, load_taxonomy
+from plg.defects.tickets import LocalTicketSystem, TicketSystem
 from plg.data.semantic import SemanticLayer, load_semantic_layer
 from plg.data.warehouse import Warehouse
 from plg.drafting.store import DraftStore
@@ -46,6 +50,7 @@ ROUTE = "route"
 KNOWLEDGE = knowledge.NODE
 DATA = data.NODE
 DRAFTING = drafting.NODE
+DEFECT = DEFECT_NODE
 MERGE = "merge"
 SUMMARISE = history.NODE
 LOAD_MEMORY = "load_memory"
@@ -63,6 +68,8 @@ rates and lists of units, tenancies, arrears, invoices, inspections, feedback, t
 reported figures differ.
 - drafting: the officer asks for a standard letter or notice to be drafted: an arrears reminder, a missing-documents \
 notice, or an update reply to someone who gave feedback.
+- defect: the officer pastes public or tenant feedback (or names a feedback case) to have it classified and routed, \
+e.g. to raise an i-EMS maintenance ticket for it.
 A question can have several parts, each needing a different specialist: name every specialist needed. Choose no \
 specialist for greetings, thanks and questions about how to use the assistant.
 Give each specialist your confidence (0 to 1) that the question needs it. If you can't tell what the officer is asking \
@@ -80,7 +87,7 @@ ROUTE_TOOL: Block = {
                 "items": {
                     "type": "object",
                     "properties": {
-                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting"]},
+                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect"]},
                         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                     },
                     "required": ["intent", "confidence"],
@@ -163,6 +170,8 @@ def build_graph(
     memory: MemoryService | None = None,
     outbox: Outbox | None = None,
     audit: AuditLog | None = None,
+    ticket_system: TicketSystem | None = None,
+    taxonomy: Taxonomy | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
@@ -172,6 +181,9 @@ def build_graph(
     drafts = drafts or DraftStore()
     outbox = outbox or LocalOutbox(settings.outbox_dir)
     audit = audit or AuditLog(settings.audit_log)
+    ticket_system = ticket_system or LocalTicketSystem(settings.iems_dir)
+    taxonomy = taxonomy or load_taxonomy(vocab)
+    defect_flow = build_defect_flow(llm, taxonomy, warehouse.records_db)
     first = LOAD_MEMORY if memory else ROUTE  # memory is recalled before routing when the graph has one
 
     def unsummarised(state: PLGState) -> list[Message]:
@@ -264,6 +276,16 @@ def build_graph(
         action = letters.propose_letter(result.draft, user.staff_id, state.get("proposed_actions", []))
         return {"findings": [finding], "proposed_actions": [action]}
 
+    async def defect_node(state: PLGState) -> PLGState:
+        """Run `defect_flow`; its classification is streamed, its ticket (if any) waits for the officer at `approval`."""
+        inputs: DefectInput = {"question": state["question"]}
+        if user := state.get("user"):
+            inputs["user"] = user
+        out = await defect_flow.ainvoke(inputs)
+        get_stream_writer()({"classification": out["classification"].model_dump(mode="json")})
+        finding = Finding(specialist=DEFECT, text=out["summary"], citations=[], traced=True)
+        return {"findings": [finding], "proposed_actions": out.get("proposed_actions", [])}
+
     async def merge(state: PLGState) -> PLGState:
         write = get_stream_writer()
         findings = state.get("findings", [])
@@ -302,19 +324,26 @@ def build_graph(
         return {"decision": decision}
 
     async def execute_action(state: PLGState, config: RunnableConfig) -> PLGState:
-        """Carry out the decision: send the (edited) letter to the outbox, or nothing for a rejection; audit it."""
+        """Carry out the decision: send the (edited) letter to the outbox or raise the (edited) ticket in i-EMS, or
+        nothing for a rejection; audit it."""
         decision = state.get("decision")
         assert decision is not None, "execute_action runs only after approval"
         action = next(a for a in state.get("proposed_actions", []) if a.action_id == decision.action_id)
         if decision.refusal(action):  # never act on a stale decision
             raise PermissionError("The decision no longer matches a pending action.")
         sent: ProposedAction | None = None
-        if decision.decision == "edit":
+        if decision.decision == "edit" and action.action_type == "raise_ticket":
+            sent = tickets.edited(action, decision.edits, taxonomy)
+        elif decision.decision == "edit":
             sent = await asyncio.to_thread(letters.edited, action, decision.edits, templates, warehouse.records_db)
         elif decision.decision == "approve":
             sent = action
-        outbox_id = None
-        if sent is not None:
+        outbox_id = ticket_id = None
+        if sent is not None and isinstance(sent.payload, TicketPayload):
+            ticket = tickets.to_ticket(sent, raised_by=decision.approver)
+            await asyncio.to_thread(ticket_system.raise_ticket, ticket)
+            ticket_id = ticket.ticket_id
+        elif sent is not None and isinstance(sent.payload, LetterPayload):
             outbox_id = f"{sent.action_id}-v{sent.version}"
             item = OutboxItem(
                 item_id=outbox_id, action_id=sent.action_id, version=sent.version,
@@ -326,12 +355,12 @@ def build_graph(
             action_id=action.action_id, version=action.version, action_type=action.action_type, title=action.title,
             thread_id=str(config.get("configurable", {}).get("thread_id", "")), decision=decision.decision, edits=decision.edits, reason=decision.reason, approver=decision.approver,
             approver_role=decision.approver_role, at=letters.now(),
-            run_id=str(config.get("configurable", {}).get(RUN_ID, "")), outbox_id=outbox_id,
+            run_id=str(config.get("configurable", {}).get(RUN_ID, "")), outbox_id=outbox_id, ticket_id=ticket_id,
         )
         await asyncio.to_thread(audit.record, entry)
         get_stream_writer()({"action_result": {
             "action_id": action.action_id, "version": sent.version if sent else action.version,
-            "decision": decision.decision, "outbox_id": outbox_id,
+            "decision": decision.decision, "outbox_id": outbox_id, "ticket_id": ticket_id,
         }})
         done = (sent or action).model_copy(update={"status": "rejected" if sent is None else "approved"})
         return {"proposed_actions": [done], "decision": None}
@@ -341,6 +370,7 @@ def build_graph(
     graph.add_node(KNOWLEDGE, knowledge_node)
     graph.add_node(DATA, data_node)
     graph.add_node(DRAFTING, drafting_node)
+    graph.add_node(DEFECT, defect_node)
     graph.add_node(MERGE, merge)
     graph.add_node(SUMMARISE, summarise_history)
     graph.add_node(APPROVAL, approval)
@@ -353,10 +383,11 @@ def build_graph(
         graph.add_node(LOAD_MEMORY, load_memory)
         graph.add_node(WRITE_MEMORY, write_memory)
         graph.add_edge(LOAD_MEMORY, ROUTE)
-    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, MERGE])
+    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, MERGE])
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
     graph.add_edge(DRAFTING, MERGE)
+    graph.add_edge(DEFECT, MERGE)
     answered = WRITE_MEMORY if memory else MERGE
     if memory:
         graph.add_edge(MERGE, WRITE_MEMORY)

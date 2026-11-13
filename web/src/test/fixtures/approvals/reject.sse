@@ -12,7 +12,7 @@ data: {"type":"node","seq":3,"node":"execute_action","status":"started"}
 
 id: 4
 event: action_result
-data: {"type":"action_result","seq":4,"action_id":"000c89bd-9e73-4c4a-94e6-a185f018d862","version":1,"decision":"reject","outbox_id":null}
+data: {"type":"action_result","seq":4,"action_id":"f69f1dec-bf5f-457c-9b7e-a5b9a96fb177","version":1,"decision":"reject","outbox_id":null,"ticket_id":null}
 
 id: 5
 event: node
@@ -20,5 +20,5 @@ data: {"type":"node","seq":5,"node":"execute_action","status":"finished"}
 
 id: 6
 event: done
-data: {"type":"done","seq":6,"run_id":"0d2cf97e-74b7-42b2-b5d9-dc92111fead2"}
+data: {"type":"done","seq":6,"run_id":"35b00a04-c1da-4c43-b353-517984dff991"}
 

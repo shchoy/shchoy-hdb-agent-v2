@@ -14,10 +14,14 @@ from pydantic import BaseModel, TypeAdapter, model_validator
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.actions.audit import AuditEntry, AuditLog
+from plg.actions import tickets
 from plg.actions.letters import unknown_slots
-from plg.actions.model import ApprovalDecision, Decision, ProposedAction
+from plg.actions.model import ApprovalDecision, Decision, LetterPayload, ProposedAction
 from plg.actions.outbox import LocalOutbox, OutboxItem
 from plg.config import Settings
+from plg.defects.taxonomy import load_taxonomy
+from plg.defects.tickets import LocalTicketSystem, Ticket
+from plg.ontology.vocab import load_vocab
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
 from plg.documents import ChunkLocation, DocumentLibrary, DocumentView
@@ -70,7 +74,8 @@ class ResumeRequest(BaseModel):
     version: int
     decision: Decision
     edits: dict[str, str] = {}
-    """Slot → new value; required for `edit`, which sends the edited letter."""
+    """Slot → new value (a letter) or ticket field → new value (category_code, severity, unit_id, description,
+    feedback_id); required for `edit`, which sends or raises the edited version."""
     reason: str = ""
     """Why it was rejected; required for `reject`."""
 
@@ -93,9 +98,11 @@ class PendingApproval(ProposedAction):
 
 
 class AuditRecord(AuditEntry):
-    """A decision from the audit log and, unless it was a rejection, the outbox item it sent."""
+    """A decision from the audit log and, unless it was a rejection, the outbox item it sent or the i-EMS ticket it
+    raised."""
 
     sent: OutboxItem | None
+    ticket: Ticket | None
 
 
 class MemoryEdit(BaseModel):
@@ -145,10 +152,13 @@ def create_app(
     runs = RunRegistry()
     outbox = LocalOutbox(settings.outbox_dir)
     audit = AuditLog(settings.audit_log)
+    ticket_system = LocalTicketSystem(settings.iems_dir)
+    taxonomy = load_taxonomy(load_vocab())
     graph = build_graph(
         llm, searcher or LazySearcher(settings), entities=entities,
         warehouse=Warehouse(settings.records_db, settings.trackers_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
         settings=settings, memory=learner, outbox=outbox, audit=audit,
+        ticket_system=ticket_system, taxonomy=taxonomy,
     )
 
     @asynccontextmanager
@@ -218,9 +228,13 @@ def create_app(
 
     @app.get("/audit")
     async def audit_trail(user: User) -> list[AuditRecord]:
-        """The officer's own decisions on proposed actions, newest first, each with the outbox item it sent."""
+        """The officer's own decisions on proposed actions, newest first, each with the outbox item it sent or the
+        i-EMS ticket it raised."""
         return [
-            AuditRecord(**e.model_dump(), sent=outbox.item(e.outbox_id) if e.outbox_id else None)
+            AuditRecord(
+                **e.model_dump(), sent=outbox.item(e.outbox_id) if e.outbox_id else None,
+                ticket=ticket_system.ticket(e.ticket_id) if e.ticket_id else None,
+            )
             for e in audit.decided_by(user.staff_id)
         ]
 
@@ -295,12 +309,15 @@ def create_app(
             raise HTTPException(status_code=409, detail="That version of the action is not pending")
         if body.decision != "reject" and user.role not in action.approver_roles:
             raise HTTPException(status_code=403, detail="Your role can't approve this action")
-        if body.decision == "edit" and (unknown := unknown_slots(action, body.edits)):
-            raise HTTPException(status_code=422, detail=f"The letter has no slot {', '.join(unknown)}")
-        blanked = {s for s, v in body.edits.items() if not v.strip()}
-        still_open = sorted(({u.slot for u in action.payload.unfilled} | blanked) - (set(body.edits) - blanked))
-        if body.decision != "reject" and still_open:
-            raise HTTPException(status_code=422, detail=f"Fill the open slots before sending the letter: {', '.join(still_open)}")
+        if isinstance(action.payload, LetterPayload):
+            if body.decision == "edit" and (unknown := unknown_slots(action, body.edits)):
+                raise HTTPException(status_code=422, detail=f"The letter has no slot {', '.join(unknown)}")
+            blanked = {s for s, v in body.edits.items() if not v.strip()}
+            still_open = sorted(({u.slot for u in action.payload.unfilled} | blanked) - (set(body.edits) - blanked))
+            if body.decision != "reject" and still_open:
+                raise HTTPException(status_code=422, detail=f"Fill the open slots before sending the letter: {', '.join(still_open)}")
+        elif body.decision == "edit" and (errors := tickets.edit_errors(action, body.edits, taxonomy)):
+            raise HTTPException(status_code=422, detail="; ".join(errors))
         decision = ApprovalDecision(**body.model_dump(), approver=user.staff_id, approver_role=user.role)
         try:
             buffer = runs.start(graph, thread_id, "", user, decision)

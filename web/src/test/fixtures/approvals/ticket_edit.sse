@@ -1,0 +1,24 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"approval","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"approval","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"execute_action","status":"started"}
+
+id: 4
+event: action_result
+data: {"type":"action_result","seq":4,"action_id":"fdb464cc-a542-46f8-9385-29186168d8a3","version":2,"decision":"edit","outbox_id":null,"ticket_id":"IEMS-2611-FDB464CC"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"execute_action","status":"finished"}
+
+id: 6
+event: done
+data: {"type":"done","seq":6,"run_id":"c2eae646-d179-407a-a5c5-99c1a0d3836c"}
+

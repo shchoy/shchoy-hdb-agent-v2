@@ -7,11 +7,13 @@ import { server } from "@/test/msw";
 import { approvalsFixture, sseResponse } from "@/test/sse";
 
 // Recorded from plg-api (scripts/record_sse_fixtures.py): a feedback reply with an open slot and a phone number
-// flagged, and a complete arrears reminder, proposed in two conversations; then the reply edited, the reminder rejected.
+// flagged, a complete arrears reminder and an i-EMS ticket for ambiguous feedback (electrical or seepage, low
+// confidence), proposed in three conversations; then the ticket raised with edits, the reply edited, the reminder rejected.
 const PENDING = approvalsFixture("pending.json");
 const AUDIT = approvalsFixture("audit.json");
-const [FEEDBACK, REMINDER] = PENDING as { action_id: string; thread_id: string; title: string }[];
-const [REJECTED, EDITED] = AUDIT;
+const [FEEDBACK, REMINDER, TICKET] = PENDING as { action_id: string; thread_id: string; title: string }[];
+const [REJECTED, EDITED, RAISED] = AUDIT;
+const RAISED_TICKET = (RAISED as { ticket: { ticket_id: string; feedback_id: string } }).ticket;
 
 type Decided = { pending: unknown[]; audit: unknown[] };
 
@@ -46,7 +48,7 @@ describe("Approvals inbox", () => {
     render(<ApprovalsScreen role="officer" />);
 
     const pending = await screen.findByRole("list", { name: "Pending approvals" });
-    expect(within(pending).getAllByRole("article")).toHaveLength(2);
+    expect(within(pending).getAllByRole("article")).toHaveLength(3);
 
     const reply = card(FEEDBACK.title);
     expect(reply).toHaveTextContent("Feedback Update Reply (TPL-FBK-03 v1.3)");
@@ -212,5 +214,116 @@ describe("Approvals inbox", () => {
 
     expect(within(reply).getByRole("button", { name: "Send edited letter" })).toBeDisabled();
     expect(reply).toHaveTextContent("Fill action_taken before sending.");
+  });
+
+  it("shows a proposed i-EMS ticket with its classification, flagged when it is low confidence", async () => {
+    plgApi();
+    render(<ApprovalsScreen role="officer" />);
+
+    const ticket = await screen.findByRole("article", { name: TICKET.title });
+    expect(ticket).toHaveTextContent("Raise i-EMS ticket: Electrical (High) for M&E");
+    expect(ticket).toHaveTextContent("i-EMS ticket · version 1 · Feedback case FB-NEW-");
+    expect(ticket).toHaveTextContent("Low confidence — please check");
+    const classified = ticket.querySelector("dl");
+    expect(classified).toHaveTextContent("CategoryElectrical (ELE)");
+    expect(classified).toHaveTextContent("SeverityHigh");
+    expect(classified).toHaveTextContent("TeamM&E");
+    expect(classified).toHaveTextContent("VendorSunrise M&E Services Pte Ltd");
+    expect(classified).toHaveTextContent("i-EMS SLA3 days");
+    expect(classified).toHaveTextContent("Confidence50%");
+    expect(within(ticket).getByRole("list", { name: "Other plausible categories" })).toHaveTextContent(
+      "Water Seepage / Leak (SEP), Medium, 60%",
+    );
+    expect(ticket).toHaveTextContent("Rationale: 'Ceiling ... wet' reads as water seepage");
+    expect(within(ticket).getByRole("row", { name: /Unit/ })).toHaveTextContent("not given");
+    const frame = within(ticket).getByTitle("Ticket to raise: " + TICKET.title);
+    expect(frame).toHaveAttribute("sandbox", "");
+    expect(frame.getAttribute("srcdoc")).toContain("Sunrise M&amp;E Services Pte Ltd");
+    expect(within(ticket).getByRole("button", { name: "Approve and raise" })).toBeEnabled();
+    expect(within(ticket).queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("raises an edited ticket, showing each change as a diff, then the result and the raised ticket", async () => {
+    const sent = decisions(TICKET.thread_id, approvalsFixture("ticket_edit.sse"), {
+      pending: [FEEDBACK, REMINDER],
+      audit: [RAISED],
+    });
+    render(<ApprovalsScreen role="officer" />);
+
+    const ticket = await screen.findByRole("article", { name: TICKET.title });
+    await userEvent.click(within(ticket).getByRole("button", { name: "Edit ticket" }));
+    const category = within(ticket).getByLabelText("Category");
+    expect(within(category).getAllByRole("option").map((o) => o.getAttribute("value"))).toEqual([
+      "STR", "SEP", "PLB", "ELE", "FIR", "PST",
+    ]);
+    await userEvent.selectOptions(category, "SEP");
+    await userEvent.selectOptions(within(ticket).getByLabelText("Priority"), "High");
+    await userEvent.type(within(ticket).getByLabelText("Unit"), "U-PI675-02-07");
+
+    const changed = within(ticket).getByRole("row", { name: /Category/ });
+    expect(changed.querySelector("del")).toHaveTextContent("Electrical (ELE)");
+    expect(changed.querySelector("ins")).toHaveTextContent("Water Seepage / Leak (SEP)");
+    expect(within(ticket).getByRole("row", { name: /Priority/ }).querySelector("ins")).toBeNull();
+    const unit = within(ticket).getByRole("row", { name: /Unit/ });
+    expect(unit.querySelector("del")).toBeNull();
+    expect(unit.querySelector("ins")).toHaveTextContent("U-PI675-02-07");
+
+    await userEvent.click(within(ticket).getByRole("button", { name: "Raise edited ticket" }));
+
+    const result = await screen.findByRole("status");
+    expect(result).toHaveTextContent(
+      `${TICKET.title}: raised with your edits as ${RAISED_TICKET.ticket_id} (version 2).`,
+    );
+    expect(sent).toEqual([{
+      action_id: TICKET.action_id, version: 1, decision: "edit",
+      // A new category is raised at the priority shown, not the category's default.
+      edits: { category_code: "SEP", severity: "High", unit_id: "U-PI675-02-07" },
+    }]);
+
+    const trail = within(await screen.findByRole("list", { name: "Audit trail" })).getByRole("article");
+    expect(trail).toHaveTextContent("Raised with edits by S05 (officer)");
+    expect(trail).toHaveTextContent(`i-EMS ticket ${RAISED_TICKET.ticket_id} (version 2) raised`);
+    const raised = trail.querySelector("dl");
+    expect(raised).toHaveTextContent(`Feedback case${RAISED_TICKET.feedback_id}`);
+    expect(raised).toHaveTextContent("CategoryWater Seepage / Leak (SEP)");
+    expect(raised).toHaveTextContent("PriorityHigh");
+    expect(raised).toHaveTextContent("TeamCivil & Structural");
+    expect(raised).toHaveTextContent("VendorKemas Building Works Pte Ltd");
+    expect(raised).toHaveTextContent("SLA3 days, due 16 Nov 2026");
+    expect(raised).toHaveTextContent("UnitU-PI675-02-07");
+    expect(trail).not.toHaveTextContent("Outbox item");
+  });
+
+  it("approves a ticket as proposed", async () => {
+    // The recorded raise was an edit; as an approval, the same ticket is raised at the proposed version.
+    const approved = approvalsFixture("ticket_edit.sse").replace('"version":2,"decision":"edit"', '"version":1,"decision":"approve"');
+    const sent = decisions(TICKET.thread_id, approved, { pending: [FEEDBACK, REMINDER], audit: [] });
+    render(<ApprovalsScreen role="officer" />);
+
+    const ticket = await screen.findByRole("article", { name: TICKET.title });
+    await userEvent.click(within(ticket).getByRole("button", { name: "Approve and raise" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      `${TICKET.title}: raised as ${RAISED_TICKET.ticket_id} (version 1).`,
+    );
+    expect(sent).toEqual([{ action_id: TICKET.action_id, version: 1, decision: "approve" }]);
+  });
+
+  it("can't raise a ticket with a required field blanked, or for a role that can't raise it", async () => {
+    plgApi();
+    const { unmount } = render(<ApprovalsScreen role="officer" />);
+
+    const ticket = await screen.findByRole("article", { name: TICKET.title });
+    await userEvent.click(within(ticket).getByRole("button", { name: "Edit ticket" }));
+    await userEvent.clear(within(ticket).getByLabelText("Description"));
+    expect(within(ticket).getByRole("button", { name: "Raise edited ticket" })).toBeDisabled();
+    expect(ticket).toHaveTextContent("Fill Description before raising.");
+    unmount();
+
+    render(<ApprovalsScreen role="analyst" />);
+    const theirs = await screen.findByRole("article", { name: TICKET.title });
+    expect(within(theirs).queryByRole("button", { name: "Approve and raise" })).not.toBeInTheDocument();
+    expect(within(theirs).queryByRole("button", { name: "Edit ticket" })).not.toBeInTheDocument();
+    expect(theirs).toHaveTextContent("Your role can't raise this ticket. You can reject it with a reason.");
   });
 });

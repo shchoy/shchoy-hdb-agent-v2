@@ -1,0 +1,168 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"load_memory","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"load_memory","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"route","status":"started"}
+
+id: 4
+event: node
+data: {"type":"node","seq":4,"node":"route","status":"finished"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"defect","status":"started"}
+
+id: 6
+event: classification
+data: {"category_code":"ELE","category":"Electrical","severity":"High","team":"M&E","vendor":"Sunrise M&E Services Pte Ltd","is_defect":true,"sla_days":3,"confidence":0.5,"low_confidence":true,"rationale":"'Ceiling ... wet' reads as water seepage; 'lights flickering' and 'short circuit' as an electrical fault.","candidates":[{"code":"SEP","category":"Water Seepage / Leak","severity":"Medium","confidence":0.6},{"code":"ELE","category":"Electrical","severity":"High","confidence":0.5}],"type":"classification","seq":6}
+
+id: 7
+event: node
+data: {"type":"node","seq":7,"node":"defect","status":"finished"}
+
+id: 8
+event: node
+data: {"type":"node","seq":8,"node":"merge","status":"started"}
+
+id: 9
+event: token
+data: {"type":"token","seq":9,"node":"merge","text":"Classified"}
+
+id: 10
+event: token
+data: {"type":"token","seq":10,"node":"merge","text":" as"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":" **Electrical"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" (High)**"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" for"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" M&E,"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" with"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" low"}
+
+id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" confidence:"}
+
+id: 18
+event: token
+data: {"type":"token","seq":18,"node":"merge","text":" it"}
+
+id: 19
+event: token
+data: {"type":"token","seq":19,"node":"merge","text":" may"}
+
+id: 20
+event: token
+data: {"type":"token","seq":20,"node":"merge","text":" also"}
+
+id: 21
+event: token
+data: {"type":"token","seq":21,"node":"merge","text":" be"}
+
+id: 22
+event: token
+data: {"type":"token","seq":22,"node":"merge","text":" water"}
+
+id: 23
+event: token
+data: {"type":"token","seq":23,"node":"merge","text":" seepage."}
+
+id: 24
+event: token
+data: {"type":"token","seq":24,"node":"merge","text":" An"}
+
+id: 25
+event: token
+data: {"type":"token","seq":25,"node":"merge","text":" i-EMS"}
+
+id: 26
+event: token
+data: {"type":"token","seq":26,"node":"merge","text":" ticket"}
+
+id: 27
+event: token
+data: {"type":"token","seq":27,"node":"merge","text":" waits"}
+
+id: 28
+event: token
+data: {"type":"token","seq":28,"node":"merge","text":" for"}
+
+id: 29
+event: token
+data: {"type":"token","seq":29,"node":"merge","text":" your"}
+
+id: 30
+event: token
+data: {"type":"token","seq":30,"node":"merge","text":" approval;"}
+
+id: 31
+event: token
+data: {"type":"token","seq":31,"node":"merge","text":" nothing"}
+
+id: 32
+event: token
+data: {"type":"token","seq":32,"node":"merge","text":" has"}
+
+id: 33
+event: token
+data: {"type":"token","seq":33,"node":"merge","text":" been"}
+
+id: 34
+event: token
+data: {"type":"token","seq":34,"node":"merge","text":" raised."}
+
+id: 35
+event: node
+data: {"type":"node","seq":35,"node":"merge","status":"finished"}
+
+id: 36
+event: node
+data: {"type":"node","seq":36,"node":"write_memory","status":"started"}
+
+id: 37
+event: node
+data: {"type":"node","seq":37,"node":"write_memory","status":"finished"}
+
+id: 38
+event: node
+data: {"type":"node","seq":38,"node":"approval","status":"started"}
+
+id: 39
+event: node
+data: {"type":"node","seq":39,"node":"approval","status":"finished"}
+
+id: 40
+event: proposed_action
+data: {"action_id":"26957076-8c29-4ef1-87a5-1345cf64d062","version":1,"action_type":"raise_ticket","title":"Raise i-EMS ticket: Electrical (High) for M&E","payload":{"kind":"ticket","feedback_id":"FB-NEW-2709E826","description":"Ceiling near the shop wet and lights flickering, scared got short circuit","unit_id":null,"category_code":"ELE","category":"Electrical","severity":"High","team":"M&E","vendor":"Sunrise M&E Services Pte Ltd","sla_days":3,"confidence":0.5,"low_confidence":true,"rationale":"'Ceiling ... wet' reads as water seepage; 'lights flickering' and 'short circuit' as an electrical fault.","candidates":[{"code":"SEP","category":"Water Seepage / Leak","severity":"Medium","confidence":0.6},{"code":"ELE","category":"Electrical","severity":"High","confidence":0.5}]},"preview":"<h3>i-EMS ticket</h3><table><tr><th>Feedback case</th><td>FB-NEW-2709E826</td></tr><tr><th>Unit</th><td>Not given</td></tr><tr><th>Category</th><td>Electrical (ELE)</td></tr><tr><th>Priority</th><td>High</td></tr><tr><th>Team</th><td>M&amp;E</td></tr><tr><th>Vendor</th><td>Sunrise M&amp;E Services Pte Ltd</td></tr><tr><th>SLA</th><td>3 days</td></tr><tr><th>Description</th><td>Ceiling near the shop wet and lights flickering, scared got short circuit</td></tr></table>","approver_roles":["officer","estate_manager","manager","director"],"proposed_by":"S05","proposed_at":"2026-11-13T07:20:13.332516+00:00","status":"pending","type":"proposed_action","seq":40}
+
+id: 41
+event: interrupt
+data: {"type":"interrupt","seq":41,"action_id":"26957076-8c29-4ef1-87a5-1345cf64d062","version":1,"approver_roles":["officer","estate_manager","manager","director"]}
+
+id: 42
+event: done
+data: {"type":"done","seq":42,"run_id":"55f0d37b-3d7d-4f05-bdd6-c2fe06483b98"}
+

@@ -61,7 +61,7 @@ def sync(
             except ScanError as exc:  # a scan Claude could not read: report it, retry on the next sync
                 report.skipped.append(Skipped(item.rel_path, f"scan could not be read: {exc}"))
                 continue
-            if item.path.suffix.lower() == ".eml":
+            if doc_type_for(item.rel_path) == injection.SCREENED_DOC_TYPE:
                 parsed, flagged = _screened(parsed)
                 if flagged:
                     report.flagged.append(item.rel_path)

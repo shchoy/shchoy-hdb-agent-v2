@@ -17,23 +17,23 @@ Rule = Literal["override", "ai_address", "approval_bypass", "authority_claim", "
 _W = r"[^.!?\n]{0,40}?"  # a few words, within one sentence
 
 RULES: dict[Rule, re.Pattern[str]] = {
-    # "ignore all previous instructions", "disregard your rules"
+    # "ignore all previous instructions", "disregard your guidelines" (not "rules": officers ask about PLG's rules)
     "override": re.compile(
         rf"\b(ignore|disregard|forget|override|bypass)\b{_W}\b(previous|prior|above|earlier|all|any|your|the system)\b"
-        rf"{_W}\b(instructions?|prompts?|rules|guidelines|guardrails|directives)\b",
+        rf"{_W}\b(instructions?|prompts?|guidelines|guardrails|directives)\b",
         re.I,
     ),
-    # "SYSTEM NOTE TO AI ASSISTANT", "message for the language model"
+    # "SYSTEM NOTE TO AI ASSISTANT", "message for the language model" (not "agent": tenants have agents)
     "ai_address": re.compile(
-        r"\b(system|developer|admin)\s+(note|message|prompt|instructions?|override)\b"
-        r"|\b(note|message|instructions?)\s+(to|for)\s+(the\s+)?(ai|assistant|llm|language\s+model|chatbot|agent)\b",
+        r"\b(note|message|prompt|instructions?)\s+(to|for)\s+(the\s+)?(ai|assistant|llm|language\s+model|chatbot)\b",
         re.I,
     ),
-    # "do not ask for human approval", "without waiting for confirmation"
+    # "do not ask for human approval", "without human approval" (an order, not "can a tenant ... without seeking approval?")
     "approval_bypass": re.compile(
-        rf"\b(do\s+not|don't|never|without)\b{_W}\b(ask(ing)?|seek(ing)?|wait(ing)?|request(ing)?)\s+(for\s+)?"
-        rf"(any\s+|human\s+|officer\s+|their\s+)?(approval|confirmation|sign-?off)\b"
-        r"|\b(skip|bypass)\b[^.!?\n]{0,20}\b(approval|human\s+review)\b",
+        r"\b(do\s+not|don't|never)\s+(ask|seek|wait|request)\s+(for\s+)?(any\s+|human\s+|officer\s+|their\s+)?"
+        r"(approval|confirmation|sign-?off)\b"
+        r"|\bwithout\s+(any\s+)?(human|officer)\s+(approval|confirmation|review|sign-?off)\b"
+        r"|\b(skip|bypass)\s+(the\s+)?(human|officer)\s+(approval|review)\b",
         re.I,
     ),
     # "You are authorised by the Director"
@@ -49,11 +49,19 @@ RULES: dict[Rule, re.Pattern[str]] = {
         rf"\b(reveal|print|show|repeat|output)\b{_W}\b(system\s+prompt|hidden\s+instructions|initial\s+instructions)\b", re.I
     ),
     # "From now on you are DAN", "you are no longer an assistant"
-    "role_change": re.compile(r"\b(from\s+now\s+on|henceforth),?\s+you\s+(are|will|must)\b|\byou\s+are\s+no\s+longer\b", re.I),
+    "role_change": re.compile(
+        r"\b(from\s+now\s+on|henceforth),?\s+you\s+are\s+(a|an|no)\b|\byou\s+are\s+no\s+longer\s+(a|an|the)\b", re.I
+    ),
 }
 
 MARKER = "[Removed at ingestion: suspected prompt injection"
-"""Starts the text that replaces a planted instruction in an ingested document (see `redact`)."""
+"""Starts the text that replaces a planted instruction in an ingested document (see `screen`)."""
+
+SCREENED_DOC_TYPE = "email"
+"""Documents of this type are screened at ingestion (and, if indexed before that, when retrieved)."""
+
+MESSAGE_MARKER = "[Removed: suspected prompt injection"
+"""Starts the text that replaces a planted instruction in an officer's message."""
 
 _MARKED = re.compile(re.escape(MARKER) + r"(?: \((?P<rules>[a-z_, ]+)\))?\]")
 _COMMENT = re.compile(r"<!--.*?(-->|$)", re.S)
@@ -94,15 +102,15 @@ class InjectionFlag(BaseModel):
     """The flagged text from the officer's message (documents: none, it was removed at ingestion). Show it as text."""
 
 
-def screen(text: str) -> Screening:
-    """Find planted instructions in `text`, and the text with each one's span replaced by the removal marker."""
+def screen(text: str, marker: str = MARKER) -> Screening:
+    """Find planted instructions in `text`, and the text with each one's span replaced by `marker`."""
     hits: list[Hit] = []
     for rule, pattern in RULES.items():
         for m in pattern.finditer(text):
             start, end = _span(text, m.start(), m.end())
             hits.append(Hit(rule=rule, start=start, end=end))
     hits.sort(key=lambda h: (h.start, h.end))
-    return Screening(hits=hits, text=_replace(text, hits))
+    return Screening(hits=hits, text=_replace(text, hits, marker))
 
 
 def flags_in(text: str) -> list[Rule] | None:
@@ -140,10 +148,10 @@ def _merged(hits: list[Hit]) -> list[tuple[int, int]]:
     return spans
 
 
-def _replace(text: str, hits: list[Hit]) -> str:
+def _replace(text: str, hits: list[Hit], marker: str) -> str:
     out, at = [], 0
     for start, end in _merged(hits):
         rules = ", ".join(dict.fromkeys(h.rule for h in hits if start <= h.start < end))
-        out += [text[at:start], f"{MARKER} ({rules})]"]
+        out += [text[at:start], f"{marker} ({rules})]"]
         at = end
     return "".join([*out, text[at:]])

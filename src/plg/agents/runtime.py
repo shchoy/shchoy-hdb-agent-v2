@@ -165,18 +165,19 @@ def _guarded(output: Sequence[Source | str], report: Callable[[InjectionFlag], N
     planted instruction, is withheld."""
     kept: list[Source | str] = []
     flags: dict[str, InjectionFlag] = {}
+    def note(chunk: Chunk, rules: list[injection.Rule]) -> None:
+        flags.setdefault(chunk.doc_id, InjectionFlag(source="document", rules=rules, doc_id=chunk.doc_id, title=chunk.title))
+
     for item in output:
-        if isinstance(item, Source):
-            chunk = item.chunk
-            rules = injection.flags_in(chunk.text)
-            live = injection.screen(chunk.text) if rules is None and chunk.doc_type == "email" else None
-            if rules is not None or (live and live.flagged):
-                found = rules if rules is not None else live.rules if live else []
-                flags.setdefault(chunk.doc_id, InjectionFlag(
-                    source="document", rules=found, doc_id=chunk.doc_id, title=chunk.title,
-                ))
-                if live and live.flagged:
-                    continue
+        if not isinstance(item, Source):
+            kept.append(item)
+            continue
+        removed = injection.flags_in(item.chunk.text)
+        if removed is not None:  # screened at ingestion: the planted part is already gone
+            note(item.chunk, removed)
+        elif item.chunk.doc_type == injection.SCREENED_DOC_TYPE and (live := injection.screen(item.chunk.text)).flagged:
+            note(item.chunk, live.rules)  # indexed before screening: never shown
+            continue
         kept.append(item)
     if flags:
         titles = ", ".join(f'"{f.title}"' for f in flags.values())

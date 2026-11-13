@@ -61,6 +61,12 @@ src/plg/
 │   │                digest(); render() (plain text: console, file, merge finding); can_view / team (self; directors all; manager/estate_manager
 │   │                their dept's non-lead staff). ask.py (NODE "tasks"): whose (full name, staff ID or a possessive unique first name, else the
 │   │                asker), how_many ("top N"), NOT_ALLOWED / RATIONALE (asks merge for one sentence per task).
+├── guardrails/      Prompt injection (issue #23). injection.py: rule-based (no Claude, user decision) screen(text, marker) → Screening
+│   │                (hits: rule override|ai_address|approval_bypass|authority_claim|concealment|prompt_leak|role_change + span = its sentence or
+│   │                the whole hidden <!-- --> comment; text with spans replaced by MARKER "[Removed at ingestion: ..." or MESSAGE_MARKER
+│   │                "[Removed: ..."), flags_in(text) (rules recorded in an ingestion marker), excerpt, InjectionFlag (source message|document,
+│   │                rules, doc_id, title, excerpt), SCREENED_DOC_TYPE "email". Rules are tuned so the corpus and PLG Records flag only the
+│   │                planted suspicious_refund_request email; officer questions about approvals/rules must not trip them.
 ├── identity.py      UserCtx (staff_id, name, title, dept, role) loaded read-only from the `staff` table;
 │                    role is derived from the job title (role_for). POC identity, replaced by OIDC later.
 ├── agents/
@@ -71,6 +77,9 @@ src/plg/
 │                    text block per sentence, citations enabled). Citation = doc_id, chunk_id, title, version,
 │                    location, quote, span (offsets into the chunk text). Citations of chunks the run didn't
 │                    retrieve are dropped. A tool may also return plain-text notes next to its Sources (shown, never citable).
+│                    _guarded screens every Source before Claude sees it: a chunk carrying the ingestion marker gets an INJECTION_NOTE
+│                    warning; an email chunk still carrying a planted instruction (indexed before #23) is withheld; each flagged doc →
+│                    on_injection(InjectionFlag) (knowledge.answer passes it through).
 │   ├── entities.py  Knowledge agent's graph tools: resolve_entities, entity_context, policy_lineage(policy_id, as_of?) (read-only; lineage is one
 │   │                citable passage `lineage:<policy_id>`; on_lineage callback feeds the policy_stance event). Context comes back as
 │   │                citable record passages (Chunk doc_type "record", source_system "plg_records", chunk_id `record:<id>`).
@@ -111,10 +120,13 @@ src/plg/
 ├── graph/
 │   ├── state.py     PLGState (messages = completed exchanges only, question, user, intents, findings, answer) and
 │                    PLGGraph. A turn joins `messages` only when merge answers it, so a failed run leaves no trace.
-│                    findings fan in by appending; route's empty update resets them each turn. `clarification` = route's question back (reset each turn). `memory` = this turn's labelled notes block.
+│                    findings fan in by appending (per_turn reducer: an empty update resets, so specialists never send []); screen_input and route reset them each turn.
+│                    screened (flags in the officer's message), injections (flagged documents read this turn), proposals (this turn's
+│                    actions: merge commits them to proposed_actions only if the turn met no injection). `clarification` = route's question back (reset each turn). `memory` = this turn's labelled notes block.
 │                    proposed_actions (upserted by action ID), decision (what `approval` received). RUN_ID = configurable key carrying the run_id to nodes.
 │   ├── summary.py   summarise_history: fold(llm, older messages, previous summary) (Haiku, node summarise_history); entity IDs missing from the reply are re-appended verbatim.
-│   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → (summarise_history if history > threshold) → load_memory → route → knowledge, data, drafting, defect, doc_check and/or tasks (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END
+│   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → screen_input (flagged message → merge:
+│                    fixed MESSAGE_FLAGGED, no Claude; streams `injection`; history gets the redacted message) → (summarise_history if history > threshold) → load_memory → route → knowledge, data, drafting, defect, doc_check and/or tasks (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END
 │                    (load_memory/write_memory only when a MemoryService is given: plg-api yes, `plg ask` no). The memory block is appended to merge's system prompt.
 │                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting, defect, doc_check, tasks) + optional
 │                    clarifying_question (RouteDecision). Labels below route_min_confidence are dropped; if none is left but some were
@@ -122,6 +134,9 @@ src/plg/
 │                    call, and it joins `messages` so the officer's reply is routed with it. Otherwise fan_out sends one
 │                    Send(intent, state) per intent (run in parallel); none = merge answers directly, told not to state PLG facts without sources. knowledge streams `citation` chunks, data
 │                    streams `sql_trace` chunks.
+│                    A turn whose knowledge run read a flagged document: knowledge streams `injection` once per doc, merge opens with
+│                    DOCUMENT_FLAGGED (+ WITHHELD when proposals were dropped), adds MERGE_INJECTION to its system prompt, commits no
+│                    proposals; write_memory learns nothing from a flagged turn.
 │                    merge fuses findings keeping [n] markers (with 2+ supported findings, cited or traced, in one `## ` section per part); findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
 │                    answer with no Claude call. merge is the only node that streams tokens. Checkpointer: InMemorySaver by default (CLI); plg-api swaps in AsyncSqliteSaver (threads_db) in its lifespan. State keeps the full `messages` plus `summary`/`summarised` (offset folded).
 │                    drafting_node turns its draft into a ProposedAction (letters.propose_letter). defect_node runs the `defect_flow` subgraph (ainvoke: its
@@ -141,14 +156,15 @@ src/plg/
 │   │                drain() awaits pending writes (plg-api lifespan shutdown). Memory never yields citations.
 ├── threads.py       ThreadStore (SQLite plg_threads: owner + title; a thread is listed once asked), RunBuffer (every event of a run, follow(after=seq)) and
 │                    RunRegistry (latest run per thread, runs as background tasks so they outlive the client; 409 while one is answering).
-├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data), classification (Classification), doc_check (DocCheck), tasks (TaskDigest),
+├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data), classification (Classification), doc_check (DocCheck), tasks (TaskDigest), injection (InjectionFlag),
 │                    draft (Draft: html preview, unfilled slots, pii flags), proposed_action (ProposedAction), interrupt (action_id, version,
 │                    approver_roles), action_result (action_id, version sent, decision, outbox_id|null, ticket_id|null), done (run_id), error (run_id).
 ├── runs.py          stream_run(graph, thread_id, message, user?, *, decision?): runs the graph (or resumes it with Command(resume=decision)),
 │                    yields numbered RunEvents (an interrupted task → proposed_action + interrupt per pending action), turns any failure into an error event. Shared by the API and the CLI.
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
 │                    structure-aware chunking with contextual headers, metadata + entity tagging from PLG Records,
-│                    incremental by content hash; superseded versions are marked, never deleted.
+│                    incremental by content hash; superseded versions are marked, never deleted. Emails (doc_type email) are screened
+│                    (guardrails.injection) before chunking: planted spans → ingestion marker; SyncReport.flagged, printed `Flagged: ...`.
 │                    lineage.py: `plg graph lineage` - Policy/Sop/Circular/Clause/Precedent nodes from index metadata; Haiku (node extract_lineage,
 │                    forced record_edges tool built from generated/extraction/*.json) proposes SUPERSEDES/OVERRIDES/APPLIES; an edge is kept only with a
 │                    verbatim quote from a chunk of the batch read and known, allowed endpoints; written via GraphWriter. Idempotent.
@@ -224,6 +240,8 @@ tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLL
                      refusal status; test_approvals_api.py reads LocalOutbox/AuditLog there as the observable outcome. The poc-data
                      corpus is synced once per session (hashing embedder) for search and knowledge_api tests
                      (real local cross-encoder; each search costs seconds). That sync also loads the trackers (`trackers_db` fixture);
+                     test_guardrail_api.py (#23): ATTACKS (guardrail cases, 100%) / BENIGN controls, redacted history, ingestion screening of the synced
+                     corpus (only the planted email), the planted email via knowledge + defect → flagged, no proposed/executed action, and a pre-#23 index chunk withheld.
                      test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).
@@ -236,7 +254,7 @@ scripts/record_sse_fixtures.py
                      with the corpus synced into a temp index (threads, memory, graph, outbox and audit writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json, and the approvals flow (two letters in two
                      threads + a ticket → fixtures/approvals/pending.json, edit.sse, reject.sse, ticket_edit.sse, audit.json), and defect.sse (ambiguous feedback → ELE, low confidence), doc_check.sse (APP-2026-0294), doc_check_problem.sse (APP-2026-0288,
-                     illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`). Optional scenario names record only those.
+                     illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`), injection.sse (flagged message), injection_email.sse (planted email via knowledge). Optional scenario names record only those.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
@@ -249,7 +267,7 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      open slots, PII flags, editable slots shown as <del>/<ins> diff, approve / send edited / reject with reason, approve+edit
                      hidden for roles that can't send or while open slots are blank; then the result (outbox ID, version sent) and the audit
                      trail (who, role, when, reason, edits, outbox item + letter as sent, run_id)), /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
-                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), TaskList under the answer (`tasks` event: ranked table, 'Overdue · N days' marker, urgency × impact = score, reasons), DocCheckCard under the answer (✓/✗/– checklist table, problem + reason, files identified, scan marker), ClassificationCard under the answer (category, severity, team, vendor, SLA or 'not a maintenance defect', confidence + low-confidence flag, other candidates, rationale), DraftPreview under the answer (sandboxed HTML preview via LetterFrame.tsx, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry).
+                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), TaskList under the answer (`tasks` event: ranked table, 'Overdue · N days' marker, urgency × impact = score, reasons), DocCheckCard under the answer (✓/✗/– checklist table, problem + reason, files identified, scan marker), ClassificationCard under the answer (category, severity, team, vendor, SLA or 'not a maintenance defect', confidence + low-confidence flag, other candidates, rationale), DraftPreview under the answer (sandboxed HTML preview via LetterFrame.tsx, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry; InjectionAlert.tsx: role="alert" above the answer for `injection` events, rule labels, excerpt as plain text).
                      dates.ts: day() / period() / when() date formatting shared by the cards.
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.

@@ -14,6 +14,7 @@ from plg.identity import Role
 from plg.data.trace import SqlTrace
 from plg.drafting.model import Draft
 from plg.entities.policy import PolicyLineage
+from plg.guardrails.injection import InjectionFlag
 from plg.tasks.rules import TaskDigest
 
 
@@ -85,6 +86,14 @@ class TasksEvent(TaskDigest):
     seq: int
 
 
+class InjectionEvent(InjectionFlag):
+    """A prompt-injection attempt was detected and ignored: instructions planted for the assistant in the officer's
+    message (nothing else ran) or in a document it read (nothing is proposed this turn). Report it as suspicious."""
+
+    type: Literal["injection"] = "injection"
+    seq: int
+
+
 class ProposedActionEvent(ProposedAction):
     """Something the assistant proposes to do outside the system. It waits for the officer's decision."""
 
@@ -132,6 +141,6 @@ class ErrorEvent(BaseModel):
 
 RunEvent = Annotated[
     NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | ClassificationEvent
-    | DocCheckEvent | TasksEvent | ProposedActionEvent
+    | DocCheckEvent | TasksEvent | InjectionEvent | ProposedActionEvent
     | InterruptEvent | ActionResultEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
 ]

@@ -472,3 +472,26 @@
   margin: 0;
   padding-left: 1.1rem;
 }
+
+.injection {
+  margin: 0.5rem 0 1rem;
+}
+
+.injectionFlag + .injectionFlag {
+  border-top: 1px solid var(--danger);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.injectionFlag ul {
+  margin: 0 0 0.5rem;
+}
+
+.injectionExcerpt {
+  margin: 0 0 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-left: 3px solid var(--danger);
+  font-family: ui-monospace, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

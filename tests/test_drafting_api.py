@@ -102,7 +102,7 @@ def test_arrears_reminder_is_filled_from_the_records(api: Api, llm: ScriptedLLMC
     assert any(r[0] in "\n".join(tool_results(llm)) for r in rows)  # the lookup ran against real records
     assert stream.of_type("done") and not stream.of_type("error")
     assert [e["node"] for e in stream.of_type("node") if e["status"] == "started"] == [
-        "load_memory", "route", "drafting", "merge", "write_memory", "approval"  # sending it waits for the officer
+        "screen_input", "load_memory", "route", "drafting", "merge", "write_memory", "approval"  # sending it waits for the officer
     ]
 
 

@@ -18,6 +18,7 @@ from plg.agents.entities import entity_tools, precedent_tool
 from plg.agents.runtime import AgentResult, Source, Tool, run_agent
 from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
+from plg.guardrails.injection import InjectionFlag
 from plg.llm import AgentMessage, LLMClient
 from plg.ontology.vocab import TermMatch, VocabIndex
 from plg.search.models import SearchFilter, SearchHit
@@ -135,6 +136,7 @@ async def answer(
     question: str,
     entities: GraphStore | None = None,
     on_lineage: Callable[[PolicyLineage], None] | None = None,
+    on_injection: Callable[[InjectionFlag], None] | None = None,
 ) -> AgentResult:
     doc_types = [c.notation for c in vocab.scheme("plg:document_types") if c.notation]
     return await run_agent(
@@ -147,4 +149,5 @@ async def answer(
             *([*entity_tools(entities, on_lineage), precedent_tool(entities, retriever)] if entities else []),
         ],
         messages=messages,
+        on_injection=on_injection,
     )

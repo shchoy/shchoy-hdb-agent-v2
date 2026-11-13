@@ -8,6 +8,7 @@ import {
   type ClassificationEvent,
   type DocCheckEvent,
   type DraftEvent,
+  type InjectionEvent,
   type PolicyStanceEvent,
   type SqlTraceEvent,
   type TasksEvent,
@@ -18,6 +19,7 @@ import { AnswerText } from "./AnswerText";
 import { ClassificationCard } from "./ClassificationCard";
 import { DocCheckCard } from "./DocCheckCard";
 import { DraftPreview } from "./DraftPreview";
+import { InjectionAlert } from "./InjectionAlert";
 import { PolicyStanceCard } from "./PolicyStanceCard";
 import { ReasoningPanel } from "./ReasoningPanel";
 import { SourceViewer } from "./SourceViewer";
@@ -34,6 +36,7 @@ type Answer = {
   classifications: ClassificationEvent[];
   docChecks: DocCheckEvent[];
   drafts: DraftEvent[];
+  injections: InjectionEvent[];
   stances: PolicyStanceEvent[];
   tasks: TasksEvent[];
   traces: SqlTraceEvent[];
@@ -47,7 +50,7 @@ type Run =
   | { status: "failed"; question: string; reason: string; trajectory: Step[] };
 
 function emptyAnswer(question: string): Answer {
-  return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], stances: [], tasks: [], traces: [], trajectory: [] };
+  return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], injections: [], stances: [], tasks: [], traces: [], trajectory: [] };
 }
 
 const RESUME_ATTEMPTS = 3;
@@ -112,6 +115,9 @@ export function AskScreen() {
                 break;
               case "tasks":
                 acc.tasks = [...acc.tasks, event];
+                break;
+              case "injection":
+                acc.injections = [...acc.injections, event];
                 break;
               case "draft":
                 acc.drafts = [...acc.drafts, event];
@@ -343,6 +349,7 @@ export function AskScreen() {
                 className={styles.answer}
               >
                 <h2 id="answer-heading">Answer</h2>
+                <InjectionAlert flags={run.injections} />
                 <div aria-live="polite" aria-busy={running}>
                   <AnswerText markdown={run.answer} />
                 </div>

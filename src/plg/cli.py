@@ -118,6 +118,8 @@ def sync(
     )
     for path in report.superseded:
         typer.echo(f"Superseded: {path}")
+    for path in report.flagged:
+        typer.echo(f"Flagged: {path} (suspected prompt injection; instructions removed)")
     for skipped in report.skipped:
         typer.echo(f"Skipped: {skipped.rel_path} ({skipped.reason})")
 

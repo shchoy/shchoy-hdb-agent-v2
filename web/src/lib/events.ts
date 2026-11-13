@@ -17,6 +17,7 @@ export type ProposedActionEvent = Schemas["ProposedActionEvent"];
 export type ClassificationEvent = Schemas["ClassificationEvent"];
 export type DocCheckEvent = Schemas["DocCheckEvent"];
 export type TasksEvent = Schemas["TasksEvent"];
+export type InjectionEvent = Schemas["InjectionEvent"];
 export type TaskDigest = Schemas["TaskDigest"];
 export type RankedTask = Schemas["RankedTask"];
 export type Submission = Schemas["Submission"];
@@ -226,6 +227,25 @@ export const runEventSchema = z.discriminatedUnion("type", [
         reasons: z.array(z.string()),
       }),
     ),
+  }),
+  z.object({
+    type: z.literal("injection"),
+    seq,
+    source: z.enum(["message", "document"]),
+    rules: z.array(
+      z.enum([
+        "override",
+        "ai_address",
+        "approval_bypass",
+        "authority_claim",
+        "concealment",
+        "prompt_leak",
+        "role_change",
+      ]),
+    ),
+    doc_id: z.string().nullable(),
+    title: z.string().nullable(),
+    excerpt: z.string().nullable(),
   }),
   z.object({
     type: z.literal("proposed_action"),

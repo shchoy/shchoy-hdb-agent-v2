@@ -101,7 +101,7 @@ def test_knowledge_question_runs_route_then_knowledge_then_merge(knowledge_api: 
     stream = knowledge_api.run(knowledge_api.create_thread(), LOD_QUESTION)
 
     started = [e["node"] for e in stream.of_type("node") if e["status"] == "started"]
-    assert started == ["load_memory", "route", "knowledge", "merge", "write_memory"]
+    assert started == ["screen_input", "load_memory", "route", "knowledge", "merge", "write_memory"]
     first_token = next(i for i, e in enumerate(stream.events) if e["type"] == "token")
     assert all(i < first_token for i, e in enumerate(stream.events) if e["type"] == "citation")
 

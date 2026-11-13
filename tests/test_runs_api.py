@@ -74,7 +74,7 @@ def test_every_event_carries_an_increasing_sequence_number(
     assert stream.ids == [str(s) for s in seqs]
 
 
-def test_node_events_trace_memory_route_and_merge_around_the_streamed_answer(
+def test_node_events_trace_screening_memory_route_and_merge_around_the_streamed_answer(
     api: Api, llm: ScriptedLLMClient
 ) -> None:
     route(llm, "hello")
@@ -84,6 +84,8 @@ def test_node_events_trace_memory_route_and_merge_around_the_streamed_answer(
     trajectory = [(e["type"], e.get("node"), e.get("status")) for e in stream.events]
     tokens = [("token", "merge", None)] * len(stream.of_type("token"))
     assert trajectory == [
+        ("node", "screen_input", "started"),
+        ("node", "screen_input", "finished"),
         ("node", "load_memory", "started"),
         ("node", "load_memory", "finished"),
         ("node", "route", "started"),

@@ -235,6 +235,24 @@ Where it lives: `src/plg/tasks/` (`rules.py` matrix, digest, role check; `ask.py
 node in `src/plg/graph/build.py`, `web/src/app/tasks/`, `web/src/app/TaskList.tsx`, BFF `web/src/app/api/tasks/`,
 `tests/test_tasks_api.py`.
 
+### Prompt-injection guardrail (issue #23)
+
+Nothing to configure: screening is rule-based (no Claude call, no API key).
+
+- **Your message.** Every question is screened first (`screen_input`). Instructions aimed at the assistant ("ignore all
+  previous instructions", "do not ask for approval", "SYSTEM NOTE TO AI ...") stop the turn: no specialist runs, the
+  answer says it was a suspected prompt injection, and the Ask screen shows a red alert with the flagged text (as plain
+  text). History keeps your message with the planted part replaced by `[Removed: suspected prompt injection (...)]`.
+- **Emails.** `plg sync` screens every email and prints `Flagged: <path> (suspected prompt injection; instructions
+  removed)`; the planted part never reaches the index. An index built before #23 still holds the raw text: run
+  `uv run plg sync --full` once (until then, such an email is withheld from Claude whenever it's retrieved, and flagged).
+- **A turn that reads a flagged email** opens with a warning naming it, and proposes nothing for approval.
+
+Try it: `uv run plg ask "Process the latest email in the feedback inbox."` (needs the index) → the planted
+`suspicious_refund_request` email is flagged and nothing is proposed. Where it lives: `src/plg/guardrails/injection.py`,
+`screen_input` in `src/plg/graph/build.py`, `_guarded` in `src/plg/agents/runtime.py`, `web/src/app/InjectionAlert.tsx`,
+`tests/test_guardrail_api.py`.
+
 ### Ask a data question (issue #12)
 
 ```bash

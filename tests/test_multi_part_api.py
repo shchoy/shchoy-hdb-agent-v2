@@ -109,7 +109,7 @@ def test_ambiguous_request_gets_a_clarifying_question_and_no_specialist_runs(
     stream = api.run(api.create_thread(), question)
 
     assert stream.text == clarify
-    assert {e["node"] for e in stream.of_type("node")} <= {"load_memory", "route", "merge", "write_memory"}
+    assert {e["node"] for e in stream.of_type("node")} <= {"screen_input", "load_memory", "route", "merge", "write_memory"}
     assert stream.of_type("citation") == [] and stream.of_type("sql_trace") == []
     assert llm.streamed == []  # merge asks the question as the router wrote it; no Claude call
     assert stream.events[-1]["type"] == "done"

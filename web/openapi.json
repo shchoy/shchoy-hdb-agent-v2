@@ -3355,6 +3355,88 @@
         "title": "FileCheck",
         "type": "object"
       },
+      "InjectionEvent": {
+        "description": "A prompt-injection attempt was detected and ignored: instructions planted for the assistant in the officer's\nmessage (nothing else ran) or in a document it read (nothing is proposed this turn). Report it as suspicious.",
+        "properties": {
+          "source": {
+            "enum": [
+              "message",
+              "document"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "enum": [
+                "override",
+                "ai_address",
+                "approval_bypass",
+                "authority_claim",
+                "concealment",
+                "prompt_leak",
+                "role_change"
+              ],
+              "type": "string"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "doc_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Doc Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Excerpt"
+          },
+          "type": {
+            "const": "injection",
+            "default": "injection",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "source",
+          "rules",
+          "seq"
+        ],
+        "title": "InjectionEvent",
+        "type": "object"
+      },
       "InterruptEvent": {
         "description": "The run paused for the officer's decision on this exact version: resume with POST /threads/{id}/resume.",
         "properties": {
@@ -4037,6 +4119,7 @@
             "done": "#/components/schemas/DoneEvent",
             "draft": "#/components/schemas/DraftEvent",
             "error": "#/components/schemas/ErrorEvent",
+            "injection": "#/components/schemas/InjectionEvent",
             "interrupt": "#/components/schemas/InterruptEvent",
             "node": "#/components/schemas/NodeEvent",
             "policy_stance": "#/components/schemas/PolicyStanceEvent",
@@ -4074,6 +4157,9 @@
           },
           {
             "$ref": "#/components/schemas/TasksEvent"
+          },
+          {
+            "$ref": "#/components/schemas/InjectionEvent"
           },
           {
             "$ref": "#/components/schemas/ProposedActionEvent"

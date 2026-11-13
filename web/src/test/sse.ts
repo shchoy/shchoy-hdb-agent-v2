@@ -15,7 +15,9 @@ export function fixture(
     | "defect"
     | "doc_check"
     | "doc_check_problem"
-    | "tasks",
+    | "tasks"
+    | "injection"
+    | "injection_email",
 ): string {
   // Vitest runs from web/; import.meta.url is not a file URL under jsdom.
   return readFileSync(join(process.cwd(), "src/test/fixtures", `${name}.sse`), "utf8");

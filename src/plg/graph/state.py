@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import operator
-from typing import Annotated, Any, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict, TypeVar
 
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel
 
 from plg.actions.model import ApprovalDecision, ProposedAction, upsert_actions
 from plg.agents.runtime import Citation
+from plg.guardrails.injection import InjectionFlag
 from plg.identity import UserCtx
 from plg.llm import Message
 
@@ -27,8 +28,11 @@ class Finding(BaseModel):
     """The finding rests on a query that ran (the data specialist's counterpart of a citation)."""
 
 
-def add_findings(left: list[Finding], right: list[Finding]) -> list[Finding]:
-    """Specialists fan in by appending. An empty update (from `route`) starts the turn afresh."""
+T = TypeVar("T")
+
+
+def per_turn(left: list[T], right: list[T]) -> list[T]:
+    """Specialists fan in by appending. An empty update (from `screen_input` or `route`) starts the turn afresh."""
     return [*left, *right] if right else []
 
 
@@ -44,10 +48,16 @@ class PLGState(TypedDict, total=False):
     intents: list[Intent]
     # The question `route` asks back when it can't tell what the officer needs; empty when it routed the question.
     clarification: str
-    findings: Annotated[list[Finding], add_findings]
+    findings: Annotated[list[Finding], per_turn]
+    # Prompt-injection attempts met this turn: in the officer's message (`screen_input`; such a message reaches no
+    # specialist), and in the documents the specialists read (flagged at ingestion).
+    screened: list[InjectionFlag]
+    injections: Annotated[list[InjectionFlag], per_turn]
     answer: str
     # The labelled block of the officer's private notes for this turn (see plg.memory).
     memory: str
+    # What this turn's specialists propose; `merge` commits it to `proposed_actions` unless the turn met an injection.
+    proposals: Annotated[list[ProposedAction], per_turn]
     # Everything the thread has proposed to do outside the system, by action ID; pending ones wait at `approval`.
     proposed_actions: Annotated[list[ProposedAction], upsert_actions]
     # The officer's decision `approval` received, for `execute_action` to carry out.

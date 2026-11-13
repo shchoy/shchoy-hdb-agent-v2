@@ -1,15 +1,18 @@
 """`plg sync`: incremental ingestion of the text-bearing corpus into the `SearchStore`, by content hash.
 
-Unchanged documents are not re-read or re-embedded. Superseded versions are marked, never deleted.
+Unchanged documents are not re-read or re-embedded. Superseded versions are marked, never deleted. Emails are
+screened for prompt injection: a planted instruction is replaced by a removal marker before it is chunked, so it never
+reaches the index or Claude (see `plg.guardrails.injection`).
 """
 
 from __future__ import annotations
 
 import hashlib
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
+from plg.guardrails import injection
 from plg.ingest.chunking import location, sections, split
 from plg.ingest.extract import ParsedDoc, ScanSource, extract
 from plg.ingest.metadata import EntityTagger, control_meta, doc_type_for, lifecycle
@@ -29,6 +32,8 @@ class SyncReport:
     skipped: list[Skipped] = field(default_factory=list)
     superseded: list[str] = field(default_factory=list)
     """Documents newly marked superseded by this run."""
+    flagged: list[str] = field(default_factory=list)
+    """Emails read by this run with a suspected prompt injection removed."""
     chunks_written: int = 0
 
 
@@ -56,6 +61,10 @@ def sync(
             except ScanError as exc:  # a scan Claude could not read: report it, retry on the next sync
                 report.skipped.append(Skipped(item.rel_path, f"scan could not be read: {exc}"))
                 continue
+            if item.path.suffix.lower() == ".eml":
+                parsed, flagged = _screened(parsed)
+                if flagged:
+                    report.flagged.append(item.rel_path)
             chunks = _chunks(item, parsed, content_hash, embedder, tagger)
             if not chunks:
                 report.skipped.append(Skipped(item.rel_path, "no text layer (image-only scan)"))
@@ -77,6 +86,16 @@ def sync(
     if callable(optimize):
         optimize()
     return report
+
+
+def _screened(parsed: ParsedDoc) -> tuple[ParsedDoc, bool]:
+    """The email with every planted instruction replaced by the removal marker, and whether it had any."""
+    blocks, flagged = [], False
+    for block in parsed.blocks:
+        screening = injection.screen(block.text)
+        flagged = flagged or screening.flagged
+        blocks.append(replace(block, text=screening.text))
+    return replace(parsed, blocks=blocks), flagged
 
 
 def _chunks(

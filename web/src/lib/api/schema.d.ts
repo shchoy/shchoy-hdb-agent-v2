@@ -1236,6 +1236,42 @@ export interface components {
             reason: string;
         };
         /**
+         * InjectionEvent
+         * @description A prompt-injection attempt was detected and ignored: instructions planted for the assistant in the officer's
+         *     message (nothing else ran) or in a document it read (nothing is proposed this turn). Report it as suspicious.
+         */
+        InjectionEvent: {
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "message" | "document";
+            /** Rules */
+            rules: ("override" | "ai_address" | "approval_bypass" | "authority_claim" | "concealment" | "prompt_leak" | "role_change")[];
+            /**
+             * Doc Id
+             * @default null
+             */
+            doc_id: string | null;
+            /**
+             * Title
+             * @default null
+             */
+            title: string | null;
+            /**
+             * Excerpt
+             * @default null
+             */
+            excerpt: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "injection";
+            /** Seq */
+            seq: number;
+        };
+        /**
          * InterruptEvent
          * @description The run paused for the officer's decision on this exact version: resume with POST /threads/{id}/resume.
          */
@@ -1517,7 +1553,7 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["DocCheckEvent"] | components["schemas"]["TasksEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["DocCheckEvent"] | components["schemas"]["TasksEvent"] | components["schemas"]["InjectionEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;

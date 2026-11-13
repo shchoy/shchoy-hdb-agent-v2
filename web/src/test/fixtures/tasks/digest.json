@@ -1,0 +1,112 @@
+{
+  "staff_id": "S04",
+  "name": "Marcus Lim",
+  "title": "Estate Manager (East)",
+  "as_of": "2026-09-30",
+  "open_count": 35,
+  "overdue_count": 26,
+  "tasks": [
+    {
+      "task_id": "TSK-2026-0830",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Fire Safety at U-BV204-01-03",
+      "related_id": "INSP-2026-1712",
+      "due_date": "2026-09-18",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 1,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 12,
+      "reasons": [
+        "Overdue by 12 days (due 18 Sep 2026)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0968",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Structural Defect at U-CD143-01-01",
+      "related_id": "INSP-2026-1840",
+      "due_date": "2026-10-04",
+      "status": "In Progress",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 2,
+      "urgency": "this_week",
+      "impact": "high",
+      "score": 9,
+      "overdue": false,
+      "days_overdue": 0,
+      "reasons": [
+        "Due in 4 days (4 Oct 2026)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0134",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-BV271-01-08",
+      "related_id": "INSP-2025-0462",
+      "due_date": "2025-12-18",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 3,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 286,
+      "reasons": [
+        "Overdue by 286 days (due 18 Dec 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0178",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unauth Trade at U-BV214-01-25",
+      "related_id": "INSP-2025-0590",
+      "due_date": "2025-12-27",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 4,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 277,
+      "reasons": [
+        "Overdue by 277 days (due 27 Dec 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0169",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-BV231-01-01",
+      "related_id": "INSP-2025-0568",
+      "due_date": "2025-12-31",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 5,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 273,
+      "reasons": [
+        "Overdue by 273 days (due 31 Dec 2025)"
+      ]
+    }
+  ]
+}

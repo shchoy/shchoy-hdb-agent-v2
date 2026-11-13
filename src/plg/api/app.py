@@ -6,7 +6,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated, Any, Literal
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.openapi.utils import get_openapi
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -43,6 +43,8 @@ from plg.memory.store import FlaggedByPolicy, MemoryStore, MemoryView, view
 from plg.search.embed import LazyEmbedder
 from plg.search.rerank import LazySearcher, Retriever
 from plg.search.store import SearchStore
+from plg.tasks import rules as task_rules
+from plg.tasks.rules import TaskDigest
 from plg.threads import RunBuffer, RunInProgress, RunRegistry, ThreadStore, ThreadSummary
 
 
@@ -230,6 +232,25 @@ def create_app(
             for t in threads.list(user.staff_id) for action in await waiting(t.thread_id)
         ]
         return sorted(found, key=lambda a: a.proposed_at)
+
+    @app.get("/tasks/digest", responses={403: {"description": "Your role can't view this officer's tasks"}})
+    def task_digest(
+        request: Request, user: User, staff_id: str | None = None, limit: Annotated[int, Query(ge=1)] = task_rules.DEFAULT_LIMIT
+    ) -> TaskDigest:
+        """An officer's top open tasks (default: your own), ranked by urgency × impact, overdue ones marked. Team
+        leads may view their department's officers; directors anyone's."""
+        personas: dict[str, UserCtx] = request.app.state.personas
+        officer = personas.get(staff_id or user.staff_id)
+        if officer is None:
+            raise HTTPException(status_code=404, detail="Unknown staff ID")
+        if not task_rules.can_view(user, officer):
+            raise HTTPException(status_code=403, detail="Your role can't view this officer's tasks")
+        return task_rules.digest(settings.records_db, officer, settings.tasks_today, limit)
+
+    @app.get("/tasks/team")
+    def task_team(request: Request, user: User) -> list[UserCtx]:
+        """The staff whose tasks you may view (GET /tasks/digest?staff_id=...), yourself first."""
+        return task_rules.team(user, list(request.app.state.personas.values()))
 
     @app.get("/submissions")
     def list_submissions(user: User) -> list[Submission]:

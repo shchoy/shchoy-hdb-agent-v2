@@ -243,3 +243,22 @@ export function resumeThread(staffId: string, threadId: string, body: ResumeRequ
     cache: "no-store",
   });
 }
+
+/** An officer's top open tasks (default: the caller's own), ranked; plg-api's status and JSON body, for the BFF to relay. */
+export async function getTaskDigest(
+  staffId: string,
+  query: { staff_id?: string; limit?: number },
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/tasks/digest", {
+    params: { query, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** The staff whose tasks the caller may view, themselves first. */
+export async function getTaskTeam(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/tasks/team", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}

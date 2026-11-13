@@ -1,0 +1,168 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"load_memory","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"load_memory","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"route","status":"started"}
+
+id: 4
+event: node
+data: {"type":"node","seq":4,"node":"route","status":"finished"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"tasks","status":"started"}
+
+id: 6
+event: tasks
+data: {"staff_id":"S05","name":"Siti Aishah Yusof","title":"Leasing Officer","as_of":"2026-09-30","open_count":241,"overdue_count":20,"tasks":[{"task_id":"TSK-2026-0183","task_type":"Renewal","title":"Renewal due: TA-2023-00016 expires 30 Sep 2026","related_id":"TA-2023-00016","due_date":"2026-06-02","status":"Overdue","safety_flag":false,"revenue_at_risk":53520.0,"tenants_affected":1,"rank":1,"urgency":"overdue","impact":"high","score":12,"overdue":true,"days_overdue":120,"reasons":["Overdue by 120 days (due 2 Jun 2026)","S$53,520 rent at risk"]},{"task_id":"TSK-2026-0374","task_type":"Renewal","title":"Renewal due: TA-2023-00124 expires 30 Nov 2026","related_id":"TA-2023-00124","due_date":"2026-08-02","status":"Overdue","safety_flag":false,"revenue_at_risk":58680.0,"tenants_affected":1,"rank":2,"urgency":"overdue","impact":"high","score":12,"overdue":true,"days_overdue":59,"reasons":["Overdue by 59 days (due 2 Aug 2026)","S$58,680 rent at risk"]},{"task_id":"TSK-2026-0501","task_type":"Renewal","title":"Renewal due: TA-2024-00019 expires 31 Dec 2026","related_id":"TA-2024-00019","due_date":"2026-09-02","status":"Overdue","safety_flag":false,"revenue_at_risk":71400.0,"tenants_affected":1,"rank":3,"urgency":"overdue","impact":"high","score":12,"overdue":true,"days_overdue":28,"reasons":["Overdue by 28 days (due 2 Sep 2026)","S$71,400 rent at risk"]},{"task_id":"TSK-2026-0541","task_type":"Renewal","title":"Renewal due: TA-2024-00083 expires 31 Dec 2026","related_id":"TA-2024-00083","due_date":"2026-09-02","status":"Overdue","safety_flag":false,"revenue_at_risk":51360.0,"tenants_affected":1,"rank":4,"urgency":"overdue","impact":"high","score":12,"overdue":true,"days_overdue":28,"reasons":["Overdue by 28 days (due 2 Sep 2026)","S$51,360 rent at risk"]},{"task_id":"TSK-2026-0642","task_type":"Renewal","title":"Renewal due: TA-2024-00142 expires 31 Jan 2027","related_id":"TA-2024-00142","due_date":"2026-10-03","status":"Open","safety_flag":false,"revenue_at_risk":84840.0,"tenants_affected":1,"rank":5,"urgency":"this_week","impact":"high","score":9,"overdue":false,"days_overdue":0,"reasons":["Due in 3 days (3 Oct 2026)","S$84,840 rent at risk"]}],"type":"tasks","seq":6}
+
+id: 7
+event: node
+data: {"type":"node","seq":7,"node":"tasks","status":"finished"}
+
+id: 8
+event: node
+data: {"type":"node","seq":8,"node":"merge","status":"started"}
+
+id: 9
+event: token
+data: {"type":"token","seq":9,"node":"merge","text":"Your"}
+
+id: 10
+event: token
+data: {"type":"token","seq":10,"node":"merge","text":" top"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":" task"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" is"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" the"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" **overdue"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" renewal"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" TSK-2026-0183**:"}
+
+id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" S$53,520"}
+
+id: 18
+event: token
+data: {"type":"token","seq":18,"node":"merge","text":" of"}
+
+id: 19
+event: token
+data: {"type":"token","seq":19,"node":"merge","text":" rent"}
+
+id: 20
+event: token
+data: {"type":"token","seq":20,"node":"merge","text":" is"}
+
+id: 21
+event: token
+data: {"type":"token","seq":21,"node":"merge","text":" at"}
+
+id: 22
+event: token
+data: {"type":"token","seq":22,"node":"merge","text":" risk"}
+
+id: 23
+event: token
+data: {"type":"token","seq":23,"node":"merge","text":" and"}
+
+id: 24
+event: token
+data: {"type":"token","seq":24,"node":"merge","text":" it"}
+
+id: 25
+event: token
+data: {"type":"token","seq":25,"node":"merge","text":" was"}
+
+id: 26
+event: token
+data: {"type":"token","seq":26,"node":"merge","text":" due"}
+
+id: 27
+event: token
+data: {"type":"token","seq":27,"node":"merge","text":" on"}
+
+id: 28
+event: token
+data: {"type":"token","seq":28,"node":"merge","text":" 2"}
+
+id: 29
+event: token
+data: {"type":"token","seq":29,"node":"merge","text":" Jun"}
+
+id: 30
+event: token
+data: {"type":"token","seq":30,"node":"merge","text":" 2026."}
+
+id: 31
+event: token
+data: {"type":"token","seq":31,"node":"merge","text":" The"}
+
+id: 32
+event: token
+data: {"type":"token","seq":32,"node":"merge","text":" next"}
+
+id: 33
+event: token
+data: {"type":"token","seq":33,"node":"merge","text":" three"}
+
+id: 34
+event: token
+data: {"type":"token","seq":34,"node":"merge","text":" are"}
+
+id: 35
+event: token
+data: {"type":"token","seq":35,"node":"merge","text":" also"}
+
+id: 36
+event: token
+data: {"type":"token","seq":36,"node":"merge","text":" overdue"}
+
+id: 37
+event: token
+data: {"type":"token","seq":37,"node":"merge","text":" high-value"}
+
+id: 38
+event: token
+data: {"type":"token","seq":38,"node":"merge","text":" renewals."}
+
+id: 39
+event: node
+data: {"type":"node","seq":39,"node":"merge","status":"finished"}
+
+id: 40
+event: node
+data: {"type":"node","seq":40,"node":"write_memory","status":"started"}
+
+id: 41
+event: node
+data: {"type":"node","seq":41,"node":"write_memory","status":"finished"}
+
+id: 42
+event: done
+data: {"type":"done","seq":42,"run_id":"a604f558-f9f7-4bd3-8113-a0e8caccaf91"}
+

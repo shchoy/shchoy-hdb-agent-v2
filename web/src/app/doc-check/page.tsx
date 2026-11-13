@@ -20,6 +20,7 @@ export default async function DocCheckPage() {
         <Link href="/">Ask</Link>
         <Link href="/approvals">Approvals</Link>
         <Link href="/memory">Memory</Link>
+        <Link href="/tasks">Tasks</Link>
         <SignOutButton />
       </header>
       <main>

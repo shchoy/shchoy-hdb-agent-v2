@@ -4,7 +4,8 @@
 
 Writes `web/src/test/fixtures/*.sse`, `documents/*.json` (a document and a cited span's location, per file type) and
 `approvals/*` (two letters and an i-EMS ticket proposed in three conversations: the pending list, a ticket raised with
-edits, a letter edit and a rejection, the audit trail) and `submissions.json` (the Document check screen's list). Streams come from the real API and graph with a scripted
+edits, a letter edit and a rejection, the audit trail), `submissions.json` (the Document check screen's list) and
+`tasks/*.json` (the Tasks screen: an estate manager's own digest, a team member's, and the team list). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -49,6 +50,9 @@ DRAFT_QUESTION = "Draft an update reply to the member of public who gave feedbac
 REMINDER_QUESTION = "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
 DOC_CHECK_QUESTION = "Is application APP-2026-0294 complete? Check the submitted documents."
 ILLEGIBLE_QUESTION = "Is application APP-2026-0288 complete? Check the submitted documents."
+TASKS_QUESTION = "What are my top 5 tasks this week and why?"
+TEAM_LEAD = {"X-PLG-User": "S04"}
+"""Marcus Lim, Estate Manager (East): may view Daniel Ong's (S06) tasks."""
 DEFECT_QUESTION = "Classify: 'Ceiling near the shop wet and lights flickering, scared got short circuit'"
 
 
@@ -171,6 +175,27 @@ def doc_check_problem(llm: ScriptedLLMClient) -> None:
     llm.script("merge", ILLEGIBLE_QUESTION, "**APP-2026-0288 is incomplete**: the insurance certificate has expired and the GIRO form is an "
                "illegible scan. "
                "A missing-documents notice waits for your approval; nothing has been sent.")
+
+
+def tasks(llm: ScriptedLLMClient) -> None:
+    """The leasing officer's top 5 tasks: the ranking streamed as a `tasks` event, merge's rationale from it."""
+    llm.script_turns("route", TASKS_QUESTION, routed("tasks"))
+    llm.script("merge", TASKS_QUESTION, "Your top task is the **overdue renewal TSK-2026-0183**: S$53,520 of rent is "
+               "at risk and it was due on 2 Jun 2026. The next three are also overdue high-value renewals.")
+
+
+def record_tasks() -> dict[str, str]:
+    """The Tasks screen's responses: an estate manager's own digest, a team member's top 50 (S06, with the overdue Lucky
+    Star subletting follow-up at rank 43), and the officers they may view."""
+    with tempfile.TemporaryDirectory() as scratch:
+        app = create_app(scratch_settings(Path(scratch)), llm=ScriptedLLMClient(), memory=scratch_memory(Path(scratch) / "memory"))
+        with TestClient(app) as client:
+            responses = {
+                "digest.json": client.get("/tasks/digest", headers=TEAM_LEAD).json(),
+                "digest_S06.json": client.get("/tasks/digest", params={"staff_id": "S06", "limit": 50}, headers=TEAM_LEAD).json(),
+                "team.json": client.get("/tasks/team", headers=TEAM_LEAD).json(),
+            }
+    return {name: json.dumps(body, indent=2) + "\n" for name, body in responses.items()}
 
 
 def record_submissions() -> str:
@@ -313,6 +338,7 @@ SCRIPTS: dict[str, tuple[str, Callable[[ScriptedLLMClient], None]]] = {
     "draft": (DRAFT_QUESTION, draft), "data": (DATA_QUESTION, data), "policy_stance": (POLICY_QUESTION, policy_stance),
     "multi_part": (MULTI_QUESTION, multi_part), "defect": (DEFECT_QUESTION, defect),
     "doc_check": (DOC_CHECK_QUESTION, doc_check), "doc_check_problem": (ILLEGIBLE_QUESTION, doc_check_problem),
+    "tasks": (TASKS_QUESTION, tasks),
 }
 
 
@@ -389,14 +415,20 @@ def _stream(app: Any, question: str) -> str:
 
 
 def main(only: list[str]) -> None:
-    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`)."""
+    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`)."""
     OUT.mkdir(parents=True, exist_ok=True)
     if not only or "submissions" in only:
         path = OUT / "submissions.json"
         path.write_text(record_submissions())
         print(f"wrote {path.relative_to(REPO_ROOT)}")
-        if only == ["submissions"]:
-            return
+    if not only or "tasks_api" in only:
+        (OUT / "tasks").mkdir(exist_ok=True)
+        for name, content in record_tasks().items():
+            path = OUT / "tasks" / name
+            path.write_text(content)
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
+    if only and set(only) <= {"submissions", "tasks_api"}:
+        return
     with tempfile.TemporaryDirectory() as index, tempfile.TemporaryDirectory() as graph_dir:
         search, store = searcher(Path(index))
         graph = lineage_graph(store, Path(graph_dir))

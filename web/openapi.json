@@ -296,6 +296,138 @@
         }
       }
     },
+    "/tasks/digest": {
+      "get": {
+        "summary": "Task Digest",
+        "description": "An officer's top open tasks (default: your own), ranked by urgency \u00d7 impact, overdue ones marked. Team\nleads may view their department's officers; directors anyone's.",
+        "operationId": "task_digest_tasks_digest_get",
+        "parameters": [
+          {
+            "name": "staff_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Staff Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDigest"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your role can't view this officer's tasks"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/team": {
+      "get": {
+        "summary": "Task Team",
+        "description": "The staff whose tasks you may view (GET /tasks/digest?staff_id=...), yourself first.",
+        "operationId": "task_team_tasks_team_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserCtx"
+                  },
+                  "title": "Response Task Team Tasks Team Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/submissions": {
       "get": {
         "summary": "List Submissions",
@@ -1916,6 +2048,109 @@
         ],
         "title": "ProposedAction"
       },
+      "RankedTask": {
+        "properties": {
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_type": {
+            "title": "Task Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "related_id": {
+            "title": "Related Id",
+            "type": "string"
+          },
+          "due_date": {
+            "format": "date",
+            "title": "Due Date",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "safety_flag": {
+            "title": "Safety Flag",
+            "type": "boolean"
+          },
+          "revenue_at_risk": {
+            "title": "Revenue At Risk",
+            "type": "number"
+          },
+          "tenants_affected": {
+            "title": "Tenants Affected",
+            "type": "integer"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "urgency": {
+            "enum": [
+              "overdue",
+              "this_week",
+              "soon",
+              "later"
+            ],
+            "title": "Urgency",
+            "type": "string"
+          },
+          "impact": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Impact",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "boolean"
+          },
+          "days_overdue": {
+            "title": "Days Overdue",
+            "type": "integer"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "task_id",
+          "task_type",
+          "title",
+          "related_id",
+          "due_date",
+          "status",
+          "safety_flag",
+          "revenue_at_risk",
+          "tenants_affected",
+          "rank",
+          "urgency",
+          "impact",
+          "score",
+          "overdue",
+          "days_overdue",
+          "reasons"
+        ],
+        "title": "RankedTask",
+        "type": "object"
+      },
       "ResumeRequest": {
         "properties": {
           "action_id": {
@@ -2020,6 +2255,54 @@
         ],
         "title": "Submission",
         "description": "An application with a submission bundle, as the Document check screen offers it."
+      },
+      "TaskDigest": {
+        "properties": {
+          "staff_id": {
+            "type": "string",
+            "title": "Staff Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "open_count": {
+            "type": "integer",
+            "title": "Open Count"
+          },
+          "overdue_count": {
+            "type": "integer",
+            "title": "Overdue Count"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/RankedTask"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "staff_id",
+          "name",
+          "title",
+          "as_of",
+          "open_count",
+          "overdue_count",
+          "tasks"
+        ],
+        "title": "TaskDigest",
+        "description": "An officer's top open tasks on `as_of`, ranked by urgency \u00d7 impact."
       },
       "ThreadCreated": {
         "properties": {
@@ -3656,6 +3939,65 @@
         "title": "Supersession",
         "type": "object"
       },
+      "TasksEvent": {
+        "description": "An officer's top open tasks ranked by urgency \u00d7 impact (a deterministic rules matrix), overdue ones marked,\neach with the reasons for its place.",
+        "properties": {
+          "staff_id": {
+            "title": "Staff Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "open_count": {
+            "title": "Open Count",
+            "type": "integer"
+          },
+          "overdue_count": {
+            "title": "Overdue Count",
+            "type": "integer"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/RankedTask"
+            },
+            "title": "Tasks",
+            "type": "array"
+          },
+          "type": {
+            "const": "tasks",
+            "default": "tasks",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "staff_id",
+          "name",
+          "title",
+          "as_of",
+          "open_count",
+          "overdue_count",
+          "tasks",
+          "seq"
+        ],
+        "title": "TasksEvent",
+        "type": "object"
+      },
       "TokenEvent": {
         "properties": {
           "type": {
@@ -3700,6 +4042,7 @@
             "policy_stance": "#/components/schemas/PolicyStanceEvent",
             "proposed_action": "#/components/schemas/ProposedActionEvent",
             "sql_trace": "#/components/schemas/SqlTraceEvent",
+            "tasks": "#/components/schemas/TasksEvent",
             "token": "#/components/schemas/TokenEvent"
           },
           "propertyName": "type"
@@ -3728,6 +4071,9 @@
           },
           {
             "$ref": "#/components/schemas/DocCheckEvent"
+          },
+          {
+            "$ref": "#/components/schemas/TasksEvent"
           },
           {
             "$ref": "#/components/schemas/ProposedActionEvent"

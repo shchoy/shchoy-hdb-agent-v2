@@ -16,6 +16,9 @@ export type SqlTraceEvent = Schemas["SqlTraceEvent"];
 export type ProposedActionEvent = Schemas["ProposedActionEvent"];
 export type ClassificationEvent = Schemas["ClassificationEvent"];
 export type DocCheckEvent = Schemas["DocCheckEvent"];
+export type TasksEvent = Schemas["TasksEvent"];
+export type TaskDigest = Schemas["TaskDigest"];
+export type RankedTask = Schemas["RankedTask"];
 export type Submission = Schemas["Submission"];
 export type UserCtx = Schemas["UserCtx"];
 export type ThreadSummary = Schemas["ThreadSummary"];
@@ -193,6 +196,36 @@ export const runEventSchema = z.discriminatedUnion("type", [
     missing: z.array(z.string()),
     problems: z.record(z.string(), docProblem),
     complete: z.boolean(),
+  }),
+  z.object({
+    type: z.literal("tasks"),
+    seq,
+    staff_id: z.string(),
+    name: z.string(),
+    title: z.string(),
+    as_of: z.string(),
+    open_count: z.number().int(),
+    overdue_count: z.number().int(),
+    tasks: z.array(
+      z.object({
+        task_id: z.string(),
+        task_type: z.string(),
+        title: z.string(),
+        related_id: z.string(),
+        due_date: z.string(),
+        status: z.string(),
+        safety_flag: z.boolean(),
+        revenue_at_risk: z.number(),
+        tenants_affected: z.number().int(),
+        rank: z.number().int(),
+        urgency: z.enum(["overdue", "this_week", "soon", "later"]),
+        impact: z.enum(["high", "medium", "low"]),
+        score: z.number().int(),
+        overdue: z.boolean(),
+        days_overdue: z.number().int(),
+        reasons: z.array(z.string()),
+      }),
+    ),
   }),
   z.object({
     type: z.literal("proposed_action"),

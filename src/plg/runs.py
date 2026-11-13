@@ -13,7 +13,7 @@ from langgraph.types import Command
 from plg.actions.model import ApprovalDecision
 from plg.events import (
     ActionResultEvent, CitationEvent, ClassificationEvent, DocCheckEvent, DoneEvent, DraftEvent, ErrorEvent, InterruptEvent, NodeEvent, PolicyStanceEvent,
-    ProposedActionEvent, RunEvent, SqlTraceEvent, TokenEvent,
+    ProposedActionEvent, RunEvent, SqlTraceEvent, TasksEvent, TokenEvent,
 )
 from plg.graph.state import RUN_ID, PLGGraph, PLGState
 from plg.identity import UserCtx
@@ -77,6 +77,8 @@ async def stream_run(
                 yield ClassificationEvent(seq=next_seq(), **chunk["classification"])
             elif mode == "custom" and "doc_check" in chunk:
                 yield DocCheckEvent(seq=next_seq(), **chunk["doc_check"])
+            elif mode == "custom" and "tasks" in chunk:
+                yield TasksEvent(seq=next_seq(), **chunk["tasks"])
             elif mode == "custom" and "policy_stance" in chunk:
                 yield PolicyStanceEvent(seq=next_seq(), **chunk["policy_stance"])
             elif mode == "custom" and "action_result" in chunk:

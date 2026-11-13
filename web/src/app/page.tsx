@@ -20,6 +20,7 @@ export default async function AskPage() {
         <Link href="/approvals">Approvals</Link>
         <Link href="/memory">Memory</Link>
         <Link href="/doc-check">Document check</Link>
+        <Link href="/tasks">Tasks</Link>
         <SignOutButton />
       </header>
       <main>

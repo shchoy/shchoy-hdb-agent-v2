@@ -99,6 +99,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tasks/digest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Task Digest
+         * @description An officer's top open tasks (default: your own), ranked by urgency × impact, overdue ones marked. Team
+         *     leads may view their department's officers; directors anyone's.
+         */
+        get: operations["task_digest_tasks_digest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Task Team
+         * @description The staff whose tasks you may view (GET /tasks/digest?staff_id=...), yourself first.
+         */
+        get: operations["task_team_tasks_team_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/submissions": {
         parameters: {
             query?: never;
@@ -643,6 +684,50 @@ export interface components {
              */
             status: "pending" | "approved" | "rejected";
         };
+        /** RankedTask */
+        RankedTask: {
+            /** Task Id */
+            task_id: string;
+            /** Task Type */
+            task_type: string;
+            /** Title */
+            title: string;
+            /** Related Id */
+            related_id: string;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Status */
+            status: string;
+            /** Safety Flag */
+            safety_flag: boolean;
+            /** Revenue At Risk */
+            revenue_at_risk: number;
+            /** Tenants Affected */
+            tenants_affected: number;
+            /** Rank */
+            rank: number;
+            /**
+             * Urgency
+             * @enum {string}
+             */
+            urgency: "overdue" | "this_week" | "soon" | "later";
+            /**
+             * Impact
+             * @enum {string}
+             */
+            impact: "high" | "medium" | "low";
+            /** Score */
+            score: number;
+            /** Overdue */
+            overdue: boolean;
+            /** Days Overdue */
+            days_overdue: number;
+            /** Reasons */
+            reasons: string[];
+        };
         /**
          * ResumeRequest
          * @description The officer's decision on the exact pending version of an action.
@@ -699,6 +784,29 @@ export interface components {
             status: string;
             /** Files */
             files: number;
+        };
+        /**
+         * TaskDigest
+         * @description An officer's top open tasks on `as_of`, ranked by urgency × impact.
+         */
+        TaskDigest: {
+            /** Staff Id */
+            staff_id: string;
+            /** Name */
+            name: string;
+            /** Title */
+            title: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Open Count */
+            open_count: number;
+            /** Overdue Count */
+            overdue_count: number;
+            /** Tasks */
+            tasks: components["schemas"]["RankedTask"][];
         };
         /** ThreadCreated */
         ThreadCreated: {
@@ -1364,6 +1472,37 @@ export interface components {
             /** Evidence Quote */
             evidence_quote: string;
         };
+        /**
+         * TasksEvent
+         * @description An officer's top open tasks ranked by urgency × impact (a deterministic rules matrix), overdue ones marked,
+         *     each with the reasons for its place.
+         */
+        TasksEvent: {
+            /** Staff Id */
+            staff_id: string;
+            /** Name */
+            name: string;
+            /** Title */
+            title: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Open Count */
+            open_count: number;
+            /** Overdue Count */
+            overdue_count: number;
+            /** Tasks */
+            tasks: components["schemas"]["RankedTask"][];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "tasks";
+            /** Seq */
+            seq: number;
+        };
         /** TokenEvent */
         TokenEvent: {
             /**
@@ -1378,7 +1517,7 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["DocCheckEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["DocCheckEvent"] | components["schemas"]["TasksEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;
@@ -1559,6 +1698,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PendingApproval"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    task_digest_tasks_digest_get: {
+        parameters: {
+            query?: {
+                staff_id?: string | null;
+                limit?: number;
+            };
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskDigest"];
+                };
+            };
+            /** @description Your role can't view this officer's tasks */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    task_team_tasks_team_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserCtx"][];
                 };
             };
             /** @description Validation Error */

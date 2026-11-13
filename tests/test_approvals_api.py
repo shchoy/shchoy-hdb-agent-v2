@@ -227,3 +227,50 @@ def test_no_model_is_offered_a_tool_that_acts(api: Api, llm: ScriptedLLMClient) 
 
     offered = {tool["name"] for _, tools in llm.requests for tool in tools}
     assert offered <= {"route", "get_template", "lookup_records", "submit_draft", "record_memory"}
+
+
+def test_an_edit_cannot_blank_a_slot_of_the_letter(api: Api, llm: ScriptedLLMClient, tmp_path: Path) -> None:
+    thread_id, stream = propose(api, llm)
+    (action,) = stream.of_type("proposed_action")
+
+    assert api.resume(thread_id, decide(action, "edit", edits={"tenant_name": " "})) == 422
+    assert outbox(tmp_path).items() == []
+
+
+def test_an_officer_can_reject_an_action_their_role_cannot_approve(
+    api: Api, llm: ScriptedLLMClient, tmp_path: Path
+) -> None:
+    analyst = {"X-PLG-User": "S08"}
+    thread_id, stream = propose(api, llm, headers=analyst)
+    (action,) = stream.of_type("proposed_action")
+
+    assert isinstance(api.resume(thread_id, decide(action, "reject", reason="Not mine to send."), headers=analyst), SseStream)
+    assert outbox(tmp_path).items() == []
+    assert api.client.get("/approvals", headers=analyst).json() == []
+
+
+NOTICE = "Draft a missing documents notice for APP-2025-0012"
+NOTICE_SLOTS = {
+    "letter_ref": "PLG/DOC/2026/001", "letter_date": "30 September 2026", "tenant_name": "Example Pte Ltd",
+    "contact_person": "Ms Tan", "application_id": "APP-2025-0012", "application_type": "NEW TENANCY",
+    "unit_address": "Blk 1 #01-01", "missing_documents_list": "1. ACRA profile (missing)",
+    "submit_by_date": "14 October 2026", "officer_name": "Siti Aishah Yusof",
+    "officer_email": "siti.aishah@heb.example.org",
+}
+
+
+def test_every_pending_action_of_a_thread_can_be_decided(api: Api, llm: ScriptedLLMClient, tmp_path: Path) -> None:
+    thread_id, stream = propose(api, llm)
+    (reminder,) = stream.of_type("proposed_action")
+    route(llm, NOTICE, "drafting")
+    llm.script_turns("drafting", NOTICE, turn(tool_call("submit_draft", template_id="TPL-DOC-02", slots=NOTICE_SLOTS)), turn(text("Drafted.")))
+    llm.script("merge", NOTICE, "Your notice is ready for your approval.")
+    api.run(thread_id, NOTICE)
+
+    listed = api.client.get("/approvals", headers=USER).json()
+    notice = next(a for a in listed if a["action_id"] != reminder["action_id"])
+    assert len(listed) == 2
+
+    api.resume(thread_id, decide(notice, "approve"))  # the later one first
+    api.resume(thread_id, decide(reminder, "approve"))
+    assert {i.action_id for i in outbox(tmp_path).items()} == {reminder["action_id"], notice["action_id"]}

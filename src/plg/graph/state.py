@@ -54,4 +54,7 @@ class PLGState(TypedDict, total=False):
     decision: ApprovalDecision | None
 
 
+RUN_ID = "plg_run_id"
+"""Configurable key carrying the run's (LangSmith) run ID to the nodes, e.g. for the audit log."""
+
 PLGGraph = CompiledStateGraph[PLGState, Any, PLGState, PLGState]

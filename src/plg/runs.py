@@ -15,14 +15,10 @@ from plg.events import (
     ActionResultEvent, CitationEvent, DoneEvent, DraftEvent, ErrorEvent, InterruptEvent, NodeEvent, PolicyStanceEvent,
     ProposedActionEvent, RunEvent, SqlTraceEvent, TokenEvent,
 )
-from plg.graph.state import PLGGraph, PLGState
+from plg.graph.state import RUN_ID, PLGGraph, PLGState
 from plg.identity import UserCtx
 
 logger = logging.getLogger(__name__)
-
-
-RUN_ID = "plg_run_id"
-"""Configurable key carrying the run's (LangSmith) run ID to the nodes, e.g. for the audit log."""
 
 
 async def stream_run(
@@ -61,13 +57,14 @@ async def stream_run(
                     node=chunk["name"],
                     status="finished" if "result" in chunk else "started",
                 )
-                for paused in chunk.get("interrupts") or []:  # waiting for the officer's decision on an action
-                    action = ProposedActionEvent(seq=next_seq(), **paused["value"])
-                    yield action
-                    yield InterruptEvent(
-                        seq=next_seq(), action_id=action.action_id, version=action.version,
-                        approver_roles=action.approver_roles,
-                    )
+                for paused in chunk.get("interrupts") or []:  # waiting for the officer's decision on actions
+                    for proposed in paused["value"]:
+                        action = ProposedActionEvent(seq=next_seq(), **proposed)
+                        yield action
+                        yield InterruptEvent(
+                            seq=next_seq(), action_id=action.action_id, version=action.version,
+                            approver_roles=action.approver_roles,
+                        )
             elif mode == "custom" and "token" in chunk:
                 yield TokenEvent(seq=next_seq(), node=chunk["node"], text=chunk["token"])
             elif mode == "custom" and "citation" in chunk:

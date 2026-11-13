@@ -21,7 +21,8 @@ Decision = Literal["approve", "edit", "reject"]
 APPROVER_ROLES: dict[ActionType, list[Role]] = {
     "send_letter": ["officer", "estate_manager", "manager", "director", "legal"],
 }
-"""Who may approve each action type. Analysts can draft letters but not send them."""
+"""Who may approve (or edit) each action type. Analysts can draft letters but not send them; anyone can reject
+their own proposal."""
 
 
 class LetterPayload(BaseModel):
@@ -71,7 +72,7 @@ class ApprovalDecision(BaseModel):
             return "That version of the action is not pending."
         if self.approver != action.proposed_by:
             return "Only the officer who asked for the action can decide on it."
-        if self.approver_role not in action.approver_roles:
+        if self.decision != "reject" and self.approver_role not in action.approver_roles:
             return "Your role can't approve this action."
         return None
 

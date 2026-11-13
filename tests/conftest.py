@@ -110,9 +110,9 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
     ) -> Api:
         settings.setdefault("threads_db", tmp_path / "threads.sqlite")
         settings.setdefault("graph_dir", tmp_path / "graph")  # WORKED_ON links never reach the real graph
-        settings.setdefault("trackers_db", tmp_path / "trackers.duckdb")
+        settings.setdefault("trackers_db", tmp_path / "trackers.duckdb")  # none unless a test passes the synced ones
         settings.setdefault("outbox_dir", tmp_path / "outbox")  # approved actions land here, never in .plg/
-        settings.setdefault("audit_log", tmp_path / "audit.jsonl")  # none unless a test passes the synced ones
+        settings.setdefault("audit_log", tmp_path / "audit.jsonl")
         embedder = HashingEmbedder(dim=128)
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]

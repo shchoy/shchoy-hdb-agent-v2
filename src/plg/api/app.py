@@ -195,7 +195,7 @@ def create_app(
     async def waiting(thread_id: str) -> list[ProposedAction]:
         """The actions the thread's checkpoint is paused on, so they survive a restart."""
         snapshot = await graph.aget_state({"configurable": {"thread_id": thread_id}})
-        return [ProposedAction.model_validate(i.value) for i in snapshot.interrupts]
+        return [ProposedAction.model_validate(a) for i in snapshot.interrupts for a in i.value]
 
     @app.get("/approvals")
     async def list_approvals(user: User, status: Literal["pending"] = "pending") -> list[PendingApproval]:
@@ -275,11 +275,12 @@ def create_app(
         action = next((a for a in await waiting(thread_id) if a.action_id == body.action_id), None)
         if action is None or action.version != body.version:
             raise HTTPException(status_code=409, detail="That version of the action is not pending")
-        if user.role not in action.approver_roles:
+        if body.decision != "reject" and user.role not in action.approver_roles:
             raise HTTPException(status_code=403, detail="Your role can't approve this action")
         if body.decision == "edit" and (unknown := unknown_slots(action, body.edits)):
             raise HTTPException(status_code=422, detail=f"The letter has no slot {', '.join(unknown)}")
-        still_open = sorted({u.slot for u in action.payload.unfilled} - {s for s, v in body.edits.items() if v.strip()})
+        blanked = {s for s, v in body.edits.items() if not v.strip()}
+        still_open = sorted(({u.slot for u in action.payload.unfilled} | blanked) - (set(body.edits) - blanked))
         if body.decision != "reject" and still_open:
             raise HTTPException(status_code=422, detail=f"Fill the open slots before sending the letter: {', '.join(still_open)}")
         decision = ApprovalDecision(**body.model_dump(), approver=user.staff_id, approver_role=user.role)

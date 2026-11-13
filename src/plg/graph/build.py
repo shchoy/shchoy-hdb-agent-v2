@@ -35,8 +35,7 @@ from plg.drafting.templates import TemplateLibrary
 from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
 from plg.graph import summary as history
-from plg.graph.state import Finding, Intent, PLGGraph, PLGState
-from plg.runs import RUN_ID
+from plg.graph.state import RUN_ID, Finding, Intent, PLGGraph, PLGState
 from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
 from plg.ontology.glossary import Glossary, load_glossary
@@ -291,11 +290,13 @@ def build_graph(
         return APPROVAL if pending(state.get("proposed_actions", [])) else END
 
     def approval(state: PLGState) -> PLGState:
-        """Pause until the officer decides on the oldest pending action. The decision is checked again here, so
-        nothing but an approval of this exact version, by its owner holding an approver role, gets through."""
-        action = pending(state.get("proposed_actions", []))[0]
-        decision = ApprovalDecision.model_validate(interrupt(action.model_dump(mode="json")))
-        refusal = decision.refusal(action)
+        """Pause until the officer decides on one of the pending actions (the interrupt carries them all). The
+        decision is checked again here, so nothing but a decision on an exact pending version, by its owner
+        holding an approver role, gets through."""
+        waiting = pending(state.get("proposed_actions", []))
+        decision = ApprovalDecision.model_validate(interrupt([a.model_dump(mode="json") for a in waiting]))
+        action = next((a for a in waiting if a.action_id == decision.action_id), None)
+        refusal = decision.refusal(action) if action else "That action is not pending."
         if refusal:
             raise PermissionError(refusal)
         return {"decision": decision}

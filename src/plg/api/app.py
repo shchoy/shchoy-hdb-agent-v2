@@ -21,6 +21,9 @@ from plg.actions.outbox import LocalOutbox, OutboxItem
 from plg.config import Settings
 from plg.defects.taxonomy import load_taxonomy
 from plg.defects.tickets import LocalTicketSystem, Ticket
+from plg.doccheck import flow as doc_flow
+from plg.doccheck.checklists import load_checklists
+from plg.doccheck.model import Submission
 from plg.ontology.vocab import load_vocab
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
@@ -153,12 +156,14 @@ def create_app(
     outbox = LocalOutbox(settings.outbox_dir)
     audit = AuditLog(settings.audit_log)
     ticket_system = LocalTicketSystem(settings.iems_dir)
-    taxonomy = load_taxonomy(load_vocab())
+    vocab = load_vocab()
+    taxonomy = load_taxonomy(vocab)
+    checklists = load_checklists(vocab)
     graph = build_graph(
         llm, searcher or LazySearcher(settings), entities=entities,
         warehouse=Warehouse(settings.records_db, settings.trackers_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
         settings=settings, memory=learner, outbox=outbox, audit=audit,
-        ticket_system=ticket_system, taxonomy=taxonomy,
+        ticket_system=ticket_system, taxonomy=taxonomy, checklists=checklists,
     )
 
     @asynccontextmanager
@@ -225,6 +230,11 @@ def create_app(
             for t in threads.list(user.staff_id) for action in await waiting(t.thread_id)
         ]
         return sorted(found, key=lambda a: a.proposed_at)
+
+    @app.get("/submissions")
+    def list_submissions(user: User) -> list[Submission]:
+        """Applications with a submission bundle, for the Document check screen to pick from (newest first)."""
+        return doc_flow.submissions(settings.records_db, settings.submissions_dir, checklists)
 
     @app.get("/audit")
     async def audit_trail(user: User) -> list[AuditRecord]:

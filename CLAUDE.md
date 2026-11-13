@@ -12,7 +12,7 @@ src/plg/
 │                    records_db (PLG Records SQLite), trackers_db (.plg/trackers.duckdb, Excel trackers), corpus_dir, search_db (LanceDB, default .plg/lancedb),
 │                    Voyage embed model/dim, rerank_backend (voyage|local), Voyage rerank model, local rerank model,
 │                    search_candidates, vector_weight.
-│                    transcripts_dir (saved scan transcripts, beside search_db). threads_db (.plg/threads.sqlite: checkpoints + thread owners),
+│                    transcripts_dir (saved scan transcripts, beside search_db). submissions_dir (corpus_dir/pdfs/submissions, property). threads_db (.plg/threads.sqlite: checkpoints + thread owners),
 │                    history_token_threshold / history_keep_messages (when older turns are folded into a summary).
 │                    route_min_confidence (0.6: weaker routing labels are dropped; none left → clarifying question).
 │                    outbox_dir (.plg/outbox, local Outbox), audit_log (.plg/audit.jsonl, append-only) and iems_dir (.plg/iems, i-EMS mock).
@@ -42,6 +42,18 @@ src/plg/
 │   │                flow.py: `defect_flow` subgraph classify_feedback (+ a named FB case read from PLG Records) → propose_ticket
 │   │                (i-EMS categories only, needs a user; pasted feedback gets a new FB-NEW-… case ID). tickets.py: TicketSystem
 │   │                protocol + LocalTicketSystem (one JSON per ticket, overwrite = idempotent; ticket(id), for_feedback(id)).
+├── doccheck/        Document completeness check (issue #21). checklists.py: Checklists (load_checklists(vocab): per application
+│   │                type, its required documents (code, label, description, mandatory) from plg:application_types +
+│   │                plg:submission_document_types). identify.py (NODE "doc_check"): each file by CONTENT: text-layer PDFs by printed title
+│   │                (SIGNATURES regexes); scans (no text layer) or unmatched PDFs read by Claude (Sonnet, PDF input, forced record_document:
+│   │                document_type, legible, title, text; prompt identify_prompt(app, file) names the file, so tests script per file). Not cached.
+│   │                rules.py: Application (from PLG Records) + check(): BIZ vs BIZ2 (assignee) by company name; problems illegible_scan >
+│   │                wrong_unit (another unit ID or Blk/#unit address; not for BIZ2/NRIC) > expired (BIZ > 3 months old; INS not in force at
+│   │                the new term start (renewal: tenancy end + 1 day) else on submission; LIC/CON lapsed). Line status ok|missing|problem|
+│   │                not_submitted. model.py: DocCheck, ChecklistLine, FileCheck, Submission. notice.py: TPL-DOC-02 filled from the check
+│   │                (letter_ref left open), submit by +14 days. flow.py: `doc_check_flow` load_application (APP ID in the question; bundle =
+│   │                settings.submissions_dir/<APP-ID>/*.pdf) → identify_files (parallel) → check_bundle → propose_notice (incomplete + user);
+│   │                submissions() lists applications with a bundle. 3 renewals deviate from the GT by design (KNOWN_GT_DEVIATIONS).
 ├── identity.py      UserCtx (staff_id, name, title, dept, role) loaded read-only from the `staff` table;
 │                    role is derived from the job title (role_for). POC identity, replaced by OIDC later.
 ├── agents/
@@ -95,9 +107,9 @@ src/plg/
 │                    findings fan in by appending; route's empty update resets them each turn. `clarification` = route's question back (reset each turn). `memory` = this turn's labelled notes block.
 │                    proposed_actions (upserted by action ID), decision (what `approval` received). RUN_ID = configurable key carrying the run_id to nodes.
 │   ├── summary.py   summarise_history: fold(llm, older messages, previous summary) (Haiku, node summarise_history); entity IDs missing from the reply are re-appended verbatim.
-│   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → (summarise_history if history > threshold) → load_memory → route → knowledge, data, drafting and/or defect (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END
+│   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → (summarise_history if history > threshold) → load_memory → route → knowledge, data, drafting, defect and/or doc_check (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END
 │                    (load_memory/write_memory only when a MemoryService is given: plg-api yes, `plg ask` no). The memory block is appended to merge's system prompt.
-│                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting, defect) + optional
+│                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting, defect, doc_check) + optional
 │                    clarifying_question (RouteDecision). Labels below route_min_confidence are dropped; if none is left but some were
 │                    named (or a question was given), `clarification` is set: no fan-out, merge streams it word by word with no Claude
 │                    call, and it joins `messages` so the officer's reply is routed with it. Otherwise fan_out sends one
@@ -106,7 +118,7 @@ src/plg/
 │                    merge fuses findings keeping [n] markers (with 2+ supported findings, cited or traced, in one `## ` section per part); findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
 │                    answer with no Claude call. merge is the only node that streams tokens. Checkpointer: InMemorySaver by default (CLI); plg-api swaps in AsyncSqliteSaver (threads_db) in its lifespan. State keeps the full `messages` plus `summary`/`summarised` (offset folded).
 │                    drafting_node turns its draft into a ProposedAction (letters.propose_letter). defect_node runs the `defect_flow` subgraph (ainvoke: its
-│                    custom writes don't reach the parent stream), streams `classification`, its finding is traced, its ticket is a raise_ticket action. approval = LangGraph interrupt() carrying every pending
+│                    custom writes don't reach the parent stream), streams `classification`, its finding is traced, its ticket is a raise_ticket action. doc_check_node runs `doc_check_flow`, streams `doc_check`, its finding is traced; an incomplete bundle's notice is stored (DraftStore), streamed as `draft` and proposed (propose_sending, shared with drafting_node). approval = LangGraph interrupt() carrying every pending
 │                    action (JSON list); the resume value is an ApprovalDecision, re-checked (refusal) before execute_action, the only side-effecting
 │                    node: approve/edit → Outbox item for a letter (edit = re-composed next version) or i-EMS ticket via TicketSystem, every decision → one AuditLog entry with the run_id; emits
 │                    `action_result`. A new question on an interrupted thread runs afresh and re-interrupts at the end while actions stay pending.
@@ -122,7 +134,7 @@ src/plg/
 │   │                drain() awaits pending writes (plg-api lifespan shutdown). Memory never yields citations.
 ├── threads.py       ThreadStore (SQLite plg_threads: owner + title; a thread is listed once asked), RunBuffer (every event of a run, follow(after=seq)) and
 │                    RunRegistry (latest run per thread, runs as background tasks so they outlive the client; 409 while one is answering).
-├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data), classification (Classification),
+├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data), classification (Classification), doc_check (DocCheck),
 │                    draft (Draft: html preview, unfilled slots, pii flags), proposed_action (ProposedAction), interrupt (action_id, version,
 │                    approver_roles), action_result (action_id, version sent, decision, outbox_id|null, ticket_id|null), done (run_id), error (run_id).
 ├── runs.py          stream_run(graph, thread_id, message, user?, *, decision?): runs the graph (or resumes it with Command(resume=decision)),
@@ -182,7 +194,8 @@ src/plg/
 │                    pending action/version (replay), 403 role can't approve/edit, 422 reject without reason / unknown or blanked slot / open slots
 │                    left; then RunRegistry.start(decision). GET /approvals?status=pending: own pending actions across threads (PendingApproval =
 │                    ProposedAction + thread_id/title), read from checkpoint interrupts so they survive a restart. ThreadView.pending likewise.
-│                    GET /audit: own decisions, newest first (AuditRecord = AuditEntry + `sent`: the OutboxItem, `ticket`: the i-EMS Ticket; null when not applicable).
+│                    GET /submissions: applications with a submission bundle (Submission list, newest first).
+                    GET /audit: own decisions, newest first (AuditRecord = AuditEntry + `sent`: the OutboxItem, `ticket`: the i-EMS Ticket; null when not applicable).
 │                    Resume edits for a ticket are validated by tickets.edit_errors (422).
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers),
                      `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
@@ -213,18 +226,21 @@ scripts/record_sse_fixtures.py
                      Records real SSE streams (answer with citations, not_covered, error, draft, policy_stance, data: a rejected then a successful run_sql, multi_part: knowledge + data fused in sections) from the in-process API,
                      with the corpus synced into a temp index (threads, memory, graph, outbox and audit writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json, and the approvals flow (two letters in two
-                     threads + a ticket → fixtures/approvals/pending.json, edit.sse, reject.sse, ticket_edit.sse, audit.json), and defect.sse (ambiguous feedback → ELE, low confidence).
+                     threads + a ticket → fixtures/approvals/pending.json, edit.sse, reject.sse, ticket_edit.sse, audit.json), and defect.sse (ambiguous feedback → ELE, low confidence), doc_check.sse (APP-2026-0294), doc_check_problem.sse (APP-2026-0288,
+                     illegible scan scripted) and submissions.json. Optional scenario names record only those.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
                      /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay),
-                     /api/memory (GET list), /api/memory/[id] (PATCH, DELETE), /api/approvals (GET pending), /api/audit (GET),
+                     /api/memory (GET list), /api/submissions (GET), /api/memory/[id] (PATCH, DELETE), /api/approvals (GET pending), /api/audit (GET),
                      /api/threads/[id]/resume (POST decision, SSE through; refusals relayed). SSE pass-through = relaySse (src/lib/server/plg-api.ts).
-                     Pages: /sign-in, /approvals (Approvals inbox, approvals/ApprovalsScreen.tsx: pending actions across threads (letters and i-EMS tickets: TicketCard with classification details, editable category/priority/unit/description/case, 'Approve and raise') with letter preview,
+                     Pages: /doc-check (doc-check/DocCheckScreen.tsx: pick an application from /api/submissions → new thread + run
+                     "Is application <ID> complete? ..." (shared helpers in runClient.ts), DocCheckCard + notice preview + link to Approvals and
+                     to the conversation (sessionStorage plg_active_thread)), /sign-in, /approvals (Approvals inbox, approvals/ApprovalsScreen.tsx: pending actions across threads (letters and i-EMS tickets: TicketCard with classification details, editable category/priority/unit/description/case, 'Approve and raise') with letter preview,
                      open slots, PII flags, editable slots shown as <del>/<ins> diff, approve / send edited / reject with reason, approve+edit
                      hidden for roles that can't send or while open slots are blank; then the result (outbox ID, version sent) and the audit
                      trail (who, role, when, reason, edits, outbox item + letter as sent, run_id)), /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
-                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), ClassificationCard under the answer (category, severity, team, vendor, SLA or 'not a maintenance defect', confidence + low-confidence flag, other candidates, rationale), DraftPreview under the answer (sandboxed HTML preview via LetterFrame.tsx, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry).
+                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DocCheckCard under the answer (✓/✗/– checklist table, problem + reason, files identified, scan marker), ClassificationCard under the answer (category, severity, team, vendor, SLA or 'not a maintenance defect', confidence + low-confidence flag, other candidates, rationale), DraftPreview under the answer (sandboxed HTML preview via LetterFrame.tsx, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry).
                      dates.ts: day() / period() / when() date formatting shared by the cards.
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.

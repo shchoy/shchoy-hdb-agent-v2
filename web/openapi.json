@@ -296,6 +296,59 @@
         }
       }
     },
+    "/submissions": {
+      "get": {
+        "summary": "List Submissions",
+        "description": "Applications with a submission bundle, for the Document check screen to pick from (newest first).",
+        "operationId": "list_submissions_submissions_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Submission"
+                  },
+                  "title": "Response List Submissions Submissions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/audit": {
       "get": {
         "summary": "Audit Trail",
@@ -1918,6 +1971,56 @@
         ],
         "title": "RunRequest"
       },
+      "Submission": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "title": "Application Id"
+          },
+          "app_type": {
+            "type": "string",
+            "title": "App Type"
+          },
+          "app_type_label": {
+            "type": "string",
+            "title": "App Type Label"
+          },
+          "tenant_name": {
+            "type": "string",
+            "title": "Tenant Name"
+          },
+          "unit_id": {
+            "type": "string",
+            "title": "Unit Id"
+          },
+          "submitted_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Submitted Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "files": {
+            "type": "integer",
+            "title": "Files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "app_type",
+          "app_type_label",
+          "tenant_name",
+          "unit_id",
+          "submitted_date",
+          "status",
+          "files"
+        ],
+        "title": "Submission",
+        "description": "An application with a submission bundle, as the Document check screen offers it."
+      },
       "ThreadCreated": {
         "properties": {
           "thread_id": {
@@ -2386,6 +2489,75 @@
         "title": "ActionResultEvent",
         "type": "object"
       },
+      "ChecklistLine": {
+        "properties": {
+          "doc_code": {
+            "title": "Doc Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "mandatory": {
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "missing",
+              "problem",
+              "not_submitted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "enum": [
+                  "expired",
+                  "wrong_unit",
+                  "illegible_scan"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Problem"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "doc_code",
+          "label",
+          "description",
+          "mandatory",
+          "status",
+          "files"
+        ],
+        "title": "ChecklistLine",
+        "type": "object"
+      },
       "CitationEvent": {
         "description": "A source the answer cites. `index` is the number of its `[n]` marker in the answer text.",
         "properties": {
@@ -2605,6 +2777,109 @@
         "title": "ConceptUsed",
         "type": "object"
       },
+      "DocCheckEvent": {
+        "description": "An application's submission bundle checked against its checklist: each file identified, each required\ndocument ticked or crossed, expired, wrong-unit and illegible documents flagged.",
+        "properties": {
+          "application_id": {
+            "title": "Application Id",
+            "type": "string"
+          },
+          "app_type": {
+            "title": "App Type",
+            "type": "string"
+          },
+          "app_type_label": {
+            "title": "App Type Label",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "tenant_name": {
+            "title": "Tenant Name",
+            "type": "string"
+          },
+          "unit_id": {
+            "title": "Unit Id",
+            "type": "string"
+          },
+          "unit_address": {
+            "title": "Unit Address",
+            "type": "string"
+          },
+          "submitted_date": {
+            "format": "date",
+            "title": "Submitted Date",
+            "type": "string"
+          },
+          "checklist": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistLine"
+            },
+            "title": "Checklist",
+            "type": "array"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/FileCheck"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "problems": {
+            "additionalProperties": {
+              "enum": [
+                "expired",
+                "wrong_unit",
+                "illegible_scan"
+              ],
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "object"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "doc_check",
+            "default": "doc_check",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "application_id",
+          "app_type",
+          "app_type_label",
+          "tenant_id",
+          "tenant_name",
+          "unit_id",
+          "unit_address",
+          "submitted_date",
+          "checklist",
+          "files",
+          "missing",
+          "problems",
+          "complete",
+          "seq"
+        ],
+        "title": "DocCheckEvent",
+        "type": "object"
+      },
       "DoneEvent": {
         "properties": {
           "type": {
@@ -2726,6 +3001,75 @@
           "message"
         ],
         "title": "ErrorEvent",
+        "type": "object"
+      },
+      "FileCheck": {
+        "description": "One file of the bundle, identified by what it says rather than its file name.",
+        "properties": {
+          "file": {
+            "title": "File",
+            "type": "string"
+          },
+          "doc_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Code"
+          },
+          "doc_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Label"
+          },
+          "read_by": {
+            "enum": [
+              "text",
+              "scan"
+            ],
+            "title": "Read By",
+            "type": "string"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "enum": [
+                  "expired",
+                  "wrong_unit",
+                  "illegible_scan"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Problem"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "doc_code",
+          "doc_label",
+          "read_by"
+        ],
+        "title": "FileCheck",
         "type": "object"
       },
       "InterruptEvent": {
@@ -3347,6 +3691,7 @@
             "action_result": "#/components/schemas/ActionResultEvent",
             "citation": "#/components/schemas/CitationEvent",
             "classification": "#/components/schemas/ClassificationEvent",
+            "doc_check": "#/components/schemas/DocCheckEvent",
             "done": "#/components/schemas/DoneEvent",
             "draft": "#/components/schemas/DraftEvent",
             "error": "#/components/schemas/ErrorEvent",
@@ -3380,6 +3725,9 @@
           },
           {
             "$ref": "#/components/schemas/ClassificationEvent"
+          },
+          {
+            "$ref": "#/components/schemas/DocCheckEvent"
           },
           {
             "$ref": "#/components/schemas/ProposedActionEvent"

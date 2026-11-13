@@ -61,6 +61,11 @@ class Settings(BaseModel):
     vector_weight: float = 0.7
 
     @property
+    def submissions_dir(self) -> Path:
+        """Application submission bundles, one folder of PDFs per application ID (the document check reads them)."""
+        return self.corpus_dir / "pdfs" / "submissions"
+
+    @property
     def transcripts_dir(self) -> Path:
         """Saved transcripts of scanned PDFs, beside the index (`plg sync --full` keeps them)."""
         return self.search_db.with_name(f"{self.search_db.name}-transcripts")

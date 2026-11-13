@@ -7,7 +7,7 @@ How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on 
 | Part | Status | How to run |
 |---|---|---|
 | Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations, data questions over PLG Records and the Excel trackers, letter drafting | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
-| Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in and Ask screen with citation chips | `cd web && npm run dev` |
+| Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in, Ask, Approvals, Document check and Memory screens | `cd web && npm run dev` |
 
 ## 1. Prerequisites
 
@@ -163,6 +163,40 @@ a case gets a new `FB-NEW-…` ID. `GET /audit` shows the raised ticket.
 
 Where it lives: `src/plg/defects/` (taxonomy, classify, `defect_flow`, `TicketSystem`), `src/plg/actions/tickets.py`,
 `web/src/app/ClassificationCard.tsx`, `web/src/app/approvals/`, `tests/test_defect_api.py`.
+
+### Check an application's documents (issue #21)
+
+In the web app, **Document check** in the top bar (`/doc-check`) lists the applications that have a submission bundle
+(`poc-data/pdfs/submissions/<APP-ID>/`, from `GET /submissions`). Pick one, or ask on the Ask screen:
+
+```bash
+uv run plg ask "Is application APP-2026-0294 complete? Check the submitted documents."
+```
+
+The `doc_check` specialist runs the `doc_check_flow` subgraph. It identifies each file by its content, not its name:
+- a PDF with a text layer is identified by its printed title;
+- a scan (no text layer), or a PDF matching no known title, is read by Claude (Sonnet, PDF input). Claude
+  transcribes it, says whether it's legible and names the document type.
+
+The application type's checklist (new tenancy, renewal, assignment, change of trade, A&A; from the ontology
+vocabularies) is then ticked off. Flags:
+- **Expired:**
+  - business profile more than 3 months old;
+  - insurance not in force when the new term starts (renewals) or on the submission date;
+  - lapsed licence or contractor registration.
+- **Wrong unit:** the document names another unit ID or address.
+- **Illegible scan.**
+
+The `doc_check` event carries the checklist (✓ / ✗ / – per document) and every file with what it was identified as.
+An incomplete bundle also gets the missing-documents notice (`TPL-DOC-02`), listing each missing or rejected document
+with the reason, as a `send_letter` action. The letter reference is left open: fill it in with **Edit slots** in
+Approvals before sending. Only `ANTHROPIC_API_KEY` is needed; scans are read again on every check (not cached yet).
+
+The renewals APP-2026-0278, -0288 and -0268 are flagged for expired insurance (it ends before the new term starts)
+although `_master/submission_bundles_ground_truth.json` marks them valid; see `tests/test_doc_check_api.py`.
+
+Where it lives: `src/plg/doccheck/`, `web/src/app/doc-check/`, `web/src/app/DocCheckCard.tsx`,
+BFF `web/src/app/api/submissions/`, `tests/test_doc_check_api.py`.
 
 ### Ask a data question (issue #12)
 

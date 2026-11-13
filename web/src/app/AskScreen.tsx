@@ -6,6 +6,7 @@ import {
   parseRunEvents,
   type CitationEvent,
   type ClassificationEvent,
+  type DocCheckEvent,
   type DraftEvent,
   type PolicyStanceEvent,
   type SqlTraceEvent,
@@ -14,11 +15,13 @@ import {
 } from "@/lib/events";
 import { AnswerText } from "./AnswerText";
 import { ClassificationCard } from "./ClassificationCard";
+import { DocCheckCard } from "./DocCheckCard";
 import { DraftPreview } from "./DraftPreview";
 import { PolicyStanceCard } from "./PolicyStanceCard";
 import { ReasoningPanel } from "./ReasoningPanel";
 import { SourceViewer } from "./SourceViewer";
 import styles from "./ask.module.css";
+import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "./runClient";
 
 type Step = { node: string; finished: boolean };
 
@@ -27,6 +30,7 @@ type Answer = {
   answer: string;
   citations: CitationEvent[];
   classifications: ClassificationEvent[];
+  docChecks: DocCheckEvent[];
   drafts: DraftEvent[];
   stances: PolicyStanceEvent[];
   traces: SqlTraceEvent[];
@@ -40,27 +44,10 @@ type Run =
   | { status: "failed"; question: string; reason: string; trajectory: Step[] };
 
 function emptyAnswer(question: string): Answer {
-  return { question, answer: "", citations: [], classifications: [], drafts: [], stances: [], traces: [], trajectory: [] };
-}
-
-/** The run failed or was cut short: whatever was streamed is partial and not to be trusted. */
-class RunFailed extends Error {}
-
-async function createThread(): Promise<string> {
-  const response = await fetch("/api/threads", { method: "POST" });
-  if (!response.ok) throw new RunFailed(failureFor(response.status));
-  const { thread_id } = (await response.json()) as { thread_id: string };
-  return thread_id;
-}
-
-function failureFor(status: number): string {
-  return status === 401
-    ? "You are no longer signed in. Sign in again, then retry."
-    : `The service responded with an error (HTTP ${status}).`;
+  return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], stances: [], traces: [], trajectory: [] };
 }
 
 const RESUME_ATTEMPTS = 3;
-const ACTIVE_THREAD = "plg_active_thread";
 
 /** The run's stream stopped before `done`; it may be picked up again from the last event seen. */
 class Interrupted extends Error {}
@@ -116,6 +103,9 @@ export function AskScreen() {
                 break;
               case "classification":
                 acc.classifications = [...acc.classifications, event];
+                break;
+              case "doc_check":
+                acc.docChecks = [...acc.docChecks, event];
                 break;
               case "draft":
                 acc.drafts = [...acc.drafts, event];
@@ -197,16 +187,7 @@ export function AskScreen() {
       return;
     }
     const id = threadId.current;
-    await follow(text, () =>
-      fetch(`/api/threads/${encodeURIComponent(id)}/runs`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "text/event-stream",
-        },
-        body: JSON.stringify({ message: text }),
-      }),
-    );
+    await follow(text, () => startRun(id, text));
   }
 
   /** Opens a past conversation; if its last question is still being answered, picks that answer up. */
@@ -365,6 +346,9 @@ export function AskScreen() {
                 {run.traces.length > 0 && <ReasoningPanel traces={run.traces} />}
                 {run.classifications.map((found) => (
                   <ClassificationCard key={found.seq} found={found} />
+                ))}
+                {run.docChecks.map((check) => (
+                  <DocCheckCard key={check.seq} check={check} />
                 ))}
                 {run.drafts.map((draft) => (
                   <DraftPreview key={draft.draft_id} draft={draft} />

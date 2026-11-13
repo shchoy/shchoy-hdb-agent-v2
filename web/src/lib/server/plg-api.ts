@@ -214,6 +214,14 @@ export async function listApprovals(staffId: string): Promise<{ status: number; 
   return { status: response.status, body: data ?? error };
 }
 
+/** Applications with a submission bundle, newest first, for the Document check screen. */
+export async function listSubmissions(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/submissions", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
 /** The officer's own decisions on proposed actions, newest first, with what each sent. */
 export async function getAuditTrail(staffId: string): Promise<{ status: number; body: unknown }> {
   const { data, error, response } = await client().GET("/audit", {

@@ -99,6 +99,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Submissions
+         * @description Applications with a submission bundle, for the Document check screen to pick from (newest first).
+         */
+        get: operations["list_submissions_submissions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/audit": {
         parameters: {
             query?: never;
@@ -655,6 +675,31 @@ export interface components {
             /** Message */
             message: string;
         };
+        /**
+         * Submission
+         * @description An application with a submission bundle, as the Document check screen offers it.
+         */
+        Submission: {
+            /** Application Id */
+            application_id: string;
+            /** App Type */
+            app_type: string;
+            /** App Type Label */
+            app_type_label: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Unit Id */
+            unit_id: string;
+            /**
+             * Submitted Date
+             * Format: date
+             */
+            submitted_date: string;
+            /** Status */
+            status: string;
+            /** Files */
+            files: number;
+        };
         /** ThreadCreated */
         ThreadCreated: {
             /** Thread Id */
@@ -838,6 +883,34 @@ export interface components {
             /** Ticket Id */
             ticket_id: string | null;
         };
+        /** ChecklistLine */
+        ChecklistLine: {
+            /** Doc Code */
+            doc_code: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
+            /** Mandatory */
+            mandatory: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "missing" | "problem" | "not_submitted";
+            /** Files */
+            files: string[];
+            /**
+             * Problem
+             * @default null
+             */
+            problem: ("expired" | "wrong_unit" | "illegible_scan") | null;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
         /**
          * CitationEvent
          * @description A source the answer cites. `index` is the number of its `[n]` marker in the answer text.
@@ -922,6 +995,51 @@ export interface components {
             /** Effective To */
             effective_to: string | null;
         };
+        /**
+         * DocCheckEvent
+         * @description An application's submission bundle checked against its checklist: each file identified, each required
+         *     document ticked or crossed, expired, wrong-unit and illegible documents flagged.
+         */
+        DocCheckEvent: {
+            /** Application Id */
+            application_id: string;
+            /** App Type */
+            app_type: string;
+            /** App Type Label */
+            app_type_label: string;
+            /** Tenant Id */
+            tenant_id: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Unit Id */
+            unit_id: string;
+            /** Unit Address */
+            unit_address: string;
+            /**
+             * Submitted Date
+             * Format: date
+             */
+            submitted_date: string;
+            /** Checklist */
+            checklist: components["schemas"]["ChecklistLine"][];
+            /** Files */
+            files: components["schemas"]["FileCheck"][];
+            /** Missing */
+            missing: string[];
+            /** Problems */
+            problems: {
+                [key: string]: "expired" | "wrong_unit" | "illegible_scan";
+            };
+            /** Complete */
+            complete: boolean;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "doc_check";
+            /** Seq */
+            seq: number;
+        };
         /** DoneEvent */
         DoneEvent: {
             /**
@@ -981,6 +1099,33 @@ export interface components {
             run_id: string;
             /** Message */
             message: string;
+        };
+        /**
+         * FileCheck
+         * @description One file of the bundle, identified by what it says rather than its file name.
+         */
+        FileCheck: {
+            /** File */
+            file: string;
+            /** Doc Code */
+            doc_code: string | null;
+            /** Doc Label */
+            doc_label: string | null;
+            /**
+             * Read By
+             * @enum {string}
+             */
+            read_by: "text" | "scan";
+            /**
+             * Problem
+             * @default null
+             */
+            problem: ("expired" | "wrong_unit" | "illegible_scan") | null;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
         };
         /**
          * InterruptEvent
@@ -1233,7 +1378,7 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["DocCheckEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;
@@ -1414,6 +1559,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PendingApproval"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_submissions_submissions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Submission"][];
                 };
             };
             /** @description Validation Error */

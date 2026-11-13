@@ -1,10 +1,10 @@
 """Record SSE streams and source-viewer responses from an in-process plg-api for the web tests to replay (MSW).
 
-    uv run python scripts/record_sse_fixtures.py
+    uv run python scripts/record_sse_fixtures.py [name ...]   # e.g. `doc_check submissions`; none = everything
 
 Writes `web/src/test/fixtures/*.sse`, `documents/*.json` (a document and a cited span's location, per file type) and
 `approvals/*` (two letters and an i-EMS ticket proposed in three conversations: the pending list, a ticket raised with
-edits, a letter edit and a rejection, the audit trail). Streams come from the real API and graph with a scripted
+edits, a letter edit and a rejection, the audit trail) and `submissions.json` (the Document check screen's list). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import json
 import re
+import sys
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
@@ -24,6 +25,7 @@ from fastapi.testclient import TestClient
 from plg.api.app import create_app
 from plg.config import REPO_ROOT, Settings
 from plg.data.semantic import load_semantic_layer
+from plg.doccheck.identify import IDENTIFY_NODE, identify_prompt
 from plg.entities.local import LocalGraphStore
 from plg.entities.spine import write_spine
 from plg.entities.writer import GraphWriter
@@ -45,6 +47,8 @@ DATA_QUESTION = "Which tenancies have arrears above 3 months' rent?"
 MULTI_QUESTION = "How many vacant units are there in Bayshore Vale, and how is vacancy defined?"
 DRAFT_QUESTION = "Draft an update reply to the member of public who gave feedback FB-2025-00002"
 REMINDER_QUESTION = "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
+DOC_CHECK_QUESTION = "Is application APP-2026-0294 complete? Check the submitted documents."
+ILLEGIBLE_QUESTION = "Is application APP-2026-0288 complete? Check the submitted documents."
 DEFECT_QUESTION = "Classify: 'Ceiling near the shop wet and lights flickering, scared got short circuit'"
 
 
@@ -146,6 +150,35 @@ def defect(llm: ScriptedLLMClient) -> None:
     )))
     llm.script("merge", DEFECT_QUESTION, "Classified as **Electrical (High)** for M&E, with low confidence: it may also be "
                "water seepage. An i-EMS ticket waits for your approval; nothing has been raised.")
+
+
+def doc_check(llm: ScriptedLLMClient) -> None:
+    """An A&A application with the method statement and insurance missing (no scans to read): a ✓/✗ checklist, and the
+    missing-documents notice proposed for approval."""
+    llm.script_turns("route", DOC_CHECK_QUESTION, routed("doc_check"))
+    llm.script("merge", DOC_CHECK_QUESTION, "**APP-2026-0294 is incomplete**: the method statement and the insurance "
+               "certificate are missing. A missing-documents notice waits for your approval; nothing has been sent.")
+
+
+def doc_check_problem(llm: ScriptedLLMClient) -> None:
+    """A renewal whose insurance ends before the new term and whose GIRO form is a scan Claude can't read: both flagged
+    (a ✗ with its reason), notice proposed."""
+    llm.script_turns("route", ILLEGIBLE_QUESTION, routed("doc_check"))
+    llm.script_turns(IDENTIFY_NODE, identify_prompt("APP-2026-0288", "IMG_5846.pdf"), turn(tool_call(
+        "record_document", document_type="GIRO", legible=False, title="GIRO authorisation form (HEB rent)",
+        text="GIRO AUTHORISATION FORM (HEB RENT)\nAccount holder: [illegible]\nAccount no.: [illegible]\nSigned: [illegible]",
+    )))
+    llm.script("merge", ILLEGIBLE_QUESTION, "**APP-2026-0288 is incomplete**: the insurance certificate has expired and the GIRO form is an "
+               "illegible scan. "
+               "A missing-documents notice waits for your approval; nothing has been sent.")
+
+
+def record_submissions() -> str:
+    """The applications the Document check screen offers."""
+    with tempfile.TemporaryDirectory() as scratch:
+        app = create_app(scratch_settings(Path(scratch)), llm=ScriptedLLMClient(), memory=scratch_memory(Path(scratch) / "memory"))
+        with TestClient(app) as client:
+            return json.dumps(client.get("/submissions", headers=USER).json(), indent=2) + "\n"
 
 
 FEEDBACK_EDITS = {
@@ -279,6 +312,7 @@ SCRIPTS: dict[str, tuple[str, Callable[[ScriptedLLMClient], None]]] = {
     "answer": (QUESTION, answer), "not_covered": (QUESTION, not_covered), "error": (QUESTION, error),
     "draft": (DRAFT_QUESTION, draft), "data": (DATA_QUESTION, data), "policy_stance": (POLICY_QUESTION, policy_stance),
     "multi_part": (MULTI_QUESTION, multi_part), "defect": (DEFECT_QUESTION, defect),
+    "doc_check": (DOC_CHECK_QUESTION, doc_check), "doc_check_problem": (ILLEGIBLE_QUESTION, doc_check_problem),
 }
 
 
@@ -354,15 +388,26 @@ def _stream(app: Any, question: str) -> str:
             return response.read().decode()
 
 
-def main() -> None:
+def main(only: list[str]) -> None:
+    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`)."""
     OUT.mkdir(parents=True, exist_ok=True)
+    if not only or "submissions" in only:
+        path = OUT / "submissions.json"
+        path.write_text(record_submissions())
+        print(f"wrote {path.relative_to(REPO_ROOT)}")
+        if only == ["submissions"]:
+            return
     with tempfile.TemporaryDirectory() as index, tempfile.TemporaryDirectory() as graph_dir:
         search, store = searcher(Path(index))
         graph = lineage_graph(store, Path(graph_dir))
         for name, (question, script) in SCRIPTS.items():
+            if only and name not in only:
+                continue
             path = OUT / f"{name}.sse"
             path.write_text(record(search, question, script, graph))
             print(f"wrote {path.relative_to(REPO_ROOT)}")
+        if only:
+            return
         (OUT / "documents").mkdir(exist_ok=True)
         for kind, recorded in record_documents(store).items():
             path = OUT / "documents" / f"{kind}.json"
@@ -376,4 +421,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

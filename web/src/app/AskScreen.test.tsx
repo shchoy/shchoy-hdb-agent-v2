@@ -353,6 +353,71 @@ describe("Ask screen", () => {
     expect(card).not.toHaveTextContent("Not a maintenance defect");
   });
 
+  it("shows the document check with a tick or cross per document, and the missing-documents notice", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("doc_check"))),
+    );
+
+    await ask("Is application APP-2026-0294 complete? Check the submitted documents.");
+    await runFinished();
+
+    const card = screen.getByRole("region", { name: "Document check" });
+    expect(card).toHaveTextContent("Incomplete");
+    expect(card.querySelector("dl")).toHaveTextContent(
+      "ApplicationAPP-2026-0294 (Alteration & addition)TenantSiva Dental Care Pte Ltd",
+    );
+    expect(card.querySelector("dl")).toHaveTextContent(/Submitted22 Sept? 2026/);
+    const rows = within(within(card).getByRole("table", { name: "Checklist" })).getAllByRole("row").slice(1);
+    expect(
+      rows.map((row) => [
+        within(row).getByRole("img").getAttribute("aria-label"),
+        within(row).getByRole("rowheader").textContent,
+      ]),
+    ).toEqual([
+      ["Submitted", "A&A works application"],
+      ["Submitted", "Layout and elevation drawings"],
+      ["Submitted", "Contractor's registration certificate"],
+      ["Not submitted (optional)", "Professional Engineer endorsement (optional)"],
+      ["Missing", "Method statement"],
+      ["Missing", "Insurance certificate"],
+    ]);
+    expect(rows[0]).toHaveTextContent("AA form.pdf");
+    expect(within(card).getByRole("list", { name: "Files submitted" })).toHaveTextContent(
+      "drawings.pdf: Layout and elevation drawings",
+    );
+
+    const notice = screen.getByRole("region", { name: "Draft preview" });
+    expect(notice).toHaveTextContent("Missing Documents Notice (TPL-DOC-02 v1.3). Nothing has been sent.");
+    expect(within(notice).getByTitle("Preview of Missing Documents Notice").getAttribute("srcdoc")).toContain(
+      "Method statement and work schedule (not submitted)",
+    );
+  });
+
+  it("says why a submitted document can't be accepted, and marks scans", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("doc_check_problem"))),
+    );
+
+    await ask("Is application APP-2026-0288 complete? Check the submitted documents.");
+    await runFinished();
+
+    const card = screen.getByRole("region", { name: "Document check" });
+    const table = within(card).getByRole("table", { name: "Checklist" });
+    const giro = within(table).getByRole("rowheader", { name: /^GIRO authorisation form/ }).closest("tr")!;
+    expect(within(giro).getByRole("img", { name: "Problem" })).toHaveTextContent("✗");
+    expect(giro).toHaveTextContent("IMG_5846.pdf");
+    expect(giro).toHaveTextContent("Illegible scan: The scan can't be read, so it counts as not submitted.");
+    const insurance = within(table).getByRole("rowheader", { name: "Insurance certificate" }).closest("tr")!;
+    expect(insurance).toHaveTextContent("Expired: The cover ends on 13 July 2027");
+    const files = within(card).getByRole("list", { name: "Files submitted" });
+    expect(within(files).getByText("IMG_5846.pdf").closest("li")).toHaveTextContent(
+      "IMG_5846.pdf: GIRO authorisation form scan",
+    );
+    expect(within(files).getByText("REN_1.pdf").closest("li")).not.toHaveTextContent("scan");
+  });
+
   it("says a non-defect complaint gets no i-EMS ticket", async () => {
     const found = {
       type: "classification", seq: 1, category_code: "NOI", category: "Noise / Nuisance", severity: "Low",

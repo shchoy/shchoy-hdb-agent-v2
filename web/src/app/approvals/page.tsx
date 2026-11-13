@@ -19,6 +19,7 @@ export default async function ApprovalsPage() {
         </p>
         <Link href="/">Ask</Link>
         <Link href="/memory">Memory</Link>
+        <Link href="/doc-check">Document check</Link>
         <SignOutButton />
       </header>
       <main>

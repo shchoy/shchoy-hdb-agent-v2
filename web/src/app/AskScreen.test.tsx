@@ -394,6 +394,36 @@ describe("Ask screen", () => {
     );
   });
 
+  it("shows the officer's ranked tasks under the answer, overdue ones marked", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("tasks"))),
+    );
+
+    await ask("What are my top 5 tasks this week and why?");
+    await runFinished();
+
+    const answer = screen.getByRole("region", { name: "Answer" });
+    expect(answer).toHaveTextContent("Your top task is the overdue renewal TSK-2026-0183");
+    const list = within(answer).getByRole("region", { name: "Top tasks" });
+    expect(list.querySelector("dl")).toHaveTextContent(
+      /OfficerSiti Aishah Yusof \(Leasing Officer\)As of30 Sept? 2026Open241Overdue20/,
+    );
+    const rows = within(within(list).getByRole("table", { name: "Ranked tasks" })).getAllByRole("row").slice(1);
+    expect(rows.map((row) => within(row).getByRole("rowheader").textContent)).toEqual([
+      "TSK-2026-0183 Renewal due: TA-2023-00016 expires 30 Sep 2026",
+      "TSK-2026-0374 Renewal due: TA-2023-00124 expires 30 Nov 2026",
+      "TSK-2026-0501 Renewal due: TA-2024-00019 expires 31 Dec 2026",
+      "TSK-2026-0541 Renewal due: TA-2024-00083 expires 31 Dec 2026",
+      "TSK-2026-0642 Renewal due: TA-2024-00142 expires 31 Jan 2027",
+    ]);
+    expect(rows[0]).toHaveTextContent("Overdue · 120 days");
+    expect(rows[0]).toHaveTextContent("Overdue × high impact = 12");
+    expect(rows[0]).toHaveTextContent("S$53,520 rent at risk");
+    expect(rows[4]).not.toHaveTextContent("Overdue ·");
+    expect(rows[4]).toHaveTextContent("This week × high impact = 9");
+  });
+
   it("says why a submitted document can't be accepted, and marks scans", async () => {
     server.use(
       threadsApi(),

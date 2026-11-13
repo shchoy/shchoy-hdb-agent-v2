@@ -6,6 +6,7 @@ import asyncio
 import os
 import shutil
 import uuid
+from pathlib import Path
 from datetime import date
 from typing import Annotated
 
@@ -24,6 +25,7 @@ from plg.llm import AnthropicLLMClient, LLMClient, ScriptedLLMClient
 from plg.ontology.generated.models import GlossaryTerm
 from plg.ontology.glossary import load_glossary
 from plg.runs import stream_run
+from plg.tasks.rules import DEFAULT_LIMIT as DEFAULT_TASKS
 from plg.search.embed import Embedder, VoyageEmbedder
 from plg.search.models import DocStatus, SearchFilter
 from plg.search.rerank import LazySearcher, Reranker
@@ -171,6 +173,33 @@ def openapi() -> None:
     # The contract doesn't depend on the model, so no API key is needed to print it.
     api = create_app(Settings.from_env(), llm=ScriptedLLMClient())
     typer.echo(json.dumps(api.openapi(), indent=2))
+
+
+@app.command()
+def digest(
+    user: Annotated[
+        str | None, typer.Option("--user", "-u", help="Staff ID, e.g. S12. Default: every officer with open tasks.")
+    ] = None,
+    limit: Annotated[int, typer.Option(min=1, help="Tasks per officer.")] = DEFAULT_TASKS,
+    out: Annotated[Path | None, typer.Option(help="Write the digest to this file instead of the console.")] = None,
+) -> None:
+    """Task digest: officers' top open tasks ranked by urgency × impact, overdue ones marked. For scheduled runs."""
+    from plg.tasks import rules
+
+    settings = Settings.from_env()
+    personas = load_personas(settings.records_db)
+    if user is not None and user not in personas:
+        typer.echo(f"Unknown staff ID {user}.", err=True)
+        raise typer.Exit(code=1)
+    officers = [personas[user]] if user else list(personas.values())
+    digests = [rules.digest(settings.records_db, o, settings.tasks_today, limit) for o in officers]
+    text = "\n\n".join(rules.render(d) for d in digests if d.open_count or user)
+    if out is None:
+        typer.echo(text)
+        return
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text + "\n")
+    typer.echo(f"Task digest written to {out}.")
 
 
 @graph_app.command("build")

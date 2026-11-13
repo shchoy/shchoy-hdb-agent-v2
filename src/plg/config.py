@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import os
 from pathlib import Path
 from typing import Literal
@@ -40,6 +41,8 @@ class Settings(BaseModel):
     audit_log: Path = REPO_ROOT / ".plg" / "audit.jsonl"
     iems_dir: Path = REPO_ROOT / ".plg" / "iems"
     """The i-EMS mock: raised tickets, one JSON file each."""
+    tasks_today: dt.date = dt.date(2026, 9, 30)
+    """The day tasks are ranked on (overdue, due this week): PLG Records is a snapshot taken on 30 Sep 2026."""
     # Above this many (estimated) tokens of history, older turns are folded into a summary, keeping the last
     # `history_keep_messages` messages verbatim.
     history_token_threshold: int = 6000

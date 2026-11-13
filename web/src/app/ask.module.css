@@ -436,3 +436,39 @@
   border-radius: 3px;
   padding: 0 0.3rem;
 }
+
+.tasks {
+  border: 1px solid #c9ced6;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0 0.75rem;
+}
+
+.tasks h3 {
+  margin: 0 0 0.5rem;
+}
+
+.taskId {
+  display: block;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}
+
+.overdue {
+  display: inline-block;
+  white-space: nowrap;
+  color: #111;
+  background: #fdd8d8;
+  border: 1px solid #b00020;
+  border-radius: 4px;
+  padding: 0 0.4rem;
+}
+
+.checklist tr[data-overdue="true"] td:first-child {
+  border-left: 4px solid #b00020;
+}
+
+.reasons {
+  margin: 0;
+  padding-left: 1.1rem;
+}

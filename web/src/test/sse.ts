@@ -14,7 +14,8 @@ export function fixture(
     | "multi_part"
     | "defect"
     | "doc_check"
-    | "doc_check_problem",
+    | "doc_check_problem"
+    | "tasks",
 ): string {
   // Vitest runs from web/; import.meta.url is not a file URL under jsdom.
   return readFileSync(join(process.cwd(), "src/test/fixtures", `${name}.sse`), "utf8");
@@ -26,6 +27,13 @@ export function submissionsFixture(): Record<string, unknown>[] {
     string,
     unknown
   >[];
+}
+
+/** A recorded task response: `digest.json` (S04's own), `digest_S06.json` (S04 viewing S06, limit 10), `team.json` (S04's team). */
+export function tasksFixture(name: "digest.json" | "digest_S06.json"): Record<string, unknown>;
+export function tasksFixture(name: "team.json"): Record<string, unknown>[];
+export function tasksFixture(name: string): unknown {
+  return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/tasks", name), "utf8"));
 }
 
 /** A recorded approvals response: `pending.json`, `audit.json` (parsed) or a resume stream `edit.sse` / `reject.sse` / `ticket_edit.sse`. */

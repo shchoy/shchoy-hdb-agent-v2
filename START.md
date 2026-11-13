@@ -7,7 +7,7 @@ How to set up and run the PLG "Super-Librarian" POC locally. Everything runs on 
 | Part | Status | How to run |
 |---|---|---|
 | Backend: `plg` CLI and `plg-api` (Python, FastAPI, LangGraph) | Available: policy Q&A with citations, data questions over PLG Records and the Excel trackers, letter drafting | `uv run plg sync`, then `uv run plg ask "..."` / `uv run plg serve` |
-| Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in, Ask, Approvals, Document check and Memory screens | `cd web && npm run dev` |
+| Frontend: web app (TypeScript, Next.js) with a BFF | Available: sign-in, Ask, Approvals, Document check, Tasks and Memory screens | `cd web && npm run dev` |
 
 ## 1. Prerequisites
 
@@ -197,6 +197,43 @@ although `_master/submission_bundles_ground_truth.json` marks them valid; see `t
 
 Where it lives: `src/plg/doccheck/`, `web/src/app/doc-check/`, `web/src/app/DocCheckCard.tsx`,
 BFF `web/src/app/api/submissions/`, `tests/test_doc_check_api.py`.
+
+### Top tasks and the task digest (issue #22)
+
+In the web app, **Tasks** in the top bar (`/tasks`) shows your top open tasks. A team lead also gets an **Officer**
+picker (from `GET /tasks/team`). **Show** sets how many tasks are listed: 5, 10, 20 or 50. You can also ask on the Ask
+screen:
+
+```bash
+uv run plg ask "What are my top 5 tasks this week and why?"   # plg ask has no signed-in officer: use the web app or API
+uv run plg digest --user S12                 # Benjamin Ho's top 5, to the console
+uv run plg digest --limit 10 --out .plg/digest.txt   # every officer with open tasks, to a file (for a scheduled job)
+```
+
+Open tasks (PLG Records `tasks`, not Done) are ranked by a fixed rules matrix, with no Claude call:
+- **Urgency:** overdue 4, due within 7 days 3, due within 30 days 2, later 1.
+- **Impact:** high 3 (safety-related, S$50,000+ rent at risk or 5+ tenants affected), medium 2 (S$10,000+ or 2+
+  tenants), low 1.
+- **Score:** urgency × impact. Ties go to the earlier due date, then the larger rent at risk.
+
+Each task comes with its reasons, e.g. "Overdue by 283 days (due 21 Dec 2025)", "Safety-related", "S$53,520 rent at
+risk". Overdue tasks are marked. "Today" is `PLG_TASKS_TODAY`, which defaults to 2026-09-30, the date of the PLG
+Records snapshot.
+
+- **In a conversation:** the `tasks` specialist streams the ranking as a `tasks` event and merge (Claude) writes the
+  one-line rationale per task. `GET /tasks/digest` and `plg digest` give the rule-based reasons only.
+- **Who can view whose tasks:**
+  - everyone sees their own;
+  - directors see everyone's;
+  - managers and estate managers see the officers of their own department, not other leads.
+
+  Anything else gets 403 from `GET /tasks/digest?staff_id=...`. In a conversation, merge says you're not allowed and
+  no tasks are read.
+- `plg digest` is an admin job: no role check.
+
+Where it lives: `src/plg/tasks/` (`rules.py` matrix, digest, role check; `ask.py` whose tasks and how many), the `tasks`
+node in `src/plg/graph/build.py`, `web/src/app/tasks/`, `web/src/app/TaskList.tsx`, BFF `web/src/app/api/tasks/`,
+`tests/test_tasks_api.py`.
 
 ### Ask a data question (issue #12)
 

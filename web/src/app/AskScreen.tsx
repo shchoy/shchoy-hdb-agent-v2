@@ -10,6 +10,7 @@ import {
   type DraftEvent,
   type PolicyStanceEvent,
   type SqlTraceEvent,
+  type TasksEvent,
   type ThreadSummary,
   type ThreadView,
 } from "@/lib/events";
@@ -20,6 +21,7 @@ import { DraftPreview } from "./DraftPreview";
 import { PolicyStanceCard } from "./PolicyStanceCard";
 import { ReasoningPanel } from "./ReasoningPanel";
 import { SourceViewer } from "./SourceViewer";
+import { TaskList } from "./TaskList";
 import styles from "./ask.module.css";
 import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "./runClient";
 
@@ -33,6 +35,7 @@ type Answer = {
   docChecks: DocCheckEvent[];
   drafts: DraftEvent[];
   stances: PolicyStanceEvent[];
+  tasks: TasksEvent[];
   traces: SqlTraceEvent[];
   trajectory: Step[];
 };
@@ -44,7 +47,7 @@ type Run =
   | { status: "failed"; question: string; reason: string; trajectory: Step[] };
 
 function emptyAnswer(question: string): Answer {
-  return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], stances: [], traces: [], trajectory: [] };
+  return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], stances: [], tasks: [], traces: [], trajectory: [] };
 }
 
 const RESUME_ATTEMPTS = 3;
@@ -106,6 +109,9 @@ export function AskScreen() {
                 break;
               case "doc_check":
                 acc.docChecks = [...acc.docChecks, event];
+                break;
+              case "tasks":
+                acc.tasks = [...acc.tasks, event];
                 break;
               case "draft":
                 acc.drafts = [...acc.drafts, event];
@@ -349,6 +355,9 @@ export function AskScreen() {
                 ))}
                 {run.docChecks.map((check) => (
                   <DocCheckCard key={check.seq} check={check} />
+                ))}
+                {run.tasks.map((digest) => (
+                  <TaskList key={digest.seq} digest={digest} />
                 ))}
                 {run.drafts.map((draft) => (
                   <DraftPreview key={draft.draft_id} draft={draft} />

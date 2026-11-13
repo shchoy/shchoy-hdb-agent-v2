@@ -1,0 +1,1019 @@
+{
+  "staff_id": "S06",
+  "name": "Daniel Ong",
+  "title": "Property Officer (Inspections)",
+  "as_of": "2026-09-30",
+  "open_count": 89,
+  "overdue_count": 71,
+  "tasks": [
+    {
+      "task_id": "TSK-2025-0057",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Fire Safety at U-CD190-01-02",
+      "related_id": "INSP-2025-0185",
+      "due_date": "2025-11-03",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 1,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 331,
+      "reasons": [
+        "Overdue by 331 days (due 3 Nov 2025)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0124",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Fire Safety at U-KR305-01-29",
+      "related_id": "INSP-2025-0403",
+      "due_date": "2025-12-03",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 2,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 301,
+      "reasons": [
+        "Overdue by 301 days (due 3 Dec 2025)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0101",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Fire Safety at U-CD119-01-06",
+      "related_id": "INSP-2026-0358",
+      "due_date": "2026-03-03",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 3,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 211,
+      "reasons": [
+        "Overdue by 211 days (due 3 Mar 2026)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0459",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Structural Defect at U-KR372-01-08",
+      "related_id": "INSP-2026-1151",
+      "due_date": "2026-06-27",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 4,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 95,
+      "reasons": [
+        "Overdue by 95 days (due 27 Jun 2026)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0839",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Fire Safety at U-PI667-01-14",
+      "related_id": "INSP-2026-1733",
+      "due_date": "2026-09-21",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 5,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 9,
+      "reasons": [
+        "Overdue by 9 days (due 21 Sep 2026)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0925",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Fire Safety at U-KR359-01-08",
+      "related_id": "INSP-2026-1770",
+      "due_date": "2026-09-25",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 6,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 5,
+      "reasons": [
+        "Overdue by 5 days (due 25 Sep 2026)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0933",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Structural Defect at U-KR371-01-03",
+      "related_id": "INSP-2026-1778",
+      "due_date": "2026-09-26",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 7,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 4,
+      "reasons": [
+        "Overdue by 4 days (due 26 Sep 2026)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0948",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Structural Defect at U-RH437-01-06",
+      "related_id": "INSP-2026-1802",
+      "due_date": "2026-09-29",
+      "status": "Overdue",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 8,
+      "urgency": "overdue",
+      "impact": "high",
+      "score": 12,
+      "overdue": true,
+      "days_overdue": 1,
+      "reasons": [
+        "Overdue by 1 day (due 29 Sep 2026)",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0953",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Fire Safety at U-BV266-01-08",
+      "related_id": "INSP-2026-1811",
+      "due_date": "2026-09-30",
+      "status": "In Progress",
+      "safety_flag": true,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 9,
+      "urgency": "this_week",
+      "impact": "high",
+      "score": 9,
+      "overdue": false,
+      "days_overdue": 0,
+      "reasons": [
+        "Due today",
+        "Safety-related"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0006",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-BV290-01-05",
+      "related_id": "INSP-2025-0032",
+      "due_date": "2025-10-20",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 10,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 345,
+      "reasons": [
+        "Overdue by 345 days (due 20 Oct 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0059",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-CD118-01-07",
+      "related_id": "INSP-2025-0189",
+      "due_date": "2025-11-10",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 11,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 324,
+      "reasons": [
+        "Overdue by 324 days (due 10 Nov 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0082",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-RH464-01-03",
+      "related_id": "INSP-2025-0264",
+      "due_date": "2025-11-19",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 12,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 315,
+      "reasons": [
+        "Overdue by 315 days (due 19 Nov 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0090",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-KR369-01-06",
+      "related_id": "INSP-2025-0300",
+      "due_date": "2025-11-25",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 13,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 309,
+      "reasons": [
+        "Overdue by 309 days (due 25 Nov 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0106",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-RH455-01-06",
+      "related_id": "INSP-2025-0343",
+      "due_date": "2025-12-02",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 14,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 302,
+      "reasons": [
+        "Overdue by 302 days (due 2 Dec 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0109",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-BV214-01-32",
+      "related_id": "INSP-2025-0360",
+      "due_date": "2025-12-04",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 15,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 300,
+      "reasons": [
+        "Overdue by 300 days (due 4 Dec 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0113",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-BV231-01-08",
+      "related_id": "INSP-2025-0367",
+      "due_date": "2025-12-05",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 16,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 299,
+      "reasons": [
+        "Overdue by 299 days (due 5 Dec 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0123",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-PI634-01-08",
+      "related_id": "INSP-2025-0397",
+      "due_date": "2025-12-09",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 17,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 295,
+      "reasons": [
+        "Overdue by 295 days (due 9 Dec 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0130",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-KR341-01-11",
+      "related_id": "INSP-2025-0444",
+      "due_date": "2025-12-16",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 18,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 288,
+      "reasons": [
+        "Overdue by 288 days (due 16 Dec 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0144",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unauth Trade at U-CD160-01-13",
+      "related_id": "INSP-2025-0500",
+      "due_date": "2025-12-16",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 19,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 288,
+      "reasons": [
+        "Overdue by 288 days (due 16 Dec 2025)"
+      ]
+    },
+    {
+      "task_id": "TSK-2025-0173",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-BV227-02-05",
+      "related_id": "INSP-2025-0577",
+      "due_date": "2026-01-02",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 20,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 271,
+      "reasons": [
+        "Overdue by 271 days (due 2 Jan 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0011",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unauth Trade at U-CD153-01-04",
+      "related_id": "INSP-2026-0050",
+      "due_date": "2026-01-15",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 21,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 258,
+      "reasons": [
+        "Overdue by 258 days (due 15 Jan 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0012",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-KR368-01-06",
+      "related_id": "INSP-2026-0052",
+      "due_date": "2026-01-22",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 22,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 251,
+      "reasons": [
+        "Overdue by 251 days (due 22 Jan 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0034",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unauth Trade at U-PI627-01-21",
+      "related_id": "INSP-2026-0126",
+      "due_date": "2026-01-24",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 23,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 249,
+      "reasons": [
+        "Overdue by 249 days (due 24 Jan 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0017",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-RH434-01-01",
+      "related_id": "INSP-2026-0070",
+      "due_date": "2026-01-25",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 24,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 248,
+      "reasons": [
+        "Overdue by 248 days (due 25 Jan 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0025",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-KR345-01-08",
+      "related_id": "INSP-2026-0092",
+      "due_date": "2026-01-27",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 25,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 246,
+      "reasons": [
+        "Overdue by 246 days (due 27 Jan 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0042",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-CD129-01-06",
+      "related_id": "INSP-2026-0161",
+      "due_date": "2026-02-07",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 26,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 235,
+      "reasons": [
+        "Overdue by 235 days (due 7 Feb 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0050",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-KR362-01-06",
+      "related_id": "INSP-2026-0181",
+      "due_date": "2026-02-10",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 27,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 232,
+      "reasons": [
+        "Overdue by 232 days (due 10 Feb 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0051",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-CD185-01-07",
+      "related_id": "INSP-2026-0184",
+      "due_date": "2026-02-11",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 28,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 231,
+      "reasons": [
+        "Overdue by 231 days (due 11 Feb 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0055",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-PI696-01-01",
+      "related_id": "INSP-2026-0198",
+      "due_date": "2026-02-12",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 29,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 230,
+      "reasons": [
+        "Overdue by 230 days (due 12 Feb 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0093",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-ST501-01-06",
+      "related_id": "INSP-2026-0338",
+      "due_date": "2026-03-08",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 30,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 206,
+      "reasons": [
+        "Overdue by 206 days (due 8 Mar 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0129",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-CD174-01-05",
+      "related_id": "INSP-2026-0465",
+      "due_date": "2026-03-26",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 31,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 188,
+      "reasons": [
+        "Overdue by 188 days (due 26 Mar 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0149",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-ST513-01-09",
+      "related_id": "INSP-2026-0537",
+      "due_date": "2026-04-06",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 32,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 177,
+      "reasons": [
+        "Overdue by 177 days (due 6 Apr 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0160",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-BV205-01-07",
+      "related_id": "INSP-2026-0573",
+      "due_date": "2026-04-12",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 33,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 171,
+      "reasons": [
+        "Overdue by 171 days (due 12 Apr 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0220",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-ST501-01-11",
+      "related_id": "INSP-2026-0675",
+      "due_date": "2026-04-28",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 34,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 155,
+      "reasons": [
+        "Overdue by 155 days (due 28 Apr 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0247",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-KR341-01-06",
+      "related_id": "INSP-2026-0795",
+      "due_date": "2026-05-15",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 35,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 138,
+      "reasons": [
+        "Overdue by 138 days (due 15 May 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0248",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-RH463-01-01",
+      "related_id": "INSP-2026-0802",
+      "due_date": "2026-05-16",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 36,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 137,
+      "reasons": [
+        "Overdue by 137 days (due 16 May 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0311",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-ST566-02-01",
+      "related_id": "INSP-2026-0848",
+      "due_date": "2026-05-23",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 37,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 130,
+      "reasons": [
+        "Overdue by 130 days (due 23 May 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0345",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unauth Trade at U-RH455-01-01",
+      "related_id": "INSP-2026-0928",
+      "due_date": "2026-05-25",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 38,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 128,
+      "reasons": [
+        "Overdue by 128 days (due 25 May 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0326",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-BV279-01-07",
+      "related_id": "INSP-2026-0895",
+      "due_date": "2026-05-29",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 39,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 124,
+      "reasons": [
+        "Overdue by 124 days (due 29 May 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0340",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-RH485-01-09",
+      "related_id": "INSP-2026-0913",
+      "due_date": "2026-05-30",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 40,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 123,
+      "reasons": [
+        "Overdue by 123 days (due 30 May 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0360",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unauth Trade at U-KR318-01-01",
+      "related_id": "INSP-2026-0981",
+      "due_date": "2026-06-04",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 41,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 118,
+      "reasons": [
+        "Overdue by 118 days (due 4 Jun 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0366",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-RH476-01-05",
+      "related_id": "INSP-2026-0994",
+      "due_date": "2026-06-13",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 42,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 109,
+      "reasons": [
+        "Overdue by 109 days (due 13 Jun 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0452",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unauth Sublet at U-RH455-01-20",
+      "related_id": "INSP-2026-1119",
+      "due_date": "2026-06-30",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 43,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 92,
+      "reasons": [
+        "Overdue by 92 days (due 30 Jun 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0468",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-ST535-01-06",
+      "related_id": "INSP-2026-1182",
+      "due_date": "2026-07-09",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 44,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 83,
+      "reasons": [
+        "Overdue by 83 days (due 9 Jul 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0557",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-KR345-01-14",
+      "related_id": "INSP-2026-1304",
+      "due_date": "2026-07-27",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 45,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 65,
+      "reasons": [
+        "Overdue by 65 days (due 27 Jul 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0560",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-KR305-01-34",
+      "related_id": "INSP-2026-1310",
+      "due_date": "2026-07-28",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 46,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 64,
+      "reasons": [
+        "Overdue by 64 days (due 28 Jul 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0579",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Hygiene at U-KR345-01-04",
+      "related_id": "INSP-2026-1356",
+      "due_date": "2026-08-05",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 47,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 56,
+      "reasons": [
+        "Overdue by 56 days (due 5 Aug 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0580",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unapproved Aa at U-ST545-01-02",
+      "related_id": "INSP-2026-1358",
+      "due_date": "2026-08-05",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 48,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 56,
+      "reasons": [
+        "Overdue by 56 days (due 5 Aug 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0586",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Display Encroach at U-CD129-01-03",
+      "related_id": "INSP-2026-1372",
+      "due_date": "2026-08-07",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 49,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 54,
+      "reasons": [
+        "Overdue by 54 days (due 7 Aug 2026)"
+      ]
+    },
+    {
+      "task_id": "TSK-2026-0658",
+      "task_type": "Inspection Follow-up",
+      "title": "Follow up Unauth Trade at U-BV237-01-03",
+      "related_id": "INSP-2026-1465",
+      "due_date": "2026-08-14",
+      "status": "Overdue",
+      "safety_flag": false,
+      "revenue_at_risk": 0.0,
+      "tenants_affected": 1,
+      "rank": 50,
+      "urgency": "overdue",
+      "impact": "low",
+      "score": 4,
+      "overdue": true,
+      "days_overdue": 47,
+      "reasons": [
+        "Overdue by 47 days (due 14 Aug 2026)"
+      ]
+    }
+  ]
+}

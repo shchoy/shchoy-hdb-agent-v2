@@ -14,6 +14,7 @@ from plg.identity import Role
 from plg.data.trace import SqlTrace
 from plg.drafting.model import Draft
 from plg.entities.policy import PolicyLineage
+from plg.tasks.rules import TaskDigest
 
 
 class NodeEvent(BaseModel):
@@ -76,6 +77,14 @@ class DocCheckEvent(DocCheck):
     seq: int
 
 
+class TasksEvent(TaskDigest):
+    """An officer's top open tasks ranked by urgency × impact (a deterministic rules matrix), overdue ones marked,
+    each with the reasons for its place."""
+
+    type: Literal["tasks"] = "tasks"
+    seq: int
+
+
 class ProposedActionEvent(ProposedAction):
     """Something the assistant proposes to do outside the system. It waits for the officer's decision."""
 
@@ -123,6 +132,6 @@ class ErrorEvent(BaseModel):
 
 RunEvent = Annotated[
     NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | ClassificationEvent
-    | DocCheckEvent | ProposedActionEvent
+    | DocCheckEvent | TasksEvent | ProposedActionEvent
     | InterruptEvent | ActionResultEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
 ]

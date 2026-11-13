@@ -1,5 +1,5 @@
 """StateGraph wiring: START → route → specialists (fan-out; `defect` and `doc_check` run the `defect_flow` and
-`doc_check_flow` subgraphs) → merge → (approval → execute_action)* → END.
+`doc_check_flow` subgraphs; `tasks` is deterministic) → merge → (approval → execute_action)* → END.
 
 `route` (Haiku) decides which specialists a question needs; none means `merge` answers it directly.
 `merge` fuses the specialists' findings into one answer and is the only node that streams tokens.
@@ -44,7 +44,9 @@ from plg.drafting.templates import TemplateLibrary
 from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
 from plg.graph import summary as history
-from plg.identity import UserCtx
+from plg.identity import UserCtx, load_personas
+from plg.tasks import ask as task_ask
+from plg.tasks import rules as task_rules
 from plg.graph.state import RUN_ID, Finding, Intent, PLGGraph, PLGState
 from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
@@ -58,6 +60,7 @@ DATA = data.NODE
 DRAFTING = drafting.NODE
 DEFECT = DEFECT_NODE
 DOC_CHECK = DOC_CHECK_NODE
+TASKS = task_ask.NODE
 MERGE = "merge"
 SUMMARISE = history.NODE
 LOAD_MEMORY = "load_memory"
@@ -80,6 +83,8 @@ e.g. to raise an i-EMS maintenance ticket for it.
 - doc_check: the officer asks whether an application (APP-yyyy-nnnn) is complete or has all its documents, or asks \
 to check its submitted documents or bundle; the check also drafts the missing-documents notice for it, so a request \
 for that notice about a named application goes here, not to drafting.
+- tasks: the officer asks what to work on: their own (or a named colleague's) top, most urgent or overdue tasks, work \
+queue or task digest, ranked and explained. Counts and statistics of tasks across PLG go to data.
 A question can have several parts, each needing a different specialist: name every specialist needed. Choose no \
 specialist for greetings, thanks and questions about how to use the assistant.
 Give each specialist your confidence (0 to 1) that the question needs it. If you can't tell what the officer is asking \
@@ -97,7 +102,7 @@ ROUTE_TOOL: Block = {
                 "items": {
                     "type": "object",
                     "properties": {
-                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect", "doc_check"]},
+                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect", "doc_check", "tasks"]},
                         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                     },
                     "required": ["intent", "confidence"],
@@ -198,6 +203,7 @@ def build_graph(
     doc_check_flow = build_doc_check_flow(
         llm, checklists or load_checklists(vocab), warehouse.records_db, settings.submissions_dir, templates
     )
+    staff = list(load_personas(warehouse.records_db).values())
     first = LOAD_MEMORY if memory else ROUTE  # memory is recalled before routing when the graph has one
 
     def unsummarised(state: PLGState) -> list[Message]:
@@ -320,6 +326,23 @@ def build_graph(
         drafts.add(user.staff_id, draft, out["notice_docx"])
         return {"findings": [finding], "proposed_actions": [propose_sending(state, draft, user)]}
 
+    async def tasks_node(state: PLGState) -> PLGState:
+        """Rank the officer's (or a named colleague's, if their role allows) open tasks by the rules matrix; stream the
+        ranking. Deterministic: merge words the rationale from the reasons given. Its findings count as traced (a
+        records read or the role check that refused it), so merge relays a refusal rather than "not covered"."""
+        user = state.get("user")
+        if user is None:
+            return {"findings": [Finding(specialist=TASKS, text=task_ask.NO_USER, citations=[], traced=True)]}
+        officer = task_ask.whose(state["question"], user, staff)
+        if not task_rules.can_view(user, officer):
+            refusal = task_ask.NOT_ALLOWED.format(viewer=user.name, title=user.title, target=officer.name)
+            return {"findings": [Finding(specialist=TASKS, text=refusal, citations=[], traced=True)]}
+        found = await asyncio.to_thread(
+            task_rules.digest, warehouse.records_db, officer, settings.tasks_today, task_ask.how_many(state["question"])
+        )
+        get_stream_writer()({"tasks": found.model_dump(mode="json")})
+        return {"findings": [Finding(specialist=TASKS, text=task_rules.render(found) + "\n" + task_ask.RATIONALE, citations=[], traced=True)]}
+
     async def merge(state: PLGState) -> PLGState:
         write = get_stream_writer()
         findings = state.get("findings", [])
@@ -406,6 +429,7 @@ def build_graph(
     graph.add_node(DRAFTING, drafting_node)
     graph.add_node(DEFECT, defect_node)
     graph.add_node(DOC_CHECK, doc_check_node)
+    graph.add_node(TASKS, tasks_node)
     graph.add_node(MERGE, merge)
     graph.add_node(SUMMARISE, summarise_history)
     graph.add_node(APPROVAL, approval)
@@ -418,12 +442,13 @@ def build_graph(
         graph.add_node(LOAD_MEMORY, load_memory)
         graph.add_node(WRITE_MEMORY, write_memory)
         graph.add_edge(LOAD_MEMORY, ROUTE)
-    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, DOC_CHECK, MERGE])
+    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, DOC_CHECK, TASKS, MERGE])
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
     graph.add_edge(DRAFTING, MERGE)
     graph.add_edge(DEFECT, MERGE)
     graph.add_edge(DOC_CHECK, MERGE)
+    graph.add_edge(TASKS, MERGE)
     answered = WRITE_MEMORY if memory else MERGE
     if memory:
         graph.add_edge(MERGE, WRITE_MEMORY)

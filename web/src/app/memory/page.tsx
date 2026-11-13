@@ -20,6 +20,7 @@ export default async function MemoryPage() {
         <Link href="/">Ask</Link>
         <Link href="/approvals">Approvals</Link>
         <Link href="/doc-check">Document check</Link>
+        <Link href="/tasks">Tasks</Link>
         <SignOutButton />
       </header>
       <main>

@@ -15,6 +15,7 @@ src/plg/
 │                    transcripts_dir (saved scan transcripts, beside search_db). threads_db (.plg/threads.sqlite: checkpoints + thread owners),
 │                    history_token_threshold / history_keep_messages (when older turns are folded into a summary).
 │                    route_min_confidence (0.6: weaker routing labels are dropped; none left → clarifying question).
+│                    outbox_dir (.plg/outbox, local Outbox) and audit_log (.plg/audit.jsonl, append-only).
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
@@ -24,6 +25,14 @@ src/plg/
 │                    script() for streamed replies, script_turns() for complete() turns, keyed by (node, latest plain-
 │                    text user message, or the text block of a block message without tool results); a turn may be a callable of the messages, e.g. to cite a search result it was
 │                    shown; `sent` records messages, `requests` system+tools). Turn builders: turn, text, tool_call.
+├── actions/         Approvals (issue #18). model.py: ProposedAction (stable action_id + version, action_type send_letter, title,
+│   │                LetterPayload, preview HTML, approver_roles, proposed_by, status pending|approved|rejected), APPROVER_ROLES (send_letter:
+│   │                not analysts), ApprovalDecision (+ approver, approver_role; refusal(action): wrong id/version/not pending, not the
+│   │                proposer, role can't approve (reject needs no role)), upsert_actions reducer, pending(). letters.py: propose_letter
+│   │                (a draft of the same template revises the thread's pending letter: same ID, version+1), edited (slot edits re-composed
+│   │                and PII-checked → next version), unknown_slots. outbox.py: Outbox protocol + LocalOutbox (one JSON per item, id
+│   │                `<action_id>-v<version>`, overwrite = idempotent). audit.py: AuditLog (JSONL, append-only, one entry per action ID:
+│   │                decision, edits, reason, approver + role, at, run_id, outbox_id).
 ├── identity.py      UserCtx (staff_id, name, title, dept, role) loaded read-only from the `staff` table;
 │                    role is derived from the job title (role_for). POC identity, replaced by OIDC later.
 ├── agents/
@@ -44,7 +53,7 @@ src/plg/
 │   │                binding) and run_sql (plan, sql with $as_of, glossary term IDs, as_of; default as_of = semantic layer's
 │   │                as_of_default 2026-09-30). Each run_sql leaves a SqlTrace; the last carries the agent's explanation, which always ends by naming the
 │   │                definition versions and effective dates used (with_definitions appends them if the agent left them out).
-│   ├── drafting.py  The drafting agent: tools get_template, lookup_records (read-only SELECT through the Warehouse) and submit_draft
+│   ├── drafting.py  The drafting agent (its draft becomes a proposed send_letter action in the graph): tools get_template, lookup_records (read-only SELECT through the Warehouse) and submit_draft
 │   │                (records a Draft; the last submission wins and is stored for download). Unfilled slots are listed with reasons, never
 │   │                invented; the draft gets a PII check. Signing officer's email/phone come from `staff`, read directly (the Warehouse blocks it).
 │   └── knowledge.py The knowledge agent: search_corpus (+ the entity tools and find_precedents when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
@@ -69,13 +78,15 @@ src/plg/
 │   │                `{{ name }}`, [guidance] dropped, wording never changed), render.py (fill → paragraphs; open slots show as «slot»; to_html
 │   │                escapes everything; to_docx reuses the template file, open slots highlighted), pii.py (NRIC/FIN, non-officer phone/email,
 │   │                tenant names in replies to the public; findings point at slots, never repeat values), model.py (Draft, UnfilledSlot,
-│   │                PiiFinding), store.py (DraftStore: in memory, owner-checked). Nothing is sent and no outbox item is made.
+│   │                PiiFinding), store.py (DraftStore: in memory, owner-checked), compose.py (slot values →
+│   │                Draft + DOCX; shared by submit_draft and approval edits). Drafting sends nothing: sending is a ProposedAction (actions/).
 ├── graph/
 │   ├── state.py     PLGState (messages = completed exchanges only, question, user, intents, findings, answer) and
 │                    PLGGraph. A turn joins `messages` only when merge answers it, so a failed run leaves no trace.
 │                    findings fan in by appending; route's empty update resets them each turn. `clarification` = route's question back (reset each turn). `memory` = this turn's labelled notes block.
+│                    proposed_actions (upserted by action ID), decision (what `approval` received). RUN_ID = configurable key carrying the run_id to nodes.
 │   ├── summary.py   summarise_history: fold(llm, older messages, previous summary) (Haiku, node summarise_history); entity IDs missing from the reply are re-appended verbatim.
-│   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → (summarise_history if history > threshold) → load_memory → route → knowledge, data and/or drafting (if intended) → merge → write_memory → END
+│   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → (summarise_history if history > threshold) → load_memory → route → knowledge, data and/or drafting (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END
 │                    (load_memory/write_memory only when a MemoryService is given: plg-api yes, `plg ask` no). The memory block is appended to merge's system prompt.
 │                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting) + optional
 │                    clarifying_question (RouteDecision). Labels below route_min_confidence are dropped; if none is left but some were
@@ -85,6 +96,10 @@ src/plg/
 │                    streams `sql_trace` chunks.
 │                    merge fuses findings keeping [n] markers (with 2+ supported findings, cited or traced, in one `## ` section per part); findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
 │                    answer with no Claude call. merge is the only node that streams tokens. Checkpointer: InMemorySaver by default (CLI); plg-api swaps in AsyncSqliteSaver (threads_db) in its lifespan. State keeps the full `messages` plus `summary`/`summarised` (offset folded).
+│                    drafting_node turns its draft into a ProposedAction (letters.propose_letter). approval = LangGraph interrupt() carrying every pending
+│                    action (JSON list); the resume value is an ApprovalDecision, re-checked (refusal) before execute_action, the only side-effecting
+│                    node: approve/edit → Outbox item (edit = re-composed next version), every decision → one AuditLog entry with the run_id; emits
+│                    `action_result`. A new question on an interrupted thread runs afresh and re-interrupts at the end while actions stay pending.
 ├── memory/          Personal long-term memory (issue #24). store.py: MemoryStore, a LangGraph BaseStore over the LanceDB `memory`
 │   │                table (namespace ("memory", staff_id, profile|preference|episode)); typed API remember (PII masked with
 │   │                drafting/pii.py patterns; near-duplicates (cosine >= 0.9 or same key) merged; a retired note is never revived),
@@ -98,9 +113,10 @@ src/plg/
 ├── threads.py       ThreadStore (SQLite plg_threads: owner + title; a thread is listed once asked), RunBuffer (every event of a run, follow(after=seq)) and
 │                    RunRegistry (latest run per thread, runs as background tasks so they outlive the client; 409 while one is answering).
 ├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data),
-│                    draft (Draft: html preview, unfilled slots, pii flags), done (run_id), error (run_id).
-├── runs.py          stream_run(graph, thread_id, message, user?): runs the graph, yields numbered RunEvents,
-│                    turns any failure into an error event. Shared by the API and the CLI.
+│                    draft (Draft: html preview, unfilled slots, pii flags), proposed_action (ProposedAction), interrupt (action_id, version,
+│                    approver_roles), action_result (action_id, version sent, decision, outbox_id|null), done (run_id), error (run_id).
+├── runs.py          stream_run(graph, thread_id, message, user?, *, decision?): runs the graph (or resumes it with Command(resume=decision)),
+│                    yields numbered RunEvents (an interrupted task → proposed_action + interrupt per pending action), turns any failure into an error event. Shared by the API and the CLI.
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
 │                    structure-aware chunking with contextual headers, metadata + entity tagging from PLG Records,
 │                    incremental by content hash; superseded versions are marked, never deleted.
@@ -152,6 +168,10 @@ src/plg/
 │                    GET /memory (own memories, profile seeded on first look), GET/PATCH/DELETE /memory/{id} (PATCH: text and/or status
 │                    active|retired; a policy-flagged note can't be set active (409, FlaggedByPolicy): rewording it clears the flag;
 │                    other users' memories are 404).
+│                    POST /threads/{id}/resume {action_id, version, decision approve|edit|reject, edits?, reason?} (SSE): 404 non-owner, 409 not the
+│                    pending action/version (replay), 403 role can't approve/edit, 422 reject without reason / unknown or blanked slot / open slots
+│                    left; then RunRegistry.start(decision). GET /approvals?status=pending: own pending actions across threads (PendingApproval =
+│                    ProposedAction + thread_id/title), read from checkpoint interrupts so they survive a restart. ThreadView.pending likewise.
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers),
                      `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
                      `plg glossary list [--all] | show <term>`, `plg memory list | show | edit | forget --user <staff ID>`. make_llm() builds the real LLMClient.
@@ -165,7 +185,9 @@ ontology/            SOURCE of the ontology (semantic.yaml = the semantic layer:
 tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLLMClient (conftest.py; requests
                      carry USER = X-PLG-User S05; route(llm, question, *intents) scripts the router; make_api gives each test
                      a temp threads_db, graph_dir and HashingEmbedder memory store). `llm.streamed` records merge's system + messages
-                     (use it, not `sent[-1]`, which the background extract_memory call can win). The poc-data
+                     (use it, not `sent[-1]`, which the background extract_memory call can win).
+                     make_api also puts outbox_dir/audit_log in tmp_path; Api.resume(thread, decision, headers) returns the SSE stream or the
+                     refusal status; test_approvals_api.py reads LocalOutbox/AuditLog there as the observable outcome. The poc-data
                      corpus is synced once per session (hashing embedder) for search and knowledge_api tests
                      (real local cross-encoder; each search costs seconds). That sync also loads the trackers (`trackers_db` fixture);
                      test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
@@ -177,7 +199,7 @@ scripts/build_ontology.py
                      problem lists them, exits 1, writes nothing. --source/--out for testing. Needs dev deps (linkml).
 scripts/record_sse_fixtures.py
                      Records real SSE streams (answer with citations, not_covered, error, draft, policy_stance, data: a rejected then a successful run_sql, multi_part: knowledge + data fused in sections) from the in-process API,
-                     with the corpus synced into a temp index (threads, memory and graph writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
+                     with the corpus synced into a temp index (threads, memory, graph, outbox and audit writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
@@ -221,6 +243,8 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 - The browser never talks to plg-api and holds no credentials: PLG_API_URL is server-only, never NEXT_PUBLIC_*.
 - The data agent only runs one read-only SELECT over PLG Records (not `staff`) and the Excel trackers (`trackers.<table>`), validated and EXPLAIN-dry-run first; business
   terms use the glossary version in force on the reporting date. The DuckDB `sqlite` extension is downloaded on first use.
+- Side effects exist only as `ProposedAction`s; `execute_action` runs only after the `approval` interrupt, and no model
+  toolset holds a tool that acts. Outbox and audit writes go through the `Outbox` / `AuditLog` adapters.
 - Every claim in a knowledge answer is cited through the Messages API search_result citations; an answer
   with no surviving citation becomes the fixed "not covered" answer. Agent tools are read-only.
 - `wrap_anthropic` is not used for streaming: langsmith 0.14.8's stream reducer crashes with anthropic 1.13.

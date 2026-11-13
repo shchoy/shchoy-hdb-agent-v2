@@ -64,17 +64,24 @@ USER = {"X-PLG-User": "S05"}
 class Api:
     client: TestClient
 
-    def create_thread(self) -> str:
-        response = self.client.post("/threads", headers=USER)
+    def create_thread(self, headers: dict[str, str] = USER) -> str:
+        response = self.client.post("/threads", headers=headers)
         assert response.status_code == 201
         return str(response.json()["thread_id"])
 
-    def run(self, thread_id: str, message: str) -> SseStream:
+    def run(self, thread_id: str, message: str, headers: dict[str, str] = USER) -> SseStream:
         with self.client.stream(
-            "POST", f"/threads/{thread_id}/runs", json={"message": message}, headers=USER
+            "POST", f"/threads/{thread_id}/runs", json={"message": message}, headers=headers
         ) as r:
             assert r.status_code == 200
             assert r.headers["content-type"].startswith("text/event-stream")
+            return parse_sse(r.read().decode())
+
+    def resume(self, thread_id: str, decision: dict[str, object], headers: dict[str, str] = USER) -> SseStream | int:
+        """The SSE stream of the resumed run, or the HTTP status it was refused with."""
+        with self.client.stream("POST", f"/threads/{thread_id}/resume", json=decision, headers=headers) as r:
+            if r.status_code != 200:
+                return r.status_code
             return parse_sse(r.read().decode())
 
 
@@ -104,6 +111,8 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         settings.setdefault("threads_db", tmp_path / "threads.sqlite")
         settings.setdefault("graph_dir", tmp_path / "graph")  # WORKED_ON links never reach the real graph
         settings.setdefault("trackers_db", tmp_path / "trackers.duckdb")  # none unless a test passes the synced ones
+        settings.setdefault("outbox_dir", tmp_path / "outbox")  # approved actions land here, never in .plg/
+        settings.setdefault("audit_log", tmp_path / "audit.jsonl")
         embedder = HashingEmbedder(dim=128)
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]

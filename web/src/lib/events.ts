@@ -13,6 +13,7 @@ export type CitationEvent = Schemas["CitationEvent"];
 export type DraftEvent = Schemas["DraftEvent"];
 export type PolicyStanceEvent = Schemas["PolicyStanceEvent"];
 export type SqlTraceEvent = Schemas["SqlTraceEvent"];
+export type ProposedActionEvent = Schemas["ProposedActionEvent"];
 export type UserCtx = Schemas["UserCtx"];
 export type ThreadSummary = Schemas["ThreadSummary"];
 export type ThreadView = Schemas["ThreadView"];
@@ -23,6 +24,14 @@ export function roleLabel(role: UserCtx["role"]): string {
 }
 
 const seq = z.number().int();
+const role = z.enum(["director", "manager", "estate_manager", "officer", "analyst", "legal"]);
+const decision = z.enum(["approve", "edit", "reject"]);
+const unfilledSlot = z.object({ slot: z.string(), reason: z.string() });
+const piiFinding = z.object({
+  kind: z.enum(["nric", "email", "phone", "tenant"]),
+  slot: z.string(),
+  message: z.string(),
+});
 
 export const runEventSchema = z.discriminatedUnion("type", [
   z.object({
@@ -81,8 +90,8 @@ export const runEventSchema = z.discriminatedUnion("type", [
     template_title: z.string(),
     template_version: z.string(),
     slots: z.record(z.string(), z.string()),
-    unfilled: z.array(z.object({ slot: z.string(), reason: z.string() })),
-    pii: z.array(z.object({ kind: z.enum(["nric", "email", "phone", "tenant"]), slot: z.string(), message: z.string() })),
+    unfilled: z.array(unfilledSlot),
+    pii: z.array(piiFinding),
     html: z.string(),
   }),
   z.object({
@@ -126,6 +135,44 @@ export const runEventSchema = z.discriminatedUnion("type", [
         evidence_quote: z.string(),
       }),
     ),
+  }),
+  z.object({
+    type: z.literal("proposed_action"),
+    seq,
+    action_id: z.string(),
+    version: z.number().int(),
+    action_type: z.literal("send_letter"),
+    title: z.string(),
+    payload: z.object({
+      draft_id: z.string(),
+      template_id: z.string(),
+      template_title: z.string(),
+      template_version: z.string(),
+      recipient: z.string(),
+      slots: z.record(z.string(), z.string()),
+      unfilled: z.array(unfilledSlot),
+      pii: z.array(piiFinding),
+    }),
+    preview: z.string(),
+    approver_roles: z.array(role),
+    proposed_by: z.string(),
+    proposed_at: z.string(),
+    status: z.enum(["pending", "approved", "rejected"]),
+  }),
+  z.object({
+    type: z.literal("interrupt"),
+    seq,
+    action_id: z.string(),
+    version: z.number().int(),
+    approver_roles: z.array(role),
+  }),
+  z.object({
+    type: z.literal("action_result"),
+    seq,
+    action_id: z.string(),
+    version: z.number().int(),
+    decision,
+    outbox_id: z.string().nullable(),
   }),
   z.object({ type: z.literal("done"), seq, run_id: z.string() }),
   z.object({ type: z.literal("error"), seq, run_id: z.string(), message: z.string() }),

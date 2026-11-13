@@ -79,6 +79,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Approvals
+         * @description The officer's own actions waiting for a decision, across all their conversations, oldest first.
+         */
+        get: operations["list_approvals_approvals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/memory": {
         parameters: {
             query?: never;
@@ -129,6 +149,27 @@ export interface paths {
         put?: never;
         /** Create Run */
         post: operations["create_run_threads__thread_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/threads/{thread_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume Thread
+         * @description Approve, edit or reject the pending action. Only the thread's owner, holding an approver role for the
+         *     action type, can decide, and only on the exact pending version; anything else changes nothing.
+         */
+        post: operations["resume_thread_threads__thread_id__resume_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -303,6 +344,30 @@ export interface components {
             /** End */
             end: number;
         };
+        /**
+         * LetterPayload
+         * @description A letter filled from an approved template, as it would be sent.
+         */
+        LetterPayload: {
+            /** Draft Id */
+            draft_id: string;
+            /** Template Id */
+            template_id: string;
+            /** Template Title */
+            template_title: string;
+            /** Template Version */
+            template_version: string;
+            /** Recipient */
+            recipient: string;
+            /** Slots */
+            slots: {
+                [key: string]: string;
+            };
+            /** Unfilled */
+            unfilled: components["schemas"]["UnfilledSlot"][];
+            /** Pii */
+            pii: components["schemas"]["PiiFinding"][];
+        };
         /** MemoryEdit */
         MemoryEdit: {
             /** Text */
@@ -356,6 +421,113 @@ export interface components {
             /** Content */
             content: string;
         };
+        /**
+         * PendingApproval
+         * @description A pending action and the conversation it waits in.
+         */
+        PendingApproval: {
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Action Type
+             * @constant
+             */
+            action_type: "send_letter";
+            /** Title */
+            title: string;
+            payload: components["schemas"]["LetterPayload"];
+            /** Preview */
+            preview: string;
+            /** Approver Roles */
+            approver_roles: ("director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal")[];
+            /** Proposed By */
+            proposed_by: string;
+            /** Proposed At */
+            proposed_at: string;
+            /**
+             * Status
+             * @default pending
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
+            /** Thread Id */
+            thread_id: string;
+            /** Thread Title */
+            thread_title: string;
+        };
+        /**
+         * PiiFinding
+         * @description Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.
+         */
+        PiiFinding: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "nric" | "email" | "phone" | "tenant";
+            /** Slot */
+            slot: string;
+            /** Message */
+            message: string;
+        };
+        /** ProposedAction */
+        ProposedAction: {
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Action Type
+             * @constant
+             */
+            action_type: "send_letter";
+            /** Title */
+            title: string;
+            payload: components["schemas"]["LetterPayload"];
+            /** Preview */
+            preview: string;
+            /** Approver Roles */
+            approver_roles: ("director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal")[];
+            /** Proposed By */
+            proposed_by: string;
+            /** Proposed At */
+            proposed_at: string;
+            /**
+             * Status
+             * @default pending
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
+        };
+        /**
+         * ResumeRequest
+         * @description The officer's decision on the exact pending version of an action.
+         */
+        ResumeRequest: {
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "edit" | "reject";
+            /**
+             * Edits
+             * @default {}
+             */
+            edits: {
+                [key: string]: string;
+            };
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
         /** RunRequest */
         RunRequest: {
             /** Message */
@@ -390,6 +562,18 @@ export interface components {
             summary: string;
             /** Running */
             running?: string | null;
+            /**
+             * Pending
+             * @default []
+             */
+            pending: components["schemas"]["ProposedAction"][];
+        };
+        /** UnfilledSlot */
+        UnfilledSlot: {
+            /** Slot */
+            slot: string;
+            /** Reason */
+            reason: string;
         };
         /**
          * UserCtx
@@ -422,6 +606,30 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * ActionResultEvent
+         * @description A decision was carried out: the outbox item sent (approve, edit) or nothing (reject).
+         */
+        ActionResultEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "action_result";
+            /** Seq */
+            seq: number;
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "edit" | "reject";
+            /** Outbox Id */
+            outbox_id: string | null;
         };
         /**
          * CitationEvent
@@ -530,6 +738,25 @@ export interface components {
             message: string;
         };
         /**
+         * InterruptEvent
+         * @description The run paused for the officer's decision on this exact version: resume with POST /threads/{id}/resume.
+         */
+        InterruptEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "interrupt";
+            /** Seq */
+            seq: number;
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /** Approver Roles */
+            approver_roles: ("director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal")[];
+        };
+        /**
          * NodeEvent
          * @description A graph node started or finished, for the trajectory view.
          */
@@ -587,21 +814,6 @@ export interface components {
             evidence_quote: string;
         };
         /**
-         * PiiFinding
-         * @description Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.
-         */
-        PiiFinding: {
-            /**
-             * Kind
-             * @enum {string}
-             */
-            kind: "nric" | "email" | "phone" | "tenant";
-            /** Slot */
-            slot: string;
-            /** Message */
-            message: string;
-        };
-        /**
          * PolicyStanceEvent
          * @description PLG's position on one policy: the version in force, the versions it superseded and the circulars overriding it.
          */
@@ -653,6 +865,45 @@ export interface components {
              * @enum {string}
              */
             status: "current" | "superseded";
+        };
+        /**
+         * ProposedActionEvent
+         * @description Something the assistant proposes to do outside the system. It waits for the officer's decision.
+         */
+        ProposedActionEvent: {
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Action Type
+             * @constant
+             */
+            action_type: "send_letter";
+            /** Title */
+            title: string;
+            payload: components["schemas"]["LetterPayload"];
+            /** Preview */
+            preview: string;
+            /** Approver Roles */
+            approver_roles: ("director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal")[];
+            /** Proposed By */
+            proposed_by: string;
+            /** Proposed At */
+            proposed_at: string;
+            /**
+             * Status
+             * @default pending
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "proposed_action";
+            /** Seq */
+            seq: number;
         };
         /** ResultSummary */
         ResultSummary: {
@@ -736,14 +987,7 @@ export interface components {
             /** Text */
             text: string;
         };
-        /** UnfilledSlot */
-        UnfilledSlot: {
-            /** Slot */
-            slot: string;
-            /** Reason */
-            reason: string;
-        };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;
@@ -890,6 +1134,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ThreadView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_approvals_approvals_get: {
+        parameters: {
+            query?: {
+                status?: "pending";
+            };
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingApproval"][];
                 };
             };
             /** @description Validation Error */
@@ -1065,6 +1343,58 @@ export interface operations {
                 content: {
                     "text/event-stream": components["schemas"]["RunEvent"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_thread_threads__thread_id__resume_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResumeRequest"];
+            };
+        };
+        responses: {
+            /** @description Server-Sent Events; each frame's data is one RunEvent. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["RunEvent"];
+                };
+            };
+            /** @description Your role can't approve this action. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description That version of the action isn't pending, or the thread is still answering. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

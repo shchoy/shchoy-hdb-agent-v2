@@ -1,4 +1,4 @@
-"""Graph state. Grows with later tickets (sql traces, proposed actions, ...)."""
+"""Graph state."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from typing import Annotated, Any, Literal, TypedDict
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel
 
+from plg.actions.model import ApprovalDecision, ProposedAction, upsert_actions
 from plg.agents.runtime import Citation
 from plg.identity import UserCtx
 from plg.llm import Message
@@ -47,6 +48,13 @@ class PLGState(TypedDict, total=False):
     answer: str
     # The labelled block of the officer's private notes for this turn (see plg.memory).
     memory: str
+    # Everything the thread has proposed to do outside the system, by action ID; pending ones wait at `approval`.
+    proposed_actions: Annotated[list[ProposedAction], upsert_actions]
+    # The officer's decision `approval` received, for `execute_action` to carry out.
+    decision: ApprovalDecision | None
 
+
+RUN_ID = "plg_run_id"
+"""Configurable key carrying the run's (LangSmith) run ID to the nodes, e.g. for the audit log."""
 
 PLGGraph = CompiledStateGraph[PLGState, Any, PLGState, PLGState]

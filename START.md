@@ -61,7 +61,9 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_API_PORT` | `8000` | `plg-api` port |
 | `PLG_RECORDS_DB` | `poc-data/plg_records.db` | PLG Records SQLite database (read-only; source of the staff personas) |
 | `PLG_TRACKERS_DB` | `.plg/trackers.duckdb` | The Excel trackers (`poc-data/sheets/*.xlsx`), cleaned into DuckDB tables by `plg sync`; the data agent queries them as `trackers.<table>` |
-| `PLG_THREADS_DB` | `.plg/threads.sqlite` | Conversations: LangGraph checkpoints and thread owners; they survive a `plg-api` restart |
+| `PLG_THREADS_DB` | `.plg/threads.sqlite` | Conversations: LangGraph checkpoints and thread owners; they survive a `plg-api` restart (so do pending approvals) |
+| `PLG_OUTBOX_DIR` | `.plg/outbox` | Local Outbox: one JSON file per approved letter (nothing is delivered) |
+| `PLG_AUDIT_LOG` | `.plg/audit.jsonl` | Append-only audit log: one line per decided action (approver, time, LangSmith `run_id`) |
 | `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
 | `PLG_HISTORY_KEEP_MESSAGES` | `4` | Recent messages kept verbatim when folding |
 | `PLG_RERANK_BACKEND` | `voyage` | `voyage` reranks with Voyage's hosted reranker (uses `VOYAGE_API_KEY`); `local` runs a cross-encoder on this machine (no document text leaves it) |
@@ -110,7 +112,21 @@ The answer streams to the terminal, then its sources: each `[n]` in the answer i
 uv run plg ask "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
 ```
 
-Requests for a standard letter go to the `drafting` agent. It picks an approved template (`poc-data/docs/TPL-REM-01`, `TPL-DOC-02`, `TPL-FBK-03`), fills the slots from PLG Records with read-only lookups, lists the slots it couldn't fill (e.g. `letter_ref`) and flags personal data. Only `ANTHROPIC_API_KEY` is needed, no index. In the web app the draft appears under the answer: an HTML preview, the open slots, any personal-data flags and a **Download DOCX** link (`GET /drafts/{id}/file`, only for the officer who asked). Nothing is sent. Drafts live in memory, so they are lost when `plg-api` restarts. In `plg ask` (CLI) the draft is not shown, only the answer. Where it lives: `src/plg/drafting/`, `src/plg/agents/drafting.py`, `tests/test_drafting_api.py`.
+Requests for a standard letter go to the `drafting` agent. It picks an approved template (`poc-data/docs/TPL-REM-01`, `TPL-DOC-02`, `TPL-FBK-03`), fills the slots from PLG Records with read-only lookups, lists the slots it couldn't fill (e.g. `letter_ref`) and flags personal data. Only `ANTHROPIC_API_KEY` is needed, no index. In the web app the draft appears under the answer: an HTML preview, the open slots, any personal-data flags and a **Download DOCX** link (`GET /drafts/{id}/file`, only for the officer who asked). Nothing is sent until you approve it (see below). Drafts live in memory, so they are lost when `plg-api` restarts. In `plg ask` (CLI) the draft is not shown, only the answer. Where it lives: `src/plg/drafting/`, `src/plg/agents/drafting.py`, `tests/test_drafting_api.py`.
+
+### Approve, edit or reject a proposed action (issue #18)
+
+A drafted letter is only *proposed*: the run ends with a `proposed_action` event (the letter, its slots, who may approve) and an `interrupt` event (`action_id` + `version`), and the thread waits. Decide on it with `/resume`, which streams the rest of the run (`action_result`, then `done`):
+
+```bash
+curl -s 'http://127.0.0.1:8000/approvals?status=pending' -H 'X-PLG-User: S05'     # your pending actions, all threads
+curl -N -X POST http://127.0.0.1:8000/threads/<id>/resume -H 'X-PLG-User: S05' -H 'content-type: application/json' \
+  -d '{"action_id":"<action_id>","version":1,"decision":"approve"}'
+#  edit:   {"action_id":"…","version":1,"decision":"edit","edits":{"pay_by_date":"21 October 2026"}}
+#  reject: {"action_id":"…","version":1,"decision":"reject","reason":"Tenant paid yesterday"}
+```
+
+Only the thread's owner can decide (another officer gets 404), and only on the exact pending version (otherwise 409, including a replay). Approving or editing needs an approver role for the action type (`send_letter`: not analysts; 403); anyone can reject their own proposal, with a reason. A letter with open slots can't be sent until an edit fills them (422). Approve/edit writes the letter to `PLG_OUTBOX_DIR` (nothing is delivered); every decision appends one line to `PLG_AUDIT_LOG` with the approver, time and the run's `run_id`. Asking for the same template again in the thread revises the pending letter (same ID, next version). Pending approvals survive a `plg-api` restart. `plg ask` stops at the proposal, with no way to approve from the CLI yet. Where it lives: `src/plg/actions/`, `src/plg/graph/build.py` (`approval`, `execute_action`), `tests/test_approvals_api.py`.
 
 ### Ask a data question (issue #12)
 
@@ -157,9 +173,9 @@ Every endpoint except `/personas` needs an `X-PLG-User` header with a known staf
 
 This is POC identity: `plg-api` trusts the header because only the BFF calls it, over loopback. Keep `PLG_API_HOST` at `127.0.0.1`. Binding it to a network address would let anyone on the network claim to be any staff member.
 
-Each SSE event has a sequence number (`id:`) and a JSON payload of type `node`, `token`, `done` (with `run_id`) or `error`. Heartbeat comments (lines starting with `:`) keep long runs alive. Interactive API docs are at http://127.0.0.1:8000/docs.
+Each SSE event has a sequence number (`id:`) and a JSON payload of type `node`, `token`, `citation`, `sql_trace`, `policy_stance`, `draft`, `proposed_action`, `interrupt`, `action_result`, `done` (with `run_id`) or `error`. Heartbeat comments (lines starting with `:`) keep long runs alive. Interactive API docs are at http://127.0.0.1:8000/docs.
 
-Threads are held in memory for now, so they are lost when the server restarts.
+Threads are checkpointed in `PLG_THREADS_DB`, so they survive a server restart.
 
 ### Personal memory (issue #24)
 

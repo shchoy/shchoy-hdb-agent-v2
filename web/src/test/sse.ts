@@ -8,6 +8,14 @@ export function fixture(name: "answer" | "not_covered" | "error" | "draft" | "po
   return readFileSync(join(process.cwd(), "src/test/fixtures", `${name}.sse`), "utf8");
 }
 
+/** A recorded approvals response: `pending.json`, `audit.json` (parsed) or a resume stream `edit.sse` / `reject.sse`. */
+export function approvalsFixture(name: "edit.sse" | "reject.sse"): string;
+export function approvalsFixture(name: "pending.json" | "audit.json"): Record<string, unknown>[];
+export function approvalsFixture(name: string): unknown {
+  const raw = readFileSync(join(process.cwd(), "src/test/fixtures/approvals", name), "utf8");
+  return name.endsWith(".json") ? JSON.parse(raw) : raw;
+}
+
 /**
  * Replays `body` as an SSE response in small chunks with a pause between them, so the
  * reader sees partial frames, split CRLFs and tokens arriving over time.

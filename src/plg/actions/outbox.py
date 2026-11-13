@@ -27,6 +27,8 @@ class Outbox(Protocol):
 
     def items(self) -> list[OutboxItem]: ...
 
+    def item(self, item_id: str) -> OutboxItem | None: ...
+
 
 class LocalOutbox:
     """One JSON file per item. Sending the same item again overwrites it, so a retried step can't send twice."""
@@ -40,6 +42,10 @@ class LocalOutbox:
         partial = target.with_suffix(".part")
         partial.write_text(item.model_dump_json(indent=2), encoding="utf-8")
         partial.replace(target)
+
+    def item(self, item_id: str) -> OutboxItem | None:
+        path = self.path / f"{item_id}.json"
+        return OutboxItem.model_validate_json(path.read_text(encoding="utf-8")) if path.is_file() else None
 
     def items(self) -> list[OutboxItem]:
         if not self.path.exists():

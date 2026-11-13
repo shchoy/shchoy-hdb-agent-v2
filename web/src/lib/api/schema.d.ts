@@ -99,6 +99,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Audit Trail
+         * @description The officer's own decisions on proposed actions, newest first, each with the outbox item it sent.
+         */
+        get: operations["audit_trail_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/memory": {
         parameters: {
             query?: never;
@@ -281,6 +301,56 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AuditRecord
+         * @description A decision from the audit log and, unless it was a rejection, the outbox item it sent.
+         */
+        AuditRecord: {
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Action Type
+             * @constant
+             */
+            action_type: "send_letter";
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+            /**
+             * Thread Id
+             * @default
+             */
+            thread_id: string;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "edit" | "reject";
+            /** Edits */
+            edits: {
+                [key: string]: string;
+            };
+            /** Reason */
+            reason: string;
+            /** Approver */
+            approver: string;
+            /**
+             * Approver Role
+             * @enum {string}
+             */
+            approver_role: "director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal";
+            /** At */
+            at: string;
+            /** Run Id */
+            run_id: string;
+            /** Outbox Id */
+            outbox_id: string | null;
+            sent: components["schemas"]["OutboxItem"] | null;
+        };
+        /**
          * ChunkLocation
          * @description Where a cited span sits in its document.
          */
@@ -420,6 +490,31 @@ export interface components {
             role: "user" | "assistant";
             /** Content */
             content: string;
+        };
+        /** OutboxItem */
+        OutboxItem: {
+            /** Item Id */
+            item_id: string;
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /** Template Id */
+            template_id: string;
+            /** Recipient */
+            recipient: string;
+            /** Title */
+            title: string;
+            /** Slots */
+            slots: {
+                [key: string]: string;
+            };
+            /** Html */
+            html: string;
+            /** Approver */
+            approver: string;
+            /** Sent At */
+            sent_at: string;
         };
         /**
          * PendingApproval
@@ -1168,6 +1263,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PendingApproval"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    audit_trail_audit_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditRecord"][];
                 };
             };
             /** @description Validation Error */

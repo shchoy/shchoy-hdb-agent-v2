@@ -1,0 +1,63 @@
+.list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  border: 1px solid var(--muted);
+  border-radius: 0.25rem;
+  padding: 1rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.alert {
+  border: 2px solid var(--danger);
+  background: var(--danger-bg);
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  margin: 0.5rem 0;
+}
+
+.slots {
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.slots th,
+.slots td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--muted);
+}
+
+.slots del {
+  background: var(--danger-bg);
+}
+
+.slots ins {
+  background: #e6ffed;
+  text-decoration: none;
+}
+
+.frame {
+  width: 100%;
+  height: 22rem;
+  border: 1px solid var(--muted);
+  background: #fff;
+  margin: 0.5rem 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+  margin-top: 0.5rem;
+}

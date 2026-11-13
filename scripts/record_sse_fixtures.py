@@ -2,7 +2,8 @@
 
     uv run python scripts/record_sse_fixtures.py
 
-Writes `web/src/test/fixtures/*.sse` and `documents/*.json` (a document and a cited span's location, per file type). Streams come from the real API and graph with a scripted
+Writes `web/src/test/fixtures/*.sse`, `documents/*.json` (a document and a cited span's location, per file type) and
+`approvals/*` (two letters proposed in two conversations: the pending list, an edit and a rejection, the audit trail). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -42,6 +43,7 @@ POLICY_QUESTION = "How far can a tenant display goods beyond the shopfront?"
 DATA_QUESTION = "Which tenancies have arrears above 3 months' rent?"
 MULTI_QUESTION = "How many vacant units are there in Bayshore Vale, and how is vacancy defined?"
 DRAFT_QUESTION = "Draft an update reply to the member of public who gave feedback FB-2025-00002"
+REMINDER_QUESTION = "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
 
 
 def routed(*intents: str) -> AgentTurn:
@@ -110,6 +112,61 @@ def draft(llm: ScriptedLLMClient) -> None:
         turn(text("Drafted the feedback reply.")),
     )
     llm.script("merge", DRAFT_QUESTION, "I drafted the reply from TPL-FBK-03. Nothing has been sent.")
+
+
+def reminder(llm: ScriptedLLMClient) -> None:
+    """A complete reminder letter: approvable as proposed."""
+    llm.script_turns("route", REMINDER_QUESTION, routed("drafting"))
+    llm.script_turns(
+        "drafting", REMINDER_QUESTION,
+        turn(tool_call("submit_draft", template_id="TPL-REM-01", slots={
+            "letter_ref": "PLG/REM/2026/001", "letter_date": "30 September 2026",
+            "tenant_name": "Golden Leaf Minimart Pte Ltd",
+            "tenant_address": "#01-32, Blk 214 Bayshore Vale Drive, Singapore 460214",
+            "unit_address": "Blk 214 Bayshore Vale Drive #01-32", "tenancy_id": "TA-2024-00542",
+            "notice_level": "FIRST", "invoice_table": "INV-1 | 2026-08 | due 2026-08-01 | S$3,924.00",
+            "total_due": "S$3,924.00", "pay_by_date": "14 October 2026", "officer_name": "Siti Aishah Yusof",
+            "officer_phone": "+65 6100 2058",
+        })),
+        turn(text("Drafted the reminder.")),
+    )
+    llm.script("merge", REMINDER_QUESTION, "I drafted the reminder from TPL-REM-01. It waits for your approval.")
+
+
+FEEDBACK_EDITS = {
+    "action_taken": "Our contractor sealed the ceiling joint on 5 October 2025.",
+    "next_steps": "If it recurs, please call us on 6100 2058.",
+}
+
+
+def record_approvals(search: Searcher, graph: LocalGraphStore) -> dict[str, str]:
+    """Two letters proposed in two conversations, then the officer edits one and rejects the other."""
+    llm = ScriptedLLMClient()
+    draft(llm)
+    reminder(llm)
+    recorded: dict[str, str] = {}
+    with tempfile.TemporaryDirectory() as scratch:
+        settings = Settings(
+            graph_dir=Path(scratch) / "graph", threads_db=Path(scratch) / "threads.sqlite",
+            outbox_dir=Path(scratch) / "outbox", audit_log=Path(scratch) / "audit.jsonl",
+        )
+        app = create_app(settings, llm=llm, searcher=search, entities=graph, memory=scratch_memory(Path(scratch) / "memory"))
+        with TestClient(app) as client:
+            for question in (DRAFT_QUESTION, REMINDER_QUESTION):
+                thread_id = client.post("/threads", headers=USER).json()["thread_id"]
+                client.post(f"/threads/{thread_id}/runs", json={"message": question}, headers=USER).read()
+            feedback, letter = client.get("/approvals", headers=USER).json()
+            recorded["pending.json"] = json.dumps([feedback, letter], indent=2) + "\n"
+            for name, action, decision in (
+                ("edit.sse", feedback, {"decision": "edit", "edits": FEEDBACK_EDITS}),
+                ("reject.sse", letter, {"decision": "reject", "reason": "The tenant paid yesterday."}),
+            ):
+                body = {"action_id": action["action_id"], "version": action["version"], **decision}
+                with client.stream("POST", f"/threads/{action['thread_id']}/resume", json=body, headers=USER) as response:
+                    assert response.status_code == 200, response.read()
+                    recorded[name] = response.read().decode()
+            recorded["audit.json"] = json.dumps(client.get("/audit", headers=USER).json(), indent=2) + "\n"
+    return recorded
 
 
 def data(llm: ScriptedLLMClient) -> None:
@@ -288,6 +345,11 @@ def main() -> None:
         for kind, recorded in record_documents(store).items():
             path = OUT / "documents" / f"{kind}.json"
             path.write_text(json.dumps(recorded, indent=2) + "\n")
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
+        (OUT / "approvals").mkdir(exist_ok=True)
+        for name, content in record_approvals(search, graph).items():
+            path = OUT / "approvals" / name
+            path.write_text(content)
             print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 

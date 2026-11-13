@@ -323,8 +323,8 @@ def build_graph(
             )
             await asyncio.to_thread(outbox.send, item)
         entry = AuditEntry(
-            action_id=action.action_id, version=action.version, action_type=action.action_type,
-            decision=decision.decision, edits=decision.edits, reason=decision.reason, approver=decision.approver,
+            action_id=action.action_id, version=action.version, action_type=action.action_type, title=action.title,
+            thread_id=str(config.get("configurable", {}).get("thread_id", "")), decision=decision.decision, edits=decision.edits, reason=decision.reason, approver=decision.approver,
             approver_role=decision.approver_role, at=letters.now(),
             run_id=str(config.get("configurable", {}).get(RUN_ID, "")), outbox_id=outbox_id,
         )

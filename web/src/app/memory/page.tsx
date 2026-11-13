@@ -18,6 +18,7 @@ export default async function MemoryPage() {
           Signed in as <strong>{user.name}</strong> ({roleLabel(user.role)})
         </p>
         <Link href="/">Ask</Link>
+        <Link href="/approvals">Approvals</Link>
         <SignOutButton />
       </header>
       <main>

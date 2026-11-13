@@ -13,8 +13,10 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from pydantic import BaseModel, TypeAdapter, model_validator
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
+from plg.actions.audit import AuditEntry, AuditLog
 from plg.actions.letters import unknown_slots
 from plg.actions.model import ApprovalDecision, Decision, ProposedAction
+from plg.actions.outbox import LocalOutbox, OutboxItem
 from plg.config import Settings
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
@@ -90,6 +92,12 @@ class PendingApproval(ProposedAction):
     thread_title: str
 
 
+class AuditRecord(AuditEntry):
+    """A decision from the audit log and, unless it was a rejection, the outbox item it sent."""
+
+    sent: OutboxItem | None
+
+
 class MemoryEdit(BaseModel):
     text: str | None = None
     """New wording. Editing makes the note yours and re-embeds it."""
@@ -135,10 +143,12 @@ def create_app(
     drafts = DraftStore()
     threads = ThreadStore(settings.threads_db)
     runs = RunRegistry()
+    outbox = LocalOutbox(settings.outbox_dir)
+    audit = AuditLog(settings.audit_log)
     graph = build_graph(
         llm, searcher or LazySearcher(settings), entities=entities,
         warehouse=Warehouse(settings.records_db, settings.trackers_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
-        settings=settings, memory=learner,
+        settings=settings, memory=learner, outbox=outbox, audit=audit,
     )
 
     @asynccontextmanager
@@ -205,6 +215,14 @@ def create_app(
             for t in threads.list(user.staff_id) for action in await waiting(t.thread_id)
         ]
         return sorted(found, key=lambda a: a.proposed_at)
+
+    @app.get("/audit")
+    async def audit_trail(user: User) -> list[AuditRecord]:
+        """The officer's own decisions on proposed actions, newest first, each with the outbox item it sent."""
+        return [
+            AuditRecord(**e.model_dump(), sent=outbox.item(e.outbox_id) if e.outbox_id else None)
+            for e in audit.decided_by(user.staff_id)
+        ]
 
     def memory_of(memory_id: str, user: UserCtx) -> MemoryView:
         """Someone else's memory looks exactly like one that doesn't exist."""

@@ -274,3 +274,34 @@ def test_every_pending_action_of_a_thread_can_be_decided(api: Api, llm: Scripted
     api.resume(thread_id, decide(notice, "approve"))  # the later one first
     api.resume(thread_id, decide(reminder, "approve"))
     assert {i.action_id for i in outbox(tmp_path).items()} == {reminder["action_id"], notice["action_id"]}
+
+
+def test_the_audit_trail_shows_each_decision_and_what_it_sent(api: Api, llm: ScriptedLLMClient) -> None:
+    sent_thread, sent_stream = propose(api, llm)
+    (to_send,) = sent_stream.of_type("proposed_action")
+    other = "Draft a first reminder letter for Prima Deposit's overdue rent"
+    kept_thread, kept_stream = propose(api, llm, question=other)
+    (to_reject,) = kept_stream.of_type("proposed_action")
+
+    api.resume(sent_thread, decide(to_send, "edit", edits={"pay_by_date": "21 October 2026"}))
+    api.resume(kept_thread, decide(to_reject, "reject", reason="The tenant paid yesterday."))
+
+    rejected, edited = api.client.get("/audit", headers=USER).json()  # newest first
+    assert (rejected["action_id"], rejected["decision"], rejected["reason"]) == (to_reject["action_id"], "reject", "The tenant paid yesterday.")
+    assert (rejected["thread_id"], rejected["title"], rejected["sent"]) == (kept_thread, to_reject["title"], None)
+    assert (edited["decision"], edited["edits"], edited["approver"], edited["approver_role"]) == (
+        "edit", {"pay_by_date": "21 October 2026"}, "S05", "officer",
+    )
+    assert edited["run_id"] and edited["at"] and edited["thread_id"] == sent_thread
+    assert edited["sent"]["item_id"] == edited["outbox_id"] == f"{to_send['action_id']}-v2"
+    assert "21 October 2026" in edited["sent"]["html"]
+
+
+def test_the_audit_trail_is_only_the_officers_own(api: Api, llm: ScriptedLLMClient) -> None:
+    thread_id, stream = propose(api, llm)
+    (action,) = stream.of_type("proposed_action")
+    api.resume(thread_id, decide(action, "reject", reason="Not needed."))
+
+    assert api.client.get("/audit", headers={"X-PLG-User": "S03"}).json() == []
+    assert len(api.client.get("/audit", headers=USER).json()) == 1
+    assert api.client.get("/audit").status_code == 401

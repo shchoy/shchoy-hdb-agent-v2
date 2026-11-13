@@ -1,4 +1,5 @@
-"""StateGraph wiring: START → route → specialists (fan-out; `defect` runs the `defect_flow` subgraph) → merge → (approval → execute_action)* → END.
+"""StateGraph wiring: START → route → specialists (fan-out; `defect` and `doc_check` run the `defect_flow` and
+`doc_check_flow` subgraphs) → merge → (approval → execute_action)* → END.
 
 `route` (Haiku) decides which specialists a question needs; none means `merge` answers it directly.
 `merge` fuses the specialists' findings into one answer and is the only node that streams tokens.
@@ -32,13 +33,18 @@ from plg.defects.classify import NODE as DEFECT_NODE
 from plg.defects.flow import DefectInput, build_defect_flow
 from plg.defects.taxonomy import Taxonomy, load_taxonomy
 from plg.defects.tickets import LocalTicketSystem, TicketSystem
+from plg.doccheck.checklists import Checklists, load_checklists
+from plg.doccheck.flow import DocCheckInput, build_doc_check_flow
+from plg.doccheck.identify import NODE as DOC_CHECK_NODE
 from plg.data.semantic import SemanticLayer, load_semantic_layer
 from plg.data.warehouse import Warehouse
+from plg.drafting.model import Draft
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
 from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
 from plg.graph import summary as history
+from plg.identity import UserCtx
 from plg.graph.state import RUN_ID, Finding, Intent, PLGGraph, PLGState
 from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
@@ -51,6 +57,7 @@ KNOWLEDGE = knowledge.NODE
 DATA = data.NODE
 DRAFTING = drafting.NODE
 DEFECT = DEFECT_NODE
+DOC_CHECK = DOC_CHECK_NODE
 MERGE = "merge"
 SUMMARISE = history.NODE
 LOAD_MEMORY = "load_memory"
@@ -70,6 +77,9 @@ reported figures differ.
 notice, or an update reply to someone who gave feedback.
 - defect: the officer pastes public or tenant feedback (or names a feedback case) to have it classified and routed, \
 e.g. to raise an i-EMS maintenance ticket for it.
+- doc_check: the officer asks whether an application (APP-yyyy-nnnn) is complete or has all its documents, or asks \
+to check its submitted documents or bundle; the check also drafts the missing-documents notice for it, so a request \
+for that notice about a named application goes here, not to drafting.
 A question can have several parts, each needing a different specialist: name every specialist needed. Choose no \
 specialist for greetings, thanks and questions about how to use the assistant.
 Give each specialist your confidence (0 to 1) that the question needs it. If you can't tell what the officer is asking \
@@ -87,7 +97,7 @@ ROUTE_TOOL: Block = {
                 "items": {
                     "type": "object",
                     "properties": {
-                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect"]},
+                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect", "doc_check"]},
                         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                     },
                     "required": ["intent", "confidence"],
@@ -172,6 +182,7 @@ def build_graph(
     audit: AuditLog | None = None,
     ticket_system: TicketSystem | None = None,
     taxonomy: Taxonomy | None = None,
+    checklists: Checklists | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
@@ -184,6 +195,9 @@ def build_graph(
     ticket_system = ticket_system or LocalTicketSystem(settings.iems_dir)
     taxonomy = taxonomy or load_taxonomy(vocab)
     defect_flow = build_defect_flow(llm, taxonomy, warehouse.records_db)
+    doc_check_flow = build_doc_check_flow(
+        llm, checklists or load_checklists(vocab), warehouse.records_db, settings.submissions_dir, templates
+    )
     first = LOAD_MEMORY if memory else ROUTE  # memory is recalled before routing when the graph has one
 
     def unsummarised(state: PLGState) -> list[Message]:
@@ -236,6 +250,11 @@ def build_graph(
         """One task per specialist, run in parallel; none (or a clarifying question) goes straight to merge."""
         return [Send(intent, state) for intent in state.get("intents", [])] or [MERGE]
 
+    def propose_sending(state: PLGState, draft: Draft, user: UserCtx) -> ProposedAction:
+        """Stream the draft, and propose sending it: it waits for the officer at `approval`."""
+        get_stream_writer()({"draft": draft.model_dump()})
+        return letters.propose_letter(draft, user.staff_id, state.get("proposed_actions", []))
+
     async def knowledge_node(state: PLGState) -> PLGState:
         stances: dict[str, PolicyLineage] = {}
 
@@ -271,10 +290,7 @@ def build_graph(
         user = state.get("user")
         if not result.draft or user is None:
             return {"findings": [finding]}
-        get_stream_writer()({"draft": result.draft.model_dump()})
-        # Sending it is only proposed: it waits for the officer at `approval`.
-        action = letters.propose_letter(result.draft, user.staff_id, state.get("proposed_actions", []))
-        return {"findings": [finding], "proposed_actions": [action]}
+        return {"findings": [finding], "proposed_actions": [propose_sending(state, result.draft, user)]}
 
     async def defect_node(state: PLGState) -> PLGState:
         """Run `defect_flow`; its classification is streamed, its ticket (if any) waits for the officer at `approval`."""
@@ -285,6 +301,24 @@ def build_graph(
         get_stream_writer()({"classification": out["classification"].model_dump(mode="json")})
         finding = Finding(specialist=DEFECT, text=out["summary"], citations=[], traced=True)
         return {"findings": [finding], "proposed_actions": out.get("proposed_actions", [])}
+
+    async def doc_check_node(state: PLGState) -> PLGState:
+        """Run `doc_check_flow`; its checklist is streamed, its missing-documents notice (if any) is drafted and waits
+        for the officer at `approval`."""
+        inputs: DocCheckInput = {"question": state["question"]}
+        user = state.get("user")
+        if user:
+            inputs["user"] = user
+        out = await doc_check_flow.ainvoke(inputs)
+        write = get_stream_writer()
+        if found := out.get("result"):
+            write({"doc_check": found.model_dump(mode="json")})
+        finding = Finding(specialist=DOC_CHECK, text=out["summary"], citations=[], traced=True)
+        draft = out.get("notice")
+        if draft is None or user is None:
+            return {"findings": [finding]}
+        drafts.add(user.staff_id, draft, out["notice_docx"])
+        return {"findings": [finding], "proposed_actions": [propose_sending(state, draft, user)]}
 
     async def merge(state: PLGState) -> PLGState:
         write = get_stream_writer()
@@ -371,6 +405,7 @@ def build_graph(
     graph.add_node(DATA, data_node)
     graph.add_node(DRAFTING, drafting_node)
     graph.add_node(DEFECT, defect_node)
+    graph.add_node(DOC_CHECK, doc_check_node)
     graph.add_node(MERGE, merge)
     graph.add_node(SUMMARISE, summarise_history)
     graph.add_node(APPROVAL, approval)
@@ -383,11 +418,12 @@ def build_graph(
         graph.add_node(LOAD_MEMORY, load_memory)
         graph.add_node(WRITE_MEMORY, write_memory)
         graph.add_edge(LOAD_MEMORY, ROUTE)
-    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, MERGE])
+    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, DOC_CHECK, MERGE])
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
     graph.add_edge(DRAFTING, MERGE)
     graph.add_edge(DEFECT, MERGE)
+    graph.add_edge(DOC_CHECK, MERGE)
     answered = WRITE_MEMORY if memory else MERGE
     if memory:
         graph.add_edge(MERGE, WRITE_MEMORY)

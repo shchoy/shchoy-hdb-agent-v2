@@ -361,3 +361,78 @@
   padding: 0.1rem 0.5rem;
   margin: 0.25rem 0;
 }
+
+.docCheck {
+  border: 1px solid #c9ced6;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0 0.75rem;
+}
+
+.docCheck h3 {
+  margin: 0 0 0.5rem;
+}
+
+.complete,
+.incomplete {
+  display: inline-block;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+  margin: 0.25rem 0;
+  color: #111;
+}
+
+.complete {
+  background: #c8ecd0;
+}
+
+.incomplete {
+  background: #fdd8d8;
+}
+
+.checklist {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.checklist caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.25rem;
+}
+
+.checklist th,
+.checklist td {
+  border-bottom: 1px solid #e3e6ea;
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.checklist tbody th {
+  font-weight: normal;
+}
+
+.checklist tr[data-status="missing"] td:first-child,
+.checklist tr[data-status="problem"] td:first-child {
+  color: #b00020;
+  font-weight: 700;
+}
+
+.checklist tr[data-status="ok"] td:first-child {
+  color: #1b6e2d;
+  font-weight: 700;
+}
+
+.files {
+  margin: 0.25rem 0;
+}
+
+.scan {
+  font-size: 0.8rem;
+  border: 1px solid #8a93a0;
+  border-radius: 3px;
+  padding: 0 0.3rem;
+}

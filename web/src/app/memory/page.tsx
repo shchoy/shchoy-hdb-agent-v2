@@ -19,6 +19,7 @@ export default async function MemoryPage() {
         </p>
         <Link href="/">Ask</Link>
         <Link href="/approvals">Approvals</Link>
+        <Link href="/doc-check">Document check</Link>
         <SignOutButton />
       </header>
       <main>

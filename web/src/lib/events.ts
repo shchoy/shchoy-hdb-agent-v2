@@ -15,6 +15,8 @@ export type PolicyStanceEvent = Schemas["PolicyStanceEvent"];
 export type SqlTraceEvent = Schemas["SqlTraceEvent"];
 export type ProposedActionEvent = Schemas["ProposedActionEvent"];
 export type ClassificationEvent = Schemas["ClassificationEvent"];
+export type DocCheckEvent = Schemas["DocCheckEvent"];
+export type Submission = Schemas["Submission"];
 export type UserCtx = Schemas["UserCtx"];
 export type ThreadSummary = Schemas["ThreadSummary"];
 export type ThreadView = Schemas["ThreadView"];
@@ -34,6 +36,7 @@ const piiFinding = z.object({
   message: z.string(),
 });
 const severity = z.enum(["Low", "Medium", "High", "Critical"]);
+const docProblem = z.enum(["expired", "wrong_unit", "illegible_scan"]);
 const candidate = z.object({ code: z.string(), category: z.string(), severity, confidence: z.number() });
 
 export const runEventSchema = z.discriminatedUnion("type", [
@@ -153,6 +156,43 @@ export const runEventSchema = z.discriminatedUnion("type", [
     low_confidence: z.boolean(),
     rationale: z.string(),
     candidates: z.array(candidate),
+  }),
+  z.object({
+    type: z.literal("doc_check"),
+    seq,
+    application_id: z.string(),
+    app_type: z.string(),
+    app_type_label: z.string(),
+    tenant_id: z.string(),
+    tenant_name: z.string(),
+    unit_id: z.string(),
+    unit_address: z.string(),
+    submitted_date: z.string(),
+    checklist: z.array(
+      z.object({
+        doc_code: z.string(),
+        label: z.string(),
+        description: z.string(),
+        mandatory: z.boolean(),
+        status: z.enum(["ok", "missing", "problem", "not_submitted"]),
+        files: z.array(z.string()),
+        problem: docProblem.nullable(),
+        reason: z.string(),
+      }),
+    ),
+    files: z.array(
+      z.object({
+        file: z.string(),
+        doc_code: z.string().nullable(),
+        doc_label: z.string().nullable(),
+        read_by: z.enum(["text", "scan"]),
+        problem: docProblem.nullable(),
+        reason: z.string(),
+      }),
+    ),
+    missing: z.array(z.string()),
+    problems: z.record(z.string(), docProblem),
+    complete: z.boolean(),
   }),
   z.object({
     type: z.literal("proposed_action"),

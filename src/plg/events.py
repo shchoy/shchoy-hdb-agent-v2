@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from plg.actions.model import Decision, ProposedAction
 from plg.defects.classify import Classification
+from plg.doccheck.model import DocCheck
 from plg.agents.runtime import Citation
 from plg.identity import Role
 from plg.data.trace import SqlTrace
@@ -67,6 +68,14 @@ class ClassificationEvent(Classification):
     seq: int
 
 
+class DocCheckEvent(DocCheck):
+    """An application's submission bundle checked against its checklist: each file identified, each required
+    document ticked or crossed, expired, wrong-unit and illegible documents flagged."""
+
+    type: Literal["doc_check"] = "doc_check"
+    seq: int
+
+
 class ProposedActionEvent(ProposedAction):
     """Something the assistant proposes to do outside the system. It waits for the officer's decision."""
 
@@ -114,6 +123,6 @@ class ErrorEvent(BaseModel):
 
 RunEvent = Annotated[
     NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | ClassificationEvent
-    | ProposedActionEvent
+    | DocCheckEvent | ProposedActionEvent
     | InterruptEvent | ActionResultEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
 ]

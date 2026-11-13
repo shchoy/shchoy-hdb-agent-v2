@@ -1,0 +1,202 @@
+[
+  {
+    "application_id": "APP-2026-0299",
+    "app_type": "ASSIGNMENT",
+    "app_type_label": "Assignment",
+    "tenant_name": "PrimeValue Mart Pte Ltd",
+    "unit_id": "U-BV214-01-29",
+    "submitted_date": "2026-09-25",
+    "status": "Pending Documents",
+    "files": 6
+  },
+  {
+    "application_id": "APP-2026-0294",
+    "app_type": "ALTERATION",
+    "app_type_label": "Alteration & addition",
+    "tenant_name": "Siva Dental Care Pte Ltd",
+    "unit_id": "U-PI642-01-01",
+    "submitted_date": "2026-09-22",
+    "status": "Pending Documents",
+    "files": 3
+  },
+  {
+    "application_id": "APP-2026-0293",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "Wellcare Family Clinic",
+    "unit_id": "U-KR305-01-12",
+    "submitted_date": "2026-09-21",
+    "status": "Pending Documents",
+    "files": 3
+  },
+  {
+    "application_id": "APP-2026-0288",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "PrimeValue Mart Pte Ltd",
+    "unit_id": "U-PI667-01-02",
+    "submitted_date": "2026-09-16",
+    "status": "Pending Documents",
+    "files": 4
+  },
+  {
+    "application_id": "APP-2026-0289",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "Nanyang Family Clinic",
+    "unit_id": "U-ST513-01-09",
+    "submitted_date": "2026-09-16",
+    "status": "Pending Documents",
+    "files": 4
+  },
+  {
+    "application_id": "APP-2026-0284",
+    "app_type": "ASSIGNMENT",
+    "app_type_label": "Assignment",
+    "tenant_name": "Cahaya TCM Clinic",
+    "unit_id": "U-CD131-02-08",
+    "submitted_date": "2026-09-12",
+    "status": "Pending Documents",
+    "files": 5
+  },
+  {
+    "application_id": "APP-2026-0280",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "Cosy Mobile",
+    "unit_id": "U-PI696-01-03",
+    "submitted_date": "2026-09-11",
+    "status": "Pending Documents",
+    "files": 2
+  },
+  {
+    "application_id": "APP-2026-0283",
+    "app_type": "NEW_TENANCY",
+    "app_type_label": "New tenancy",
+    "tenant_name": "Wellcare Provision Shop Pte Ltd",
+    "unit_id": "U-PI627-01-13",
+    "submitted_date": "2026-09-11",
+    "status": "Pending Documents",
+    "files": 6
+  },
+  {
+    "application_id": "APP-2026-0279",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "Lotus Mart Pte Ltd",
+    "unit_id": "U-RH482-01-05",
+    "submitted_date": "2026-09-09",
+    "status": "Pending Documents",
+    "files": 2
+  },
+  {
+    "application_id": "APP-2026-0278",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "Nur Dental Care",
+    "unit_id": "U-PI651-01-04",
+    "submitted_date": "2026-09-08",
+    "status": "Under Review",
+    "files": 3
+  },
+  {
+    "application_id": "APP-2026-0272",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "Hassan Dry Cleaners Pte Ltd",
+    "unit_id": "U-BV215-01-11",
+    "submitted_date": "2026-09-03",
+    "status": "Pending Documents",
+    "files": 4
+  },
+  {
+    "application_id": "APP-2026-0268",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "Heng Ann Snacks Pte Ltd",
+    "unit_id": "U-BV214-01-16",
+    "submitted_date": "2026-08-29",
+    "status": "Under Review",
+    "files": 4
+  },
+  {
+    "application_id": "APP-2026-0260",
+    "app_type": "RENEWAL",
+    "app_type_label": "Renewal",
+    "tenant_name": "Barakah Agency Pte Ltd",
+    "unit_id": "U-PI605-02-04",
+    "submitted_date": "2026-08-26",
+    "status": "Pending Documents",
+    "files": 2
+  },
+  {
+    "application_id": "APP-2026-0256",
+    "app_type": "CHANGE_OF_TRADE",
+    "app_type_label": "Change of trade",
+    "tenant_name": "Mutiara Provision Shop",
+    "unit_id": "U-PI627-01-08",
+    "submitted_date": "2026-08-24",
+    "status": "Pending Documents",
+    "files": 3
+  },
+  {
+    "application_id": "APP-2026-0252",
+    "app_type": "NEW_TENANCY",
+    "app_type_label": "New tenancy",
+    "tenant_name": "Lakshmi Kindergarten Pte Ltd",
+    "unit_id": "U-RH482-02-06",
+    "submitted_date": "2026-08-20",
+    "status": "Under Review",
+    "files": 6
+  },
+  {
+    "application_id": "APP-2026-0244",
+    "app_type": "ALTERATION",
+    "app_type_label": "Alteration & addition",
+    "tenant_name": "Treasure Medical Hall",
+    "unit_id": "U-ST556-01-02",
+    "submitted_date": "2026-08-15",
+    "status": "Pending Documents",
+    "files": 4
+  },
+  {
+    "application_id": "APP-2026-0238",
+    "app_type": "ALTERATION",
+    "app_type_label": "Alteration & addition",
+    "tenant_name": "Raja Dental Surgery Pte Ltd",
+    "unit_id": "U-KR330-02-06",
+    "submitted_date": "2026-08-10",
+    "status": "Pending Documents",
+    "files": 6
+  },
+  {
+    "application_id": "APP-2026-0234",
+    "app_type": "NEW_TENANCY",
+    "app_type_label": "New tenancy",
+    "tenant_name": "Fortune Coffeeshop",
+    "unit_id": "U-PI668-01-01",
+    "submitted_date": "2026-08-07",
+    "status": "Under Review",
+    "files": 7
+  },
+  {
+    "application_id": "APP-2026-0233",
+    "app_type": "ALTERATION",
+    "app_type_label": "Alteration & addition",
+    "tenant_name": "Swee Heng Telecom",
+    "unit_id": "U-BV229-01-08",
+    "submitted_date": "2026-08-06",
+    "status": "Under Review",
+    "files": 6
+  },
+  {
+    "application_id": "APP-2026-0228",
+    "app_type": "NEW_TENANCY",
+    "app_type_label": "New tenancy",
+    "tenant_name": "Prima Dental Care Pte Ltd",
+    "unit_id": "U-ST512-01-33",
+    "submitted_date": "2026-08-03",
+    "status": "Pending Documents",
+    "files": 5
+  }
+]

@@ -3,9 +3,29 @@ import { join } from "node:path";
 import { HttpResponse } from "msw";
 
 /** A recorded plg-api SSE stream (see scripts/record_sse_fixtures.py at the repo root). */
-export function fixture(name: "answer" | "not_covered" | "error" | "draft" | "policy_stance" | "data" | "multi_part" | "defect"): string {
+export function fixture(
+  name:
+    | "answer"
+    | "not_covered"
+    | "error"
+    | "draft"
+    | "policy_stance"
+    | "data"
+    | "multi_part"
+    | "defect"
+    | "doc_check"
+    | "doc_check_problem",
+): string {
   // Vitest runs from web/; import.meta.url is not a file URL under jsdom.
   return readFileSync(join(process.cwd(), "src/test/fixtures", `${name}.sse`), "utf8");
+}
+
+/** The recorded GET /submissions response: the applications the Document check screen offers. */
+export function submissionsFixture(): Record<string, unknown>[] {
+  return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/submissions.json"), "utf8")) as Record<
+    string,
+    unknown
+  >[];
 }
 
 /** A recorded approvals response: `pending.json`, `audit.json` (parsed) or a resume stream `edit.sse` / `reject.sse` / `ticket_edit.sse`. */

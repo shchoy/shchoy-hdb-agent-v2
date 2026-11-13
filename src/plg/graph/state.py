@@ -13,8 +13,8 @@ from plg.agents.runtime import Citation
 from plg.identity import UserCtx
 from plg.llm import Message
 
-Intent = Literal["knowledge", "data", "drafting", "defect"]
-"""What kind of question it is. Grows with the specialists (doc_check, tasks, ...)."""
+Intent = Literal["knowledge", "data", "drafting", "defect", "doc_check"]
+"""What kind of question it is. Grows with the specialists (tasks, ...)."""
 
 
 class Finding(BaseModel):

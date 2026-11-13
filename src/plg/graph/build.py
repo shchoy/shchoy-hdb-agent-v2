@@ -1,7 +1,9 @@
-"""StateGraph wiring: START → route → specialists (fan-out) → merge → END.
+"""StateGraph wiring: START → route → specialists (fan-out) → merge → (approval → execute_action)* → END.
 
 `route` (Haiku) decides which specialists a question needs; none means `merge` answers it directly.
 `merge` fuses the specialists' findings into one answer and is the only node that streams tokens.
+Proposed actions wait at `approval` (a LangGraph interrupt) for the officer's decision; `execute_action`, the only
+node with side effects, is reachable only from there.
 """
 
 from __future__ import annotations
@@ -16,9 +18,13 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
-from langgraph.types import Send
+from langgraph.types import Send, interrupt
 from pydantic import BaseModel
 
+from plg.actions import letters
+from plg.actions.audit import AuditEntry, AuditLog
+from plg.actions.model import ApprovalDecision, ProposedAction, pending
+from plg.actions.outbox import LocalOutbox, Outbox, OutboxItem
 from plg.agents import data, drafting, knowledge
 from plg.agents.runtime import CACHE
 from plg.config import Settings
@@ -30,6 +36,7 @@ from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
 from plg.graph import summary as history
 from plg.graph.state import Finding, Intent, PLGGraph, PLGState
+from plg.runs import RUN_ID
 from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
 from plg.ontology.glossary import Glossary, load_glossary
@@ -44,6 +51,8 @@ MERGE = "merge"
 SUMMARISE = history.NODE
 LOAD_MEMORY = "load_memory"
 WRITE_MEMORY = "write_memory"
+APPROVAL = "approval"
+EXECUTE = "execute_action"
 
 ROUTE_SYSTEM = """\
 You route questions from officers of the Properties & Land Group (PLG) to specialists.
@@ -153,6 +162,8 @@ def build_graph(
     checkpointer: BaseCheckpointSaver[Any] | None = None,
     settings: Settings | None = None,
     memory: MemoryService | None = None,
+    outbox: Outbox | None = None,
+    audit: AuditLog | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
@@ -160,6 +171,8 @@ def build_graph(
     settings = settings or Settings.from_env()
     templates = templates or TemplateLibrary(settings.corpus_dir)
     drafts = drafts or DraftStore()
+    outbox = outbox or LocalOutbox(settings.outbox_dir)
+    audit = audit or AuditLog(settings.audit_log)
     first = LOAD_MEMORY if memory else ROUTE  # memory is recalled before routing when the graph has one
 
     def unsummarised(state: PLGState) -> list[Message]:
@@ -243,9 +256,14 @@ def build_graph(
         result = await drafting.answer(
             llm, warehouse, layer, templates, drafts, agent_conversation(state), state.get("user")
         )
-        if result.draft:
-            get_stream_writer()({"draft": result.draft.model_dump()})
-        return {"findings": [Finding(specialist=DRAFTING, text=result.text, citations=[], traced=result.draft is not None)]}
+        finding = Finding(specialist=DRAFTING, text=result.text, citations=[], traced=result.draft is not None)
+        user = state.get("user")
+        if not result.draft or user is None:
+            return {"findings": [finding]}
+        get_stream_writer()({"draft": result.draft.model_dump()})
+        # Sending it is only proposed: it waits for the officer at `approval`.
+        action = letters.propose_letter(result.draft, user.staff_id, state.get("proposed_actions", []))
+        return {"findings": [finding], "proposed_actions": [action]}
 
     async def merge(state: PLGState) -> PLGState:
         write = get_stream_writer()
@@ -269,6 +287,54 @@ def build_graph(
             memory.learn_in_background(user, thread_id, state["question"], verified)
         return {}
 
+    def after_answer(state: PLGState) -> str:
+        return APPROVAL if pending(state.get("proposed_actions", [])) else END
+
+    def approval(state: PLGState) -> PLGState:
+        """Pause until the officer decides on the oldest pending action. The decision is checked again here, so
+        nothing but an approval of this exact version, by its owner holding an approver role, gets through."""
+        action = pending(state.get("proposed_actions", []))[0]
+        decision = ApprovalDecision.model_validate(interrupt(action.model_dump(mode="json")))
+        refusal = decision.refusal(action)
+        if refusal:
+            raise PermissionError(refusal)
+        return {"decision": decision}
+
+    async def execute_action(state: PLGState, config: RunnableConfig) -> PLGState:
+        """Carry out the decision: send the (edited) letter to the outbox, or nothing for a rejection; audit it."""
+        decision = state.get("decision")
+        assert decision is not None, "execute_action runs only after approval"
+        action = next(a for a in state.get("proposed_actions", []) if a.action_id == decision.action_id)
+        if decision.refusal(action):  # never act on a stale decision
+            raise PermissionError("The decision no longer matches a pending action.")
+        sent: ProposedAction | None = None
+        if decision.decision == "edit":
+            sent = await asyncio.to_thread(letters.edited, action, decision.edits, templates, warehouse.records_db)
+        elif decision.decision == "approve":
+            sent = action
+        outbox_id = None
+        if sent is not None:
+            outbox_id = f"{sent.action_id}-v{sent.version}"
+            item = OutboxItem(
+                item_id=outbox_id, action_id=sent.action_id, version=sent.version,
+                template_id=sent.payload.template_id, recipient=sent.payload.recipient, title=sent.title,
+                slots=sent.payload.slots, html=sent.preview, approver=decision.approver, sent_at=letters.now(),
+            )
+            await asyncio.to_thread(outbox.send, item)
+        entry = AuditEntry(
+            action_id=action.action_id, version=action.version, action_type=action.action_type,
+            decision=decision.decision, edits=decision.edits, reason=decision.reason, approver=decision.approver,
+            approver_role=decision.approver_role, at=letters.now(),
+            run_id=str(config.get("configurable", {}).get(RUN_ID, "")), outbox_id=outbox_id,
+        )
+        await asyncio.to_thread(audit.record, entry)
+        get_stream_writer()({"action_result": {
+            "action_id": action.action_id, "version": sent.version if sent else action.version,
+            "decision": decision.decision, "outbox_id": outbox_id,
+        }})
+        done = (sent or action).model_copy(update={"status": "rejected" if sent is None else "approved"})
+        return {"proposed_actions": [done], "decision": None}
+
     graph = StateGraph(PLGState)
     graph.add_node(ROUTE, route)
     graph.add_node(KNOWLEDGE, knowledge_node)
@@ -276,6 +342,10 @@ def build_graph(
     graph.add_node(DRAFTING, drafting_node)
     graph.add_node(MERGE, merge)
     graph.add_node(SUMMARISE, summarise_history)
+    graph.add_node(APPROVAL, approval)
+    graph.add_node(EXECUTE, execute_action)
+    graph.add_edge(APPROVAL, EXECUTE)
+    graph.add_conditional_edges(EXECUTE, after_answer, [APPROVAL, END])
     graph.add_conditional_edges(START, start, [SUMMARISE, first])
     graph.add_edge(SUMMARISE, first)
     if memory:
@@ -286,11 +356,10 @@ def build_graph(
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
     graph.add_edge(DRAFTING, MERGE)
+    answered = WRITE_MEMORY if memory else MERGE
     if memory:
         graph.add_edge(MERGE, WRITE_MEMORY)
-        graph.add_edge(WRITE_MEMORY, END)
-    else:
-        graph.add_edge(MERGE, END)
+    graph.add_conditional_edges(answered, after_answer, [APPROVAL, END])
     return graph.compile(checkpointer=checkpointer or InMemorySaver())
 
 

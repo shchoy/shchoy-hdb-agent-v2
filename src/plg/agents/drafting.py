@@ -1,7 +1,8 @@
 """The `drafting` agent: picks the approved template for a requested letter and fills its slots from PLG Records.
 
 Its tools only read (templates, records) and propose: `submit_draft` records a draft for the officer to preview and
-download. Nothing is sent, and drafting creates no outbox item. Slots it can't fill are listed, never invented, and
+download. Nothing is sent: the graph turns the draft into a proposed `send_letter` action that waits for the
+officer's approval. Slots it can't fill are listed, never invented, and
 the filled draft gets a personal-data check.
 """
 
@@ -9,7 +10,6 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -20,8 +20,8 @@ from plg.agents.runtime import Tool, run_agent
 from plg.data.semantic import SemanticLayer
 from plg.data.sqlcheck import SqlRejected
 from plg.data.warehouse import Warehouse
-from plg.drafting import pii, render
-from plg.drafting.model import Draft, UnfilledSlot
+from plg.drafting.compose import compose
+from plg.drafting.model import Draft
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import Template, TemplateLibrary
 from plg.identity import UserCtx
@@ -173,22 +173,9 @@ def submit_tool(
         template = library.get(args.template_id)
         if template is None:
             return unknown(library, args.template_id)
-        values = {
-            slot: str(v).strip() for slot, v in args.slots.items()
-            if slot in template.slots and v is not None and str(v).strip()
-        }
-        reasons = {n.slot: n.reason for n in args.unfilled}
-        unfilled = [
-            UnfilledSlot(slot=slot, reason=reasons.get(slot) or "No value was supplied.")
-            for slot in template.slots if slot not in values
-        ]
-        paragraphs = render.fill(template, values)
-        draft = Draft(
-            draft_id=str(uuid.uuid4()), template_id=template.template_id, template_title=template.title,
-            template_version=template.version, slots=values, unfilled=unfilled,
-            pii=pii.check(template.template_id, values, officer, names), html=render.to_html(paragraphs),
-        )
-        drafts.append((draft, render.to_docx(template, paragraphs)))
+        values = {slot: str(v).strip() for slot, v in args.slots.items() if v is not None}
+        draft, docx_bytes = compose(template, values, {n.slot: n.reason for n in args.unfilled}, officer, names)
+        drafts.append((draft, docx_bytes))
         return summary(draft)
 
     return Tool(

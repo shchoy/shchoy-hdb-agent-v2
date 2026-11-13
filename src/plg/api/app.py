@@ -10,9 +10,11 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.openapi.utils import get_openapi
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, model_validator
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
+from plg.actions.letters import unknown_slots
+from plg.actions.model import ApprovalDecision, Decision, ProposedAction
 from plg.config import Settings
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
@@ -51,10 +53,41 @@ class ThreadView(BaseModel):
     summary: str
     running: str | None = None
     """The question still being answered, if a run is in progress: resume it with GET /threads/{id}/runs/latest."""
+    pending: list[ProposedAction] = []
+    """Actions waiting for the officer's decision (POST /threads/{id}/resume)."""
 
 
 class RunRequest(BaseModel):
     message: str
+
+
+class ResumeRequest(BaseModel):
+    """The officer's decision on the exact pending version of an action."""
+
+    action_id: str
+    version: int
+    decision: Decision
+    edits: dict[str, str] = {}
+    """Slot → new value; required for `edit`, which sends the edited letter."""
+    reason: str = ""
+    """Why it was rejected; required for `reject`."""
+
+    @model_validator(mode="after")
+    def complete(self) -> ResumeRequest:
+        if self.decision == "reject" and not self.reason.strip():
+            raise ValueError("A rejection needs a reason")
+        if self.decision == "edit" and not self.edits:
+            raise ValueError("An edit needs at least one slot value")
+        if self.decision != "edit" and self.edits:
+            raise ValueError("Only an edit can change slot values")
+        return self
+
+
+class PendingApproval(ProposedAction):
+    """A pending action and the conversation it waits in."""
+
+    thread_id: str
+    thread_title: str
 
 
 class MemoryEdit(BaseModel):
@@ -155,8 +188,23 @@ def create_app(
         latest = runs.latest(thread_id)
         return ThreadView(
             thread_id=thread_id, title=title, messages=values.get("messages", []), summary=values.get("summary", ""),
-            running=latest.question if latest and not latest.finished else None,
+            running=latest.question if latest and not latest.finished and latest.question else None,
+            pending=await waiting(thread_id),
         )
+
+    async def waiting(thread_id: str) -> list[ProposedAction]:
+        """The actions the thread's checkpoint is paused on, so they survive a restart."""
+        snapshot = await graph.aget_state({"configurable": {"thread_id": thread_id}})
+        return [ProposedAction.model_validate(i.value) for i in snapshot.interrupts]
+
+    @app.get("/approvals")
+    async def list_approvals(user: User, status: Literal["pending"] = "pending") -> list[PendingApproval]:
+        """The officer's own actions waiting for a decision, across all their conversations, oldest first."""
+        found = [
+            PendingApproval(**action.model_dump(), thread_id=t.thread_id, thread_title=t.title)
+            for t in threads.list(user.staff_id) for action in await waiting(t.thread_id)
+        ]
+        return sorted(found, key=lambda a: a.proposed_at)
 
     def memory_of(memory_id: str, user: UserCtx) -> MemoryView:
         """Someone else's memory looks exactly like one that doesn't exist."""
@@ -213,6 +261,32 @@ def create_app(
         except RunInProgress:
             raise HTTPException(status_code=409, detail="This conversation is still answering") from None
         threads.asked(thread_id, body.message)
+        return sse(buffer)
+
+    @app.post(
+        "/threads/{thread_id}/resume", response_class=EventSourceResponse,
+        responses={**run_stream_docs, 403: {"description": "Your role can't approve this action."},
+                   409: {"description": "That version of the action isn't pending, or the thread is still answering."}},
+    )
+    async def resume_thread(thread_id: str, body: ResumeRequest, user: User) -> EventSourceResponse:
+        """Approve, edit or reject the pending action. Only the thread's owner, holding an approver role for the
+        action type, can decide, and only on the exact pending version; anything else changes nothing."""
+        owned(thread_id, user)
+        action = next((a for a in await waiting(thread_id) if a.action_id == body.action_id), None)
+        if action is None or action.version != body.version:
+            raise HTTPException(status_code=409, detail="That version of the action is not pending")
+        if user.role not in action.approver_roles:
+            raise HTTPException(status_code=403, detail="Your role can't approve this action")
+        if body.decision == "edit" and (unknown := unknown_slots(action, body.edits)):
+            raise HTTPException(status_code=422, detail=f"The letter has no slot {', '.join(unknown)}")
+        still_open = sorted({u.slot for u in action.payload.unfilled} - {s for s, v in body.edits.items() if v.strip()})
+        if body.decision != "reject" and still_open:
+            raise HTTPException(status_code=422, detail=f"Fill the open slots before sending the letter: {', '.join(still_open)}")
+        decision = ApprovalDecision(**body.model_dump(), approver=user.staff_id, approver_role=user.role)
+        try:
+            buffer = runs.start(graph, thread_id, "", user, decision)
+        except RunInProgress:
+            raise HTTPException(status_code=409, detail="This conversation is still answering") from None
         return sse(buffer)
 
     @app.get("/threads/{thread_id}/runs/latest", response_class=EventSourceResponse, responses=run_stream_docs)

@@ -232,6 +232,70 @@
         }
       }
     },
+    "/approvals": {
+      "get": {
+        "summary": "List Approvals",
+        "description": "The officer's own actions waiting for a decision, across all their conversations, oldest first.",
+        "operationId": "list_approvals_approvals_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": "pending",
+              "type": "string",
+              "default": "pending",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PendingApproval"
+                  },
+                  "title": "Response List Approvals Approvals Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/memory": {
       "get": {
         "summary": "List Memory",
@@ -508,6 +572,80 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/threads/{thread_id}/resume": {
+      "post": {
+        "summary": "Resume Thread",
+        "description": "Approve, edit or reject the pending action. Only the thread's owner, holding an approver role for the\naction type, can decide, and only on the exact pending version; anything else changes nothing.",
+        "operationId": "resume_thread_threads__thread_id__resume_post",
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events; each frame's data is one RunEvent.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunEvent"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your role can't approve this action."
+          },
+          "409": {
+            "description": "That version of the action isn't pending, or the thread is still answering."
           },
           "422": {
             "description": "Validation Error",
@@ -1041,6 +1179,64 @@
         "title": "Highlight",
         "description": "`blocks[block].text[start:end]` is part of the cited span."
       },
+      "LetterPayload": {
+        "description": "A letter filled from an approved template, as it would be sent.",
+        "properties": {
+          "draft_id": {
+            "title": "Draft Id",
+            "type": "string"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "template_title": {
+            "title": "Template Title",
+            "type": "string"
+          },
+          "template_version": {
+            "title": "Template Version",
+            "type": "string"
+          },
+          "recipient": {
+            "title": "Recipient",
+            "type": "string"
+          },
+          "slots": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Slots",
+            "type": "object"
+          },
+          "unfilled": {
+            "items": {
+              "$ref": "#/components/schemas/UnfilledSlot"
+            },
+            "title": "Unfilled",
+            "type": "array"
+          },
+          "pii": {
+            "items": {
+              "$ref": "#/components/schemas/PiiFinding"
+            },
+            "title": "Pii",
+            "type": "array"
+          }
+        },
+        "required": [
+          "draft_id",
+          "template_id",
+          "template_title",
+          "template_version",
+          "recipient",
+          "slots",
+          "unfilled",
+          "pii"
+        ],
+        "title": "LetterPayload",
+        "type": "object"
+      },
       "MemoryEdit": {
         "properties": {
           "text": {
@@ -1168,6 +1364,237 @@
         ],
         "title": "Message"
       },
+      "PendingApproval": {
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "title": "Action Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "action_type": {
+            "type": "string",
+            "const": "send_letter",
+            "title": "Action Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/LetterPayload"
+          },
+          "preview": {
+            "type": "string",
+            "title": "Preview"
+          },
+          "approver_roles": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "director",
+                "manager",
+                "estate_manager",
+                "officer",
+                "analyst",
+                "legal"
+              ]
+            },
+            "type": "array",
+            "title": "Approver Roles"
+          },
+          "proposed_by": {
+            "type": "string",
+            "title": "Proposed By"
+          },
+          "proposed_at": {
+            "type": "string",
+            "title": "Proposed At"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status",
+            "default": "pending"
+          },
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "thread_title": {
+            "type": "string",
+            "title": "Thread Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_id",
+          "version",
+          "action_type",
+          "title",
+          "payload",
+          "preview",
+          "approver_roles",
+          "proposed_by",
+          "proposed_at",
+          "thread_id",
+          "thread_title"
+        ],
+        "title": "PendingApproval",
+        "description": "A pending action and the conversation it waits in."
+      },
+      "PiiFinding": {
+        "description": "Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "nric",
+              "email",
+              "phone",
+              "tenant"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "slot": {
+            "title": "Slot",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "slot",
+          "message"
+        ],
+        "title": "PiiFinding",
+        "type": "object"
+      },
+      "ProposedAction": {
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "title": "Action Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "action_type": {
+            "type": "string",
+            "const": "send_letter",
+            "title": "Action Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/LetterPayload"
+          },
+          "preview": {
+            "type": "string",
+            "title": "Preview"
+          },
+          "approver_roles": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "director",
+                "manager",
+                "estate_manager",
+                "officer",
+                "analyst",
+                "legal"
+              ]
+            },
+            "type": "array",
+            "title": "Approver Roles"
+          },
+          "proposed_by": {
+            "type": "string",
+            "title": "Proposed By"
+          },
+          "proposed_at": {
+            "type": "string",
+            "title": "Proposed At"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status",
+            "default": "pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_id",
+          "version",
+          "action_type",
+          "title",
+          "payload",
+          "preview",
+          "approver_roles",
+          "proposed_by",
+          "proposed_at"
+        ],
+        "title": "ProposedAction"
+      },
+      "ResumeRequest": {
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "title": "Action Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "edit",
+              "reject"
+            ],
+            "title": "Decision"
+          },
+          "edits": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Edits",
+            "default": {}
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_id",
+          "version",
+          "decision"
+        ],
+        "title": "ResumeRequest",
+        "description": "The officer's decision on the exact pending version of an action."
+      },
       "RunRequest": {
         "properties": {
           "message": {
@@ -1248,6 +1675,14 @@
               }
             ],
             "title": "Running"
+          },
+          "pending": {
+            "items": {
+              "$ref": "#/components/schemas/ProposedAction"
+            },
+            "type": "array",
+            "title": "Pending",
+            "default": []
           }
         },
         "type": "object",
@@ -1259,6 +1694,24 @@
         ],
         "title": "ThreadView",
         "description": "A conversation rebuilt from its checkpoint: every exchange, and the summary standing in for older turns."
+      },
+      "UnfilledSlot": {
+        "properties": {
+          "slot": {
+            "title": "Slot",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot",
+          "reason"
+        ],
+        "title": "UnfilledSlot",
+        "type": "object"
       },
       "UserCtx": {
         "properties": {
@@ -1341,6 +1794,58 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "ActionResultEvent": {
+        "description": "A decision was carried out: the outbox item sent (approve, edit) or nothing (reject).",
+        "properties": {
+          "type": {
+            "const": "action_result",
+            "default": "action_result",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "decision": {
+            "enum": [
+              "approve",
+              "edit",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "outbox_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outbox Id"
+          }
+        },
+        "required": [
+          "seq",
+          "action_id",
+          "version",
+          "decision",
+          "outbox_id"
+        ],
+        "title": "ActionResultEvent",
+        "type": "object"
       },
       "CitationEvent": {
         "description": "A source the answer cites. `index` is the number of its `[n]` marker in the answer text.",
@@ -1586,6 +2091,52 @@
         "title": "ErrorEvent",
         "type": "object"
       },
+      "InterruptEvent": {
+        "description": "The run paused for the officer's decision on this exact version: resume with POST /threads/{id}/resume.",
+        "properties": {
+          "type": {
+            "const": "interrupt",
+            "default": "interrupt",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "approver_roles": {
+            "items": {
+              "enum": [
+                "director",
+                "manager",
+                "estate_manager",
+                "officer",
+                "analyst",
+                "legal"
+              ],
+              "type": "string"
+            },
+            "title": "Approver Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "seq",
+          "action_id",
+          "version",
+          "approver_roles"
+        ],
+        "title": "InterruptEvent",
+        "type": "object"
+      },
       "NodeEvent": {
         "description": "A graph node started or finished, for the trajectory view.",
         "properties": {
@@ -1705,36 +2256,6 @@
           "evidence_quote"
         ],
         "title": "Override",
-        "type": "object"
-      },
-      "PiiFinding": {
-        "description": "Personal data that shouldn't be in the draft. Points at the slot; never repeats the value.",
-        "properties": {
-          "kind": {
-            "enum": [
-              "nric",
-              "email",
-              "phone",
-              "tenant"
-            ],
-            "title": "Kind",
-            "type": "string"
-          },
-          "slot": {
-            "title": "Slot",
-            "type": "string"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind",
-          "slot",
-          "message"
-        ],
-        "title": "PiiFinding",
         "type": "object"
       },
       "PolicyStanceEvent": {
@@ -1869,6 +2390,92 @@
           "status"
         ],
         "title": "PolicyVersion",
+        "type": "object"
+      },
+      "ProposedActionEvent": {
+        "description": "Something the assistant proposes to do outside the system. It waits for the officer's decision.",
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "action_type": {
+            "const": "send_letter",
+            "title": "Action Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/LetterPayload"
+          },
+          "preview": {
+            "title": "Preview",
+            "type": "string"
+          },
+          "approver_roles": {
+            "items": {
+              "enum": [
+                "director",
+                "manager",
+                "estate_manager",
+                "officer",
+                "analyst",
+                "legal"
+              ],
+              "type": "string"
+            },
+            "title": "Approver Roles",
+            "type": "array"
+          },
+          "proposed_by": {
+            "title": "Proposed By",
+            "type": "string"
+          },
+          "proposed_at": {
+            "title": "Proposed At",
+            "type": "string"
+          },
+          "status": {
+            "default": "pending",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "const": "proposed_action",
+            "default": "proposed_action",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action_id",
+          "version",
+          "action_type",
+          "title",
+          "payload",
+          "preview",
+          "approver_roles",
+          "proposed_by",
+          "proposed_at",
+          "seq"
+        ],
+        "title": "ProposedActionEvent",
         "type": "object"
       },
       "ResultSummary": {
@@ -2086,33 +2693,18 @@
         "title": "TokenEvent",
         "type": "object"
       },
-      "UnfilledSlot": {
-        "properties": {
-          "slot": {
-            "title": "Slot",
-            "type": "string"
-          },
-          "reason": {
-            "title": "Reason",
-            "type": "string"
-          }
-        },
-        "required": [
-          "slot",
-          "reason"
-        ],
-        "title": "UnfilledSlot",
-        "type": "object"
-      },
       "RunEvent": {
         "discriminator": {
           "mapping": {
+            "action_result": "#/components/schemas/ActionResultEvent",
             "citation": "#/components/schemas/CitationEvent",
             "done": "#/components/schemas/DoneEvent",
             "draft": "#/components/schemas/DraftEvent",
             "error": "#/components/schemas/ErrorEvent",
+            "interrupt": "#/components/schemas/InterruptEvent",
             "node": "#/components/schemas/NodeEvent",
             "policy_stance": "#/components/schemas/PolicyStanceEvent",
+            "proposed_action": "#/components/schemas/ProposedActionEvent",
             "sql_trace": "#/components/schemas/SqlTraceEvent",
             "token": "#/components/schemas/TokenEvent"
           },
@@ -2136,6 +2728,15 @@
           },
           {
             "$ref": "#/components/schemas/PolicyStanceEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ProposedActionEvent"
+          },
+          {
+            "$ref": "#/components/schemas/InterruptEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ActionResultEvent"
           },
           {
             "$ref": "#/components/schemas/DoneEvent"

@@ -35,6 +35,9 @@ class Settings(BaseModel):
     graph_dir: Path = REPO_ROOT / ".plg" / "graph"
     # Conversations: LangGraph checkpoints and thread ownership (SQLite).
     threads_db: Path = REPO_ROOT / ".plg" / "threads.sqlite"
+    # Approved actions: the local Outbox adapter (one JSON file per letter) and the append-only audit log.
+    outbox_dir: Path = REPO_ROOT / ".plg" / "outbox"
+    audit_log: Path = REPO_ROOT / ".plg" / "audit.jsonl"
     # Above this many (estimated) tokens of history, older turns are folded into a summary, keeping the last
     # `history_keep_messages` messages verbatim.
     history_token_threshold: int = 6000

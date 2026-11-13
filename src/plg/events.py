@@ -6,7 +6,9 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from plg.actions.model import Decision, ProposedAction
 from plg.agents.runtime import Citation
+from plg.identity import Role
 from plg.data.trace import SqlTrace
 from plg.drafting.model import Draft
 from plg.entities.policy import PolicyLineage
@@ -57,6 +59,35 @@ class PolicyStanceEvent(PolicyLineage):
     seq: int
 
 
+class ProposedActionEvent(ProposedAction):
+    """Something the assistant proposes to do outside the system. It waits for the officer's decision."""
+
+    type: Literal["proposed_action"] = "proposed_action"
+    seq: int
+
+
+class InterruptEvent(BaseModel):
+    """The run paused for the officer's decision on this exact version: resume with POST /threads/{id}/resume."""
+
+    type: Literal["interrupt"] = "interrupt"
+    seq: int
+    action_id: str
+    version: int
+    approver_roles: list[Role]
+
+
+class ActionResultEvent(BaseModel):
+    """A decision was carried out: the outbox item sent (approve, edit) or nothing (reject)."""
+
+    type: Literal["action_result"] = "action_result"
+    seq: int
+    action_id: str
+    version: int
+    """The version sent: one above the approved version after an edit."""
+    decision: Decision
+    outbox_id: str | None
+
+
 class DoneEvent(BaseModel):
     type: Literal["done"] = "done"
     seq: int
@@ -73,5 +104,6 @@ class ErrorEvent(BaseModel):
 
 
 RunEvent = Annotated[
-    NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
+    NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | ProposedActionEvent
+    | InterruptEvent | ActionResultEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
 ]

@@ -8,23 +8,38 @@ from collections.abc import AsyncIterator
 from typing import Any, cast
 
 from langchain_core.runnables import RunnableConfig
+from langgraph.types import Command
 
-from plg.events import CitationEvent, DoneEvent, DraftEvent, ErrorEvent, NodeEvent, PolicyStanceEvent, RunEvent, SqlTraceEvent, TokenEvent
+from plg.actions.model import ApprovalDecision
+from plg.events import (
+    ActionResultEvent, CitationEvent, DoneEvent, DraftEvent, ErrorEvent, InterruptEvent, NodeEvent, PolicyStanceEvent,
+    ProposedActionEvent, RunEvent, SqlTraceEvent, TokenEvent,
+)
 from plg.graph.state import PLGGraph, PLGState
 from plg.identity import UserCtx
 
 logger = logging.getLogger(__name__)
 
 
+RUN_ID = "plg_run_id"
+"""Configurable key carrying the run's (LangSmith) run ID to the nodes, e.g. for the audit log."""
+
+
 async def stream_run(
-    graph: PLGGraph, thread_id: str, message: str, user: UserCtx | None = None
+    graph: PLGGraph, thread_id: str, message: str, user: UserCtx | None = None,
+    *, decision: ApprovalDecision | None = None,
 ) -> AsyncIterator[RunEvent]:
+    """Answer `message`, or, given a `decision`, resume the thread's pending approval with it."""
     run_id = uuid.uuid4()
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}, "run_id": run_id}
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id, RUN_ID: str(run_id)}, "run_id": run_id}
     seq = 0
-    inputs: PLGState = {"question": message}
-    if user is not None:
-        inputs["user"] = user
+    inputs: PLGState | Command[None]
+    if decision is not None:
+        inputs = Command(resume=decision.model_dump(mode="json"))
+    else:
+        inputs = {"question": message}
+        if user is not None:
+            inputs["user"] = user
 
     def next_seq() -> int:
         nonlocal seq
@@ -46,6 +61,13 @@ async def stream_run(
                     node=chunk["name"],
                     status="finished" if "result" in chunk else "started",
                 )
+                for paused in chunk.get("interrupts") or []:  # waiting for the officer's decision on an action
+                    action = ProposedActionEvent(seq=next_seq(), **paused["value"])
+                    yield action
+                    yield InterruptEvent(
+                        seq=next_seq(), action_id=action.action_id, version=action.version,
+                        approver_roles=action.approver_roles,
+                    )
             elif mode == "custom" and "token" in chunk:
                 yield TokenEvent(seq=next_seq(), node=chunk["node"], text=chunk["token"])
             elif mode == "custom" and "citation" in chunk:
@@ -56,6 +78,8 @@ async def stream_run(
                 yield DraftEvent(seq=next_seq(), **chunk["draft"])
             elif mode == "custom" and "policy_stance" in chunk:
                 yield PolicyStanceEvent(seq=next_seq(), **chunk["policy_stance"])
+            elif mode == "custom" and "action_result" in chunk:
+                yield ActionResultEvent(seq=next_seq(), **chunk["action_result"])
     except Exception:
         logger.exception("Run %s on thread %s failed", run_id, thread_id)
         yield ErrorEvent(

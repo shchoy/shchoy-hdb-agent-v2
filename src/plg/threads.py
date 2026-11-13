@@ -17,6 +17,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from plg.actions.model import ApprovalDecision
 from plg.events import DoneEvent, ErrorEvent, RunEvent
 from plg.graph.state import PLGGraph
 from plg.identity import UserCtx
@@ -129,7 +130,10 @@ class RunRegistry:
     def latest(self, thread_id: str) -> RunBuffer | None:
         return self._runs.get(thread_id)
 
-    def start(self, graph: PLGGraph, thread_id: str, message: str, user: UserCtx) -> RunBuffer:
+    def start(
+        self, graph: PLGGraph, thread_id: str, message: str, user: UserCtx, decision: ApprovalDecision | None = None
+    ) -> RunBuffer:
+        """Answer `message` (or carry out `decision`, with an empty `message`) in the background."""
         current = self._runs.get(thread_id)
         if current is not None and not current.finished:
             raise RunInProgress
@@ -137,7 +141,7 @@ class RunRegistry:
 
         async def pump() -> None:
             try:
-                async for event in stream_run(graph, thread_id, message, user):
+                async for event in stream_run(graph, thread_id, message, user, decision=decision):
                     await buffer.add(event)
             finally:
                 await buffer.close()  # followers never hang, and the thread can be asked again

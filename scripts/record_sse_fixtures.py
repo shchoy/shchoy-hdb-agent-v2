@@ -257,8 +257,11 @@ def record(
     llm = ScriptedLLMClient()
     script(llm)
     with tempfile.TemporaryDirectory() as scratch:
-        # Threads, memory and WORKED_ON links go to scratch space, never the real .plg stores.
-        settings = Settings(graph_dir=Path(scratch) / "graph", threads_db=Path(scratch) / "threads.sqlite")
+        # Threads, memory, WORKED_ON links, the outbox and the audit log go to scratch space, never the real .plg stores.
+        settings = Settings(
+            graph_dir=Path(scratch) / "graph", threads_db=Path(scratch) / "threads.sqlite",
+            outbox_dir=Path(scratch) / "outbox", audit_log=Path(scratch) / "audit.jsonl",
+        )
         app = create_app(settings, llm=llm, searcher=search, entities=graph, memory=scratch_memory(Path(scratch) / "memory"))
         return _stream(app, question)
 

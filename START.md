@@ -128,6 +128,16 @@ curl -N -X POST http://127.0.0.1:8000/threads/<id>/resume -H 'X-PLG-User: S05' -
 
 Only the thread's owner can decide (another officer gets 404), and only on the exact pending version (otherwise 409, including a replay). Approving or editing needs an approver role for the action type (`send_letter`: not analysts; 403); anyone can reject their own proposal, with a reason. A letter with open slots can't be sent until an edit fills them (422). Approve/edit writes the letter to `PLG_OUTBOX_DIR` (nothing is delivered); every decision appends one line to `PLG_AUDIT_LOG` with the approver, time and the run's `run_id`. Asking for the same template again in the thread revises the pending letter (same ID, next version). Pending approvals survive a `plg-api` restart. `plg ask` stops at the proposal, with no way to approve from the CLI yet. Where it lives: `src/plg/actions/`, `src/plg/graph/build.py` (`approval`, `execute_action`), `tests/test_approvals_api.py`.
 
+### Approvals inbox (issue #19)
+
+In the web app, **Approvals** in the top bar (`/approvals`) lists every action waiting for you across your conversations: the letter as it would be sent, its slot values, open slots and personal-data flags. **Edit slots** turns the slots into inputs and shows each change against the proposal (struck-through old value, new value); **Send edited letter** is enabled once the open slots are filled. **Approve and send** appears only for a complete letter and a role that can send it; **Reject…** asks for a reason. After a decision you see its result (outbox item ID and version sent, or that nothing was sent), and the **Decided** section shows your audit trail from `GET /audit`: who decided, role, when, reason, edits, the outbox item with the letter as sent, and the run's `run_id`.
+
+```bash
+curl -s http://127.0.0.1:8000/audit -H 'X-PLG-User: S05'   # your decisions, newest first
+```
+
+Where it lives: `web/src/app/approvals/`, BFF `web/src/app/api/{approvals,audit}/`, `web/src/app/api/threads/[id]/resume/`, `src/plg/api/app.py` (`/audit`).
+
 ### Ask a data question (issue #12)
 
 ```bash

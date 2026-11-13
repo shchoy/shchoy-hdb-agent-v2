@@ -296,6 +296,59 @@
         }
       }
     },
+    "/audit": {
+      "get": {
+        "summary": "Audit Trail",
+        "description": "The officer's own decisions on proposed actions, newest first, each with the outbox item it sent.",
+        "operationId": "audit_trail_audit_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditRecord"
+                  },
+                  "title": "Response Audit Trail Audit Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/memory": {
       "get": {
         "summary": "List Memory",
@@ -1002,6 +1055,115 @@
   },
   "components": {
     "schemas": {
+      "AuditRecord": {
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "title": "Action Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "action_type": {
+            "type": "string",
+            "const": "send_letter",
+            "title": "Action Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id",
+            "default": ""
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "edit",
+              "reject"
+            ],
+            "title": "Decision"
+          },
+          "edits": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Edits"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "approver": {
+            "type": "string",
+            "title": "Approver"
+          },
+          "approver_role": {
+            "type": "string",
+            "enum": [
+              "director",
+              "manager",
+              "estate_manager",
+              "officer",
+              "analyst",
+              "legal"
+            ],
+            "title": "Approver Role"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "outbox_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outbox Id"
+          },
+          "sent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutboxItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_id",
+          "version",
+          "action_type",
+          "decision",
+          "edits",
+          "reason",
+          "approver",
+          "approver_role",
+          "at",
+          "run_id",
+          "outbox_id",
+          "sent"
+        ],
+        "title": "AuditRecord",
+        "description": "A decision from the audit log and, unless it was a rejection, the outbox item it sent."
+      },
       "ChunkLocation": {
         "properties": {
           "doc_id": {
@@ -1363,6 +1525,67 @@
           "content"
         ],
         "title": "Message"
+      },
+      "OutboxItem": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "action_id": {
+            "type": "string",
+            "title": "Action Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "template_id": {
+            "type": "string",
+            "title": "Template Id"
+          },
+          "recipient": {
+            "type": "string",
+            "title": "Recipient"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slots": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Slots"
+          },
+          "html": {
+            "type": "string",
+            "title": "Html"
+          },
+          "approver": {
+            "type": "string",
+            "title": "Approver"
+          },
+          "sent_at": {
+            "type": "string",
+            "title": "Sent At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "action_id",
+          "version",
+          "template_id",
+          "recipient",
+          "title",
+          "slots",
+          "html",
+          "approver",
+          "sent_at"
+        ],
+        "title": "OutboxItem"
       },
       "PendingApproval": {
         "properties": {

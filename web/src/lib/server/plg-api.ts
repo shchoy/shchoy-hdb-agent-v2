@@ -17,6 +17,27 @@ export function plgApiUnavailable(): NextResponse {
   return NextResponse.json({ detail: "plg-api is unavailable" }, { status: 502 });
 }
 
+/**
+ * plg-api's SSE reply passed straight through to the browser, unbuffered; a refusal (or any non-stream reply) is
+ * relayed with its status and body.
+ */
+export function relaySse(upstream: Response): Response {
+  if (upstream.status !== 200 || !upstream.body) {
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json" },
+    });
+  }
+  return new Response(upstream.body, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
+
 export function plgApiUrl(): string {
   return process.env.PLG_API_URL ?? DEFAULT_PLG_API_URL;
 }
@@ -183,4 +204,34 @@ export async function forgetMemory(staffId: string, memoryId: string): Promise<{
     params: { path: { memory_id: memoryId }, header: { "x-plg-user": staffId } },
   });
   return { status: response.status, body: error ?? null };
+}
+
+/** The officer's own actions waiting for a decision, across conversations. */
+export async function listApprovals(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/approvals", {
+    params: { query: { status: "pending" }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** The officer's own decisions on proposed actions, newest first, with what each sent. */
+export async function getAuditTrail(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/audit", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+type ResumePath = "/threads/{thread_id}/resume";
+export type ResumeRequest = paths[ResumePath]["post"]["requestBody"]["content"]["application/json"];
+
+/** Approves, edits or rejects a pending action; the SSE body (or plg-api's refusal) is returned unread. */
+export function resumeThread(staffId: string, threadId: string, body: ResumeRequest): Promise<Response> {
+  const path: ResumePath = "/threads/{thread_id}/resume";
+  return fetch(plgApiUrl() + path.replace("{thread_id}", encodeURIComponent(threadId)), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream", [USER_HEADER]: staffId },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
 }

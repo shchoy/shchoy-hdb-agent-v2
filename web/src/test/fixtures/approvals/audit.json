@@ -1,0 +1,59 @@
+[
+  {
+    "action_id": "000c89bd-9e73-4c4a-94e6-a185f018d862",
+    "version": 1,
+    "action_type": "send_letter",
+    "title": "Send Arrears Reminder Letter to Golden Leaf Minimart Pte Ltd",
+    "thread_id": "593395b1-ba98-4275-a6b5-9afec215e762",
+    "decision": "reject",
+    "edits": {},
+    "reason": "The tenant paid yesterday.",
+    "approver": "S05",
+    "approver_role": "officer",
+    "at": "2026-11-13T04:26:15.258949+00:00",
+    "run_id": "0d2cf97e-74b7-42b2-b5d9-dc92111fead2",
+    "outbox_id": null,
+    "sent": null
+  },
+  {
+    "action_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356",
+    "version": 1,
+    "action_type": "send_letter",
+    "title": "Send Feedback Update Reply to Sir/Madam",
+    "thread_id": "6ff3a625-e9b9-40de-bad9-8ddfa1b78680",
+    "decision": "edit",
+    "edits": {
+      "action_taken": "Our contractor sealed the ceiling joint on 5 October 2025.",
+      "next_steps": "If it recurs, please call us on 6100 2058."
+    },
+    "reason": "",
+    "approver": "S05",
+    "approver_role": "officer",
+    "at": "2026-11-13T04:26:15.254529+00:00",
+    "run_id": "deaa9674-ec40-44d7-aa0b-228a529193b0",
+    "outbox_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356-v2",
+    "sent": {
+      "item_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356-v2",
+      "action_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356",
+      "version": 2,
+      "template_id": "TPL-FBK-03",
+      "recipient": "Sir/Madam",
+      "title": "Send Feedback Update Reply to Sir/Madam",
+      "slots": {
+        "feedback_id": "FB-2025-00002",
+        "reply_date": "30 September 2026",
+        "provider_name": "Sir/Madam",
+        "received_date": "2 October 2025",
+        "location": "Blk 675 #02-07",
+        "issue_summary": "a leaking ceiling",
+        "ticket_reference": "IEMS-2510-0002",
+        "next_steps": "If it recurs, please call us on 6100 2058.",
+        "officer_name": "Siti Aishah Yusof",
+        "action_taken": "Our contractor sealed the ceiling joint on 5 October 2025."
+      },
+      "html": "<p>Case: FB-2025-00002</p>\n<p>30 September 2026</p>\n<p>Dear Sir/Madam,</p>\n<p>Thank you for your feedback received on 2 October 2025 regarding a leaking ceiling at Blk 675 #02-07.</p>\n<p>We have looked into the matter. Our contractor sealed the ceiling joint on 5 October 2025.</p>\n<p>Reference: IEMS-2510-0002</p>\n<p>If it recurs, please call us on 6100 2058.</p>\n<p>We appreciate you taking the time to help us keep our estates safe and pleasant.</p>\n<p>Yours sincerely,</p>\n<p>Siti Aishah Yusof</p>\n<p>Customer Relations</p>\n<p>Properties &amp; Land Group</p>",
+      "approver": "S05",
+      "sent_at": "2026-11-13T04:26:15.252747+00:00"
+    }
+  }
+]

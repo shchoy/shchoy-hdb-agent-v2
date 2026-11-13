@@ -1,7 +1,6 @@
 import type { DraftEvent } from "@/lib/events";
 import styles from "./ask.module.css";
-
-const STYLE = "body{font:15px/1.5 system-ui,sans-serif;margin:1rem;color:#111}p{margin:0 0 .75rem}mark{background:#fff3b0}";
+import { LetterFrame } from "./LetterFrame";
 
 /**
  * A letter drafted from an approved template: its preview, the slots still to fill, personal data to remove,
@@ -40,12 +39,7 @@ export function DraftPreview({ draft }: { draft: DraftEvent }) {
           </ul>
         </div>
       )}
-      <iframe
-        title={`Preview of ${draft.template_title}`}
-        sandbox=""
-        srcDoc={`<style>${STYLE}</style>${draft.html}`}
-        className={styles.draftFrame}
-      />
+      <LetterFrame title={`Preview of ${draft.template_title}`} html={draft.html} />
       <a href={`/api/drafts/${encodeURIComponent(draft.draft_id)}/file`} download>
         Download DOCX
       </a>

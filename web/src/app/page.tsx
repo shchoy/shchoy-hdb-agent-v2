@@ -17,6 +17,7 @@ export default async function AskPage() {
         <p>
           Signed in as <strong>{user.name}</strong> ({roleLabel(user.role)})
         </p>
+        <Link href="/approvals">Approvals</Link>
         <Link href="/memory">Memory</Link>
         <SignOutButton />
       </header>

@@ -1,0 +1,94 @@
+[
+  {
+    "action_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356",
+    "version": 1,
+    "action_type": "send_letter",
+    "title": "Send Feedback Update Reply to Sir/Madam",
+    "payload": {
+      "draft_id": "2993a81e-85ee-4738-9a94-047886b12597",
+      "template_id": "TPL-FBK-03",
+      "template_title": "Feedback Update Reply",
+      "template_version": "1.3",
+      "recipient": "Sir/Madam",
+      "slots": {
+        "feedback_id": "FB-2025-00002",
+        "reply_date": "30 September 2026",
+        "provider_name": "Sir/Madam",
+        "received_date": "2 October 2025",
+        "location": "Blk 675 #02-07",
+        "issue_summary": "a leaking ceiling",
+        "ticket_reference": "IEMS-2510-0002",
+        "next_steps": "If it recurs, call the shop on +65 9138 9404.",
+        "officer_name": "Siti Aishah Yusof"
+      },
+      "unfilled": [
+        {
+          "slot": "action_taken",
+          "reason": "The case record doesn't say what was done."
+        }
+      ],
+      "pii": [
+        {
+          "kind": "phone",
+          "slot": "next_steps",
+          "message": "Contains a phone number that isn't the signing officer's."
+        }
+      ]
+    },
+    "preview": "<p>Case: FB-2025-00002</p>\n<p>30 September 2026</p>\n<p>Dear Sir/Madam,</p>\n<p>Thank you for your feedback received on 2 October 2025 regarding a leaking ceiling at Blk 675 #02-07.</p>\n<p>We have looked into the matter. <mark>\u00abaction_taken\u00bb</mark></p>\n<p>Reference: IEMS-2510-0002</p>\n<p>If it recurs, call the shop on +65 9138 9404.</p>\n<p>We appreciate you taking the time to help us keep our estates safe and pleasant.</p>\n<p>Yours sincerely,</p>\n<p>Siti Aishah Yusof</p>\n<p>Customer Relations</p>\n<p>Properties &amp; Land Group</p>",
+    "approver_roles": [
+      "officer",
+      "estate_manager",
+      "manager",
+      "director",
+      "legal"
+    ],
+    "proposed_by": "S05",
+    "proposed_at": "2026-11-13T04:26:15.123673+00:00",
+    "status": "pending",
+    "thread_id": "6ff3a625-e9b9-40de-bad9-8ddfa1b78680",
+    "thread_title": "Draft an update reply to the member of public who gave feedback FB-2025-00002"
+  },
+  {
+    "action_id": "000c89bd-9e73-4c4a-94e6-a185f018d862",
+    "version": 1,
+    "action_type": "send_letter",
+    "title": "Send Arrears Reminder Letter to Golden Leaf Minimart Pte Ltd",
+    "payload": {
+      "draft_id": "08ab61e8-6e1b-459a-8aa7-c76b898657ab",
+      "template_id": "TPL-REM-01",
+      "template_title": "Arrears Reminder Letter",
+      "template_version": "1.3",
+      "recipient": "Golden Leaf Minimart Pte Ltd",
+      "slots": {
+        "letter_ref": "PLG/REM/2026/001",
+        "letter_date": "30 September 2026",
+        "tenant_name": "Golden Leaf Minimart Pte Ltd",
+        "tenant_address": "#01-32, Blk 214 Bayshore Vale Drive, Singapore 460214",
+        "unit_address": "Blk 214 Bayshore Vale Drive #01-32",
+        "tenancy_id": "TA-2024-00542",
+        "notice_level": "FIRST",
+        "invoice_table": "INV-1 | 2026-08 | due 2026-08-01 | S$3,924.00",
+        "total_due": "S$3,924.00",
+        "pay_by_date": "14 October 2026",
+        "officer_name": "Siti Aishah Yusof",
+        "officer_phone": "+65 6100 2058"
+      },
+      "unfilled": [],
+      "pii": []
+    },
+    "preview": "<p>Our ref: PLG/REM/2026/001</p>\n<p>30 September 2026</p>\n<p>Golden Leaf Minimart Pte Ltd<br>#01-32, Blk 214 Bayshore Vale Drive, Singapore 460214</p>\n<p>Dear Sir/Madam,</p>\n<p>FIRST REMINDER: OVERDUE RENT FOR Blk 214 Bayshore Vale Drive #01-32 (TENANCY TA-2024-00542)</p>\n<p>Our records show that the following rent remains unpaid as at the date of this letter:</p>\n<p>INV-1 | 2026-08 | due 2026-08-01 | S$3,924.00</p>\n<p>The total amount due is S$3,924.00 (inclusive of GST). Late-payment interest at 8% per annum will continue to accrue until full payment is received.</p>\n<p>Please pay the total amount due by 14 October 2026. You may pay by GIRO, PayNow (UEN reference on your invoice) or at any HEB branch. If you have already paid, please ignore this reminder.</p>\n<p>If you are having difficulty paying, please call Siti Aishah Yusof at +65 6100 2058 to discuss your situation.</p>\n<p>Failure to pay may result in further action under your tenancy agreement, including a Letter of Demand.</p>\n<p>Yours faithfully,</p>\n<p>Siti Aishah Yusof</p>\n<p>Finance &amp; Arrears</p>\n<p>Properties &amp; Land Group</p>\n<p>Housing &amp; Estates Board</p>",
+    "approver_roles": [
+      "officer",
+      "estate_manager",
+      "manager",
+      "director",
+      "legal"
+    ],
+    "proposed_by": "S05",
+    "proposed_at": "2026-11-13T04:26:15.203110+00:00",
+    "status": "pending",
+    "thread_id": "593395b1-ba98-4275-a6b5-9afec215e762",
+    "thread_title": "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
+  }
+]

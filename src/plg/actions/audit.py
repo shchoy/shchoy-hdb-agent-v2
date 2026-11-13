@@ -16,6 +16,10 @@ class AuditEntry(BaseModel):
     version: int
     """The version the approver saw and decided on."""
     action_type: ActionType
+    title: str = ""
+    """What the action was, e.g. "Send Feedback Update Reply to Sir/Madam"."""
+    thread_id: str = ""
+    """The conversation the action was proposed in."""
     decision: Decision
     edits: dict[str, str]
     reason: str
@@ -48,3 +52,7 @@ class AuditLog:
             return []
         lines = self.path.read_text(encoding="utf-8").splitlines()
         return [AuditEntry.model_validate_json(line) for line in lines if line.strip()]
+
+    def decided_by(self, staff_id: str) -> list[AuditEntry]:
+        """One officer's decisions, newest first."""
+        return [e for e in reversed(self.entries()) if e.approver == staff_id]

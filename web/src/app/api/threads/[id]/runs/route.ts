@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { startRun, plgApiUnavailable } from "@/lib/server/plg-api";
+import { startRun, plgApiUnavailable, relaySse } from "@/lib/server/plg-api";
 import { sessionStaffId } from "@/lib/server/session";
 
 export const runtime = "nodejs";
@@ -29,18 +29,5 @@ export async function POST(
     return plgApiUnavailable();
   }
 
-  if (upstream.status !== 200 || !upstream.body) {
-    return new Response(upstream.body, {
-      status: upstream.status,
-      headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json" },
-    });
-  }
-  return new Response(upstream.body, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      "X-Accel-Buffering": "no",
-    },
-  });
+  return relaySse(upstream);
 }

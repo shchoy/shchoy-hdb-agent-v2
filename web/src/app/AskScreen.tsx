@@ -5,6 +5,7 @@ import {
   InvalidFrameError,
   parseRunEvents,
   type CitationEvent,
+  type ClassificationEvent,
   type DraftEvent,
   type PolicyStanceEvent,
   type SqlTraceEvent,
@@ -12,6 +13,7 @@ import {
   type ThreadView,
 } from "@/lib/events";
 import { AnswerText } from "./AnswerText";
+import { ClassificationCard } from "./ClassificationCard";
 import { DraftPreview } from "./DraftPreview";
 import { PolicyStanceCard } from "./PolicyStanceCard";
 import { ReasoningPanel } from "./ReasoningPanel";
@@ -24,6 +26,7 @@ type Answer = {
   question: string;
   answer: string;
   citations: CitationEvent[];
+  classifications: ClassificationEvent[];
   drafts: DraftEvent[];
   stances: PolicyStanceEvent[];
   traces: SqlTraceEvent[];
@@ -37,7 +40,7 @@ type Run =
   | { status: "failed"; question: string; reason: string; trajectory: Step[] };
 
 function emptyAnswer(question: string): Answer {
-  return { question, answer: "", citations: [], drafts: [], stances: [], traces: [], trajectory: [] };
+  return { question, answer: "", citations: [], classifications: [], drafts: [], stances: [], traces: [], trajectory: [] };
 }
 
 /** The run failed or was cut short: whatever was streamed is partial and not to be trusted. */
@@ -110,6 +113,9 @@ export function AskScreen() {
                 break;
               case "citation":
                 acc.citations = [...acc.citations, event];
+                break;
+              case "classification":
+                acc.classifications = [...acc.classifications, event];
                 break;
               case "draft":
                 acc.drafts = [...acc.drafts, event];
@@ -357,6 +363,9 @@ export function AskScreen() {
                   <Sources citations={run.citations} stances={run.stances} />
                 )}
                 {run.traces.length > 0 && <ReasoningPanel traces={run.traces} />}
+                {run.classifications.map((found) => (
+                  <ClassificationCard key={found.seq} found={found} />
+                ))}
                 {run.drafts.map((draft) => (
                   <DraftPreview key={draft.draft_id} draft={draft} />
                 ))}

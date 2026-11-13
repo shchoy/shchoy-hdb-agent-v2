@@ -14,6 +14,7 @@ export type DraftEvent = Schemas["DraftEvent"];
 export type PolicyStanceEvent = Schemas["PolicyStanceEvent"];
 export type SqlTraceEvent = Schemas["SqlTraceEvent"];
 export type ProposedActionEvent = Schemas["ProposedActionEvent"];
+export type ClassificationEvent = Schemas["ClassificationEvent"];
 export type UserCtx = Schemas["UserCtx"];
 export type ThreadSummary = Schemas["ThreadSummary"];
 export type ThreadView = Schemas["ThreadView"];
@@ -32,6 +33,8 @@ const piiFinding = z.object({
   slot: z.string(),
   message: z.string(),
 });
+const severity = z.enum(["Low", "Medium", "High", "Critical"]);
+const candidate = z.object({ code: z.string(), category: z.string(), severity, confidence: z.number() });
 
 export const runEventSchema = z.discriminatedUnion("type", [
   z.object({
@@ -137,22 +140,56 @@ export const runEventSchema = z.discriminatedUnion("type", [
     ),
   }),
   z.object({
+    type: z.literal("classification"),
+    seq,
+    category_code: z.string(),
+    category: z.string(),
+    severity,
+    team: z.string(),
+    vendor: z.string().nullable(),
+    is_defect: z.boolean(),
+    sla_days: z.number().int().nullable(),
+    confidence: z.number(),
+    low_confidence: z.boolean(),
+    rationale: z.string(),
+    candidates: z.array(candidate),
+  }),
+  z.object({
     type: z.literal("proposed_action"),
     seq,
     action_id: z.string(),
     version: z.number().int(),
-    action_type: z.literal("send_letter"),
+    action_type: z.enum(["send_letter", "raise_ticket"]),
     title: z.string(),
-    payload: z.object({
-      draft_id: z.string(),
-      template_id: z.string(),
-      template_title: z.string(),
-      template_version: z.string(),
-      recipient: z.string(),
-      slots: z.record(z.string(), z.string()),
-      unfilled: z.array(unfilledSlot),
-      pii: z.array(piiFinding),
-    }),
+    payload: z.discriminatedUnion("kind", [
+      z.object({
+        kind: z.literal("letter"),
+        draft_id: z.string(),
+        template_id: z.string(),
+        template_title: z.string(),
+        template_version: z.string(),
+        recipient: z.string(),
+        slots: z.record(z.string(), z.string()),
+        unfilled: z.array(unfilledSlot),
+        pii: z.array(piiFinding),
+      }),
+      z.object({
+        kind: z.literal("ticket"),
+        feedback_id: z.string(),
+        description: z.string(),
+        unit_id: z.string().nullable(),
+        category_code: z.string(),
+        category: z.string(),
+        severity,
+        team: z.string(),
+        vendor: z.string().nullable(),
+        sla_days: z.number().int(),
+        confidence: z.number(),
+        low_confidence: z.boolean(),
+        rationale: z.string(),
+        candidates: z.array(candidate),
+      }),
+    ]),
     preview: z.string(),
     approver_roles: z.array(role),
     proposed_by: z.string(),
@@ -173,6 +210,7 @@ export const runEventSchema = z.discriminatedUnion("type", [
     version: z.number().int(),
     decision,
     outbox_id: z.string().nullable(),
+    ticket_id: z.string().nullable(),
   }),
   z.object({ type: z.literal("done"), seq, run_id: z.string() }),
   z.object({ type: z.literal("error"), seq, run_id: z.string(), message: z.string() }),

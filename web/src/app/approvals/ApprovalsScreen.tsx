@@ -3,17 +3,22 @@
 import { useEffect, useState } from "react";
 import type { components } from "@/lib/api/schema";
 import { parseRunEvents, roleLabel, type RunEvent, type UserCtx } from "@/lib/events";
-import { when } from "../dates";
+import { ClassificationDetails } from "../ClassificationCard";
+import { day, when } from "../dates";
 import { LetterFrame } from "../LetterFrame";
 import styles from "./approvals.module.css";
 
 type PendingApproval = components["schemas"]["PendingApproval"];
 
 type AuditRecord = components["schemas"]["AuditRecord"];
+type Ticket = components["schemas"]["Ticket"];
 type Decision = "approve" | "edit" | "reject";
 type ActionResult = Extract<RunEvent, { type: "action_result" }>;
 /** What a decision did, for the officer to see straight away. */
-type Outcome = { title: string; result: ActionResult };
+type Outcome = { title: string; kind: Kind; result: ActionResult };
+type Kind = PendingApproval["payload"]["kind"];
+type LetterPayload = components["schemas"]["LetterPayload"];
+type TicketPayload = components["schemas"]["TicketPayload"];
 
 /** The officer's pending actions across conversations, with decision controls, then the decisions already made. */
 export function ApprovalsScreen({ role }: { role: UserCtx["role"] }) {
@@ -54,10 +59,8 @@ export function ApprovalsScreen({ role }: { role: UserCtx["role"] }) {
       {error && <p role="alert">{error}</p>}
       {outcomes.length > 0 && (
         <div role="status" aria-label="Results">
-          {outcomes.map(({ title, result }) => (
-            <p key={`${result.action_id}-v${result.version}`}>
-              {title}: {describe(result)}
-            </p>
+          {outcomes.map((outcome) => (
+            <p key={`${outcome.result.action_id}-v${outcome.result.version}`}>{describe(outcome)}</p>
           ))}
         </div>
       )}
@@ -83,14 +86,18 @@ export function ApprovalsScreen({ role }: { role: UserCtx["role"] }) {
   );
 }
 
-function describe(result: ActionResult): string {
-  if (result.decision === "reject") return "rejected; nothing was sent.";
-  const how = result.decision === "edit" ? "sent with your edits" : "sent";
-  return `${how} as ${result.outbox_id} (version ${result.version}).`;
+function describe({ title, kind, result }: Outcome): string {
+  const ticket = kind === "ticket";
+  if (result.decision === "reject") return `${title}: rejected; nothing was ${ticket ? "raised" : "sent"}.`;
+  const edited = result.decision === "edit";
+  if (ticket) return `${title}: ${edited ? "raised with your edits" : "raised"} as ${result.ticket_id} (version ${result.version}).`;
+  return `${title}: ${edited ? "sent with your edits" : "sent"} as ${result.outbox_id} (version ${result.version}).`;
 }
 
+type DecisionBody = { decision: Decision; edits?: Record<string, string>; reason?: string };
+
 /** Sends the decision and reads the resumed run until the action's result (or the reason it was refused). */
-async function decide(action: PendingApproval, body: { decision: Decision; edits?: Record<string, string>; reason?: string }): Promise<ActionResult | string> {
+async function decide(action: PendingApproval, body: DecisionBody): Promise<ActionResult | string> {
   let response: Response;
   try {
     response = await fetch(`/api/threads/${encodeURIComponent(action.thread_id)}/resume`, {
@@ -120,31 +127,32 @@ async function decide(action: PendingApproval, body: { decision: Decision; edits
   return result;
 }
 
-function ActionCard({
-  action,
-  role,
-  onDecided,
-}: {
-  action: PendingApproval;
+type CardProps<P> = {
+  action: PendingApproval & { payload: P };
   role: UserCtx["role"];
   onDecided: (outcome: Outcome) => void;
-}) {
+};
+
+/** A pending letter or i-EMS ticket, with its decision controls. */
+function ActionCard({ action, role, onDecided }: CardProps<PendingApproval["payload"]>) {
   const { payload } = action;
-  const heading = `action-${action.action_id}`;
-  const canSend = action.approver_roles.includes(role);
-  const original: Record<string, string> = {
-    ...Object.fromEntries(payload.unfilled.map((u) => [u.slot, ""])),
-    ...payload.slots,
-  };
+  return payload.kind === "ticket" ? (
+    <TicketCard action={{ ...action, payload }} role={role} onDecided={onDecided} />
+  ) : (
+    <LetterCard action={{ ...action, payload }} role={role} onDecided={onDecided} />
+  );
+}
+
+/** Edits as the proposal ↔ the officer's values, the decision in flight and why plg-api refused it. */
+function useDecision(action: PendingApproval, kind: Kind, original: Record<string, string>, onDecided: (o: Outcome) => void) {
   const [edits, setEdits] = useState<Record<string, string> | null>(null);
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
-  const stillOpen = edits ? payload.unfilled.map((u) => u.slot).filter((slot) => !edits[slot]?.trim()) : [];
-  const changes = edits ? Object.fromEntries(Object.entries(edits).filter(([slot, value]) => value !== original[slot])) : {};
+  const changes = edits ? Object.fromEntries(Object.entries(edits).filter(([field, value]) => value !== original[field])) : {};
 
-  async function submit(body: Parameters<typeof decide>[1]) {
+  async function submit(body: DecisionBody) {
     setBusy(true);
     setRefusal(null);
     const result = await decide(action, body);
@@ -153,8 +161,108 @@ function ActionCard({
       return setRefusal(result);
     }
     // Stays busy: the card leaves the inbox when it reloads.
-    onDecided({ title: action.title, result });
+    onDecided({ title: action.title, kind, result });
   }
+
+  return { edits, setEdits, rejecting, setRejecting, reason, setReason, busy, refusal, changes, submit };
+}
+
+type Decider = ReturnType<typeof useDecision>;
+
+/** Approve, edit (then send the edits) or reject with a reason. */
+function Controls({
+  d,
+  original,
+  toSend,
+  canSend,
+  canApprove,
+  blocked,
+  labels,
+}: {
+  d: Decider;
+  original: Record<string, string>;
+  /** The edits sent when sending the edited version. */
+  toSend: Record<string, string>;
+  canSend: boolean;
+  canApprove: boolean;
+  blocked: boolean;
+  labels: { approve: string; edit: string; sendEdited: string };
+}) {
+  const { edits, busy, submit } = d;
+  return (
+    <div className={styles.actions}>
+      {edits ? (
+        <>
+          <button
+            type="button"
+            disabled={busy || Object.keys(toSend).length === 0 || blocked}
+            onClick={() => submit({ decision: "edit", edits: toSend })}
+          >
+            {labels.sendEdited}
+          </button>
+          <button type="button" disabled={busy} onClick={() => d.setEdits(null)}>
+            Cancel edits
+          </button>
+        </>
+      ) : d.rejecting ? (
+        <>
+          <label>
+            Reason for rejecting
+            <textarea value={d.reason} onChange={(e) => d.setReason(e.target.value)} />
+          </label>
+          <button
+            type="button"
+            disabled={busy || !d.reason.trim()}
+            onClick={() => submit({ decision: "reject", reason: d.reason.trim() })}
+          >
+            Reject
+          </button>
+          <button type="button" disabled={busy} onClick={() => d.setRejecting(false)}>
+            Cancel
+          </button>
+        </>
+      ) : (
+        <>
+          {canSend && canApprove && (
+            <button type="button" disabled={busy} onClick={() => submit({ decision: "approve" })}>
+              {labels.approve}
+            </button>
+          )}
+          {canSend && (
+            <button type="button" disabled={busy} onClick={() => d.setEdits(original)}>
+              {labels.edit}
+            </button>
+          )}
+          <button type="button" disabled={busy} onClick={() => d.setRejecting(true)}>
+            Reject…
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Refusal({ refusal }: { refusal: string | null }) {
+  return (
+    refusal && (
+      <p role="alert" className={styles.alert}>
+        {refusal}
+      </p>
+    )
+  );
+}
+
+function LetterCard({ action, role, onDecided }: CardProps<LetterPayload>) {
+  const { payload } = action;
+  const heading = `action-${action.action_id}`;
+  const canSend = action.approver_roles.includes(role);
+  const original: Record<string, string> = {
+    ...Object.fromEntries(payload.unfilled.map((u) => [u.slot, ""])),
+    ...payload.slots,
+  };
+  const d = useDecision(action, "letter", original, onDecided);
+  const { edits, changes } = d;
+  const stillOpen = edits ? payload.unfilled.map((u) => u.slot).filter((slot) => !edits[slot]?.trim()) : [];
 
   return (
     <article aria-labelledby={heading} className={styles.card}>
@@ -208,13 +316,9 @@ function ActionCard({
                     <input
                       aria-label={slot}
                       value={edits[slot]}
-                      onChange={(e) => setEdits({ ...edits, [slot]: e.target.value })}
+                      onChange={(e) => d.setEdits({ ...edits, [slot]: e.target.value })}
                     />
-                    {slot in changes && (
-                      <p>
-                        {value && <del>{value}</del>} <ins>{changes[slot]}</ins>
-                      </p>
-                    )}
+                    <Diff before={value} after={changes[slot]} changed={slot in changes} />
                   </>
                 ) : (
                   value || <em>not filled</em>
@@ -225,70 +329,175 @@ function ActionCard({
         </tbody>
       </table>
       <LetterFrame title={`Letter to send: ${action.title}`} html={action.preview} />
-      {refusal && (
-        <p role="alert" className={styles.alert}>
-          {refusal}
-        </p>
-      )}
+      <Refusal refusal={d.refusal} />
       {!canSend && <p>Your role can&apos;t send this letter. You can reject it with a reason.</p>}
       {canSend && !edits && payload.unfilled.length > 0 && (
         <p>Fill the open slots (Edit slots) before the letter can be sent.</p>
       )}
       {stillOpen.length > 0 && <p>Fill {stillOpen.join(", ")} before sending.</p>}
-      <div className={styles.actions}>
-        {edits ? (
-          <>
-            <button
-              type="button"
-              disabled={busy || Object.keys(changes).length === 0 || stillOpen.length > 0}
-              onClick={() => submit({ decision: "edit", edits: changes })}
-            >
-              Send edited letter
-            </button>
-            <button type="button" disabled={busy} onClick={() => setEdits(null)}>
-              Cancel edits
-            </button>
-          </>
-        ) : rejecting ? (
-          <>
-            <label>
-              Reason for rejecting
-              <textarea value={reason} onChange={(e) => setReason(e.target.value)} />
-            </label>
-            <button
-              type="button"
-              disabled={busy || !reason.trim()}
-              onClick={() => submit({ decision: "reject", reason: reason.trim() })}
-            >
-              Reject
-            </button>
-            <button type="button" disabled={busy} onClick={() => setRejecting(false)}>
-              Cancel
-            </button>
-          </>
-        ) : (
-          <>
-            {canSend && payload.unfilled.length === 0 && (
-              <button type="button" disabled={busy} onClick={() => submit({ decision: "approve" })}>
-                Approve and send
-              </button>
-            )}
-            {canSend && (
-              <button type="button" disabled={busy} onClick={() => setEdits(original)}>
-                Edit slots
-              </button>
-            )}
-            <button type="button" disabled={busy} onClick={() => setRejecting(true)}>
-              Reject…
-            </button>
-          </>
-        )}
-      </div>
+      <Controls
+        d={d}
+        original={original}
+        toSend={changes}
+        canSend={canSend}
+        canApprove={payload.unfilled.length === 0}
+        blocked={stillOpen.length > 0}
+        labels={{ approve: "Approve and send", edit: "Edit slots", sendEdited: "Send edited letter" }}
+      />
+    </article>
+  );
+}
+
+function Diff({ before, after, changed }: { before: string; after: string | undefined; changed: boolean }) {
+  return (
+    changed && (
+      <p>
+        {before && <del>{before}</del>} <ins>{after}</ins>
+      </p>
+    )
+  );
+}
+
+/** The i-EMS defect categories a ticket can be raised under (team, vendor and default severity follow from it). */
+const IEMS_CATEGORIES: Record<string, string> = {
+  STR: "Structural",
+  SEP: "Water Seepage / Leak",
+  PLB: "Plumbing & Sanitary",
+  ELE: "Electrical",
+  FIR: "Fire Safety",
+  PST: "Pest",
+};
+const SEVERITIES = ["Low", "Medium", "High", "Critical"] as const;
+const SLA_DAYS: Record<(typeof SEVERITIES)[number], number> = { Critical: 1, High: 3, Medium: 7, Low: 14 };
+const TICKET_FIELDS: { field: keyof TicketPayload & string; label: string; required: boolean }[] = [
+  { field: "category_code", label: "Category", required: true },
+  { field: "severity", label: "Priority", required: true },
+  { field: "unit_id", label: "Unit", required: false },
+  { field: "description", label: "Description", required: true },
+  { field: "feedback_id", label: "Feedback case", required: true },
+];
+
+function TicketField({
+  field,
+  label,
+  value,
+  onChange,
+}: {
+  field: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  if (field === "category_code")
+    return (
+      <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
+        {Object.entries(IEMS_CATEGORIES).map(([code, name]) => (
+          <option key={code} value={code}>
+            {name} ({code})
+          </option>
+        ))}
+      </select>
+    );
+  if (field === "severity")
+    return (
+      <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
+        {SEVERITIES.map((s) => (
+          <option key={s} value={s}>
+            {s} (SLA {SLA_DAYS[s]} day{SLA_DAYS[s] === 1 ? "" : "s"})
+          </option>
+        ))}
+      </select>
+    );
+  if (field === "description")
+    return <textarea aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />;
+  return <input aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />;
+}
+
+function TicketCard({ action, role, onDecided }: CardProps<TicketPayload>) {
+  const { payload } = action;
+  const heading = `action-${action.action_id}`;
+  const canSend = action.approver_roles.includes(role);
+  const original: Record<string, string> = Object.fromEntries(
+    TICKET_FIELDS.map(({ field }) => [field, String(payload[field] ?? "")]),
+  );
+  const d = useDecision(action, "ticket", original, onDecided);
+  const { edits, changes } = d;
+  const blank = edits
+    ? TICKET_FIELDS.filter(({ field, required }) => required && !edits[field]?.trim()).map(({ label }) => label)
+    : [];
+  // plg-api gives a new category its default priority unless one is sent: send the priority the officer sees.
+  const toSend = edits && "category_code" in changes ? { ...changes, severity: edits.severity } : changes;
+  const shown = (field: string, value: string) =>
+    field === "category_code" && IEMS_CATEGORIES[value] ? `${IEMS_CATEGORIES[value]} (${value})` : value;
+
+  return (
+    <article aria-labelledby={heading} className={styles.card}>
+      <h3 id={heading}>{action.title}</h3>
+      <p>
+        i-EMS ticket · version {action.version} · Feedback case {payload.feedback_id}
+      </p>
+      <p className={styles.muted}>From the conversation: {action.thread_title}</p>
+      <h4>Classification</h4>
+      <ClassificationDetails found={{ ...payload, is_defect: true }} />
+      <table className={styles.slots}>
+        <caption>{edits ? "Ticket fields: your changes are shown against the proposal" : "Ticket fields"}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Field</th>
+            <th scope="col">{edits ? "Proposed → will raise" : "Value"}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {TICKET_FIELDS.map(({ field, label }) => (
+            <tr key={field}>
+              <th scope="row">{label}</th>
+              <td>
+                {edits ? (
+                  <>
+                    <TicketField
+                      field={field}
+                      label={label}
+                      value={edits[field]}
+                      onChange={(value) => d.setEdits({ ...edits, [field]: value })}
+                    />
+                    <Diff
+                      before={shown(field, original[field])}
+                      after={changes[field] === undefined ? undefined : shown(field, changes[field])}
+                      changed={field in changes}
+                    />
+                  </>
+                ) : (
+                  shown(field, original[field]) || <em>not given</em>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {edits && (
+        <p className={styles.muted}>
+          A new category routes the ticket to that category&apos;s team and vendor. The SLA follows the priority.
+        </p>
+      )}
+      <LetterFrame title={`Ticket to raise: ${action.title}`} html={action.preview} />
+      <Refusal refusal={d.refusal} />
+      {!canSend && <p>Your role can&apos;t raise this ticket. You can reject it with a reason.</p>}
+      {blank.length > 0 && <p>Fill {blank.join(", ")} before raising.</p>}
+      <Controls
+        d={d}
+        original={original}
+        toSend={toSend}
+        canSend={canSend}
+        canApprove
+        blocked={blank.length > 0}
+        labels={{ approve: "Approve and raise", edit: "Edit ticket", sendEdited: "Raise edited ticket" }}
+      />
     </article>
   );
 }
 
 const DECIDED: Record<Decision, string> = { approve: "Approved and sent", edit: "Sent with edits", reject: "Rejected" };
+const DECIDED_TICKET: Record<Decision, string> = { approve: "Approved and raised", edit: "Raised with edits", reject: "Rejected" };
 
 /** Every decision the officer made: who, when, why, what changed, what went to the outbox and the run's trace. */
 function AuditTrail({ entries }: { entries: AuditRecord[] }) {
@@ -301,7 +510,7 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
             <article aria-labelledby={heading} className={styles.card}>
               <h3 id={heading}>{e.title || e.action_id}</h3>
               <p>
-                {DECIDED[e.decision]} by {e.approver} ({roleLabel(e.approver_role)}) on {when(e.at)}, deciding on
+                {(e.action_type === "raise_ticket" ? DECIDED_TICKET : DECIDED)[e.decision]} by {e.approver} ({roleLabel(e.approver_role)}) on {when(e.at)}, deciding on
                 version {e.version}.
               </p>
               {e.reason && <p>Reason: {e.reason}</p>}
@@ -314,12 +523,14 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
                   ))}
                 </ul>
               )}
-              {e.sent ? (
+              {e.ticket ? (
+                <RaisedTicket ticket={e.ticket} />
+              ) : e.sent ? (
                 <p>
                   Outbox item {e.sent.item_id} (version {e.sent.version}) to {e.sent.recipient}, sent {when(e.sent.sent_at)}
                 </p>
               ) : (
-                <p>Nothing was sent.</p>
+                <p>Nothing was {e.action_type === "raise_ticket" ? "raised" : "sent"}.</p>
               )}
               <p className={styles.muted}>Trace {e.run_id}</p>
               {e.sent && (
@@ -333,5 +544,36 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
         );
       })}
     </ul>
+  );
+}
+
+/** The i-EMS ticket a decision raised, as i-EMS holds it. */
+function RaisedTicket({ ticket: t }: { ticket: Ticket }) {
+  return (
+    <>
+      <p>
+        i-EMS ticket {t.ticket_id} (version {t.version}) raised {when(t.raised_at)}, status {t.status}
+      </p>
+      <dl aria-label="Raised ticket" className={styles.ticket}>
+        <dt>Feedback case</dt>
+        <dd>{t.feedback_id}</dd>
+        <dt>Category</dt>
+        <dd>
+          {t.category} ({t.category_code})
+        </dd>
+        <dt>Priority</dt>
+        <dd>{t.severity}</dd>
+        <dt>Team</dt>
+        <dd>{t.team}</dd>
+        <dt>Vendor</dt>
+        <dd>{t.vendor ?? "No vendor (handled by the team)"}</dd>
+        <dt>SLA</dt>
+        <dd>
+          {t.sla_days} day{t.sla_days === 1 ? "" : "s"}, due {day(t.due_date)}
+        </dd>
+        <dt>Unit</dt>
+        <dd>{t.unit_id ?? "Not given"}</dd>
+      </dl>
+    </>
   );
 }

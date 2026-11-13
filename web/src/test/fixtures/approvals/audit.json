@@ -1,26 +1,28 @@
 [
   {
-    "action_id": "000c89bd-9e73-4c4a-94e6-a185f018d862",
+    "action_id": "f69f1dec-bf5f-457c-9b7e-a5b9a96fb177",
     "version": 1,
     "action_type": "send_letter",
     "title": "Send Arrears Reminder Letter to Golden Leaf Minimart Pte Ltd",
-    "thread_id": "593395b1-ba98-4275-a6b5-9afec215e762",
+    "thread_id": "505bdc8c-7940-4dab-bf8f-454f016ab757",
     "decision": "reject",
     "edits": {},
     "reason": "The tenant paid yesterday.",
     "approver": "S05",
     "approver_role": "officer",
-    "at": "2026-11-13T04:26:15.258949+00:00",
-    "run_id": "0d2cf97e-74b7-42b2-b5d9-dc92111fead2",
+    "at": "2026-11-13T07:20:29.232950+00:00",
+    "run_id": "35b00a04-c1da-4c43-b353-517984dff991",
     "outbox_id": null,
-    "sent": null
+    "ticket_id": null,
+    "sent": null,
+    "ticket": null
   },
   {
-    "action_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356",
+    "action_id": "d6dc54eb-84fc-416c-94e9-390ba1f367e3",
     "version": 1,
     "action_type": "send_letter",
     "title": "Send Feedback Update Reply to Sir/Madam",
-    "thread_id": "6ff3a625-e9b9-40de-bad9-8ddfa1b78680",
+    "thread_id": "869101f1-a49d-4946-83c1-b4e65328fa34",
     "decision": "edit",
     "edits": {
       "action_taken": "Our contractor sealed the ceiling joint on 5 October 2025.",
@@ -29,12 +31,13 @@
     "reason": "",
     "approver": "S05",
     "approver_role": "officer",
-    "at": "2026-11-13T04:26:15.254529+00:00",
-    "run_id": "deaa9674-ec40-44d7-aa0b-228a529193b0",
-    "outbox_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356-v2",
+    "at": "2026-11-13T07:20:29.219186+00:00",
+    "run_id": "fa9de716-230f-4664-bea5-67d9fa06cdc6",
+    "outbox_id": "d6dc54eb-84fc-416c-94e9-390ba1f367e3-v2",
+    "ticket_id": null,
     "sent": {
-      "item_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356-v2",
-      "action_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356",
+      "item_id": "d6dc54eb-84fc-416c-94e9-390ba1f367e3-v2",
+      "action_id": "d6dc54eb-84fc-416c-94e9-390ba1f367e3",
       "version": 2,
       "template_id": "TPL-FBK-03",
       "recipient": "Sir/Madam",
@@ -53,7 +56,47 @@
       },
       "html": "<p>Case: FB-2025-00002</p>\n<p>30 September 2026</p>\n<p>Dear Sir/Madam,</p>\n<p>Thank you for your feedback received on 2 October 2025 regarding a leaking ceiling at Blk 675 #02-07.</p>\n<p>We have looked into the matter. Our contractor sealed the ceiling joint on 5 October 2025.</p>\n<p>Reference: IEMS-2510-0002</p>\n<p>If it recurs, please call us on 6100 2058.</p>\n<p>We appreciate you taking the time to help us keep our estates safe and pleasant.</p>\n<p>Yours sincerely,</p>\n<p>Siti Aishah Yusof</p>\n<p>Customer Relations</p>\n<p>Properties &amp; Land Group</p>",
       "approver": "S05",
-      "sent_at": "2026-11-13T04:26:15.252747+00:00"
+      "sent_at": "2026-11-13T07:20:29.217467+00:00"
+    },
+    "ticket": null
+  },
+  {
+    "action_id": "fdb464cc-a542-46f8-9385-29186168d8a3",
+    "version": 1,
+    "action_type": "raise_ticket",
+    "title": "Raise i-EMS ticket: Electrical (High) for M&E",
+    "thread_id": "d678165c-5eb9-4013-a253-4a445322d423",
+    "decision": "edit",
+    "edits": {
+      "category_code": "SEP",
+      "severity": "High",
+      "unit_id": "U-PI675-02-07"
+    },
+    "reason": "",
+    "approver": "S05",
+    "approver_role": "officer",
+    "at": "2026-11-13T07:20:29.158096+00:00",
+    "run_id": "c2eae646-d179-407a-a5c5-99c1a0d3836c",
+    "outbox_id": null,
+    "ticket_id": "IEMS-2611-FDB464CC",
+    "sent": null,
+    "ticket": {
+      "ticket_id": "IEMS-2611-FDB464CC",
+      "action_id": "fdb464cc-a542-46f8-9385-29186168d8a3",
+      "version": 2,
+      "feedback_id": "FB-NEW-5D07E10D",
+      "description": "Ceiling near the shop wet and lights flickering, scared got short circuit",
+      "unit_id": "U-PI675-02-07",
+      "category_code": "SEP",
+      "category": "Water Seepage / Leak",
+      "severity": "High",
+      "team": "Civil & Structural",
+      "vendor": "Kemas Building Works Pte Ltd",
+      "sla_days": 3,
+      "due_date": "2026-11-16",
+      "status": "Assigned",
+      "raised_by": "S05",
+      "raised_at": "2026-11-13T07:20:29.155574+00:00"
     }
   }
 ]

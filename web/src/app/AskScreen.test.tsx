@@ -326,6 +326,63 @@ describe("Ask screen", () => {
     );
   });
 
+  it("shows the feedback classification, flagged when it is low confidence, with the other plausible category", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("defect"))),
+    );
+
+    await ask(
+      "Classify: 'Ceiling near the shop wet and lights flickering, scared got short circuit'",
+    );
+    await runFinished();
+
+    const card = screen.getByRole("region", { name: "Feedback classification" });
+    expect(card).toHaveTextContent("Low confidence — please check");
+    const fields = card.querySelector("dl");
+    expect(fields).toHaveTextContent("CategoryElectrical (ELE)");
+    expect(fields).toHaveTextContent("SeverityHigh");
+    expect(fields).toHaveTextContent("TeamM&E");
+    expect(fields).toHaveTextContent("VendorSunrise M&E Services Pte Ltd");
+    expect(fields).toHaveTextContent("i-EMS SLA3 days");
+    expect(fields).toHaveTextContent("Confidence50%");
+    expect(
+      within(card).getByRole("list", { name: "Other plausible categories" }),
+    ).toHaveTextContent("Water Seepage / Leak (SEP), Medium, 60%");
+    expect(card).toHaveTextContent("Rationale: 'Ceiling ... wet' reads as water seepage");
+    expect(card).not.toHaveTextContent("Not a maintenance defect");
+  });
+
+  it("says a non-defect complaint gets no i-EMS ticket", async () => {
+    const found = {
+      type: "classification", seq: 1, category_code: "NOI", category: "Noise / Nuisance", severity: "Low",
+      team: "Estate Compliance", vendor: null, is_defect: false, sla_days: null, confidence: 0.9,
+      low_confidence: false, rationale: "Loud karaoke every night is a noise nuisance.",
+      candidates: [{ code: "NOI", category: "Noise / Nuisance", severity: "Low", confidence: 0.9 }],
+    };
+    const stream = [found, { type: "done", seq: 2, run_id: "r1" }]
+      .map((e) => `id: ${e.seq}\nevent: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`)
+      .join("");
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(stream)),
+    );
+
+    await ask("Classify this feedback: the karaoke downstairs is so loud every night.");
+    await runFinished();
+
+    const card = screen.getByRole("region", { name: "Feedback classification" });
+    expect(card).toHaveTextContent(
+      "Not a maintenance defect — no i-EMS ticket. Estate Compliance handles it.",
+    );
+    expect(card).toHaveTextContent("VendorNo vendor (handled by the team)");
+    expect(card).not.toHaveTextContent("i-EMS SLA");
+    expect(card).not.toHaveTextContent("Low confidence");
+    expect(
+      within(card).queryByRole("list", { name: "Other plausible categories" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows the policy stance card in the Sources panel with scope, dates and superseded versions", async () => {
     server.use(
       threadsApi(),

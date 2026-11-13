@@ -38,6 +38,8 @@ class Settings(BaseModel):
     # Approved actions: the local Outbox adapter (one JSON file per letter) and the append-only audit log.
     outbox_dir: Path = REPO_ROOT / ".plg" / "outbox"
     audit_log: Path = REPO_ROOT / ".plg" / "audit.jsonl"
+    iems_dir: Path = REPO_ROOT / ".plg" / "iems"
+    """The i-EMS mock: raised tickets, one JSON file each."""
     # Above this many (estimated) tokens of history, older turns are folded into a summary, keeping the last
     # `history_keep_messages` messages verbatim.
     history_token_threshold: int = 6000

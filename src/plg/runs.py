@@ -12,7 +12,7 @@ from langgraph.types import Command
 
 from plg.actions.model import ApprovalDecision
 from plg.events import (
-    ActionResultEvent, CitationEvent, DoneEvent, DraftEvent, ErrorEvent, InterruptEvent, NodeEvent, PolicyStanceEvent,
+    ActionResultEvent, CitationEvent, ClassificationEvent, DoneEvent, DraftEvent, ErrorEvent, InterruptEvent, NodeEvent, PolicyStanceEvent,
     ProposedActionEvent, RunEvent, SqlTraceEvent, TokenEvent,
 )
 from plg.graph.state import RUN_ID, PLGGraph, PLGState
@@ -73,6 +73,8 @@ async def stream_run(
                 yield SqlTraceEvent(seq=next_seq(), **chunk["sql_trace"])
             elif mode == "custom" and "draft" in chunk:
                 yield DraftEvent(seq=next_seq(), **chunk["draft"])
+            elif mode == "custom" and "classification" in chunk:
+                yield ClassificationEvent(seq=next_seq(), **chunk["classification"])
             elif mode == "custom" and "policy_stance" in chunk:
                 yield PolicyStanceEvent(seq=next_seq(), **chunk["policy_stance"])
             elif mode == "custom" and "action_result" in chunk:

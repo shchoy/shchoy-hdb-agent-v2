@@ -299,7 +299,7 @@
     "/audit": {
       "get": {
         "summary": "Audit Trail",
-        "description": "The officer's own decisions on proposed actions, newest first, each with the outbox item it sent.",
+        "description": "The officer's own decisions on proposed actions, newest first, each with the outbox item it sent or the\ni-EMS ticket it raised.",
         "operationId": "audit_trail_audit_get",
         "parameters": [
           {
@@ -1067,7 +1067,10 @@
           },
           "action_type": {
             "type": "string",
-            "const": "send_letter",
+            "enum": [
+              "send_letter",
+              "raise_ticket"
+            ],
             "title": "Action Type"
           },
           "title": {
@@ -1135,10 +1138,31 @@
             ],
             "title": "Outbox Id"
           },
+          "ticket_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticket Id"
+          },
           "sent": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/OutboxItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ticket": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Ticket"
               },
               {
                 "type": "null"
@@ -1159,10 +1183,45 @@
           "at",
           "run_id",
           "outbox_id",
-          "sent"
+          "sent",
+          "ticket"
         ],
         "title": "AuditRecord",
-        "description": "A decision from the audit log and, unless it was a rejection, the outbox item it sent."
+        "description": "A decision from the audit log and, unless it was a rejection, the outbox item it sent or the i-EMS ticket it\nraised."
+      },
+      "Candidate": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "category",
+          "severity",
+          "confidence"
+        ],
+        "title": "Candidate",
+        "type": "object"
       },
       "ChunkLocation": {
         "properties": {
@@ -1344,6 +1403,12 @@
       "LetterPayload": {
         "description": "A letter filled from an approved template, as it would be sent.",
         "properties": {
+          "kind": {
+            "const": "letter",
+            "default": "letter",
+            "title": "Kind",
+            "type": "string"
+          },
           "draft_id": {
             "title": "Draft Id",
             "type": "string"
@@ -1599,7 +1664,10 @@
           },
           "action_type": {
             "type": "string",
-            "const": "send_letter",
+            "enum": [
+              "send_letter",
+              "raise_ticket"
+            ],
             "title": "Action Type"
           },
           "title": {
@@ -1607,7 +1675,15 @@
             "title": "Title"
           },
           "payload": {
-            "$ref": "#/components/schemas/LetterPayload"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LetterPayload"
+              },
+              {
+                "$ref": "#/components/schemas/TicketPayload"
+              }
+            ],
+            "title": "Payload"
           },
           "preview": {
             "type": "string",
@@ -1714,7 +1790,10 @@
           },
           "action_type": {
             "type": "string",
-            "const": "send_letter",
+            "enum": [
+              "send_letter",
+              "raise_ticket"
+            ],
             "title": "Action Type"
           },
           "title": {
@@ -1722,7 +1801,15 @@
             "title": "Title"
           },
           "payload": {
-            "$ref": "#/components/schemas/LetterPayload"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LetterPayload"
+              },
+              {
+                "$ref": "#/components/schemas/TicketPayload"
+              }
+            ],
+            "title": "Payload"
           },
           "preview": {
             "type": "string",
@@ -1918,6 +2005,223 @@
         "title": "ThreadView",
         "description": "A conversation rebuilt from its checkpoint: every exchange, and the summary standing in for older turns."
       },
+      "Ticket": {
+        "properties": {
+          "ticket_id": {
+            "type": "string",
+            "title": "Ticket Id"
+          },
+          "action_id": {
+            "type": "string",
+            "title": "Action Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "feedback_id": {
+            "type": "string",
+            "title": "Feedback Id"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Id"
+          },
+          "category_code": {
+            "type": "string",
+            "title": "Category Code"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ],
+            "title": "Severity"
+          },
+          "team": {
+            "type": "string",
+            "title": "Team"
+          },
+          "vendor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor"
+          },
+          "sla_days": {
+            "type": "integer",
+            "title": "Sla Days"
+          },
+          "due_date": {
+            "type": "string",
+            "title": "Due Date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Assigned",
+              "In Progress",
+              "Closed",
+              "Rejected - Misrouted"
+            ],
+            "title": "Status",
+            "default": "Assigned"
+          },
+          "raised_by": {
+            "type": "string",
+            "title": "Raised By"
+          },
+          "raised_at": {
+            "type": "string",
+            "title": "Raised At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticket_id",
+          "action_id",
+          "version",
+          "feedback_id",
+          "description",
+          "unit_id",
+          "category_code",
+          "category",
+          "severity",
+          "team",
+          "vendor",
+          "sla_days",
+          "due_date",
+          "raised_by",
+          "raised_at"
+        ],
+        "title": "Ticket"
+      },
+      "TicketPayload": {
+        "description": "An i-EMS ticket for classified feedback, as it would be raised.",
+        "properties": {
+          "kind": {
+            "const": "ticket",
+            "default": "ticket",
+            "title": "Kind",
+            "type": "string"
+          },
+          "feedback_id": {
+            "title": "Feedback Id",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Id"
+          },
+          "category_code": {
+            "title": "Category Code",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "team": {
+            "title": "Team",
+            "type": "string"
+          },
+          "vendor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor"
+          },
+          "sla_days": {
+            "title": "Sla Days",
+            "type": "integer"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "low_confidence": {
+            "title": "Low Confidence",
+            "type": "boolean"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/Candidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "feedback_id",
+          "description",
+          "unit_id",
+          "category_code",
+          "category",
+          "severity",
+          "team",
+          "vendor",
+          "sla_days",
+          "confidence",
+          "low_confidence",
+          "rationale",
+          "candidates"
+        ],
+        "title": "TicketPayload",
+        "type": "object"
+      },
       "UnfilledSlot": {
         "properties": {
           "slot": {
@@ -2019,7 +2323,7 @@
         "title": "ValidationError"
       },
       "ActionResultEvent": {
-        "description": "A decision was carried out: the outbox item sent (approve, edit) or nothing (reject).",
+        "description": "A decision was carried out: the outbox item sent or i-EMS ticket raised (approve, edit), or nothing (reject).",
         "properties": {
           "type": {
             "const": "action_result",
@@ -2058,6 +2362,17 @@
               }
             ],
             "title": "Outbox Id"
+          },
+          "ticket_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticket Id"
           }
         },
         "required": [
@@ -2065,7 +2380,8 @@
           "action_id",
           "version",
           "decision",
-          "outbox_id"
+          "outbox_id",
+          "ticket_id"
         ],
         "title": "ActionResultEvent",
         "type": "object"
@@ -2134,6 +2450,104 @@
           "index"
         ],
         "title": "CitationEvent",
+        "type": "object"
+      },
+      "ClassificationEvent": {
+        "description": "Feedback classified into the defect taxonomy: category, severity, routing team and vendor, confidence, rationale.",
+        "properties": {
+          "category_code": {
+            "title": "Category Code",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "team": {
+            "title": "Team",
+            "type": "string"
+          },
+          "vendor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor"
+          },
+          "is_defect": {
+            "title": "Is Defect",
+            "type": "boolean"
+          },
+          "sla_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Days"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "low_confidence": {
+            "title": "Low Confidence",
+            "type": "boolean"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/Candidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "type": {
+            "const": "classification",
+            "default": "classification",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category_code",
+          "category",
+          "severity",
+          "team",
+          "vendor",
+          "is_defect",
+          "sla_days",
+          "confidence",
+          "low_confidence",
+          "rationale",
+          "candidates",
+          "seq"
+        ],
+        "title": "ClassificationEvent",
         "type": "object"
       },
       "ConceptUsed": {
@@ -2627,7 +3041,10 @@
             "type": "integer"
           },
           "action_type": {
-            "const": "send_letter",
+            "enum": [
+              "send_letter",
+              "raise_ticket"
+            ],
             "title": "Action Type",
             "type": "string"
           },
@@ -2636,7 +3053,15 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/LetterPayload"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LetterPayload"
+              },
+              {
+                "$ref": "#/components/schemas/TicketPayload"
+              }
+            ],
+            "title": "Payload"
           },
           "preview": {
             "title": "Preview",
@@ -2921,6 +3346,7 @@
           "mapping": {
             "action_result": "#/components/schemas/ActionResultEvent",
             "citation": "#/components/schemas/CitationEvent",
+            "classification": "#/components/schemas/ClassificationEvent",
             "done": "#/components/schemas/DoneEvent",
             "draft": "#/components/schemas/DraftEvent",
             "error": "#/components/schemas/ErrorEvent",
@@ -2951,6 +3377,9 @@
           },
           {
             "$ref": "#/components/schemas/PolicyStanceEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ClassificationEvent"
           },
           {
             "$ref": "#/components/schemas/ProposedActionEvent"

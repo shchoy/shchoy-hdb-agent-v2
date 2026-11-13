@@ -18,7 +18,10 @@ RECIPIENT_SLOTS = ("tenant_name", "provider_name", "contact_person")
 def propose_letter(draft: Draft, owner: str, actions: list[ProposedAction]) -> ProposedAction:
     """Sending `draft`. A new draft from the same template revises the thread's pending letter (same ID, next
     version), so an approval of the version the officer saw can't send the newer one."""
-    revised = next((a for a in pending(actions) if a.payload.template_id == draft.template_id), None)
+    revised = next(
+        (a for a in pending(actions) if isinstance(a.payload, LetterPayload) and a.payload.template_id == draft.template_id),
+        None,
+    )
     recipient = next((draft.slots[s] for s in RECIPIENT_SLOTS if draft.slots.get(s)), "the recipient")
     return ProposedAction(
         action_id=revised.action_id if revised else str(uuid.uuid4()),
@@ -39,12 +42,14 @@ def propose_letter(draft: Draft, owner: str, actions: list[ProposedAction]) -> P
 
 def unknown_slots(action: ProposedAction, edits: dict[str, str]) -> list[str]:
     """Edited slots the letter's template doesn't have."""
+    assert isinstance(action.payload, LetterPayload)
     known = set(action.payload.slots) | {u.slot for u in action.payload.unfilled}
     return sorted(set(edits) - known)
 
 
 def edited(action: ProposedAction, edits: dict[str, str], library: TemplateLibrary, records_db: Path) -> ProposedAction:
     """The letter with the officer's slot edits applied, re-rendered and re-checked: the next version."""
+    assert isinstance(action.payload, LetterPayload)
     template = library.get(action.payload.template_id)
     if template is None:
         raise LookupError(f"Template {action.payload.template_id} is no longer approved")

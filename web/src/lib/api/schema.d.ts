@@ -108,7 +108,8 @@ export interface paths {
         };
         /**
          * Audit Trail
-         * @description The officer's own decisions on proposed actions, newest first, each with the outbox item it sent.
+         * @description The officer's own decisions on proposed actions, newest first, each with the outbox item it sent or the
+         *     i-EMS ticket it raised.
          */
         get: operations["audit_trail_audit_get"];
         put?: never;
@@ -302,7 +303,8 @@ export interface components {
     schemas: {
         /**
          * AuditRecord
-         * @description A decision from the audit log and, unless it was a rejection, the outbox item it sent.
+         * @description A decision from the audit log and, unless it was a rejection, the outbox item it sent or the i-EMS ticket it
+         *     raised.
          */
         AuditRecord: {
             /** Action Id */
@@ -311,9 +313,9 @@ export interface components {
             version: number;
             /**
              * Action Type
-             * @constant
+             * @enum {string}
              */
-            action_type: "send_letter";
+            action_type: "send_letter" | "raise_ticket";
             /**
              * Title
              * @default
@@ -348,7 +350,24 @@ export interface components {
             run_id: string;
             /** Outbox Id */
             outbox_id: string | null;
+            /** Ticket Id */
+            ticket_id?: string | null;
             sent: components["schemas"]["OutboxItem"] | null;
+            ticket: components["schemas"]["Ticket"] | null;
+        };
+        /** Candidate */
+        Candidate: {
+            /** Code */
+            code: string;
+            /** Category */
+            category: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "Low" | "Medium" | "High" | "Critical";
+            /** Confidence */
+            confidence: number;
         };
         /**
          * ChunkLocation
@@ -419,6 +438,12 @@ export interface components {
          * @description A letter filled from an approved template, as it would be sent.
          */
         LetterPayload: {
+            /**
+             * Kind
+             * @default letter
+             * @constant
+             */
+            kind: "letter";
             /** Draft Id */
             draft_id: string;
             /** Template Id */
@@ -527,12 +552,13 @@ export interface components {
             version: number;
             /**
              * Action Type
-             * @constant
+             * @enum {string}
              */
-            action_type: "send_letter";
+            action_type: "send_letter" | "raise_ticket";
             /** Title */
             title: string;
-            payload: components["schemas"]["LetterPayload"];
+            /** Payload */
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
@@ -575,12 +601,13 @@ export interface components {
             version: number;
             /**
              * Action Type
-             * @constant
+             * @enum {string}
              */
-            action_type: "send_letter";
+            action_type: "send_letter" | "raise_ticket";
             /** Title */
             title: string;
-            payload: components["schemas"]["LetterPayload"];
+            /** Payload */
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
@@ -663,6 +690,89 @@ export interface components {
              */
             pending: components["schemas"]["ProposedAction"][];
         };
+        /** Ticket */
+        Ticket: {
+            /** Ticket Id */
+            ticket_id: string;
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /** Feedback Id */
+            feedback_id: string;
+            /** Description */
+            description: string;
+            /** Unit Id */
+            unit_id: string | null;
+            /** Category Code */
+            category_code: string;
+            /** Category */
+            category: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "Low" | "Medium" | "High" | "Critical";
+            /** Team */
+            team: string;
+            /** Vendor */
+            vendor: string | null;
+            /** Sla Days */
+            sla_days: number;
+            /** Due Date */
+            due_date: string;
+            /**
+             * Status
+             * @default Assigned
+             * @enum {string}
+             */
+            status: "Assigned" | "In Progress" | "Closed" | "Rejected - Misrouted";
+            /** Raised By */
+            raised_by: string;
+            /** Raised At */
+            raised_at: string;
+        };
+        /**
+         * TicketPayload
+         * @description An i-EMS ticket for classified feedback, as it would be raised.
+         */
+        TicketPayload: {
+            /**
+             * Kind
+             * @default ticket
+             * @constant
+             */
+            kind: "ticket";
+            /** Feedback Id */
+            feedback_id: string;
+            /** Description */
+            description: string;
+            /** Unit Id */
+            unit_id: string | null;
+            /** Category Code */
+            category_code: string;
+            /** Category */
+            category: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "Low" | "Medium" | "High" | "Critical";
+            /** Team */
+            team: string;
+            /** Vendor */
+            vendor: string | null;
+            /** Sla Days */
+            sla_days: number;
+            /** Confidence */
+            confidence: number;
+            /** Low Confidence */
+            low_confidence: boolean;
+            /** Rationale */
+            rationale: string;
+            /** Candidates */
+            candidates: components["schemas"]["Candidate"][];
+        };
         /** UnfilledSlot */
         UnfilledSlot: {
             /** Slot */
@@ -704,7 +814,7 @@ export interface components {
         };
         /**
          * ActionResultEvent
-         * @description A decision was carried out: the outbox item sent (approve, edit) or nothing (reject).
+         * @description A decision was carried out: the outbox item sent or i-EMS ticket raised (approve, edit), or nothing (reject).
          */
         ActionResultEvent: {
             /**
@@ -725,6 +835,8 @@ export interface components {
             decision: "approve" | "edit" | "reject";
             /** Outbox Id */
             outbox_id: string | null;
+            /** Ticket Id */
+            ticket_id: string | null;
         };
         /**
          * CitationEvent
@@ -753,6 +865,44 @@ export interface components {
             seq: number;
             /** Index */
             index: number;
+        };
+        /**
+         * ClassificationEvent
+         * @description Feedback classified into the defect taxonomy: category, severity, routing team and vendor, confidence, rationale.
+         */
+        ClassificationEvent: {
+            /** Category Code */
+            category_code: string;
+            /** Category */
+            category: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "Low" | "Medium" | "High" | "Critical";
+            /** Team */
+            team: string;
+            /** Vendor */
+            vendor: string | null;
+            /** Is Defect */
+            is_defect: boolean;
+            /** Sla Days */
+            sla_days: number | null;
+            /** Confidence */
+            confidence: number;
+            /** Low Confidence */
+            low_confidence: boolean;
+            /** Rationale */
+            rationale: string;
+            /** Candidates */
+            candidates: components["schemas"]["Candidate"][];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "classification";
+            /** Seq */
+            seq: number;
         };
         /**
          * ConceptUsed
@@ -972,12 +1122,13 @@ export interface components {
             version: number;
             /**
              * Action Type
-             * @constant
+             * @enum {string}
              */
-            action_type: "send_letter";
+            action_type: "send_letter" | "raise_ticket";
             /** Title */
             title: string;
-            payload: components["schemas"]["LetterPayload"];
+            /** Payload */
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
@@ -1082,7 +1233,7 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
     };
     responses: never;
     parameters: never;

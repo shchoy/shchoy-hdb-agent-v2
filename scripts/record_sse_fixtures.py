@@ -3,7 +3,8 @@
     uv run python scripts/record_sse_fixtures.py
 
 Writes `web/src/test/fixtures/*.sse`, `documents/*.json` (a document and a cited span's location, per file type) and
-`approvals/*` (two letters proposed in two conversations: the pending list, an edit and a rejection, the audit trail). Streams come from the real API and graph with a scripted
+`approvals/*` (two letters and an i-EMS ticket proposed in three conversations: the pending list, a ticket raised with
+edits, a letter edit and a rejection, the audit trail). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -44,6 +45,7 @@ DATA_QUESTION = "Which tenancies have arrears above 3 months' rent?"
 MULTI_QUESTION = "How many vacant units are there in Bayshore Vale, and how is vacancy defined?"
 DRAFT_QUESTION = "Draft an update reply to the member of public who gave feedback FB-2025-00002"
 REMINDER_QUESTION = "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
+DEFECT_QUESTION = "Classify: 'Ceiling near the shop wet and lights flickering, scared got short circuit'"
 
 
 def routed(*intents: str) -> AgentTurn:
@@ -133,31 +135,46 @@ def reminder(llm: ScriptedLLMClient) -> None:
     llm.script("merge", REMINDER_QUESTION, "I drafted the reminder from TPL-REM-01. It waits for your approval.")
 
 
+def defect(llm: ScriptedLLMClient) -> None:
+    """Ambiguous feedback: seepage or electrical. The more severe reading wins, flagged low confidence, and an i-EMS
+    ticket is proposed for it."""
+    llm.script_turns("route", DEFECT_QUESTION, routed("defect"))
+    llm.script_turns("defect", DEFECT_QUESTION, turn(tool_call(
+        "classify_feedback", categories=[{"code": "SEP", "confidence": 0.6}, {"code": "ELE", "confidence": 0.5}],
+        rationale="'Ceiling ... wet' reads as water seepage; 'lights flickering' and 'short circuit' as an electrical fault.",
+        feedback="Ceiling near the shop wet and lights flickering, scared got short circuit",
+    )))
+    llm.script("merge", DEFECT_QUESTION, "Classified as **Electrical (High)** for M&E, with low confidence: it may also be "
+               "water seepage. An i-EMS ticket waits for your approval; nothing has been raised.")
+
+
 FEEDBACK_EDITS = {
     "action_taken": "Our contractor sealed the ceiling joint on 5 October 2025.",
     "next_steps": "If it recurs, please call us on 6100 2058.",
 }
+TICKET_EDITS = {"category_code": "SEP", "severity": "High", "unit_id": "U-PI675-02-07"}
 
 
 def record_approvals(search: Searcher, graph: LocalGraphStore) -> dict[str, str]:
-    """Two letters proposed in two conversations, then the officer edits one and rejects the other."""
+    """Two letters and an i-EMS ticket proposed in three conversations; the officer raises the ticket with edits,
+    then edits one letter and rejects the other."""
     llm = ScriptedLLMClient()
     draft(llm)
     reminder(llm)
+    defect(llm)
     recorded: dict[str, str] = {}
     with tempfile.TemporaryDirectory() as scratch:
-        settings = Settings(
-            graph_dir=Path(scratch) / "graph", threads_db=Path(scratch) / "threads.sqlite",
-            outbox_dir=Path(scratch) / "outbox", audit_log=Path(scratch) / "audit.jsonl",
-        )
+        settings = scratch_settings(Path(scratch))
         app = create_app(settings, llm=llm, searcher=search, entities=graph, memory=scratch_memory(Path(scratch) / "memory"))
         with TestClient(app) as client:
-            for question in (DRAFT_QUESTION, REMINDER_QUESTION):
+            for question in (DRAFT_QUESTION, REMINDER_QUESTION, DEFECT_QUESTION):
                 thread_id = client.post("/threads", headers=USER).json()["thread_id"]
                 client.post(f"/threads/{thread_id}/runs", json={"message": question}, headers=USER).read()
-            feedback, letter = client.get("/approvals", headers=USER).json()
-            recorded["pending.json"] = json.dumps([feedback, letter], indent=2) + "\n"
+            feedback, letter, ticket = client.get("/approvals", headers=USER).json()
+            assert ticket["action_type"] == "raise_ticket", ticket
+            recorded["pending.json"] = json.dumps([feedback, letter, ticket], indent=2) + "\n"
             for name, action, decision in (
+                ("ticket_edit.sse", ticket, {"decision": "edit", "edits": TICKET_EDITS}),
                 ("edit.sse", feedback, {"decision": "edit", "edits": FEEDBACK_EDITS}),
                 ("reject.sse", letter, {"decision": "reject", "reason": "The tenant paid yesterday."}),
             ):
@@ -261,7 +278,7 @@ def lineage_graph(store: LanceSearchStore, graph_dir: Path) -> LocalGraphStore:
 SCRIPTS: dict[str, tuple[str, Callable[[ScriptedLLMClient], None]]] = {
     "answer": (QUESTION, answer), "not_covered": (QUESTION, not_covered), "error": (QUESTION, error),
     "draft": (DRAFT_QUESTION, draft), "data": (DATA_QUESTION, data), "policy_stance": (POLICY_QUESTION, policy_stance),
-    "multi_part": (MULTI_QUESTION, multi_part),
+    "multi_part": (MULTI_QUESTION, multi_part), "defect": (DEFECT_QUESTION, defect),
 }
 
 
@@ -308,17 +325,22 @@ def scratch_memory(directory: Path) -> MemoryStore:
     return MemoryStore(LanceSearchStore(directory, dim=embedder.dim), embedder)
 
 
+def scratch_settings(scratch: Path) -> Settings:
+    """Threads, WORKED_ON links, the outbox, i-EMS tickets and the audit log go to scratch space, never the real .plg
+    stores."""
+    return Settings(
+        graph_dir=scratch / "graph", threads_db=scratch / "threads.sqlite", outbox_dir=scratch / "outbox",
+        iems_dir=scratch / "iems", audit_log=scratch / "audit.jsonl",
+    )
+
+
 def record(
     search: Searcher, question: str, script: Callable[[ScriptedLLMClient], None], graph: LocalGraphStore | None = None
 ) -> str:
     llm = ScriptedLLMClient()
     script(llm)
     with tempfile.TemporaryDirectory() as scratch:
-        # Threads, memory, WORKED_ON links, the outbox and the audit log go to scratch space, never the real .plg stores.
-        settings = Settings(
-            graph_dir=Path(scratch) / "graph", threads_db=Path(scratch) / "threads.sqlite",
-            outbox_dir=Path(scratch) / "outbox", audit_log=Path(scratch) / "audit.jsonl",
-        )
+        settings = scratch_settings(Path(scratch))
         app = create_app(settings, llm=llm, searcher=search, entities=graph, memory=scratch_memory(Path(scratch) / "memory"))
         return _stream(app, question)
 

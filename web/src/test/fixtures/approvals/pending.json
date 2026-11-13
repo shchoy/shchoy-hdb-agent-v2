@@ -1,11 +1,12 @@
 [
   {
-    "action_id": "f1737c97-dcfe-4655-99e8-dd2f860c8356",
+    "action_id": "d6dc54eb-84fc-416c-94e9-390ba1f367e3",
     "version": 1,
     "action_type": "send_letter",
     "title": "Send Feedback Update Reply to Sir/Madam",
     "payload": {
-      "draft_id": "2993a81e-85ee-4738-9a94-047886b12597",
+      "kind": "letter",
+      "draft_id": "8d96dc51-3da7-4419-ace1-fbf7a8be0456",
       "template_id": "TPL-FBK-03",
       "template_title": "Feedback Update Reply",
       "template_version": "1.3",
@@ -44,18 +45,19 @@
       "legal"
     ],
     "proposed_by": "S05",
-    "proposed_at": "2026-11-13T04:26:15.123673+00:00",
+    "proposed_at": "2026-11-13T07:20:28.972402+00:00",
     "status": "pending",
-    "thread_id": "6ff3a625-e9b9-40de-bad9-8ddfa1b78680",
+    "thread_id": "869101f1-a49d-4946-83c1-b4e65328fa34",
     "thread_title": "Draft an update reply to the member of public who gave feedback FB-2025-00002"
   },
   {
-    "action_id": "000c89bd-9e73-4c4a-94e6-a185f018d862",
+    "action_id": "f69f1dec-bf5f-457c-9b7e-a5b9a96fb177",
     "version": 1,
     "action_type": "send_letter",
     "title": "Send Arrears Reminder Letter to Golden Leaf Minimart Pte Ltd",
     "payload": {
-      "draft_id": "08ab61e8-6e1b-459a-8aa7-c76b898657ab",
+      "kind": "letter",
+      "draft_id": "6cb05371-0944-44a1-8aa8-8903bb4383b9",
       "template_id": "TPL-REM-01",
       "template_title": "Arrears Reminder Letter",
       "template_version": "1.3",
@@ -86,9 +88,56 @@
       "legal"
     ],
     "proposed_by": "S05",
-    "proposed_at": "2026-11-13T04:26:15.203110+00:00",
+    "proposed_at": "2026-11-13T07:20:29.096588+00:00",
     "status": "pending",
-    "thread_id": "593395b1-ba98-4275-a6b5-9afec215e762",
+    "thread_id": "505bdc8c-7940-4dab-bf8f-454f016ab757",
     "thread_title": "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent"
+  },
+  {
+    "action_id": "fdb464cc-a542-46f8-9385-29186168d8a3",
+    "version": 1,
+    "action_type": "raise_ticket",
+    "title": "Raise i-EMS ticket: Electrical (High) for M&E",
+    "payload": {
+      "kind": "ticket",
+      "feedback_id": "FB-NEW-5D07E10D",
+      "description": "Ceiling near the shop wet and lights flickering, scared got short circuit",
+      "unit_id": null,
+      "category_code": "ELE",
+      "category": "Electrical",
+      "severity": "High",
+      "team": "M&E",
+      "vendor": "Sunrise M&E Services Pte Ltd",
+      "sla_days": 3,
+      "confidence": 0.5,
+      "low_confidence": true,
+      "rationale": "'Ceiling ... wet' reads as water seepage; 'lights flickering' and 'short circuit' as an electrical fault.",
+      "candidates": [
+        {
+          "code": "SEP",
+          "category": "Water Seepage / Leak",
+          "severity": "Medium",
+          "confidence": 0.6
+        },
+        {
+          "code": "ELE",
+          "category": "Electrical",
+          "severity": "High",
+          "confidence": 0.5
+        }
+      ]
+    },
+    "preview": "<h3>i-EMS ticket</h3><table><tr><th>Feedback case</th><td>FB-NEW-5D07E10D</td></tr><tr><th>Unit</th><td>Not given</td></tr><tr><th>Category</th><td>Electrical (ELE)</td></tr><tr><th>Priority</th><td>High</td></tr><tr><th>Team</th><td>M&amp;E</td></tr><tr><th>Vendor</th><td>Sunrise M&amp;E Services Pte Ltd</td></tr><tr><th>SLA</th><td>3 days</td></tr><tr><th>Description</th><td>Ceiling near the shop wet and lights flickering, scared got short circuit</td></tr></table>",
+    "approver_roles": [
+      "officer",
+      "estate_manager",
+      "manager",
+      "director"
+    ],
+    "proposed_by": "S05",
+    "proposed_at": "2026-11-13T07:20:29.130892+00:00",
+    "status": "pending",
+    "thread_id": "d678165c-5eb9-4013-a253-4a445322d423",
+    "thread_title": "Classify: 'Ceiling near the shop wet and lights flickering, scared got short cir"
   }
 ]

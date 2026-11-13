@@ -10,24 +10,28 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from plg.defects.classify import Candidate
+from plg.defects.taxonomy import Severity
 from plg.drafting.model import PiiFinding, UnfilledSlot
 from plg.identity import Role
 
-ActionType = Literal["send_letter"]
-"""Grows with the flows that propose actions (i-EMS tickets, record updates, glossary changes, ...)."""
+ActionType = Literal["send_letter", "raise_ticket"]
+"""Grows with the flows that propose actions (record updates, glossary changes, ...)."""
 
 Decision = Literal["approve", "edit", "reject"]
 
 APPROVER_ROLES: dict[ActionType, list[Role]] = {
     "send_letter": ["officer", "estate_manager", "manager", "director", "legal"],
+    "raise_ticket": ["officer", "estate_manager", "manager", "director"],
 }
-"""Who may approve (or edit) each action type. Analysts can draft letters but not send them; anyone can reject
-their own proposal."""
+"""Who may approve (or edit) each action type. Analysts can draft letters and classify feedback but not send or raise
+anything; anyone can reject their own proposal."""
 
 
 class LetterPayload(BaseModel):
     """A letter filled from an approved template, as it would be sent."""
 
+    kind: Literal["letter"] = "letter"
     draft_id: str
     template_id: str
     template_title: str
@@ -38,15 +42,37 @@ class LetterPayload(BaseModel):
     pii: list[PiiFinding]
 
 
+class TicketPayload(BaseModel):
+    """An i-EMS ticket for classified feedback, as it would be raised."""
+
+    kind: Literal["ticket"] = "ticket"
+    feedback_id: str
+    """The feedback case the ticket links back to: the case named in the question, or a new one for pasted feedback."""
+    description: str
+    """The feedback, as the maintenance team will read it."""
+    unit_id: str | None
+    category_code: str
+    category: str
+    severity: Severity
+    team: str
+    vendor: str | None
+    sla_days: int
+    """Completion SLA for the severity."""
+    confidence: float
+    low_confidence: bool
+    rationale: str
+    candidates: list[Candidate]
+
+
 class ProposedAction(BaseModel):
     action_id: str
     """Stable across versions: a revised proposal keeps its ID and gets the next version."""
     version: int
     action_type: ActionType
     title: str
-    payload: LetterPayload
+    payload: LetterPayload | TicketPayload
     preview: str
-    """What will happen, as an escaped HTML fragment (the letter)."""
+    """What will happen, as an escaped HTML fragment (the letter, the ticket)."""
     approver_roles: list[Role]
     proposed_by: str
     """Staff ID of the officer who asked for it: the only one who can decide on it."""
@@ -61,7 +87,8 @@ class ApprovalDecision(BaseModel):
     version: int
     decision: Decision
     edits: dict[str, str] = Field(default_factory=dict)
-    """Slot → new value (decision `edit`): the edited letter is what gets sent."""
+    """Slot → new value (decision `edit`) of a letter, or ticket field → new value: the edited version is what is
+    sent or raised."""
     reason: str = ""
     approver: str
     approver_role: Role

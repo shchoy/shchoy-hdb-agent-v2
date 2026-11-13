@@ -31,8 +31,8 @@ src/plg/
 │   │                proposer, role can't approve (reject needs no role)), upsert_actions reducer, pending(). letters.py: propose_letter
 │   │                (a draft of the same template revises the thread's pending letter: same ID, version+1), edited (slot edits re-composed
 │   │                and PII-checked → next version), unknown_slots. outbox.py: Outbox protocol + LocalOutbox (one JSON per item, id
-│   │                `<action_id>-v<version>`, overwrite = idempotent). audit.py: AuditLog (JSONL, append-only, one entry per action ID:
-│   │                decision, edits, reason, approver + role, at, run_id, outbox_id).
+│   │                `<action_id>-v<version>`, overwrite = idempotent; item(id)). audit.py: AuditLog (JSONL, append-only, one entry per action ID:
+│   │                title, thread_id, decision, edits, reason, approver + role, at, run_id, outbox_id; decided_by(staff_id) newest first).
 ├── identity.py      UserCtx (staff_id, name, title, dept, role) loaded read-only from the `staff` table;
 │                    role is derived from the job title (role_for). POC identity, replaced by OIDC later.
 ├── agents/
@@ -172,6 +172,7 @@ src/plg/
 │                    pending action/version (replay), 403 role can't approve/edit, 422 reject without reason / unknown or blanked slot / open slots
 │                    left; then RunRegistry.start(decision). GET /approvals?status=pending: own pending actions across threads (PendingApproval =
 │                    ProposedAction + thread_id/title), read from checkpoint interrupts so they survive a restart. ThreadView.pending likewise.
+│                    GET /audit: own decisions, newest first (AuditRecord = AuditEntry + `sent`: the OutboxItem, null for a reject).
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers),
                      `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
                      `plg glossary list [--all] | show <term>`, `plg memory list | show | edit | forget --user <staff ID>`. make_llm() builds the real LLMClient.
@@ -200,15 +201,20 @@ scripts/build_ontology.py
 scripts/record_sse_fixtures.py
                      Records real SSE streams (answer with citations, not_covered, error, draft, policy_stance, data: a rejected then a successful run_sql, multi_part: knowledge + data fused in sections) from the in-process API,
                      with the corpus synced into a temp index (threads, memory, graph, outbox and audit writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
-                     viewer's document + span-location responses per file type into fixtures/documents/*.json.
+                     viewer's document + span-location responses per file type into fixtures/documents/*.json, and the approvals flow (two letters in two
+                     threads → fixtures/approvals/pending.json, edit.sse, reject.sse, audit.json).
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
                      /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay),
-                     /api/memory (GET list), /api/memory/[id] (PATCH, DELETE).
-                     Pages: /sign-in, /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
-                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry).
-                     dates.ts: day() / period() date formatting shared by the cards.
+                     /api/memory (GET list), /api/memory/[id] (PATCH, DELETE), /api/approvals (GET pending), /api/audit (GET),
+                     /api/threads/[id]/resume (POST decision, SSE through; refusals relayed). SSE pass-through = relaySse (src/lib/server/plg-api.ts).
+                     Pages: /sign-in, /approvals (Approvals inbox, approvals/ApprovalsScreen.tsx: pending actions across threads with letter preview,
+                     open slots, PII flags, editable slots shown as <del>/<ins> diff, approve / send edited / reject with reason, approve+edit
+                     hidden for roles that can't send or while open slots are blank; then the result (outbox ID, version sent) and the audit
+                     trail (who, role, when, reason, edits, outbox item + letter as sent, run_id)), /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
+                     answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), DraftPreview under the answer (sandboxed HTML preview via LetterFrame.tsx, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry).
+                     dates.ts: day() / period() / when() date formatting shared by the cards.
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.
                      Tests: Vitest + RTL + MSW replaying the recorded fixtures.

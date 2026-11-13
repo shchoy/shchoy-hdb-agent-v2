@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { plgApiUnavailable, resumeRun } from "@/lib/server/plg-api";
+import { plgApiUnavailable, relaySse, resumeRun } from "@/lib/server/plg-api";
 import { sessionStaffId } from "@/lib/server/session";
 
 export const runtime = "nodejs";
@@ -26,21 +26,5 @@ export async function GET(
   } catch {
     return plgApiUnavailable();
   }
-  if (upstream.status !== 200 || !upstream.body) {
-    return new Response(upstream.body, {
-      status: upstream.status,
-      headers: {
-        "Content-Type":
-          upstream.headers.get("content-type") ?? "application/json",
-      },
-    });
-  }
-  return new Response(upstream.body, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      "X-Accel-Buffering": "no",
-    },
-  });
+  return relaySse(upstream);
 }

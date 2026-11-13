@@ -173,4 +173,44 @@ describe("Approvals inbox", () => {
 
     expect(await within(letter).findByText("It failed: Outbox unavailable")).toBeInTheDocument();
   });
+
+  it("keeps a decision's result when the run fails afterwards", async () => {
+    const after = `id: 9\nevent: error\ndata: {"type":"error","seq":9,"run_id":"r1","message":"Claude unavailable"}\n\n`;
+    decisions(REMINDER.thread_id, approvalsFixture("reject.sse") + after, { pending: [FEEDBACK], audit: [REJECTED] });
+    render(<ApprovalsScreen role="officer" />);
+
+    const letter = await screen.findByRole("article", { name: REMINDER.title });
+    await userEvent.click(within(letter).getByRole("button", { name: "Reject…" }));
+    await userEvent.type(within(letter).getByLabelText("Reason for rejecting"), "The tenant paid yesterday.");
+    await userEvent.click(within(letter).getByRole("button", { name: "Reject" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(`${REMINDER.title}: rejected; nothing was sent.`);
+  });
+
+  it("keeps the inbox on screen when reloading it fails after a decision", async () => {
+    decisions(REMINDER.thread_id, approvalsFixture("reject.sse"), { pending: [FEEDBACK], audit: [REJECTED] });
+    render(<ApprovalsScreen role="officer" />);
+
+    const letter = await screen.findByRole("article", { name: REMINDER.title });
+    server.use(http.get("/api/approvals", () => HttpResponse.json({ detail: "down" }, { status: 502 })));
+    await userEvent.click(within(letter).getByRole("button", { name: "Reject…" }));
+    await userEvent.type(within(letter).getByLabelText("Reason for rejecting"), "The tenant paid yesterday.");
+    await userEvent.click(within(letter).getByRole("button", { name: "Reject" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("rejected; nothing was sent.");
+    expect(await screen.findByText("Could not reload your approvals.")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Pending approvals" })).toBeInTheDocument();
+  });
+
+  it("can't send edits while an open slot is still blank", async () => {
+    plgApi();
+    render(<ApprovalsScreen role="officer" />);
+
+    const reply = await screen.findByRole("article", { name: FEEDBACK.title });
+    await userEvent.click(within(reply).getByRole("button", { name: "Edit slots" }));
+    await userEvent.type(within(reply).getByLabelText("next_steps"), " Thanks.");
+
+    expect(within(reply).getByRole("button", { name: "Send edited letter" })).toBeDisabled();
+    expect(reply).toHaveTextContent("Fill action_taken before sending.");
+  });
 });

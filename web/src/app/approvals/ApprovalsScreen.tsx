@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import type { components } from "@/lib/api/schema";
 import { parseRunEvents, roleLabel, type RunEvent, type UserCtx } from "@/lib/events";
+import { when } from "../dates";
+import { LetterFrame } from "../LetterFrame";
 import styles from "./approvals.module.css";
 
 type PendingApproval = components["schemas"]["PendingApproval"];
-
-const STYLE = "body{font:15px/1.5 system-ui,sans-serif;margin:1rem;color:#111}p{margin:0 0 .75rem}mark{background:#fff3b0}";
 
 type AuditRecord = components["schemas"]["AuditRecord"];
 type Decision = "approve" | "edit" | "reject";
@@ -22,35 +22,36 @@ export function ApprovalsScreen({ role }: { role: UserCtx["role"] }) {
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const failed = version === 0 ? "Could not load your approvals." : "Could not reload your approvals.";
 
   useEffect(() => {
     let current = true;
     Promise.all([fetch("/api/approvals"), fetch("/api/audit")])
       .then(async ([approvals, trail]) => {
         if (!current) return;
-        if (!approvals.ok || !trail.ok) return setError("Could not load your approvals.");
+        if (!approvals.ok || !trail.ok) return setError(failed);
         const [nextPending, nextAudit] = [(await approvals.json()) as PendingApproval[], (await trail.json()) as AuditRecord[]];
         if (!current) return;
         setError(null);
         setPending(nextPending);
         setAudit(nextAudit);
       })
-      .catch(() => current && setError("Could not load your approvals."));
+      .catch(() => current && setError(failed));
     return () => {
       current = false;
     };
-  }, [version]);
+  }, [version, failed]);
 
   function decided(outcome: Outcome) {
     setOutcomes((o) => [outcome, ...o]);
     setVersion((v) => v + 1);
   }
 
-  if (error) return <p role="alert">{error}</p>;
-  if (!pending) return <p>Loading…</p>;
+  if (!pending) return error ? <p role="alert">{error}</p> : <p>Loading…</p>;
 
   return (
     <>
+      {error && <p role="alert">{error}</p>}
       {outcomes.length > 0 && (
         <div role="status" aria-label="Results">
           {outcomes.map(({ title, result }) => (
@@ -108,8 +109,10 @@ async function decide(action: PendingApproval, body: { decision: Decision; edits
   let result: ActionResult | string = "No result came back. Reload to check.";
   try {
     for await (const event of parseRunEvents(response.body)) {
+      // Once the action's result is in, it was carried out: a later failure of the run doesn't undo it.
+      if (typeof result !== "string") continue;
       if (event.type === "action_result" && event.action_id === action.action_id) result = event;
-      if (event.type === "error") result = `It failed: ${event.message}`;
+      else if (event.type === "error") result = `It failed: ${event.message}`;
     }
   } catch {
     if (typeof result === "string") return "The connection dropped before the result arrived. Reload to check.";
@@ -138,14 +141,18 @@ function ActionCard({
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
+  const stillOpen = edits ? payload.unfilled.map((u) => u.slot).filter((slot) => !edits[slot]?.trim()) : [];
   const changes = edits ? Object.fromEntries(Object.entries(edits).filter(([slot, value]) => value !== original[slot])) : {};
 
   async function submit(body: Parameters<typeof decide>[1]) {
     setBusy(true);
     setRefusal(null);
     const result = await decide(action, body);
-    setBusy(false);
-    if (typeof result === "string") return setRefusal(result);
+    if (typeof result === "string") {
+      setBusy(false);
+      return setRefusal(result);
+    }
+    // Stays busy: the card leaves the inbox when it reloads.
     onDecided({ title: action.title, result });
   }
 
@@ -217,12 +224,7 @@ function ActionCard({
           ))}
         </tbody>
       </table>
-      <iframe
-        title={`Letter to send: ${action.title}`}
-        sandbox=""
-        srcDoc={`<style>${STYLE}</style>${action.preview}`}
-        className={styles.frame}
-      />
+      <LetterFrame title={`Letter to send: ${action.title}`} html={action.preview} />
       {refusal && (
         <p role="alert" className={styles.alert}>
           {refusal}
@@ -232,12 +234,13 @@ function ActionCard({
       {canSend && !edits && payload.unfilled.length > 0 && (
         <p>Fill the open slots (Edit slots) before the letter can be sent.</p>
       )}
+      {stillOpen.length > 0 && <p>Fill {stillOpen.join(", ")} before sending.</p>}
       <div className={styles.actions}>
         {edits ? (
           <>
             <button
               type="button"
-              disabled={busy || Object.keys(changes).length === 0}
+              disabled={busy || Object.keys(changes).length === 0 || stillOpen.length > 0}
               onClick={() => submit({ decision: "edit", edits: changes })}
             >
               Send edited letter
@@ -322,12 +325,7 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
               {e.sent && (
                 <details>
                   <summary>Letter as sent</summary>
-                  <iframe
-                    title={`Letter sent: ${e.title}`}
-                    sandbox=""
-                    srcDoc={`<style>${STYLE}</style>${e.sent.html}`}
-                    className={styles.frame}
-                  />
+                  <LetterFrame title={`Letter sent: ${e.title}`} html={e.sent.html} />
                 </details>
               )}
             </article>
@@ -336,10 +334,4 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
       })}
     </ul>
   );
-}
-
-const WHEN = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Singapore" });
-
-function when(iso: string): string {
-  return WHEN.format(new Date(iso));
 }

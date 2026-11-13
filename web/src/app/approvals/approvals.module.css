@@ -46,14 +46,6 @@
   text-decoration: none;
 }
 
-.frame {
-  width: 100%;
-  height: 22rem;
-  border: 1px solid var(--muted);
-  background: #fff;
-  margin: 0.5rem 0;
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;

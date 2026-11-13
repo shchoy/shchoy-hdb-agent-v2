@@ -12,3 +12,10 @@ export function period(from: string | null, to: string | null, undated: string):
   if (to) return `until ${day(to)}`;
   return undated;
 }
+
+const MOMENT = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Singapore" });
+
+/** A timestamp for display, in Singapore time: "13 Nov 2026, 12:26". */
+export function when(iso: string): string {
+  return MOMENT.format(new Date(iso));
+}

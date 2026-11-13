@@ -17,6 +17,27 @@ export function plgApiUnavailable(): NextResponse {
   return NextResponse.json({ detail: "plg-api is unavailable" }, { status: 502 });
 }
 
+/**
+ * plg-api's SSE reply passed straight through to the browser, unbuffered; a refusal (or any non-stream reply) is
+ * relayed with its status and body.
+ */
+export function relaySse(upstream: Response): Response {
+  if (upstream.status !== 200 || !upstream.body) {
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json" },
+    });
+  }
+  return new Response(upstream.body, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
+
 export function plgApiUrl(): string {
   return process.env.PLG_API_URL ?? DEFAULT_PLG_API_URL;
 }

@@ -23,7 +23,8 @@ from plg.identity import UserCtx, load_personas
 from plg.memory.store import MemoryStore, view
 from plg.llm import AnthropicLLMClient, LLMClient, ScriptedLLMClient
 from plg.ontology.generated.models import GlossaryTerm
-from plg.ontology.glossary import load_glossary
+from plg.ontology.changes import GlossaryChanges
+from plg.ontology.glossary import Glossary, load_glossary
 from plg.runs import stream_run
 from plg.tasks.rules import DEFAULT_LIMIT as DEFAULT_TASKS
 from plg.search.embed import Embedder, VoyageEmbedder
@@ -249,12 +250,17 @@ def graph_show(entity: str, hops: int = 2) -> None:
             typer.echo(f"  {edge.start} -{edge.type}-> {edge.end}")
 
 
+def _glossary() -> Glossary:
+    """The generated glossary with the changes approved since (PLG_GLOSSARY_CHANGES)."""
+    return GlossaryChanges(Settings.from_env().glossary_changes).glossary(load_glossary())
+
+
 @glossary_app.command("list")
 def glossary_list(
     all_versions: bool = typer.Option(False, "--all", help="Also list superseded and proposed versions."),
 ) -> None:
     """List glossary terms at their current version."""
-    glossary = load_glossary()
+    glossary = _glossary()
     for concept in glossary.concepts():
         versions = glossary.versions(concept)
         if all_versions:
@@ -270,7 +276,7 @@ def glossary_list(
 @glossary_app.command("show")
 def glossary_show(term: str) -> None:
     """Show a term's current definition and its history. TERM is an ID, label or synonym."""
-    glossary = load_glossary()
+    glossary = _glossary()
     concept = glossary.find(term)
     if concept is None:
         typer.echo(f"No glossary term matches {term!r}. See `plg glossary list`.", err=True)

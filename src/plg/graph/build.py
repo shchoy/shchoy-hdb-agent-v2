@@ -1,5 +1,5 @@
 """StateGraph wiring: START → route → specialists (fan-out; `defect` and `doc_check` run the `defect_flow` and
-`doc_check_flow` subgraphs; `tasks` is deterministic) → merge → (approval → execute_action)* → END.
+`doc_check_flow` subgraphs; `tasks` is deterministic; `glossary` proposes definition changes) → merge → (approval → execute_action)* → END.
 
 `route` (Haiku) decides which specialists a question needs; none means `merge` answers it directly.
 `merge` fuses the specialists' findings into one answer and is the only node that streams tokens.
@@ -22,11 +22,15 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send, interrupt
 from pydantic import BaseModel
 
+from plg.actions import glossary as glossary_actions
 from plg.actions import letters, tickets
 from plg.actions.audit import AuditEntry, AuditLog
-from plg.actions.model import ApprovalDecision, LetterPayload, ProposedAction, TicketPayload, pending
+from plg.actions.model import (
+    ApprovalDecision, GlossaryPayload, LetterPayload, ProposedAction, TicketPayload, pending,
+)
 from plg.actions.outbox import LocalOutbox, Outbox, OutboxItem
 from plg.agents import data, drafting, knowledge
+from plg.agents import glossary as glossary_agent
 from plg.agents.runtime import CACHE
 from plg.config import Settings
 from plg.defects.classify import NODE as DEFECT_NODE
@@ -52,6 +56,7 @@ from plg.tasks import rules as task_rules
 from plg.graph.state import RUN_ID, Finding, Intent, PLGGraph, PLGState
 from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
+from plg.ontology.changes import GlossaryChange, GlossaryChanges, superseded
 from plg.ontology.glossary import Glossary, load_glossary
 from plg.ontology.vocab import VocabIndex, load_vocab
 from plg.search.rerank import Retriever
@@ -64,6 +69,7 @@ DRAFTING = drafting.NODE
 DEFECT = DEFECT_NODE
 DOC_CHECK = DOC_CHECK_NODE
 TASKS = task_ask.NODE
+GLOSSARY = glossary_agent.NODE
 MERGE = "merge"
 SUMMARISE = history.NODE
 LOAD_MEMORY = "load_memory"
@@ -88,6 +94,8 @@ to check its submitted documents or bundle; the check also drafts the missing-do
 for that notice about a named application goes here, not to drafting.
 - tasks: the officer asks what to work on: their own (or a named colleague's) top, most urgent or overdue tasks, work \
 queue or task digest, ranked and explained. Counts and statistics of tasks across PLG go to data.
+- glossary: the officer proposes or asks to change a business definition in the glossary (what a term such as \
+vacant, arrears or the LOD trigger means from a date). Questions about what a term means go to knowledge.
 A question can have several parts, each needing a different specialist: name every specialist needed. Choose no \
 specialist for greetings, thanks and questions about how to use the assistant.
 Give each specialist your confidence (0 to 1) that the question needs it. If you can't tell what the officer is asking \
@@ -105,7 +113,7 @@ ROUTE_TOOL: Block = {
                 "items": {
                     "type": "object",
                     "properties": {
-                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect", "doc_check", "tasks"]},
+                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect", "doc_check", "tasks", "glossary"]},
                         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                     },
                     "required": ["intent", "confidence"],
@@ -143,6 +151,8 @@ MERGE_NO_SOURCES = """
 No specialist searched PLG's sources for this message. Don't state PLG policies, rules, figures, dates or \
 records from memory; if the officer asks about them, say you couldn't look that up and ask them to rephrase it \
 as a question about PLG's documents."""
+
+GLOSSARY_NO_USER = "A glossary change needs a signed-in officer to propose it."
 
 CLARIFY = "Could you tell me a bit more about what you need, and which unit, tenant or document it is about?"
 """Asked when `route` named no specialist confidently and didn't say what it would ask."""
@@ -214,6 +224,7 @@ def build_graph(
     ticket_system: TicketSystem | None = None,
     taxonomy: Taxonomy | None = None,
     checklists: Checklists | None = None,
+    glossary_changes: GlossaryChanges | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
@@ -225,11 +236,19 @@ def build_graph(
     audit = audit or AuditLog(settings.audit_log)
     ticket_system = ticket_system or LocalTicketSystem(settings.iems_dir)
     taxonomy = taxonomy or load_taxonomy(vocab)
+    changes = glossary_changes or GlossaryChanges(settings.glossary_changes)
+    base_glossary, base_layer = glossary, layer
+
+    def live_glossary() -> Glossary:
+        """The glossary with every approved change, read afresh so an approval takes effect at once."""
+        return changes.glossary(base_glossary)
+
     defect_flow = build_defect_flow(llm, taxonomy, warehouse.records_db)
     doc_check_flow = build_doc_check_flow(
         llm, checklists or load_checklists(vocab), warehouse.records_db, settings.submissions_dir, templates
     )
-    staff = list(load_personas(warehouse.records_db).values())
+    personas = load_personas(warehouse.records_db)
+    staff = list(personas.values())
     first = LOAD_MEMORY if memory else ROUTE  # memory is recalled before routing when the graph has one
 
     def unsummarised(state: PLGState) -> list[Message]:
@@ -319,7 +338,7 @@ def build_graph(
 
         result = await knowledge.answer(
             llm, retriever, vocab, agent_conversation(state), state["question"], entities,
-            on_lineage=remember, on_injection=flag,
+            on_lineage=remember, on_injection=flag, glossary=live_glossary,
         )
         for stance in stances.values():
             write({"policy_stance": stance.model_dump(mode="json")})
@@ -333,7 +352,7 @@ def build_graph(
 
     async def data_node(state: PLGState) -> PLGState:
         result = await data.answer(
-            llm, warehouse, glossary, layer, vocab, agent_conversation(state), state["question"]
+            llm, warehouse, live_glossary(), changes.layer(base_layer), vocab, agent_conversation(state), state["question"]
         )
         write = get_stream_writer()
         for trace in result.traces:
@@ -397,6 +416,30 @@ def build_graph(
         get_stream_writer()({"tasks": found.model_dump(mode="json")})
         return {"findings": [Finding(specialist=TASKS, text=task_rules.render(found) + "\n" + task_ask.RATIONALE, citations=[], traced=True)]}
 
+    async def glossary_node(state: PLGState) -> PLGState:
+        """Read the officer's change to a business definition and, if it checks out, propose it: the new version
+        waits at `approval` for the term owner. Nothing changes here."""
+        user = state.get("user")
+        if user is None:
+            return {"findings": [Finding(specialist=GLOSSARY, text=GLOSSARY_NO_USER, citations=[], traced=True)]}
+        current = live_glossary()
+        request = await glossary_agent.read_change(llm, agent_conversation(state), current)
+        outcome = request if isinstance(request, str) else await asyncio.to_thread(
+            glossary_actions.propose_change, request, current, changes.layer(base_layer), warehouse, personas, user,
+            state.get("proposed_actions", []),
+        )
+        if isinstance(outcome, str):
+            text = f"The glossary change was not proposed. {outcome}"
+            return {"findings": [Finding(specialist=GLOSSARY, text=text, citations=[], traced=True)]}
+        payload = outcome.payload
+        assert isinstance(payload, GlossaryPayload)
+        text = (
+            f"Proposed {payload.term.id} ({payload.term.pref_label}), superseding {payload.previous.id} from "
+            f"{payload.term.effective_from}: {payload.term.definition} It waits for the term owner, "
+            f"{payload.owner_name} ({payload.term.owned_by}), to approve it; nothing changes until then."
+        )
+        return {"findings": [Finding(specialist=GLOSSARY, text=text, citations=[], traced=True)], "proposals": [outcome]}
+
     async def merge(state: PLGState) -> PLGState:
         """Answer the turn, and commit what its specialists propose, unless the turn met a prompt injection: then
         nothing is proposed, and the officer is warned first."""
@@ -456,14 +499,29 @@ def build_graph(
         if decision.refusal(action):  # never act on a stale decision
             raise PermissionError("The decision no longer matches a pending action.")
         sent: ProposedAction | None = None
-        if decision.decision == "edit" and action.action_type == "raise_ticket":
+        if decision.decision == "edit" and action.action_type == "approve_glossary_term":
+            sent = glossary_actions.edited(action, decision.edits)
+        elif decision.decision == "edit" and action.action_type == "raise_ticket":
             sent = tickets.edited(action, decision.edits, taxonomy)
         elif decision.decision == "edit":
             sent = await asyncio.to_thread(letters.edited, action, decision.edits, templates, warehouse.records_db)
         elif decision.decision == "approve":
             sent = action
-        outbox_id = ticket_id = None
-        if sent is not None and isinstance(sent.payload, TicketPayload):
+        outbox_id = ticket_id = term_id = None
+        if sent is not None and isinstance(sent.payload, GlossaryPayload):
+            new = sent.payload.term
+            assert new.effective_from is not None
+            change = GlossaryChange(
+                term=new.model_copy(update={"status": "current"}),
+                previous=superseded(sent.payload.previous, new.effective_from), sql=sent.payload.sql,
+                action_id=sent.action_id, approved_by=decision.approver, at=letters.now(),
+            )
+            try:
+                await asyncio.to_thread(changes.approve, change, base_glossary)
+            except ValueError as e:
+                raise PermissionError(f"The glossary change can't be applied: {e}") from None
+            term_id = new.id
+        elif sent is not None and isinstance(sent.payload, TicketPayload):
             ticket = tickets.to_ticket(sent, raised_by=decision.approver)
             await asyncio.to_thread(ticket_system.raise_ticket, ticket)
             ticket_id = ticket.ticket_id
@@ -480,11 +538,12 @@ def build_graph(
             thread_id=str(config.get("configurable", {}).get("thread_id", "")), decision=decision.decision, edits=decision.edits, reason=decision.reason, approver=decision.approver,
             approver_role=decision.approver_role, at=letters.now(),
             run_id=str(config.get("configurable", {}).get(RUN_ID, "")), outbox_id=outbox_id, ticket_id=ticket_id,
+            term_id=term_id,
         )
         await asyncio.to_thread(audit.record, entry)
         get_stream_writer()({"action_result": {
             "action_id": action.action_id, "version": sent.version if sent else action.version,
-            "decision": decision.decision, "outbox_id": outbox_id, "ticket_id": ticket_id,
+            "decision": decision.decision, "outbox_id": outbox_id, "ticket_id": ticket_id, "term_id": term_id,
         }})
         done = (sent or action).model_copy(update={"status": "rejected" if sent is None else "approved"})
         return {"proposed_actions": [done], "decision": None}
@@ -498,6 +557,7 @@ def build_graph(
     graph.add_node(DEFECT, defect_node)
     graph.add_node(DOC_CHECK, doc_check_node)
     graph.add_node(TASKS, tasks_node)
+    graph.add_node(GLOSSARY, glossary_node)
     graph.add_node(MERGE, merge)
     graph.add_node(SUMMARISE, summarise_history)
     graph.add_node(APPROVAL, approval)
@@ -511,13 +571,14 @@ def build_graph(
         graph.add_node(LOAD_MEMORY, load_memory)
         graph.add_node(WRITE_MEMORY, write_memory)
         graph.add_edge(LOAD_MEMORY, ROUTE)
-    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, DOC_CHECK, TASKS, MERGE])
+    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, DOC_CHECK, TASKS, GLOSSARY, MERGE])
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
     graph.add_edge(DRAFTING, MERGE)
     graph.add_edge(DEFECT, MERGE)
     graph.add_edge(DOC_CHECK, MERGE)
     graph.add_edge(TASKS, MERGE)
+    graph.add_edge(GLOSSARY, MERGE)
     answered = WRITE_MEMORY if memory else MERGE
     if memory:
         graph.add_edge(MERGE, WRITE_MEMORY)

@@ -88,7 +88,8 @@ export interface paths {
         };
         /**
          * List Approvals
-         * @description The officer's own actions waiting for a decision, across all their conversations, oldest first.
+         * @description The actions waiting for the officer's decision, oldest first: their own, across all their conversations,
+         *     and, for a curator (a glossary term's owner), the changes to their terms proposed in anyone's.
          */
         get: operations["list_approvals_approvals_get"];
         put?: never;
@@ -249,7 +250,8 @@ export interface paths {
         /**
          * Resume Thread
          * @description Approve, edit or reject the pending action. Only the thread's owner, holding an approver role for the
-         *     action type, can decide, and only on the exact pending version; anything else changes nothing.
+         *     action type, can decide (a glossary change: only the term owner approves it; its proposer can withdraw it),
+         *     and only on the exact pending version; anything else changes nothing.
          */
         post: operations["resume_thread_threads__thread_id__resume_post"];
         delete?: never;
@@ -376,7 +378,7 @@ export interface components {
              * Action Type
              * @enum {string}
              */
-            action_type: "send_letter" | "raise_ticket";
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term";
             /**
              * Title
              * @default
@@ -413,6 +415,8 @@ export interface components {
             outbox_id: string | null;
             /** Ticket Id */
             ticket_id?: string | null;
+            /** Term Id */
+            term_id?: string | null;
             sent: components["schemas"]["OutboxItem"] | null;
             ticket: components["schemas"]["Ticket"] | null;
         };
@@ -476,6 +480,79 @@ export interface components {
             content_type: string;
             /** Blocks */
             blocks: components["schemas"]["DocumentBlock"][];
+        };
+        /**
+         * GlossaryPayload
+         * @description A change to a business definition: the proposed new version of the term, waiting for the term owner.
+         */
+        GlossaryPayload: {
+            /**
+             * Kind
+             * @default glossary
+             * @constant
+             */
+            kind: "glossary";
+            term: components["schemas"]["GlossaryVersion"];
+            previous: components["schemas"]["GlossaryVersion"];
+            /** Reason */
+            reason: string;
+            /** Sql */
+            sql: string | null;
+            /** Binding */
+            binding: string | null;
+            /** Owner Name */
+            owner_name: string;
+        };
+        /**
+         * GlossaryVersion
+         * @description One version of a business term, as the API shows it (a plain mirror of the generated GlossaryTerm).
+         */
+        GlossaryVersion: {
+            /** Id */
+            id: string;
+            /** Concept */
+            concept: string;
+            /** Version */
+            version: number;
+            /** Pref Label */
+            pref_label: string;
+            /**
+             * Alt Labels
+             * @default []
+             */
+            alt_labels: string[];
+            /** Definition */
+            definition: string;
+            /**
+             * Value
+             * @default null
+             */
+            value: string | null;
+            source: components["schemas"]["TermSource"];
+            /** Owned By */
+            owned_by: string;
+            /** Effective From */
+            effective_from: string | null;
+            /**
+             * Effective To
+             * @default null
+             */
+            effective_to: string | null;
+            /**
+             * Supersedes
+             * @default null
+             */
+            supersedes: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "proposed" | "current" | "superseded";
+            /**
+             * In Scheme
+             * @default plg:glossary
+             */
+            in_scheme: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -615,17 +692,22 @@ export interface components {
              * Action Type
              * @enum {string}
              */
-            action_type: "send_letter" | "raise_ticket";
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term";
             /** Title */
             title: string;
             /** Payload */
-            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"];
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
             approver_roles: ("director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal")[];
             /** Proposed By */
             proposed_by: string;
+            /**
+             * Approvers
+             * @default []
+             */
+            approvers: string[];
             /** Proposed At */
             proposed_at: string;
             /**
@@ -664,17 +746,22 @@ export interface components {
              * Action Type
              * @enum {string}
              */
-            action_type: "send_letter" | "raise_ticket";
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term";
             /** Title */
             title: string;
             /** Payload */
-            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"];
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
             approver_roles: ("director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal")[];
             /** Proposed By */
             proposed_by: string;
+            /**
+             * Approvers
+             * @default []
+             */
+            approvers: string[];
             /** Proposed At */
             proposed_at: string;
             /**
@@ -807,6 +894,27 @@ export interface components {
             overdue_count: number;
             /** Tasks */
             tasks: components["schemas"]["RankedTask"][];
+        };
+        /**
+         * TermSource
+         * @description Where a definition comes from.
+         */
+        TermSource: {
+            /**
+             * Document Id
+             * @default null
+             */
+            document_id: string | null;
+            /**
+             * Locator
+             * @default null
+             */
+            locator: string | null;
+            /**
+             * Quote
+             * @default null
+             */
+            quote: string | null;
         };
         /** ThreadCreated */
         ThreadCreated: {
@@ -990,6 +1098,11 @@ export interface components {
             outbox_id: string | null;
             /** Ticket Id */
             ticket_id: string | null;
+            /**
+             * Term Id
+             * @default null
+             */
+            term_id: string | null;
         };
         /** ChecklistLine */
         ChecklistLine: {
@@ -1413,17 +1526,22 @@ export interface components {
              * Action Type
              * @enum {string}
              */
-            action_type: "send_letter" | "raise_ticket";
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term";
             /** Title */
             title: string;
             /** Payload */
-            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"];
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
             approver_roles: ("director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal")[];
             /** Proposed By */
             proposed_by: string;
+            /**
+             * Approvers
+             * @default []
+             */
+            approvers: string[];
             /** Proposed At */
             proposed_at: string;
             /**

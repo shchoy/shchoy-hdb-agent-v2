@@ -1,0 +1,24 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"approval","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"approval","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"execute_action","status":"started"}
+
+id: 4
+event: action_result
+data: {"type":"action_result","seq":4,"action_id":"75b05dbf-4656-4549-9e5e-7a8da28d88cf","version":1,"decision":"approve","outbox_id":null,"ticket_id":null,"term_id":"plg:Vacant_v3"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"execute_action","status":"finished"}
+
+id: 6
+event: done
+data: {"type":"done","seq":6,"run_id":"d8a75d86-1abc-4ba6-b595-aacc41d8ba1d"}
+

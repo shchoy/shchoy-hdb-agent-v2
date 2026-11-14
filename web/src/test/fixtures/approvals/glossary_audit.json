@@ -1,0 +1,21 @@
+[
+  {
+    "action_id": "75b05dbf-4656-4549-9e5e-7a8da28d88cf",
+    "version": 1,
+    "action_type": "approve_glossary_term",
+    "title": "Change glossary term Vacant unit: plg:Vacant_v2 \u2192 plg:Vacant_v3",
+    "thread_id": "fd0af829-f0ec-47a5-a514-b854fee73c4f",
+    "decision": "approve",
+    "edits": {},
+    "reason": "",
+    "approver": "S08",
+    "approver_role": "analyst",
+    "at": "2026-11-14T02:14:59.231334+00:00",
+    "run_id": "d8a75d86-1abc-4ba6-b595-aacc41d8ba1d",
+    "outbox_id": null,
+    "ticket_id": null,
+    "term_id": "plg:Vacant_v3",
+    "sent": null,
+    "ticket": null
+  }
+]

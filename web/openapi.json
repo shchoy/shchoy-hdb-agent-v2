@@ -235,7 +235,7 @@
     "/approvals": {
       "get": {
         "summary": "List Approvals",
-        "description": "The officer's own actions waiting for a decision, across all their conversations, oldest first.",
+        "description": "The actions waiting for the officer's decision, oldest first: their own, across all their conversations,\nand, for a curator (a glossary term's owner), the changes to their terms proposed in anyone's.",
         "operationId": "list_approvals_approvals_get",
         "parameters": [
           {
@@ -827,7 +827,7 @@
     "/threads/{thread_id}/resume": {
       "post": {
         "summary": "Resume Thread",
-        "description": "Approve, edit or reject the pending action. Only the thread's owner, holding an approver role for the\naction type, can decide, and only on the exact pending version; anything else changes nothing.",
+        "description": "Approve, edit or reject the pending action. Only the thread's owner, holding an approver role for the\naction type, can decide (a glossary change: only the term owner approves it; its proposer can withdraw it),\nand only on the exact pending version; anything else changes nothing.",
         "operationId": "resume_thread_threads__thread_id__resume_post",
         "parameters": [
           {
@@ -1254,7 +1254,8 @@
             "type": "string",
             "enum": [
               "send_letter",
-              "raise_ticket"
+              "raise_ticket",
+              "approve_glossary_term"
             ],
             "title": "Action Type"
           },
@@ -1333,6 +1334,17 @@
               }
             ],
             "title": "Ticket Id"
+          },
+          "term_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Term Id"
           },
           "sent": {
             "anyOf": [
@@ -1547,6 +1559,179 @@
           "blocks"
         ],
         "title": "DocumentView"
+      },
+      "GlossaryPayload": {
+        "description": "A change to a business definition: the proposed new version of the term, waiting for the term owner.",
+        "properties": {
+          "kind": {
+            "const": "glossary",
+            "default": "glossary",
+            "title": "Kind",
+            "type": "string"
+          },
+          "term": {
+            "$ref": "#/components/schemas/GlossaryVersion"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/GlossaryVersion"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "sql": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sql"
+          },
+          "binding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Binding"
+          },
+          "owner_name": {
+            "title": "Owner Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "term",
+          "previous",
+          "reason",
+          "sql",
+          "binding",
+          "owner_name"
+        ],
+        "title": "GlossaryPayload",
+        "type": "object"
+      },
+      "GlossaryVersion": {
+        "description": "One version of a business term, as the API shows it (a plain mirror of the generated GlossaryTerm).",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "pref_label": {
+            "title": "Pref Label",
+            "type": "string"
+          },
+          "alt_labels": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Alt Labels",
+            "type": "array"
+          },
+          "definition": {
+            "title": "Definition",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Value"
+          },
+          "source": {
+            "$ref": "#/components/schemas/TermSource"
+          },
+          "owned_by": {
+            "title": "Owned By",
+            "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective To"
+          },
+          "supersedes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes"
+          },
+          "status": {
+            "enum": [
+              "proposed",
+              "current",
+              "superseded"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "in_scheme": {
+            "default": "plg:glossary",
+            "title": "In Scheme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "concept",
+          "version",
+          "pref_label",
+          "definition",
+          "source",
+          "owned_by",
+          "effective_from",
+          "status"
+        ],
+        "title": "GlossaryVersion",
+        "type": "object"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1851,7 +2036,8 @@
             "type": "string",
             "enum": [
               "send_letter",
-              "raise_ticket"
+              "raise_ticket",
+              "approve_glossary_term"
             ],
             "title": "Action Type"
           },
@@ -1866,6 +2052,9 @@
               },
               {
                 "$ref": "#/components/schemas/TicketPayload"
+              },
+              {
+                "$ref": "#/components/schemas/GlossaryPayload"
               }
             ],
             "title": "Payload"
@@ -1892,6 +2081,14 @@
           "proposed_by": {
             "type": "string",
             "title": "Proposed By"
+          },
+          "approvers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Approvers",
+            "default": []
           },
           "proposed_at": {
             "type": "string",
@@ -1977,7 +2174,8 @@
             "type": "string",
             "enum": [
               "send_letter",
-              "raise_ticket"
+              "raise_ticket",
+              "approve_glossary_term"
             ],
             "title": "Action Type"
           },
@@ -1992,6 +2190,9 @@
               },
               {
                 "$ref": "#/components/schemas/TicketPayload"
+              },
+              {
+                "$ref": "#/components/schemas/GlossaryPayload"
               }
             ],
             "title": "Payload"
@@ -2018,6 +2219,14 @@
           "proposed_by": {
             "type": "string",
             "title": "Proposed By"
+          },
+          "approvers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Approvers",
+            "default": []
           },
           "proposed_at": {
             "type": "string",
@@ -2303,6 +2512,49 @@
         ],
         "title": "TaskDigest",
         "description": "An officer's top open tasks on `as_of`, ranked by urgency \u00d7 impact."
+      },
+      "TermSource": {
+        "description": "Where a definition comes from.",
+        "properties": {
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Document Id"
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Locator"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Quote"
+          }
+        },
+        "title": "TermSource",
+        "type": "object"
       },
       "ThreadCreated": {
         "properties": {
@@ -2759,6 +3011,18 @@
               }
             ],
             "title": "Ticket Id"
+          },
+          "term_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Term Id"
           }
         },
         "required": [
@@ -3752,7 +4016,8 @@
           "action_type": {
             "enum": [
               "send_letter",
-              "raise_ticket"
+              "raise_ticket",
+              "approve_glossary_term"
             ],
             "title": "Action Type",
             "type": "string"
@@ -3768,6 +4033,9 @@
               },
               {
                 "$ref": "#/components/schemas/TicketPayload"
+              },
+              {
+                "$ref": "#/components/schemas/GlossaryPayload"
               }
             ],
             "title": "Payload"
@@ -3794,6 +4062,14 @@
           "proposed_by": {
             "title": "Proposed By",
             "type": "string"
+          },
+          "approvers": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Approvers",
+            "type": "array"
           },
           "proposed_at": {
             "title": "Proposed At",

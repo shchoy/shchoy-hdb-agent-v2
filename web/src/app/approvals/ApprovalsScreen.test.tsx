@@ -45,7 +45,7 @@ const card = (title: string) => screen.getByRole("article", { name: title });
 describe("Approvals inbox", () => {
   it("lists pending actions across conversations with a preview of what would be sent", async () => {
     plgApi();
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const pending = await screen.findByRole("list", { name: "Pending approvals" });
     expect(within(pending).getAllByRole("article")).toHaveLength(3);
@@ -64,14 +64,14 @@ describe("Approvals inbox", () => {
 
   it("says when nothing is waiting", async () => {
     plgApi([]);
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     expect(await screen.findByText("Nothing is waiting for your approval.")).toBeInTheDocument();
   });
 
   it("sends an edited letter, showing each change as a diff, then the result and the audit trail", async () => {
     const sent = decisions(FEEDBACK.thread_id, approvalsFixture("edit.sse"), { pending: [REMINDER], audit: [EDITED] });
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const reply = await screen.findByRole("article", { name: FEEDBACK.title });
     await userEvent.click(within(reply).getByRole("button", { name: "Edit slots" }));
@@ -110,7 +110,7 @@ describe("Approvals inbox", () => {
 
   it("rejects with a reason and records it in the audit trail; nothing is sent", async () => {
     const sent = decisions(REMINDER.thread_id, approvalsFixture("reject.sse"), { pending: [FEEDBACK], audit: [REJECTED] });
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const letter = await screen.findByRole("article", { name: REMINDER.title });
     await userEvent.click(within(letter).getByRole("button", { name: "Reject…" }));
@@ -131,7 +131,7 @@ describe("Approvals inbox", () => {
 
   it("offers Approve only for a complete letter and a role that can send it", async () => {
     plgApi();
-    const { unmount } = render(<ApprovalsScreen role="officer" />);
+    const { unmount } = render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const reply = await screen.findByRole("article", { name: FEEDBACK.title });
     expect(within(reply).queryByRole("button", { name: "Approve and send" })).not.toBeInTheDocument();
@@ -139,7 +139,7 @@ describe("Approvals inbox", () => {
     expect(within(card(REMINDER.title)).getByRole("button", { name: "Approve and send" })).toBeEnabled();
     unmount();
 
-    render(<ApprovalsScreen role="analyst" />);
+    render(<ApprovalsScreen role="analyst" staffId="S05" />);
     const letter = await screen.findByRole("article", { name: REMINDER.title });
     expect(within(letter).queryByRole("button", { name: "Approve and send" })).not.toBeInTheDocument();
     expect(within(letter).queryByRole("button", { name: "Edit slots" })).not.toBeInTheDocument();
@@ -154,7 +154,7 @@ describe("Approvals inbox", () => {
         HttpResponse.json({ detail: "That version of the action is not pending" }, { status: 409 }),
       ),
     );
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const letter = await screen.findByRole("article", { name: REMINDER.title });
     await userEvent.click(within(letter).getByRole("button", { name: "Approve and send" }));
@@ -168,7 +168,7 @@ describe("Approvals inbox", () => {
     plgApi();
     const failed = `id: 1\nevent: error\ndata: {"type":"error","seq":1,"run_id":"r1","message":"Outbox unavailable"}\n\n`;
     server.use(http.post(`/api/threads/${REMINDER.thread_id}/resume`, () => sseResponse(failed)));
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const letter = await screen.findByRole("article", { name: REMINDER.title });
     await userEvent.click(within(letter).getByRole("button", { name: "Approve and send" }));
@@ -179,7 +179,7 @@ describe("Approvals inbox", () => {
   it("keeps a decision's result when the run fails afterwards", async () => {
     const after = `id: 9\nevent: error\ndata: {"type":"error","seq":9,"run_id":"r1","message":"Claude unavailable"}\n\n`;
     decisions(REMINDER.thread_id, approvalsFixture("reject.sse") + after, { pending: [FEEDBACK], audit: [REJECTED] });
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const letter = await screen.findByRole("article", { name: REMINDER.title });
     await userEvent.click(within(letter).getByRole("button", { name: "Reject…" }));
@@ -191,7 +191,7 @@ describe("Approvals inbox", () => {
 
   it("keeps the inbox on screen when reloading it fails after a decision", async () => {
     decisions(REMINDER.thread_id, approvalsFixture("reject.sse"), { pending: [FEEDBACK], audit: [REJECTED] });
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const letter = await screen.findByRole("article", { name: REMINDER.title });
     server.use(http.get("/api/approvals", () => HttpResponse.json({ detail: "down" }, { status: 502 })));
@@ -206,7 +206,7 @@ describe("Approvals inbox", () => {
 
   it("can't send edits while an open slot is still blank", async () => {
     plgApi();
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const reply = await screen.findByRole("article", { name: FEEDBACK.title });
     await userEvent.click(within(reply).getByRole("button", { name: "Edit slots" }));
@@ -218,7 +218,7 @@ describe("Approvals inbox", () => {
 
   it("shows a proposed i-EMS ticket with its classification, flagged when it is low confidence", async () => {
     plgApi();
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const ticket = await screen.findByRole("article", { name: TICKET.title });
     expect(ticket).toHaveTextContent("Raise i-EMS ticket: Electrical (High) for M&E");
@@ -248,7 +248,7 @@ describe("Approvals inbox", () => {
       pending: [FEEDBACK, REMINDER],
       audit: [RAISED],
     });
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const ticket = await screen.findByRole("article", { name: TICKET.title });
     await userEvent.click(within(ticket).getByRole("button", { name: "Edit ticket" }));
@@ -298,7 +298,7 @@ describe("Approvals inbox", () => {
     // The recorded raise was an edit; as an approval, the same ticket is raised at the proposed version.
     const approved = approvalsFixture("ticket_edit.sse").replace('"version":2,"decision":"edit"', '"version":1,"decision":"approve"');
     const sent = decisions(TICKET.thread_id, approved, { pending: [FEEDBACK, REMINDER], audit: [] });
-    render(<ApprovalsScreen role="officer" />);
+    render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const ticket = await screen.findByRole("article", { name: TICKET.title });
     await userEvent.click(within(ticket).getByRole("button", { name: "Approve and raise" }));
@@ -311,7 +311,7 @@ describe("Approvals inbox", () => {
 
   it("can't raise a ticket with a required field blanked, or for a role that can't raise it", async () => {
     plgApi();
-    const { unmount } = render(<ApprovalsScreen role="officer" />);
+    const { unmount } = render(<ApprovalsScreen role="officer" staffId="S05" />);
 
     const ticket = await screen.findByRole("article", { name: TICKET.title });
     await userEvent.click(within(ticket).getByRole("button", { name: "Edit ticket" }));
@@ -320,10 +320,120 @@ describe("Approvals inbox", () => {
     expect(ticket).toHaveTextContent("Fill Description before raising.");
     unmount();
 
-    render(<ApprovalsScreen role="analyst" />);
+    render(<ApprovalsScreen role="analyst" staffId="S05" />);
     const theirs = await screen.findByRole("article", { name: TICKET.title });
     expect(within(theirs).queryByRole("button", { name: "Approve and raise" })).not.toBeInTheDocument();
     expect(within(theirs).queryByRole("button", { name: "Edit ticket" })).not.toBeInTheDocument();
     expect(theirs).toHaveTextContent("Your role can't raise this ticket. You can reject it with a reason.");
+  });
+
+  describe("a glossary change", () => {
+    // Recorded: S02 (policy owner) proposes that vacant units include those under tender again from 1 Oct 2026; the
+    // term owner S08 (Kelvin Goh, analyst) sees it in their inbox and approves it.
+    const [CHANGE] = approvalsFixture("glossary_pending.json") as { action_id: string; thread_id: string; title: string }[];
+    const [ADOPTED] = approvalsFixture("glossary_audit.json");
+
+    function glossaryApi(stream = approvalsFixture("glossary_approve.sse")) {
+      const sent: unknown[] = [];
+      let state: Decided = { pending: [CHANGE], audit: [] };
+      server.use(
+        http.get("/api/approvals", () => HttpResponse.json(state.pending)),
+        http.get("/api/audit", () => HttpResponse.json(state.audit)),
+        http.post(`/api/threads/${CHANGE.thread_id}/resume`, async ({ request }) => {
+          sent.push(await request.json());
+          state = { pending: [], audit: [ADOPTED] };
+          return sseResponse(stream);
+        }),
+      );
+      return sent;
+    }
+
+    it("shows the term owner the definition in force against the proposed one, and adopts it", async () => {
+      const sent = glossaryApi();
+      render(<ApprovalsScreen role="analyst" staffId="S08" />);
+
+      const change = await screen.findByRole("article", { name: CHANGE.title });
+      expect(change).toHaveTextContent("Glossary change · version 1 · Vacant unit (plg:Vacant)");
+      expect(within(change).getByRole("columnheader", { name: "Now (plg:Vacant_v2)" })).toBeInTheDocument();
+      expect(within(change).getByRole("columnheader", { name: "Proposed (plg:Vacant_v3)" })).toBeInTheDocument();
+      const definition = within(change).getByRole("row", { name: /Definition/ });
+      expect(definition.querySelector("del")).toHaveTextContent("excluding units under tender");
+      expect(definition.querySelector("ins")).toHaveTextContent(
+        "Lettable unit with no active or committed tenancy, including units under tender.",
+      );
+      const value = within(change).getByRole("row", { name: /Value/ });
+      expect(value.querySelector("del")).toHaveTextContent("excludes units under tender");
+      expect(value.querySelector("ins")).toHaveTextContent("includes units under tender");
+      expect(within(change).getByRole("row", { name: /Effective from/ })).toHaveTextContent("from 15 Apr 20261 Oct 2026");
+      expect(change).toHaveTextContent("Reason: Management Meeting 5/2026 aligned the monthly report with the QBR.");
+      expect(within(change).getByLabelText("SQL binding")).toHaveTextContent("WHERE u.status IN ('Vacant', 'Under Tender')");
+      expect(change).toHaveTextContent("Term owner: Kelvin Goh (S08)");
+      expect(change).not.toHaveTextContent("Waiting for");
+
+      await userEvent.click(within(change).getByRole("button", { name: "Approve change" }));
+
+      expect(await screen.findByRole("status")).toHaveTextContent(`${CHANGE.title}: adopted as plg:Vacant_v3 (version 1).`);
+      expect(sent).toEqual([{ action_id: CHANGE.action_id, version: 1, decision: "approve" }]);
+      const trail = within(await screen.findByRole("list", { name: "Audit trail" })).getByRole("article");
+      expect(trail).toHaveTextContent("Approved and adopted by S08 (analyst)");
+      expect(trail).toHaveTextContent("Adopted as glossary term plg:Vacant_v3.");
+      expect(trail).not.toHaveTextContent("sent");
+    });
+
+    it("lets the proposer only withdraw it, waiting for the term owner", async () => {
+      const sent = glossaryApi(approvalsFixture("glossary_approve.sse").replace(
+        '"decision":"approve","outbox_id":null,"ticket_id":null,"term_id":"plg:Vacant_v3"',
+        '"decision":"reject","outbox_id":null,"ticket_id":null,"term_id":null',
+      ));
+      render(<ApprovalsScreen role="director" staffId="S02" />);
+
+      const change = await screen.findByRole("article", { name: CHANGE.title });
+      expect(change).toHaveTextContent("Waiting for Kelvin Goh to approve.");
+      expect(within(change).queryByRole("button", { name: "Approve change" })).not.toBeInTheDocument();
+      expect(within(change).queryByRole("button", { name: "Edit change" })).not.toBeInTheDocument();
+
+      await userEvent.click(within(change).getByRole("button", { name: "Withdraw…" }));
+      await userEvent.type(within(change).getByLabelText("Reason for withdrawing"), "Wrong start date.");
+      await userEvent.click(within(change).getByRole("button", { name: "Withdraw" }));
+
+      expect(await screen.findByRole("status")).toHaveTextContent(`${CHANGE.title}: rejected; nothing was changed.`);
+      expect(sent).toEqual([{ action_id: CHANGE.action_id, version: 1, decision: "reject", reason: "Wrong start date." }]);
+    });
+
+    it("sends the term owner's edits to the definition, value and effective date", async () => {
+      const sent = glossaryApi(approvalsFixture("glossary_approve.sse").replace('"decision":"approve"', '"decision":"edit"'));
+      render(<ApprovalsScreen role="analyst" staffId="S08" />);
+
+      const change = await screen.findByRole("article", { name: CHANGE.title });
+      await userEvent.click(within(change).getByRole("button", { name: "Edit change" }));
+      const definition = within(change).getByLabelText("Definition");
+      await userEvent.clear(definition);
+      expect(within(change).getByRole("button", { name: "Adopt edited change" })).toBeDisabled();
+      expect(change).toHaveTextContent("Fill Definition before adopting.");
+      await userEvent.type(definition, "Lettable unit with no active tenancy, including units under tender.");
+      const value = within(change).getByLabelText("Value");
+      await userEvent.clear(value);
+      await userEvent.type(value, "includes tender units");
+      const starts = within(change).getByLabelText("Effective from");
+      await userEvent.clear(starts);
+      await userEvent.type(starts, "2026-11-01");
+
+      const changed = within(change).getByRole("row", { name: /Effective from/ });
+      expect(changed.querySelector("del")).toHaveTextContent("1 Oct 2026");
+      expect(changed.querySelector("ins")).toHaveTextContent("1 Nov 2026");
+      await userEvent.click(within(change).getByRole("button", { name: "Adopt edited change" }));
+
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        `${CHANGE.title}: adopted with your edits as plg:Vacant_v3 (version 1).`,
+      );
+      expect(sent).toEqual([{
+        action_id: CHANGE.action_id, version: 1, decision: "edit",
+        edits: {
+          definition: "Lettable unit with no active tenancy, including units under tender.",
+          value: "includes tender units",
+          effective_from: "2026-11-01",
+        },
+      }]);
+    });
   });
 });

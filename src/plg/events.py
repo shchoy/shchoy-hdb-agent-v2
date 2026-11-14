@@ -122,6 +122,8 @@ class ActionResultEvent(BaseModel):
     decision: Decision
     outbox_id: str | None
     ticket_id: str | None
+    term_id: str | None = None
+    """The glossary term version adopted by an approved glossary change."""
 
 
 class DoneEvent(BaseModel):

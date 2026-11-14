@@ -17,6 +17,7 @@ src/plg/
 │                    route_min_confidence (0.6: weaker routing labels are dropped; none left → clarifying question).
 │                    outbox_dir (.plg/outbox, local Outbox), audit_log (.plg/audit.jsonl, append-only) and iems_dir (.plg/iems, i-EMS mock).
 │                    tasks_today (2026-09-30, the PLG Records snapshot date the tasks are ranked on).
+│                    glossary_changes (.plg/glossary_changes.jsonl: approved glossary changes, append-only).
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
@@ -26,14 +27,18 @@ src/plg/
 │                    script() for streamed replies, script_turns() for complete() turns, keyed by (node, latest plain-
 │                    text user message, or the text block of a block message without tool results); a turn may be a callable of the messages, e.g. to cite a search result it was
 │                    shown; `sent` records messages, `requests` system+tools). Turn builders: turn, text, tool_call.
-├── actions/         Approvals (issue #18). model.py: ProposedAction (stable action_id + version, action_type send_letter|raise_ticket, title,
-│   │                payload LetterPayload | TicketPayload (`kind` letter|ticket), preview HTML, approver_roles, proposed_by, status pending|approved|rejected), APPROVER_ROLES (send_letter:
-│   │                not analysts; raise_ticket: not analysts or legal), ApprovalDecision (+ approver, approver_role; refusal(action): wrong id/version/not pending, not the
-│   │                proposer, role can't approve (reject needs no role)), upsert_actions reducer, pending(). letters.py: propose_letter
+├── actions/         Approvals (issue #18). model.py: ProposedAction (stable action_id + version, action_type send_letter|raise_ticket|approve_glossary_term, title,
+│   │                payload LetterPayload | TicketPayload | GlossaryPayload (`kind` letter|ticket|glossary), preview HTML, approver_roles, proposed_by, approvers (staff IDs who approve instead
+│   │                of the proposer: a glossary change's term owner; deciders(), may_decide(): the proposer can always reject/withdraw), status pending|approved|rejected), APPROVER_ROLES (send_letter:
+│   │                not analysts; raise_ticket: not analysts or legal; approve_glossary_term: any role, `approvers` gates it), ApprovalDecision (+ approver, approver_role; refusal(action): wrong id/version/not pending, not a
+│   │                decider, not the named approver, role can't approve (reject needs no role)), upsert_actions reducer, pending().
+│   │                glossary.py (#25): ChangeRequest; propose_change (term must exist with a current version, start after it, new SQL dry-run; a
+│   │                re-ask in the thread revises the pending proposal) → approve_glossary_term with a `proposed` GlossaryVersion v+1, approvers=[owned_by];
+│   │                edit_errors/edited (EDITABLE definition, value, effective_from), preview HTML (now vs proposed, binding, owner). letters.py: propose_letter
 │   │                (a draft of the same template revises the thread's pending letter: same ID, version+1), edited (slot edits re-composed
 │   │                and PII-checked → next version), unknown_slots. outbox.py: Outbox protocol + LocalOutbox (one JSON per item, id
 │   │                `<action_id>-v<version>`, overwrite = idempotent; item(id)). audit.py: AuditLog (JSONL, append-only, one entry per action ID:
-│   │                title, thread_id, decision, edits, reason, approver + role, at, run_id, outbox_id, ticket_id; decided_by(staff_id) newest first).
+│   │                title, thread_id, decision, edits, reason, approver + role, at, run_id, outbox_id, ticket_id, term_id; decided_by(staff_id) newest first).
 │   │                tickets.py (#20): propose_ticket(Classification → raise_ticket), edit_errors/edited (EDITABLE: category_code (i-EMS only;
 │   │                re-routes team/vendor), severity (resets SLA), unit_id, description, feedback_id), to_ticket (ticket_id IEMS-<yymm>-<action id>), preview HTML.
 ├── defects/         Defect classification (issue #20). taxonomy.py: Taxonomy (load_taxonomy(vocab): the 11 feedback categories with
@@ -93,7 +98,10 @@ src/plg/
 │   ├── drafting.py  The drafting agent (its draft becomes a proposed send_letter action in the graph): tools get_template, lookup_records (read-only SELECT through the Warehouse) and submit_draft
 │   │                (records a Draft; the last submission wins and is stored for download). Unfilled slots are listed with reasons, never
 │   │                invented; the draft gets a PII check. Signing officer's email/phone come from `staff`, read directly (the Warehouse blocks it).
-│   └── knowledge.py The knowledge agent: search_corpus (+ the entity tools and find_precedents when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
+│   ├── glossary.py  (#25) glossary_definitions tool (knowledge agent; glossary read per call): every approved version of a term as one citable
+│   │                passage `glossary:<concept>` (dates, definition, value, source document + quote, owner). read_change (NODE "glossary", Sonnet,
+│   │                forced propose_glossary_change: concept, definition, value?, effective_from?, reason, source?, sql?) → ChangeRequest.
+│   └── knowledge.py The knowledge agent: search_corpus (+ glossary_definitions when given the live glossary, + the entity tools and find_precedents when a GraphStore is given)(query, as_of?, doc_types?). Defaults to current
 │                    documents; as_of = in force on that date (superseded versions included). Queries are expanded
 │                    with the preferred labels of PLG terms (VocabIndex.find_terms), which are also listed in the
 │                    agent's per-run context.
@@ -128,7 +136,7 @@ src/plg/
 │   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → screen_input (flagged message → merge:
 │                    fixed MESSAGE_FLAGGED, no Claude; streams `injection`; history gets the redacted message) → (summarise_history if history > threshold) → load_memory → route → knowledge, data, drafting, defect, doc_check and/or tasks (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END
 │                    (load_memory/write_memory only when a MemoryService is given: plg-api yes, `plg ask` no). The memory block is appended to merge's system prompt.
-│                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting, defect, doc_check, tasks) + optional
+│                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting, defect, doc_check, tasks, glossary) + optional
 │                    clarifying_question (RouteDecision). Labels below route_min_confidence are dropped; if none is left but some were
 │                    named (or a question was given), `clarification` is set: no fan-out, merge streams it word by word with no Claude
 │                    call, and it joins `messages` so the officer's reply is routed with it. Otherwise fan_out sends one
@@ -139,6 +147,9 @@ src/plg/
 │                    proposals; write_memory learns nothing from a flagged turn.
 │                    merge fuses findings keeping [n] markers (with 2+ supported findings, cited or traced, in one `## ` section per part); findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
 │                    answer with no Claude call. merge is the only node that streams tokens. Checkpointer: InMemorySaver by default (CLI); plg-api swaps in AsyncSqliteSaver (threads_db) in its lifespan. State keeps the full `messages` plus `summary`/`summarised` (offset folded).
+│                    glossary_node (#25): read_change → propose_change over the live glossary (GlossaryChanges overlay); traced finding; proposal = approve_glossary_term.
+│                    data and knowledge read the live glossary/semantic layer each run, so an approval takes effect at once. execute_action for
+│                    approve_glossary_term: GlossaryChanges.approve (old version superseded, never deleted), action_result/audit carry term_id.
 │                    drafting_node turns its draft into a ProposedAction (letters.propose_letter). defect_node runs the `defect_flow` subgraph (ainvoke: its
 │                    custom writes don't reach the parent stream), streams `classification`, its finding is traced, its ticket is a raise_ticket action. tasks_node (deterministic, no Claude) ranks the asker's or a named colleague's tasks (role-checked: a refusal is a traced finding, nothing read), streams `tasks`, finding = render() + RATIONALE. doc_check_node runs `doc_check_flow`, streams `doc_check`, its finding is traced; an incomplete bundle's notice is stored (DraftStore), streamed as `draft` and proposed (propose_sending, shared with drafting_node). approval = LangGraph interrupt() carrying every pending
 │                    action (JSON list); the resume value is an ApprovalDecision, re-checked (refusal) before execute_action, the only side-effecting
@@ -154,11 +165,11 @@ src/plg/
 │   │                officer's question + verified findings, saves notes and flags `conflicts` (status pending_review, dropped from
 │   │                recall); WORKED_ON edges for IDs in the question via a WorkLinker (entities/open.py work_linker → GraphWriter).
 │   │                drain() awaits pending writes (plg-api lifespan shutdown). Memory never yields citations.
-├── threads.py       ThreadStore (SQLite plg_threads: owner + title; a thread is listed once asked), RunBuffer (every event of a run, follow(after=seq)) and
+├── threads.py       ThreadStore (SQLite plg_threads: owner + title; a thread is listed once asked; all_asked() only for curators' approvals), RunBuffer (every event of a run, follow(after=seq)) and
 │                    RunRegistry (latest run per thread, runs as background tasks so they outlive the client; 409 while one is answering).
 ├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data), classification (Classification), doc_check (DocCheck), tasks (TaskDigest), injection (InjectionFlag),
 │                    draft (Draft: html preview, unfilled slots, pii flags), proposed_action (ProposedAction), interrupt (action_id, version,
-│                    approver_roles), action_result (action_id, version sent, decision, outbox_id|null, ticket_id|null), done (run_id), error (run_id).
+│                    approver_roles), action_result (action_id, version sent, decision, outbox_id|null, ticket_id|null, term_id|null), done (run_id), error (run_id).
 ├── runs.py          stream_run(graph, thread_id, message, user?, *, decision?): runs the graph (or resumes it with Command(resume=decision)),
 │                    yields numbered RunEvents (an interrupted task → proposed_action + interrupt per pending action), turns any failure into an error event. Shared by the API and the CLI.
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
@@ -201,6 +212,10 @@ src/plg/
 │                    model) and synonym/abbreviation lookup `resolve(text)` (LOD → letter of demand + plg:LodTrigger,
 │                    ceiling leak → SEP); normalise() is shared with the generator.
 │   ├── glossary.py  Glossary (load_glossary): versions/current/in_force(concept, date)/find(id|label|synonym).
+│   ├── changes.py   (#25) GlossaryChanges: approved changes (GlossaryChange: new current GlossaryVersion + the superseded previous one with
+│   │                effective_to = day before, sql?, action_id, approved_by) appended to settings.glossary_changes; glossary(base) / layer(base)
+│   │                overlay them at run time (a change's own SQL binding, else it joins its predecessor's binding); approve() refuses a stale
+│   │                predecessor or broken supersedes chain. GlossaryVersion = API mirror of GlossaryTerm (of()/term()).
 │   ├── validate.py  supersedes_errors(terms): glossary chain rules (linear, contiguous dates, one current,
 │                    proposals supersede the current version; only v1 may lack effective_from).
 │   └── generated/   GENERATED by `make ontology`, committed: models.py (LinkML Pydantic, mypy-ignored),
@@ -215,15 +230,18 @@ src/plg/
 │                    other users' memories are 404).
 │                    POST /threads/{id}/resume {action_id, version, decision approve|edit|reject, edits?, reason?} (SSE): 404 non-owner, 409 not the
 │                    pending action/version (replay), 403 role can't approve/edit, 422 reject without reason / unknown or blanked slot / open slots
-│                    left; then RunRegistry.start(decision). GET /approvals?status=pending: own pending actions across threads (PendingApproval =
+│                    left; then RunRegistry.start(decision). GET /approvals?status=pending: pending actions the caller may decide across threads (PendingApproval =
 │                    ProposedAction + thread_id/title), read from checkpoint interrupts so they survive a restart. ThreadView.pending likewise.
+│                    Curators (#25): a glossary term owner sees changes to their terms proposed in anyone's thread (title "Proposed by <ID>"), and may
+│                    resume that thread only to decide (else 404; the thread itself stays 404); their resume stream drops other actions' events.
+│                    Glossary resume: 403 not the term owner (the proposer can only reject), 422 bad edits, 409 the term changed since proposed.
 │                    GET /submissions: applications with a submission bundle (Submission list, newest first).
 │                    GET /tasks/digest?staff_id&limit (TaskDigest; default own; 404 unknown staff, 403 role can't view), GET /tasks/team (UserCtx list the caller may view, self first).
                     GET /audit: own decisions, newest first (AuditRecord = AuditEntry + `sent`: the OutboxItem, `ticket`: the i-EMS Ticket; null when not applicable).
 │                    Resume edits for a ticket are validated by tickets.edit_errors (422).
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers),
                      `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
-                     `plg glossary list [--all] | show <term>`, `plg memory list | show | edit | forget --user <staff ID>`,
+                     `plg glossary list [--all] | show <term>` (with approved changes), `plg memory list | show | edit | forget --user <staff ID>`,
                      `plg digest [--user S12] [--limit N] [--out file]` (task digest to console or file; no --user = every officer with open tasks; no role check). make_llm() builds the real LLMClient.
 
 ontology/            SOURCE of the ontology (semantic.yaml = the semantic layer: SQL bindings per glossary term version, table
@@ -242,7 +260,7 @@ tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLL
                      (real local cross-encoder; each search costs seconds). That sync also loads the trackers (`trackers_db` fixture);
                      test_guardrail_api.py (#23): ATTACKS (guardrail cases, 100%) / BENIGN controls, redacted history, ingestion screening of the synced
                      corpus (only the planted email), the planted email via knowledge + defect → flagged, no proposed/executed action, and a pre-#23 index chunk withheld.
-                     test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
+                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).
 scripts/build_ontology.py
@@ -254,7 +272,7 @@ scripts/record_sse_fixtures.py
                      with the corpus synced into a temp index (threads, memory, graph, outbox and audit writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json, and the approvals flow (two letters in two
                      threads + a ticket → fixtures/approvals/pending.json, edit.sse, reject.sse, ticket_edit.sse, audit.json), and defect.sse (ambiguous feedback → ELE, low confidence), doc_check.sse (APP-2026-0294), doc_check_problem.sse (APP-2026-0288,
-                     illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`), injection.sse (flagged message), injection_email.sse (planted email via knowledge). Optional scenario names record only those.
+                     illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`), injection.sse (flagged message), injection_email.sse (planted email via knowledge), approvals/glossary_{pending.json,approve.sse,audit.json} (`glossary`: S02 proposes, S08 approves). Optional scenario names record only those.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
@@ -263,7 +281,7 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      /api/threads/[id]/resume (POST decision, SSE through; refusals relayed). SSE pass-through = relaySse (src/lib/server/plg-api.ts).
                      Pages: /doc-check (doc-check/DocCheckScreen.tsx: pick an application from /api/submissions → new thread + run
                      "Is application <ID> complete? ..." (shared helpers in runClient.ts), DocCheckCard + notice preview + link to Approvals and
-                     to the conversation (sessionStorage plg_active_thread)), /tasks (tasks/TasksScreen.tsx: own top tasks via TaskList.tsx; Officer picker when /api/tasks/team has more than one; Show 5/10/20/50; 403 message), /sign-in, /approvals (Approvals inbox, approvals/ApprovalsScreen.tsx: pending actions across threads (letters and i-EMS tickets: TicketCard with classification details, editable category/priority/unit/description/case, 'Approve and raise') with letter preview,
+                     to the conversation (sessionStorage plg_active_thread)), /tasks (tasks/TasksScreen.tsx: own top tasks via TaskList.tsx; Officer picker when /api/tasks/team has more than one; Show 5/10/20/50; 403 message), /sign-in, /approvals (Approvals inbox, approvals/ApprovalsScreen.tsx: pending actions across threads (letters, glossary changes (GlossaryCard: now vs proposed definition/value/effective date, reason, SQL binding, owner; approve/edit only for `approvers`, the proposer can only withdraw) and i-EMS tickets: TicketCard with classification details, editable category/priority/unit/description/case, 'Approve and raise') with letter preview,
                      open slots, PII flags, editable slots shown as <del>/<ins> diff, approve / send edited / reject with reason, approve+edit
                      hidden for roles that can't send or while open slots are blank; then the result (outbox ID, version sent) and the audit
                      trail (who, role, when, reason, edits, outbox item + letter as sent, run_id)), /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the

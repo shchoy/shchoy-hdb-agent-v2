@@ -1,95 +1,176 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 780" width="780" height="780" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1080" width="1600" height="1080" role="img" aria-labelledby="title description" font-family="Helvetica, Arial, sans-serif">
+  <title id="title">PLG LangGraph conversation flow</title>
+  <desc id="description">Input screening and optional history summarization and memory precede routing to parallel specialists. Findings merge into an answer, with pending actions sent through approval and execution.</desc>
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
     </marker>
     <style>
-      .t{font-size:14px;font-weight:bold;fill:#1a1a1a;text-anchor:middle}
-      .s{font-size:11px;fill:#444;text-anchor:middle}
-      .l{font-size:11px;fill:#666;font-style:italic}
-      .e{stroke:#444;stroke-width:1.6;fill:none;marker-end:url(#a)}
-      .d{stroke:#888;stroke-width:1.4;fill:none;stroke-dasharray:5 4;marker-end:url(#a)}
+      .title{font-size:23px;font-weight:700;fill:#172033;text-anchor:middle}
+      .subtitle{font-size:13px;fill:#526076;text-anchor:middle}
+      .node-title{font-size:14px;font-weight:700;fill:#172033;text-anchor:middle}
+      .node-sub{font-size:11px;fill:#475569;text-anchor:middle}
+      .edge-label{font-size:11px;font-style:italic;fill:#475569}
+      .edge{stroke:#475569;stroke-width:1.7;fill:none;marker-end:url(#arrow)}
+      .optional{stroke:#7554b5;stroke-width:1.6;fill:none;stroke-dasharray:6 5;marker-end:url(#arrow)}
+      .bus{stroke:#718096;stroke-width:1.5;fill:none}
+      .box{stroke-width:1.6}
     </style>
   </defs>
-  <rect width="780" height="780" fill="#fafafa"/>
-  <text x="390" y="24" class="t" style="font-size:17px">build_graph: PLG LangGraph</text>
+  <rect width="1600" height="1080" fill="#f8fafc"/>
+  <text x="800" y="34" class="title">PLG LangGraph · conversation flow</text>
+  <text x="800" y="57" class="subtitle">Conditional paths are labeled · selected specialists fan out in parallel</text>
 
-  <!-- START -->
-  <ellipse cx="390" cy="62" rx="48" ry="17" fill="#222"/>
-  <text x="390" y="67" class="t" style="fill:#fff">START</text>
+  <!-- Entry and screening -->
+  <ellipse cx="800" cy="94" rx="50" ry="19" fill="#1e293b"/>
+  <text x="800" y="99" class="node-title" style="fill:#fff">START</text>
+  <path d="M800 113 V130" class="edge"/>
+  <rect x="690" y="132" width="220" height="58" rx="9" fill="#e0f2fe" stroke="#0284c7" class="box"/>
+  <text x="800" y="156" class="node-title">screen_input</text>
+  <text x="800" y="174" class="node-sub">screen officer message for injection</text>
+  <path d="M800 190 V211" class="edge"/>
+  <polygon points="800,211 930,258 800,305 670,258" fill="#fff4cc" stroke="#c49a00" class="box"/>
+  <text x="800" y="254" class="node-title">Message flagged?</text>
+  <text x="800" y="272" class="node-sub">redact and stop, or continue</text>
 
-  <!-- decision -->
-  <polygon points="390,100 520,138 390,176 260,138" fill="#fff4cc" stroke="#c9a400" stroke-width="1.5"/>
-  <text x="390" y="134" class="t" style="font-size:12px">history too long?</text>
-  <text x="390" y="150" class="s">tokens &gt; threshold</text>
+  <!-- Clean-message preparation -->
+  <path d="M800 305 V329" class="edge"/>
+  <text x="813" y="321" class="edge-label">no</text>
+  <polygon points="800,329 930,376 800,423 670,376" fill="#fff4cc" stroke="#c49a00" class="box"/>
+  <text x="800" y="372" class="node-title">History needs summarising?</text>
+  <text x="800" y="390" class="node-sub">over token threshold and enough turns</text>
+  <path d="M670 376 H520 V450" class="edge"/>
+  <text x="547" y="365" class="edge-label">yes</text>
+  <rect x="410" y="450" width="220" height="60" rx="9" fill="#e0f2fe" stroke="#0284c7" class="box"/>
+  <text x="520" y="475" class="node-title">summarise_history</text>
+  <text x="520" y="493" class="node-sub">Haiku · fold older turns</text>
+  <path d="M800 423 V474 H650" class="edge"/>
+  <text x="812" y="447" class="edge-label">no</text>
 
-  <!-- summarise -->
-  <rect x="40" y="205" width="200" height="56" rx="8" fill="#e3f0ff" stroke="#3b7dd8" stroke-width="1.5"/>
-  <text x="140" y="228" class="t">summarise_history</text>
-  <text x="140" y="246" class="s">Haiku · writes summary</text>
+  <polygon points="800,524 915,566 800,608 685,566" fill="#f3e8ff" stroke="#8b5cf6" class="box"/>
+  <text x="800" y="562" class="node-title">Memory service enabled?</text>
+  <text x="800" y="580" class="node-sub">configured for this graph</text>
+  <path d="M520 510 V566 H685" class="edge"/>
+  <path d="M800 474 V524" class="edge"/>
+  <text x="812" y="503" class="edge-label">history summarized</text>
+  <rect x="1000" y="536" width="210" height="60" rx="9" fill="#f3e8ff" stroke="#8b5cf6" class="box"/>
+  <text x="1105" y="560" class="node-title">load_memory</text>
+  <text x="1105" y="578" class="node-sub">private notes · never a source</text>
+  <path d="M915 566 H1000" class="edge"/>
+  <text x="946" y="554" class="edge-label">yes</text>
 
-  <!-- load_memory -->
-  <rect x="280" y="290" width="220" height="56" rx="8" fill="#efe6ff" stroke="#7a4fd0" stroke-width="1.5"/>
-  <text x="390" y="313" class="t">load_memory</text>
-  <text x="390" y="331" class="s">optional · writes memory</text>
+  <!-- Router -->
+  <rect x="690" y="642" width="220" height="62" rx="9" fill="#dbeafe" stroke="#2563eb" class="box"/>
+  <text x="800" y="667" class="node-title">route</text>
+  <text x="800" y="686" class="node-sub">Haiku · confidence-filtered intents</text>
+  <path d="M800 608 V642" class="edge"/>
+  <text x="812" y="628" class="edge-label">no memory service</text>
+  <path d="M1105 596 V622 H800 V642" class="optional"/>
+  <text x="1120" y="618" class="edge-label">memory loaded</text>
 
-  <!-- route -->
-  <rect x="280" y="375" width="220" height="56" rx="8" fill="#e3f0ff" stroke="#3b7dd8" stroke-width="1.5"/>
-  <text x="390" y="398" class="t">route</text>
-  <text x="390" y="416" class="s">Haiku · writes intents</text>
+  <!-- Specialist fan-out -->
+  <path d="M800 704 V730" class="edge"/>
+  <path d="M100 730 H1500" class="bus"/>
+  <path d="M800 730 V748" class="edge"/>
+  <text x="813" y="724" class="edge-label">fan out selected intents in parallel</text>
+  <path d="M690 673 H70 V886 H690" class="optional"/>
+  <text x="88" y="854" class="edge-label">no intent / clarification</text>
 
-  <!-- specialists -->
-  <rect x="40" y="490" width="200" height="60" rx="8" fill="#e6f7e6" stroke="#3a9a3a" stroke-width="1.5"/>
-  <text x="140" y="513" class="t">knowledge</text>
-  <text x="140" y="531" class="s">citations · policy_stance</text>
+  <g>
+    <rect x="45" y="748" width="190" height="76" rx="9" fill="#dcfce7" stroke="#16a34a" class="box"/>
+    <text x="140" y="775" class="node-title">knowledge</text>
+    <text x="140" y="795" class="node-sub">PLG sources · citations</text>
+    <text x="140" y="810" class="node-sub">policy stance · precedents</text>
+    <path d="M140 730 V748" class="edge"/>
 
-  <rect x="290" y="490" width="200" height="60" rx="8" fill="#e6f7e6" stroke="#3a9a3a" stroke-width="1.5"/>
-  <text x="390" y="513" class="t">data</text>
-  <text x="390" y="531" class="s">SQL over PLG Records · sql_trace</text>
+    <rect x="260" y="748" width="190" height="76" rx="9" fill="#dcfce7" stroke="#16a34a" class="box"/>
+    <text x="355" y="775" class="node-title">data</text>
+    <text x="355" y="795" class="node-sub">read-only SQL</text>
+    <text x="355" y="810" class="node-sub">PLG Records · trackers</text>
+    <path d="M355 730 V748" class="edge"/>
 
-  <rect x="540" y="490" width="200" height="60" rx="8" fill="#e6f7e6" stroke="#3a9a3a" stroke-width="1.5"/>
-  <text x="640" y="513" class="t">drafting</text>
-  <text x="640" y="531" class="s">approved templates · draft</text>
+    <rect x="475" y="748" width="190" height="76" rx="9" fill="#dcfce7" stroke="#16a34a" class="box"/>
+    <text x="570" y="775" class="node-title">drafting</text>
+    <text x="570" y="795" class="node-sub">approved templates</text>
+    <text x="570" y="810" class="node-sub">may propose a letter</text>
+    <path d="M570 730 V748" class="edge"/>
 
-  <!-- merge -->
-  <rect x="280" y="595" width="220" height="56" rx="8" fill="#ffe9d6" stroke="#d9772b" stroke-width="1.5"/>
-  <text x="390" y="618" class="t">merge</text>
-  <text x="390" y="636" class="s">Sonnet · streams tokens · writes answer</text>
+    <rect x="690" y="748" width="190" height="76" rx="9" fill="#dcfce7" stroke="#16a34a" class="box"/>
+    <text x="785" y="775" class="node-title">defect</text>
+    <text x="785" y="795" class="node-sub">classify feedback</text>
+    <text x="785" y="810" class="node-sub">may propose an i-EMS ticket</text>
+    <path d="M785 730 V748" class="edge"/>
 
-  <!-- write_memory -->
-  <rect x="280" y="675" width="220" height="40" rx="8" fill="#efe6ff" stroke="#7a4fd0" stroke-width="1.5"/>
-  <text x="390" y="699" class="t">write_memory (optional)</text>
+    <rect x="905" y="748" width="190" height="76" rx="9" fill="#dcfce7" stroke="#16a34a" class="box"/>
+    <text x="1000" y="775" class="node-title">doc_check</text>
+    <text x="1000" y="795" class="node-sub">check application bundle</text>
+    <text x="1000" y="810" class="node-sub">may propose a notice</text>
+    <path d="M1000 730 V748" class="edge"/>
 
-  <!-- END -->
-  <ellipse cx="390" cy="749" rx="40" ry="16" fill="#222"/>
-  <text x="390" y="754" class="t" style="fill:#fff">END</text>
+    <rect x="1120" y="748" width="190" height="76" rx="9" fill="#dcfce7" stroke="#16a34a" class="box"/>
+    <text x="1215" y="775" class="node-title">tasks</text>
+    <text x="1215" y="795" class="node-sub">rank open tasks</text>
+    <text x="1215" y="810" class="node-sub">deterministic</text>
+    <path d="M1215 730 V748" class="edge"/>
 
-  <!-- edges -->
-  <line x1="390" y1="79" x2="390" y2="99" class="e"/>
-  <path d="M290,148 L140,148 L140,204" class="e"/>
-  <text x="170" y="142" class="l">yes</text>
-  <path d="M390,176 L390,289" class="e"/>
-  <text x="398" y="215" class="l">no</text>
-  <path d="M140,261 L140,318 L279,318" class="e"/>
-  <line x1="390" y1="346" x2="390" y2="374" class="e"/>
-  <path d="M340,431 L140,431 L140,489" class="e"/>
-  <line x1="390" y1="431" x2="390" y2="489" class="e"/>
-  <path d="M440,431 L640,431 L640,489" class="e"/>
-  <text x="402" y="462" class="l">parallel</text>
-  <path d="M140,550 L140,623 L279,623" class="e"/>
-  <line x1="390" y1="550" x2="390" y2="594" class="e"/>
-  <path d="M640,550 L640,623 L501,623" class="e"/>
-  <!-- no specialist needed -->
-  <path d="M500,403 L740,403 L740,590 L560,590 L560,623 L501,623" class="d"/>
-  <text x="745" y="500" class="l" transform="rotate(90 745 500)">no specialist needed</text>
-  <line x1="390" y1="651" x2="390" y2="674" class="e"/>
-  <line x1="390" y1="715" x2="390" y2="732" class="e"/>
-  <!-- no memory shortcut -->
-  <path d="M280,630 L250,630 L250,749 L349,749" class="d"/>
-  <text x="68" y="700" class="l">no memory service:</text>
-  <text x="68" y="714" class="l">merge goes straight to END</text>
+    <rect x="1335" y="748" width="190" height="76" rx="9" fill="#dcfce7" stroke="#16a34a" class="box"/>
+    <text x="1430" y="775" class="node-title">glossary</text>
+    <text x="1430" y="795" class="node-sub">propose definition change</text>
+    <text x="1430" y="810" class="node-sub">owner approval required</text>
+    <path d="M1430 730 V748" class="edge"/>
+  </g>
 
-  <!-- legend -->
-  <text x="40" y="100" class="l">solid: always taken</text>
-  <text x="40" y="115" class="l">dashed: alternate path</text>
+  <!-- Fan-in and response -->
+  <path d="M140 824 V852 H800" class="bus"/>
+  <path d="M355 824 V852" class="bus"/>
+  <path d="M570 824 V852" class="bus"/>
+  <path d="M785 824 V852" class="bus"/>
+  <path d="M1000 824 V852" class="bus"/>
+  <path d="M1215 824 V852" class="bus"/>
+  <path d="M1430 824 V852 H800" class="bus"/>
+  <path d="M800 852 V875" class="edge"/>
+  <rect x="690" y="875" width="220" height="60" rx="9" fill="#ffedd5" stroke="#ea580c" class="box"/>
+  <text x="800" y="900" class="node-title">merge</text>
+  <text x="800" y="918" class="node-sub">fuse findings · stream answer</text>
+  <path d="M800 935 V956" class="edge"/>
+
+  <!-- Optional memory write and pending-action flow -->
+  <rect x="665" y="958" width="190" height="54" rx="9" fill="#f3e8ff" stroke="#8b5cf6" class="box"/>
+  <text x="760" y="981" class="node-title">write_memory</text>
+  <text x="760" y="998" class="node-sub">learn from verified turn · optional</text>
+  <polygon points="1045,954 1155,996 1045,1038 935,996" fill="#fff4cc" stroke="#c49a00" class="box"/>
+  <text x="1045" y="992" class="node-title">Pending action(s)?</text>
+  <text x="1045" y="1010" class="node-sub">after answer / execution</text>
+  <path d="M855 985 H935" class="edge"/>
+  <text x="878" y="975" class="edge-label">memory enabled</text>
+  <path d="M910 905 H1190 V946 H1045 V954" class="optional"/>
+  <text x="1010" y="939" class="edge-label">memory disabled: skip write</text>
+
+  <rect x="1250" y="862" width="210" height="60" rx="9" fill="#fce7f3" stroke="#db2777" class="box"/>
+  <text x="1355" y="887" class="node-title">approval</text>
+  <text x="1355" y="906" class="node-sub">interrupt · officer decides</text>
+  <rect x="1250" y="956" width="210" height="60" rx="9" fill="#fce7f3" stroke="#db2777" class="box"/>
+  <text x="1355" y="981" class="node-title">execute_action</text>
+  <text x="1355" y="1000" class="node-sub">side effects + audit</text>
+  <path d="M1155 996 H1200 V892 H1250" class="edge"/>
+  <text x="1167" y="984" class="edge-label">yes</text>
+  <path d="M1355 922 V956" class="edge"/>
+  <path d="M1355 1016 V1048 H1045 V1038" class="edge"/>
+  <text x="1367" y="1040" class="edge-label">check remaining actions</text>
+
+  <ellipse cx="1045" cy="1060" rx="40" ry="16" fill="#1e293b"/>
+  <text x="1045" y="1065" class="node-title" style="fill:#fff">END</text>
+  <path d="M1045 1038 V1044" class="edge"/>
+  <text x="1060" y="1051" class="edge-label">no</text>
+
+  <!-- Screened input bypasses routing and reaches merge -->
+  <path d="M670 258 H35 V905 H690" class="optional"/>
+  <text x="48" y="247" class="edge-label">yes · fixed warning, no model call</text>
+
+  <!-- Legend -->
+  <rect x="42" y="1010" width="360" height="47" rx="7" fill="#fff" stroke="#cbd5e1"/>
+  <path d="M60 1027 H112" class="edge"/>
+  <text x="122" y="1031" class="node-sub" style="text-anchor:start">normal / conditional control flow</text>
+  <path d="M60 1044 H112" class="optional"/>
+  <text x="122" y="1048" class="node-sub" style="text-anchor:start">optional / bypass path</text>
 </svg>

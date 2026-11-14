@@ -41,6 +41,22 @@ const piiFinding = z.object({
 });
 const severity = z.enum(["Low", "Medium", "High", "Critical"]);
 const docProblem = z.enum(["expired", "wrong_unit", "illegible_scan"]);
+const glossaryVersion = z.object({
+  id: z.string(),
+  concept: z.string(),
+  version: z.number().int(),
+  pref_label: z.string(),
+  alt_labels: z.array(z.string()),
+  definition: z.string(),
+  value: z.string().nullable(),
+  source: z.object({ document_id: z.string().nullable(), locator: z.string().nullable(), quote: z.string().nullable() }),
+  owned_by: z.string(),
+  effective_from: z.string().nullable(),
+  effective_to: z.string().nullable(),
+  supersedes: z.string().nullable(),
+  status: z.enum(["proposed", "current", "superseded"]),
+  in_scheme: z.string(),
+});
 const candidate = z.object({ code: z.string(), category: z.string(), severity, confidence: z.number() });
 
 export const runEventSchema = z.discriminatedUnion("type", [
@@ -252,7 +268,7 @@ export const runEventSchema = z.discriminatedUnion("type", [
     seq,
     action_id: z.string(),
     version: z.number().int(),
-    action_type: z.enum(["send_letter", "raise_ticket"]),
+    action_type: z.enum(["send_letter", "raise_ticket", "approve_glossary_term"]),
     title: z.string(),
     payload: z.discriminatedUnion("kind", [
       z.object({
@@ -282,10 +298,21 @@ export const runEventSchema = z.discriminatedUnion("type", [
         rationale: z.string(),
         candidates: z.array(candidate),
       }),
+      z.object({
+        kind: z.literal("glossary"),
+        term: glossaryVersion,
+        previous: glossaryVersion,
+        reason: z.string(),
+        sql: z.string().nullable(),
+        binding: z.string().nullable(),
+        owner_name: z.string(),
+      }),
     ]),
     preview: z.string(),
     approver_roles: z.array(role),
     proposed_by: z.string(),
+    /** Staff IDs who approve instead of the proposer (a glossary change: the term owner); older streams lack it. */
+    approvers: z.array(z.string()).default([]),
     proposed_at: z.string(),
     status: z.enum(["pending", "approved", "rejected"]),
   }),
@@ -304,6 +331,7 @@ export const runEventSchema = z.discriminatedUnion("type", [
     decision,
     outbox_id: z.string().nullable(),
     ticket_id: z.string().nullable(),
+    term_id: z.string().nullable().default(null),
   }),
   z.object({ type: z.literal("done"), seq, run_id: z.string() }),
   z.object({ type: z.literal("error"), seq, run_id: z.string(), message: z.string() }),

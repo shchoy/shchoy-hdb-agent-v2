@@ -32,6 +32,8 @@ class AuditEntry(BaseModel):
     """The outbox item sent, or None for a rejection or a ticket."""
     ticket_id: str | None = None
     """The i-EMS ticket raised, or None for a rejection or a letter."""
+    term_id: str | None = None
+    """The glossary term version adopted (e.g. plg:Vacant_v3), or None for a rejection or another action."""
 
 
 class AuditLog:

@@ -5,7 +5,8 @@
 Writes `web/src/test/fixtures/*.sse`, `documents/*.json` (a document and a cited span's location, per file type) and
 `approvals/*` (two letters and an i-EMS ticket proposed in three conversations: the pending list, a ticket raised with
 edits, a letter edit and a rejection, the audit trail), `submissions.json` (the Document check screen's list) and
-`tasks/*.json` (the Tasks screen: an estate manager's own digest, a team member's, and the team list). Streams come from the real API and graph with a scripted
+`tasks/*.json` (the Tasks screen: an estate manager's own digest, a team member's, and the team list) and
+`approvals/glossary_*` (a glossary change proposed by a policy owner: the term owner's inbox, approval, audit trail). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -246,6 +247,44 @@ def record_approvals(search: Searcher, graph: LocalGraphStore) -> dict[str, str]
     return recorded
 
 
+POLICY_OWNER = {"X-PLG-User": "S02"}
+"""Deputy Director, Leasing Policy & Planning: proposes the glossary change."""
+TERM_OWNER = {"X-PLG-User": "S08"}
+"""Kelvin Goh, Ops Analytics: owns plg:Vacant, so approves it."""
+GLOSSARY_QUESTION = "Propose a glossary change: from 1 Oct 2026 units under tender count as vacant again"
+
+
+def record_glossary() -> dict[str, str]:
+    """A policy owner proposes that vacant units include those under tender again (with the v1 binding); the term
+    owner's inbox lists it, they approve it, and their audit trail shows the adopted version."""
+    vacant_v1 = load_semantic_layer().binding("plg:Vacant_v1")
+    assert vacant_v1 is not None
+    llm = ScriptedLLMClient()
+    llm.script_turns("route", GLOSSARY_QUESTION, routed("glossary"))
+    llm.script_turns("glossary", GLOSSARY_QUESTION, turn(tool_call(
+        "propose_glossary_change", concept="vacant",
+        definition="Lettable unit with no active or committed tenancy, including units under tender.",
+        value="includes units under tender", effective_from="2026-10-01",
+        reason="Management Meeting 5/2026 aligned the monthly report with the QBR.", sql=vacant_v1.sql,
+    )))
+    llm.script("merge", GLOSSARY_QUESTION, "Your proposal is waiting for the term owner, Kelvin Goh.")
+    recorded: dict[str, str] = {}
+    with tempfile.TemporaryDirectory() as scratch:
+        app = create_app(scratch_settings(Path(scratch)), llm=llm, memory=scratch_memory(Path(scratch) / "memory"))
+        with TestClient(app) as client:
+            thread_id = client.post("/threads", headers=POLICY_OWNER).json()["thread_id"]
+            client.post(f"/threads/{thread_id}/runs", json={"message": GLOSSARY_QUESTION}, headers=POLICY_OWNER).read()
+            (action,) = client.get("/approvals", headers=TERM_OWNER).json()
+            assert action["action_type"] == "approve_glossary_term", action
+            recorded["glossary_pending.json"] = json.dumps([action], indent=2) + "\n"
+            body = {"action_id": action["action_id"], "version": action["version"], "decision": "approve"}
+            with client.stream("POST", f"/threads/{thread_id}/resume", json=body, headers=TERM_OWNER) as response:
+                assert response.status_code == 200, response.read()
+                recorded["glossary_approve.sse"] = response.read().decode()
+            recorded["glossary_audit.json"] = json.dumps(client.get("/audit", headers=TERM_OWNER).json(), indent=2) + "\n"
+    return recorded
+
+
 def data(llm: ScriptedLLMClient) -> None:
     """A rejected query, then the corrected one over the Arrears binding, so the Reasoning panel shows both."""
     binding = load_semantic_layer().binding("plg:Arrears_v1")
@@ -404,11 +443,11 @@ def scratch_memory(directory: Path) -> MemoryStore:
 
 
 def scratch_settings(scratch: Path) -> Settings:
-    """Threads, WORKED_ON links, the outbox, i-EMS tickets and the audit log go to scratch space, never the real .plg
+    """Threads, WORKED_ON links, the outbox, i-EMS tickets, the audit log and glossary changes go to scratch space, never the real .plg
     stores."""
     return Settings(
         graph_dir=scratch / "graph", threads_db=scratch / "threads.sqlite", outbox_dir=scratch / "outbox",
-        iems_dir=scratch / "iems", audit_log=scratch / "audit.jsonl",
+        iems_dir=scratch / "iems", audit_log=scratch / "audit.jsonl", glossary_changes=scratch / "glossary_changes.jsonl",
     )
 
 
@@ -433,7 +472,7 @@ def _stream(app: Any, question: str) -> str:
 
 
 def main(only: list[str]) -> None:
-    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`)."""
+    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`)."""
     OUT.mkdir(parents=True, exist_ok=True)
     if not only or "submissions" in only:
         path = OUT / "submissions.json"
@@ -445,7 +484,13 @@ def main(only: list[str]) -> None:
             path = OUT / "tasks" / name
             path.write_text(content)
             print(f"wrote {path.relative_to(REPO_ROOT)}")
-    if only and set(only) <= {"submissions", "tasks_api"}:
+    if not only or "glossary" in only:
+        (OUT / "approvals").mkdir(exist_ok=True)
+        for name, content in record_glossary().items():
+            path = OUT / "approvals" / name
+            path.write_text(content)
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
+    if only and set(only) <= {"submissions", "tasks_api", "glossary"}:
         return
     with tempfile.TemporaryDirectory() as index, tempfile.TemporaryDirectory() as graph_dir:
         search, store = searcher(Path(index))

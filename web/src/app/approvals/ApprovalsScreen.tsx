@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { components } from "@/lib/api/schema";
 import { parseRunEvents, roleLabel, type RunEvent, type UserCtx } from "@/lib/events";
 import { ClassificationDetails } from "../ClassificationCard";
-import { day, when } from "../dates";
+import { day, period, when } from "../dates";
 import { LetterFrame } from "../LetterFrame";
 import styles from "./approvals.module.css";
 
@@ -19,9 +19,10 @@ type Outcome = { title: string; kind: Kind; result: ActionResult };
 type Kind = PendingApproval["payload"]["kind"];
 type LetterPayload = components["schemas"]["LetterPayload"];
 type TicketPayload = components["schemas"]["TicketPayload"];
+type GlossaryPayload = components["schemas"]["GlossaryPayload"];
 
 /** The officer's pending actions across conversations, with decision controls, then the decisions already made. */
-export function ApprovalsScreen({ role }: { role: UserCtx["role"] }) {
+export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staffId: string }) {
   const [pending, setPending] = useState<PendingApproval[] | null>(null);
   const [audit, setAudit] = useState<AuditRecord[]>([]);
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
@@ -72,7 +73,7 @@ export function ApprovalsScreen({ role }: { role: UserCtx["role"] }) {
           <ul aria-label="Pending approvals" className={styles.list}>
             {pending.map((action) => (
               <li key={`${action.action_id}-v${action.version}`}>
-                <ActionCard action={action} role={role} onDecided={decided} />
+                <ActionCard action={action} role={role} staffId={staffId} onDecided={decided} />
               </li>
             ))}
           </ul>
@@ -88,11 +89,15 @@ export function ApprovalsScreen({ role }: { role: UserCtx["role"] }) {
 
 function describe({ title, kind, result }: Outcome): string {
   const ticket = kind === "ticket";
-  if (result.decision === "reject") return `${title}: rejected; nothing was ${ticket ? "raised" : "sent"}.`;
+  if (result.decision === "reject") return `${title}: rejected; nothing was ${NOTHING[kind]}.`;
   const edited = result.decision === "edit";
+  if (kind === "glossary")
+    return `${title}: ${edited ? "adopted with your edits" : "adopted"} as ${result.term_id} (version ${result.version}).`;
   if (ticket) return `${title}: ${edited ? "raised with your edits" : "raised"} as ${result.ticket_id} (version ${result.version}).`;
   return `${title}: ${edited ? "sent with your edits" : "sent"} as ${result.outbox_id} (version ${result.version}).`;
 }
+
+const NOTHING: Record<Kind, string> = { letter: "sent", ticket: "raised", glossary: "changed" };
 
 type DecisionBody = { decision: Decision; edits?: Record<string, string>; reason?: string };
 
@@ -130,16 +135,19 @@ async function decide(action: PendingApproval, body: DecisionBody): Promise<Acti
 type CardProps<P> = {
   action: PendingApproval & { payload: P };
   role: UserCtx["role"];
+  staffId: string;
   onDecided: (outcome: Outcome) => void;
 };
 
-/** A pending letter or i-EMS ticket, with its decision controls. */
-function ActionCard({ action, role, onDecided }: CardProps<PendingApproval["payload"]>) {
+/** A pending letter, i-EMS ticket or glossary change, with its decision controls. */
+function ActionCard({ action, role, staffId, onDecided }: CardProps<PendingApproval["payload"]>) {
   const { payload } = action;
   return payload.kind === "ticket" ? (
-    <TicketCard action={{ ...action, payload }} role={role} onDecided={onDecided} />
+    <TicketCard action={{ ...action, payload }} role={role} staffId={staffId} onDecided={onDecided} />
+  ) : payload.kind === "glossary" ? (
+    <GlossaryCard action={{ ...action, payload }} role={role} staffId={staffId} onDecided={onDecided} />
   ) : (
-    <LetterCard action={{ ...action, payload }} role={role} onDecided={onDecided} />
+    <LetterCard action={{ ...action, payload }} role={role} staffId={staffId} onDecided={onDecided} />
   );
 }
 
@@ -169,7 +177,7 @@ function useDecision(action: PendingApproval, kind: Kind, original: Record<strin
 
 type Decider = ReturnType<typeof useDecision>;
 
-/** Approve, edit (then send the edits) or reject with a reason. */
+/** Approve, edit (then send the edits) or reject (or withdraw) with a reason. */
 function Controls({
   d,
   original,
@@ -186,9 +194,10 @@ function Controls({
   canSend: boolean;
   canApprove: boolean;
   blocked: boolean;
-  labels: { approve: string; edit: string; sendEdited: string };
+  labels: { approve: string; edit: string; sendEdited: string; reject?: "Reject" | "Withdraw" };
 }) {
   const { edits, busy, submit } = d;
+  const reject = labels.reject ?? "Reject";
   return (
     <div className={styles.actions}>
       {edits ? (
@@ -207,7 +216,7 @@ function Controls({
       ) : d.rejecting ? (
         <>
           <label>
-            Reason for rejecting
+            {reject === "Reject" ? "Reason for rejecting" : "Reason for withdrawing"}
             <textarea value={d.reason} onChange={(e) => d.setReason(e.target.value)} />
           </label>
           <button
@@ -215,7 +224,7 @@ function Controls({
             disabled={busy || !d.reason.trim()}
             onClick={() => submit({ decision: "reject", reason: d.reason.trim() })}
           >
-            Reject
+            {reject}
           </button>
           <button type="button" disabled={busy} onClick={() => d.setRejecting(false)}>
             Cancel
@@ -234,7 +243,7 @@ function Controls({
             </button>
           )}
           <button type="button" disabled={busy} onClick={() => d.setRejecting(true)}>
-            Reject…
+            {reject}…
           </button>
         </>
       )}
@@ -496,8 +505,128 @@ function TicketCard({ action, role, onDecided }: CardProps<TicketPayload>) {
   );
 }
 
-const DECIDED: Record<Decision, string> = { approve: "Approved and sent", edit: "Sent with edits", reject: "Rejected" };
-const DECIDED_TICKET: Record<Decision, string> = { approve: "Approved and raised", edit: "Raised with edits", reject: "Rejected" };
+const GLOSSARY_FIELDS = [
+  { field: "definition", label: "Definition" },
+  { field: "value", label: "Value" },
+  { field: "effective_from", label: "Effective from" },
+] as const;
+
+/** A change to a business definition: the version in force against the proposed one. Only the term owner approves. */
+function GlossaryCard({ action, role, staffId, onDecided }: CardProps<GlossaryPayload>) {
+  const { payload } = action;
+  const { term, previous } = payload;
+  const heading = `action-${action.action_id}`;
+  const canApprove = action.approvers.includes(staffId) && action.approver_roles.includes(role);
+  const original: Record<string, string> = Object.fromEntries(
+    GLOSSARY_FIELDS.map(({ field }) => [field, term[field] ?? ""]),
+  );
+  const d = useDecision(action, "glossary", original, onDecided);
+  const { edits, changes } = d;
+  const now = (field: (typeof GLOSSARY_FIELDS)[number]["field"]) =>
+    field === "effective_from"
+      ? period(previous.effective_from, previous.effective_to, "since before records began")
+      : (previous[field] ?? "");
+  const proposed = (field: string, value: string) => (field === "effective_from" && value ? day(value) : value);
+
+  return (
+    <article aria-labelledby={heading} className={styles.card}>
+      <h3 id={heading}>{action.title}</h3>
+      <p>
+        Glossary change · version {action.version} · {term.pref_label} ({term.concept})
+      </p>
+      <p className={styles.muted}>From the conversation: {action.thread_title}</p>
+      <table className={styles.slots}>
+        <caption>{edits ? "Definition: your changes are shown against the proposal" : "Definition"}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Field</th>
+            <th scope="col">Now ({previous.id})</th>
+            <th scope="col">{edits ? `Proposed → will adopt (${term.id})` : `Proposed (${term.id})`}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {GLOSSARY_FIELDS.map(({ field, label }) => {
+            const differs = now(field) !== proposed(field, original[field]);
+            return (
+              <tr key={field}>
+                <th scope="row">{label}</th>
+                <td>{differs && field !== "effective_from" ? <del>{now(field)}</del> : now(field) || <em>none</em>}</td>
+                <td>
+                  {edits ? (
+                    <>
+                      {field === "definition" ? (
+                        <textarea
+                          aria-label={label}
+                          value={edits[field]}
+                          onChange={(e) => d.setEdits({ ...edits, [field]: e.target.value })}
+                        />
+                      ) : (
+                        <input
+                          aria-label={label}
+                          type={field === "effective_from" ? "date" : "text"}
+                          value={edits[field]}
+                          onChange={(e) => d.setEdits({ ...edits, [field]: e.target.value })}
+                        />
+                      )}
+                      <Diff
+                        before={proposed(field, original[field])}
+                        after={changes[field] === undefined ? undefined : proposed(field, changes[field])}
+                        changed={field in changes}
+                      />
+                    </>
+                  ) : differs && field !== "effective_from" ? (
+                    <ins>{original[field]}</ins>
+                  ) : (
+                    proposed(field, original[field]) || <em>none</em>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p>Reason: {payload.reason}</p>
+      <p>
+        On approval {previous.id} is superseded from the new version&apos;s effective date and kept.
+      </p>
+      <h4>SQL binding{payload.sql === null && payload.binding !== null ? ` (unchanged: ${previous.id}'s)` : ""}</h4>
+      {payload.binding === null ? <p>No SQL binding.</p> : <pre aria-label="SQL binding">{payload.binding}</pre>}
+      <p>
+        Term owner: {payload.owner_name} ({term.owned_by})
+      </p>
+      <Refusal refusal={d.refusal} />
+      {!canApprove && (
+        <p>Waiting for {payload.owner_name} to approve. You can withdraw it with a reason.</p>
+      )}
+      {edits && !edits.definition?.trim() && <p>Fill Definition before adopting.</p>}
+      <Controls
+        d={d}
+        original={original}
+        toSend={changes}
+        canSend={canApprove}
+        canApprove
+        blocked={!edits?.definition?.trim()}
+        labels={{
+          approve: "Approve change",
+          edit: "Edit change",
+          sendEdited: "Adopt edited change",
+          reject: canApprove ? "Reject" : "Withdraw",
+        }}
+      />
+    </article>
+  );
+}
+
+const DECIDED: Record<AuditRecord["action_type"], Record<Decision, string>> = {
+  send_letter: { approve: "Approved and sent", edit: "Sent with edits", reject: "Rejected" },
+  raise_ticket: { approve: "Approved and raised", edit: "Raised with edits", reject: "Rejected" },
+  approve_glossary_term: { approve: "Approved and adopted", edit: "Adopted with edits", reject: "Rejected" },
+};
+const NOTHING_DONE: Record<AuditRecord["action_type"], string> = {
+  send_letter: "Nothing was sent.",
+  raise_ticket: "Nothing was raised.",
+  approve_glossary_term: "Nothing was changed.",
+};
 
 /** Every decision the officer made: who, when, why, what changed, what went to the outbox and the run's trace. */
 function AuditTrail({ entries }: { entries: AuditRecord[] }) {
@@ -510,7 +639,7 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
             <article aria-labelledby={heading} className={styles.card}>
               <h3 id={heading}>{e.title || e.action_id}</h3>
               <p>
-                {(e.action_type === "raise_ticket" ? DECIDED_TICKET : DECIDED)[e.decision]} by {e.approver} ({roleLabel(e.approver_role)}) on {when(e.at)}, deciding on
+                {DECIDED[e.action_type][e.decision]} by {e.approver} ({roleLabel(e.approver_role)}) on {when(e.at)}, deciding on
                 version {e.version}.
               </p>
               {e.reason && <p>Reason: {e.reason}</p>}
@@ -529,8 +658,10 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
                 <p>
                   Outbox item {e.sent.item_id} (version {e.sent.version}) to {e.sent.recipient}, sent {when(e.sent.sent_at)}
                 </p>
+              ) : e.term_id ? (
+                <p>Adopted as glossary term {e.term_id}.</p>
               ) : (
-                <p>Nothing was {e.action_type === "raise_ticket" ? "raised" : "sent"}.</p>
+                <p>{NOTHING_DONE[e.action_type]}</p>
               )}
               <p className={styles.muted}>Trace {e.run_id}</p>
               {e.sent && (

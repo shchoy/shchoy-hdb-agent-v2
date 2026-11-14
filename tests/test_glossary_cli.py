@@ -2,14 +2,49 @@
 
 from __future__ import annotations
 
+from datetime import date
+from pathlib import Path
+
+import pytest
 from typer.testing import CliRunner
 
 from plg import cli
+from plg.ontology.changes import GlossaryChange, GlossaryChanges, GlossaryVersion, superseded
+from plg.ontology.glossary import load_glossary
+
+
+@pytest.fixture(autouse=True)
+def changes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Where the CLI reads approved changes: never the developer's .plg/."""
+    path = tmp_path / "glossary_changes.jsonl"
+    monkeypatch.setenv("PLG_GLOSSARY_CHANGES", str(path))
+    return path
 
 
 def run(*args: str) -> tuple[int, str, str]:
     result = CliRunner().invoke(cli.app, ["glossary", *args])
     return result.exit_code, result.stdout, result.stderr
+
+
+def test_an_approved_change_shows_as_current_and_the_old_version_is_kept(changes: Path) -> None:
+    base = load_glossary()
+    previous = GlossaryVersion.of(base.current("plg:Vacant"))  # type: ignore[arg-type]
+    new = previous.model_copy(update={
+        "id": "plg:Vacant_v3", "version": 3, "definition": "Counted at month end.", "effective_from": date(2026, 10, 1),
+        "supersedes": previous.id, "status": "current",
+    })
+    GlossaryChanges(changes).approve(GlossaryChange(
+        term=new, previous=superseded(previous, date(2026, 10, 1)), sql=None, action_id="a1", approved_by="S08",
+        at="2026-11-14T00:00:00+00:00",
+    ), base)
+
+    code, out, _ = run("show", "vacant")
+
+    assert code == 0
+    current, history = out.split("History:")
+    assert "plg:Vacant_v3" in current and "Counted at month end." in current
+    assert "plg:Vacant_v2  v2  superseded  2026-04-15 -> 2026-09-30" in history
+    assert "plg:Vacant_v1" in history
 
 
 def test_list_shows_each_term_once_at_its_current_version() -> None:

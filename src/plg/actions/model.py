@@ -14,18 +14,21 @@ from plg.defects.classify import Candidate
 from plg.defects.taxonomy import Severity
 from plg.drafting.model import PiiFinding, UnfilledSlot
 from plg.identity import Role
+from plg.ontology.changes import GlossaryVersion
 
-ActionType = Literal["send_letter", "raise_ticket"]
-"""Grows with the flows that propose actions (record updates, glossary changes, ...)."""
+ActionType = Literal["send_letter", "raise_ticket", "approve_glossary_term"]
+"""Grows with the flows that propose actions (record updates, team facts, ...)."""
 
 Decision = Literal["approve", "edit", "reject"]
 
 APPROVER_ROLES: dict[ActionType, list[Role]] = {
     "send_letter": ["officer", "estate_manager", "manager", "director", "legal"],
     "raise_ticket": ["officer", "estate_manager", "manager", "director"],
+    "approve_glossary_term": ["director", "manager", "estate_manager", "officer", "analyst", "legal"],
 }
 """Who may approve (or edit) each action type. Analysts can draft letters and classify feedback but not send or raise
-anything; anyone can reject their own proposal."""
+anything; anyone can reject their own proposal. A glossary change is approved by the term's owner whatever their role
+(`ProposedAction.approvers`)."""
 
 
 class LetterPayload(BaseModel):
@@ -64,20 +67,47 @@ class TicketPayload(BaseModel):
     candidates: list[Candidate]
 
 
+class GlossaryPayload(BaseModel):
+    """A change to a business definition: the proposed new version of the term, waiting for the term owner."""
+
+    kind: Literal["glossary"] = "glossary"
+    term: GlossaryVersion
+    """The new version (status `proposed`), superseding `previous` from its effective date once approved."""
+    previous: GlossaryVersion
+    """The version in force when the change was proposed."""
+    reason: str
+    sql: str | None
+    """The new version's own SQL binding, or None: it keeps the previous version's binding."""
+    binding: str | None
+    """The SQL binding the new version will use (its own or the previous one's); None if the term has none."""
+    owner_name: str
+
+
 class ProposedAction(BaseModel):
     action_id: str
     """Stable across versions: a revised proposal keeps its ID and gets the next version."""
     version: int
     action_type: ActionType
     title: str
-    payload: LetterPayload | TicketPayload
+    payload: LetterPayload | TicketPayload | GlossaryPayload
     preview: str
     """What will happen, as an escaped HTML fragment (the letter, the ticket)."""
     approver_roles: list[Role]
     proposed_by: str
-    """Staff ID of the officer who asked for it: the only one who can decide on it."""
+    """Staff ID of the officer who asked for it. Unless `approvers` says otherwise, the only one who can decide on it;
+    they can always reject (withdraw) it."""
+    approvers: list[str] = []
+    """Staff IDs who approve it instead of the proposer (a glossary change: the term owner, its curator)."""
     proposed_at: str
     status: Literal["pending", "approved", "rejected"] = "pending"
+
+    def deciders(self) -> list[str]:
+        """Who can approve or edit it (holding an approver role)."""
+        return self.approvers or [self.proposed_by]
+
+    def may_decide(self, staff_id: str) -> bool:
+        """Approve, edit or at least reject it."""
+        return staff_id == self.proposed_by or staff_id in self.deciders()
 
 
 class ApprovalDecision(BaseModel):
@@ -87,8 +117,8 @@ class ApprovalDecision(BaseModel):
     version: int
     decision: Decision
     edits: dict[str, str] = Field(default_factory=dict)
-    """Slot → new value (decision `edit`) of a letter, or ticket field → new value: the edited version is what is
-    sent or raised."""
+    """Slot → new value (decision `edit`) of a letter, ticket field → new value, or glossary term field → new value:
+    the edited version is what is sent, raised or adopted."""
     reason: str = ""
     approver: str
     approver_role: Role
@@ -97,8 +127,10 @@ class ApprovalDecision(BaseModel):
         """Why this decision can't be applied to `action`, or None if it can."""
         if (self.action_id, self.version) != (action.action_id, action.version) or action.status != "pending":
             return "That version of the action is not pending."
-        if self.approver != action.proposed_by:
-            return "Only the officer who asked for the action can decide on it."
+        if not action.may_decide(self.approver):
+            return "Only the officer who asked for the action, or its named approver, can decide on it."
+        if self.decision != "reject" and self.approver not in action.deciders():
+            return "Only the action's named approver can approve it."
         if self.decision != "reject" and self.approver_role not in action.approver_roles:
             return "Your role can't approve this action."
         return None

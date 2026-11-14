@@ -14,7 +14,7 @@ from plg.guardrails.injection import InjectionFlag
 from plg.identity import UserCtx
 from plg.llm import Message
 
-Intent = Literal["knowledge", "data", "drafting", "defect", "doc_check", "tasks"]
+Intent = Literal["knowledge", "data", "drafting", "defect", "doc_check", "tasks", "glossary"]
 """What kind of question it is: one label per specialist."""
 
 

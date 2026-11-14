@@ -1,0 +1,80 @@
+[
+  {
+    "action_id": "75b05dbf-4656-4549-9e5e-7a8da28d88cf",
+    "version": 1,
+    "action_type": "approve_glossary_term",
+    "title": "Change glossary term Vacant unit: plg:Vacant_v2 \u2192 plg:Vacant_v3",
+    "payload": {
+      "kind": "glossary",
+      "term": {
+        "id": "plg:Vacant_v3",
+        "concept": "plg:Vacant",
+        "version": 3,
+        "pref_label": "Vacant unit",
+        "alt_labels": [
+          "vacant",
+          "vacancy",
+          "vacant units"
+        ],
+        "definition": "Lettable unit with no active or committed tenancy, including units under tender.",
+        "value": "includes units under tender",
+        "source": {
+          "document_id": null,
+          "locator": "Glossary change 75b05dbf-4656-4549-9e5e-7a8da28d88cf, proposed by S02: Management Meeting 5/2026 aligned the monthly report with the QBR.",
+          "quote": null
+        },
+        "owned_by": "S08",
+        "effective_from": "2026-10-01",
+        "effective_to": null,
+        "supersedes": "plg:Vacant_v2",
+        "status": "proposed",
+        "in_scheme": "plg:glossary"
+      },
+      "previous": {
+        "id": "plg:Vacant_v2",
+        "concept": "plg:Vacant",
+        "version": 2,
+        "pref_label": "Vacant unit",
+        "alt_labels": [
+          "vacant",
+          "vacancy",
+          "vacant units"
+        ],
+        "definition": "Lettable unit with no active or committed tenancy, excluding units under tender. Units under tender and units not lettable are reported separately. Historical figures are not restated.",
+        "value": "excludes units under tender",
+        "source": {
+          "document_id": "DOC-012",
+          "locator": "Minutes of PLG Management Meeting No. 4/2026, item 3",
+          "quote": "from the April 2026 report, 'vacant' means units with no active or committed tenancy that are lettable and NOT under tender."
+        },
+        "owned_by": "S08",
+        "effective_from": "2026-04-15",
+        "effective_to": null,
+        "supersedes": "plg:Vacant_v1",
+        "status": "current",
+        "in_scheme": "plg:glossary"
+      },
+      "reason": "Management Meeting 5/2026 aligned the monthly report with the QBR.",
+      "sql": "SELECT u.unit_id, u.status, u.vacant_since\nFROM units u\nWHERE u.status IN ('Vacant', 'Under Tender') AND u.vacant_since <= $as_of",
+      "binding": "SELECT u.unit_id, u.status, u.vacant_since\nFROM units u\nWHERE u.status IN ('Vacant', 'Under Tender') AND u.vacant_since <= $as_of",
+      "owner_name": "Kelvin Goh"
+    },
+    "preview": "<h3>Vacant unit (plg:Vacant)</h3>\n<p><strong>Now (plg:Vacant_v2, in force from 2026-04-15):</strong> Lettable unit with no active or committed tenancy, excluding units under tender. Units under tender and units not lettable are reported separately. Historical figures are not restated.</p>\n<p><strong>Proposed (plg:Vacant_v3, from 2026-10-01):</strong> Lettable unit with no active or committed tenancy, including units under tender.</p>\n<p><strong>Value:</strong> excludes units under tender \u2192 includes units under tender</p>\n<p><strong>Reason:</strong> Management Meeting 5/2026 aligned the monthly report with the QBR.</p>\n<p><strong>On approval:</strong> plg:Vacant_v2 is superseded (in force until the day before) and kept.</p>\n<p><strong>SQL binding:</strong></p><pre>SELECT u.unit_id, u.status, u.vacant_since\nFROM units u\nWHERE u.status IN (&#x27;Vacant&#x27;, &#x27;Under Tender&#x27;) AND u.vacant_since &lt;= $as_of</pre>\n<p><strong>Term owner:</strong> Kelvin Goh (S08)</p>",
+    "approver_roles": [
+      "director",
+      "manager",
+      "estate_manager",
+      "officer",
+      "analyst",
+      "legal"
+    ],
+    "proposed_by": "S02",
+    "approvers": [
+      "S08"
+    ],
+    "proposed_at": "2026-11-14T02:14:59.215616+00:00",
+    "status": "pending",
+    "thread_id": "fd0af829-f0ec-47a5-a514-b854fee73c4f",
+    "thread_title": "Proposed by S02"
+  }
+]

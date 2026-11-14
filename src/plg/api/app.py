@@ -14,9 +14,10 @@ from pydantic import BaseModel, TypeAdapter, model_validator
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.actions.audit import AuditEntry, AuditLog
+from plg.actions import glossary as glossary_actions
 from plg.actions import tickets
 from plg.actions.letters import unknown_slots
-from plg.actions.model import ApprovalDecision, Decision, LetterPayload, ProposedAction
+from plg.actions.model import ApprovalDecision, Decision, GlossaryPayload, LetterPayload, ProposedAction, TicketPayload
 from plg.actions.outbox import LocalOutbox, OutboxItem
 from plg.config import Settings
 from plg.defects.taxonomy import load_taxonomy
@@ -24,6 +25,8 @@ from plg.defects.tickets import LocalTicketSystem, Ticket
 from plg.doccheck import flow as doc_flow
 from plg.doccheck.checklists import load_checklists
 from plg.doccheck.model import Submission
+from plg.ontology.changes import GlossaryChanges
+from plg.ontology.glossary import load_glossary
 from plg.ontology.vocab import load_vocab
 from plg.drafting.store import DraftStore
 from plg.drafting.templates import TemplateLibrary
@@ -32,7 +35,7 @@ from plg.entities.local import LocalGraphStore
 from plg.entities.open import LazyGraph, work_linker
 from plg.entities.writer import GraphWriter
 from plg.entities.store import GraphStore
-from plg.events import RunEvent
+from plg.events import InterruptEvent, ProposedActionEvent, RunEvent
 from plg.data.warehouse import Warehouse
 from plg.graph.build import build_graph
 from plg.identity import UserCtx, load_personas
@@ -79,8 +82,9 @@ class ResumeRequest(BaseModel):
     version: int
     decision: Decision
     edits: dict[str, str] = {}
-    """Slot → new value (a letter) or ticket field → new value (category_code, severity, unit_id, description,
-    feedback_id); required for `edit`, which sends or raises the edited version."""
+    """Slot → new value (a letter), ticket field → new value (category_code, severity, unit_id, description,
+    feedback_id) or glossary term field → new value (definition, value, effective_from); required for `edit`, which
+    sends, raises or adopts the edited version."""
     reason: str = ""
     """Why it was rejected; required for `reject`."""
 
@@ -158,6 +162,7 @@ def create_app(
     outbox = LocalOutbox(settings.outbox_dir)
     audit = AuditLog(settings.audit_log)
     ticket_system = LocalTicketSystem(settings.iems_dir)
+    glossary_changes = GlossaryChanges(settings.glossary_changes)
     vocab = load_vocab()
     taxonomy = load_taxonomy(vocab)
     checklists = load_checklists(vocab)
@@ -165,7 +170,7 @@ def create_app(
         llm, searcher or LazySearcher(settings), entities=entities,
         warehouse=Warehouse(settings.records_db, settings.trackers_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
         settings=settings, memory=learner, outbox=outbox, audit=audit,
-        ticket_system=ticket_system, taxonomy=taxonomy, checklists=checklists,
+        ticket_system=ticket_system, taxonomy=taxonomy, checklists=checklists, glossary_changes=glossary_changes,
     )
 
     @asynccontextmanager
@@ -226,10 +231,14 @@ def create_app(
 
     @app.get("/approvals")
     async def list_approvals(user: User, status: Literal["pending"] = "pending") -> list[PendingApproval]:
-        """The officer's own actions waiting for a decision, across all their conversations, oldest first."""
+        """The actions waiting for the officer's decision, oldest first: their own, across all their conversations,
+        and, for a curator (a glossary term's owner), the changes to their terms proposed in anyone's."""
         found = [
-            PendingApproval(**action.model_dump(), thread_id=t.thread_id, thread_title=t.title)
-            for t in threads.list(user.staff_id) for action in await waiting(t.thread_id)
+            PendingApproval(
+                **action.model_dump(), thread_id=t.thread_id,
+                thread_title=t.title if action.proposed_by == user.staff_id else f"Proposed by {action.proposed_by}",
+            )
+            for t in threads.all_asked() for action in await waiting(t.thread_id) if action.may_decide(user.staff_id)
         ]
         return sorted(found, key=lambda a: a.proposed_at)
 
@@ -302,9 +311,16 @@ def create_app(
         memory.forget(user.staff_id, memory_id)
         return Response(status_code=204)
 
-    def sse(buffer: RunBuffer, after: int = 0) -> EventSourceResponse:
+    def sse(buffer: RunBuffer, after: int = 0, only_actions: set[str] | None = None) -> EventSourceResponse:
+        """The run's events; `only_actions`: a curator deciding in someone else's conversation sees no other
+        action of it (its previews are the owner's)."""
+
         async def frames() -> AsyncIterator[ServerSentEvent]:
             async for event in buffer.follow(after):
+                if only_actions is not None and isinstance(event, ProposedActionEvent | InterruptEvent) and (
+                    event.action_id not in only_actions
+                ):
+                    continue
                 yield ServerSentEvent(data=event.model_dump_json(), event=event.type, id=str(event.seq))
 
         return EventSourceResponse(frames(), ping=settings.heartbeat_seconds)
@@ -333,13 +349,27 @@ def create_app(
     )
     async def resume_thread(thread_id: str, body: ResumeRequest, user: User) -> EventSourceResponse:
         """Approve, edit or reject the pending action. Only the thread's owner, holding an approver role for the
-        action type, can decide, and only on the exact pending version; anything else changes nothing."""
-        owned(thread_id, user)
-        action = next((a for a in await waiting(thread_id) if a.action_id == body.action_id), None)
+        action type, can decide (a glossary change: only the term owner approves it; its proposer can withdraw it),
+        and only on the exact pending version; anything else changes nothing."""
+        paused = await waiting(thread_id)
+        if not threads.owns(thread_id, user.staff_id) and not any(a.may_decide(user.staff_id) for a in paused):
+            raise HTTPException(status_code=404, detail="Thread not found")
+        action = next((a for a in paused if a.action_id == body.action_id and a.may_decide(user.staff_id)), None)
         if action is None or action.version != body.version:
             raise HTTPException(status_code=409, detail="That version of the action is not pending")
+        if body.decision != "reject" and user.staff_id not in action.deciders():
+            raise HTTPException(status_code=403, detail="Only the term owner can approve this change")
         if body.decision != "reject" and user.role not in action.approver_roles:
             raise HTTPException(status_code=403, detail="Your role can't approve this action")
+        if isinstance(action.payload, GlossaryPayload) and body.decision != "reject":
+            if body.decision == "edit" and (errors := glossary_actions.edit_errors(action, body.edits)):
+                raise HTTPException(status_code=422, detail="; ".join(errors))
+            now = glossary_changes.glossary(load_glossary()).current(action.payload.term.concept)
+            if now is None or now.id != action.payload.previous.id:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"{action.payload.previous.id} is no longer current: the term changed after this was proposed. Reject it and propose again.",
+                )
         if isinstance(action.payload, LetterPayload):
             if body.decision == "edit" and (unknown := unknown_slots(action, body.edits)):
                 raise HTTPException(status_code=422, detail=f"The letter has no slot {', '.join(unknown)}")
@@ -347,14 +377,18 @@ def create_app(
             still_open = sorted(({u.slot for u in action.payload.unfilled} | blanked) - (set(body.edits) - blanked))
             if body.decision != "reject" and still_open:
                 raise HTTPException(status_code=422, detail=f"Fill the open slots before sending the letter: {', '.join(still_open)}")
-        elif body.decision == "edit" and (errors := tickets.edit_errors(action, body.edits, taxonomy)):
+        elif isinstance(action.payload, TicketPayload) and body.decision == "edit" and (
+            errors := tickets.edit_errors(action, body.edits, taxonomy)
+        ):
             raise HTTPException(status_code=422, detail="; ".join(errors))
         decision = ApprovalDecision(**body.model_dump(), approver=user.staff_id, approver_role=user.role)
         try:
             buffer = runs.start(graph, thread_id, "", user, decision)
         except RunInProgress:
             raise HTTPException(status_code=409, detail="This conversation is still answering") from None
-        return sse(buffer)
+        if threads.owns(thread_id, user.staff_id):
+            return sse(buffer)
+        return sse(buffer, only_actions={a.action_id for a in paused if a.may_decide(user.staff_id)})
 
     @app.get("/threads/{thread_id}/runs/latest", response_class=EventSourceResponse, responses=run_stream_docs)
     async def resume_run(

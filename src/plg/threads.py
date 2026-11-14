@@ -66,6 +66,14 @@ class ThreadStore:
                 (title, _now(), thread_id),
             )
 
+    def all_asked(self) -> list[ThreadSummary]:
+        """Every asked thread, whoever owns it: only for finding actions others decide on (glossary curators)."""
+        with self._db() as db:
+            rows = db.execute(
+                "SELECT thread_id, title, updated_at FROM plg_threads WHERE title IS NOT NULL ORDER BY rowid"
+            ).fetchall()
+        return [ThreadSummary(thread_id=r[0], title=r[1], updated_at=r[2]) for r in rows]
+
     def list(self, staff_id: str) -> list[ThreadSummary]:
         with self._db() as db:
             rows = db.execute(

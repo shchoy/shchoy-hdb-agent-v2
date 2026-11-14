@@ -327,6 +327,22 @@ uv run plg glossary list --all     # every version, including superseded ones
 uv run plg glossary show LOD       # current definition, source, owner, then history; accepts IDs, labels, synonyms
 ```
 
+Both commands include changes approved since `make ontology` (read from `.plg/glossary_changes.jsonl`, or `PLG_GLOSSARY_CHANGES`).
+
+#### Glossary questions and definition changes (issue #25)
+
+- **Ask what a term means** ("What does vacant mean now, and before April 2026?"). The knowledge agent reads every approved version of the term with its dates and source document, and cites them. No search index is needed for this.
+- **Propose a change** in conversation ("Propose a glossary change: from 1 Oct 2026 units under tender count as vacant again"). The `glossary` specialist turns it into a `proposed` version (v+1) inside an `approve_glossary_term` action. The change is refused if the term is unknown, if it starts on or before the date the current version took effect, or if new SQL fails the validator's dry run.
+- **Who decides:**
+  - Only the term owner (`owned_by`, e.g. S08 Kelvin Goh for `plg:Vacant`) approves or edits the change: `definition`, `value`, `effective_from`.
+  - The owner sees it in their Approvals inbox (`GET /approvals`), labelled "Proposed by S02" and not with the proposer's question.
+  - The proposer can only withdraw it.
+- **On approval:**
+  - The old version gets `effective_to` (the day before) and status `superseded`. Nothing is deleted.
+  - The new version becomes current, and the data agent uses it, with its own SQL binding or its predecessor's, from its effective date.
+  - The decision is audited with the `term_id`.
+- **Stale proposals:** a second proposal against a version that has since been superseded gets 409 and can only be rejected.
+
 ### Ontology
 
 The ontology, vocabularies and glossary are edited in `ontology/`. After changing them, regenerate the artefacts the app reads and commit them (CI fails if they drift):

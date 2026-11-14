@@ -38,9 +38,14 @@ export function tasksFixture(name: string): unknown {
   return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/tasks", name), "utf8"));
 }
 
-/** A recorded approvals response: `pending.json`, `audit.json` (parsed) or a resume stream `edit.sse` / `reject.sse` / `ticket_edit.sse`. */
-export function approvalsFixture(name: "edit.sse" | "reject.sse" | "ticket_edit.sse"): string;
-export function approvalsFixture(name: "pending.json" | "audit.json"): Record<string, unknown>[];
+/**
+ * A recorded approvals response: `pending.json`, `audit.json` (parsed) or a resume stream `edit.sse` / `reject.sse` /
+ * `ticket_edit.sse`; `glossary_*`: a glossary change proposed by S02, in its term owner S08's inbox, approved by S08.
+ */
+export function approvalsFixture(name: "edit.sse" | "reject.sse" | "ticket_edit.sse" | "glossary_approve.sse"): string;
+export function approvalsFixture(
+  name: "pending.json" | "audit.json" | "glossary_pending.json" | "glossary_audit.json",
+): Record<string, unknown>[];
 export function approvalsFixture(name: string): unknown {
   const raw = readFileSync(join(process.cwd(), "src/test/fixtures/approvals", name), "utf8");
   return name.endsWith(".json") ? JSON.parse(raw) : raw;

@@ -25,7 +25,7 @@ export default async function ApprovalsPage() {
       </header>
       <main>
         <h1>Approvals</h1>
-        <ApprovalsScreen role={user.role} />
+        <ApprovalsScreen role={user.role} staffId={user.staff_id} />
       </main>
     </>
   );

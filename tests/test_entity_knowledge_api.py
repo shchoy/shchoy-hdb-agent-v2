@@ -77,4 +77,4 @@ def test_the_agent_can_only_read_the_graph(entity_api: Api, llm: ScriptedLLMClie
     entity_api.run(entity_api.create_thread(), QUESTION)
 
     tools = {t["name"] for _, request_tools in llm.requests for t in request_tools} - {"record_memory"}  # background memory writer
-    assert tools == {"route", "search_corpus", "resolve_entities", "entity_context", "policy_lineage", "find_precedents"}
+    assert tools == {"route", "search_corpus", "resolve_entities", "entity_context", "policy_lineage", "find_precedents", "glossary_definitions"}

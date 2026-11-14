@@ -15,6 +15,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from plg.agents.entities import entity_tools, precedent_tool
+from plg.agents.glossary import definitions_tool
 from plg.agents.runtime import AgentResult, Source, Tool, run_agent
 from plg.entities.policy import PolicyLineage
 from plg.entities.store import GraphStore
@@ -22,6 +23,7 @@ from plg.guardrails.injection import InjectionFlag
 from plg.llm import AgentMessage, LLMClient
 from plg.ontology.vocab import TermMatch, VocabIndex
 from plg.search.models import SearchFilter, SearchHit
+from plg.ontology.glossary import Glossary
 from plg.search.rerank import Retriever
 
 NODE = "knowledge"
@@ -37,6 +39,9 @@ Rules:
 resolve_entities with the name, unit number or ID, then entity_context on the match. A tenant's context shows its \
 tenancies and letters; call entity_context on its unit as well for feedback, tickets and inspections. If several \
 entities match a name closely, say so and name them rather than guessing.
+- For what a PLG business term means (vacant, arrears, occupancy rate, LOD trigger, ...), call \
+glossary_definitions with the term. It lists every approved version with its effective dates and source: give the \
+definition in force now and, when asked about an earlier date or period, the version then in force, citing both.
 - Give PLG's current stance: the version in force, its effective date, and what it superseded when the \
 sources say so. Searches return documents in force today unless you set `as_of` to ask about an earlier date.
 - For a policy topic, call policy_lineage with the policy's ID (find it by searching if you don't know it). It lists \
@@ -137,6 +142,7 @@ async def answer(
     entities: GraphStore | None = None,
     on_lineage: Callable[[PolicyLineage], None] | None = None,
     on_injection: Callable[[InjectionFlag], None] | None = None,
+    glossary: Callable[[], Glossary] | None = None,
 ) -> AgentResult:
     doc_types = [c.notation for c in vocab.scheme("plg:document_types") if c.notation]
     return await run_agent(
@@ -146,6 +152,7 @@ async def answer(
         context=describe_terms(vocab.find_terms(question)),
         tools=[
             search_tool(retriever, vocab, doc_types),
+            *([definitions_tool(glossary)] if glossary else []),
             *([*entity_tools(entities, on_lineage), precedent_tool(entities, retriever)] if entities else []),
         ],
         messages=messages,

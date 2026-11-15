@@ -14,6 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
+from plg.actions.model import SqlExamplePayload
 from plg.agents.runtime import Tool, run_agent
 from plg.data.semantic import SemanticLayer
 from plg.data.sqlcheck import SqlRejected
@@ -241,6 +242,19 @@ def terms_context(layer: SemanticLayer, glossary: Glossary, vocab: VocabIndex, q
     return "\n\n".join(parts)
 
 
+VERIFIED = (
+    "Verified examples: questions like this one that officers confirmed and curators approved, with the SQL that "
+    "answered them. Reuse their approach where it fits, still checking each business term with get_definition:"
+)
+
+
+def examples_context(examples: list[SqlExamplePayload]) -> str:
+    """Approved question → SQL pairs nearest the question, as few-shot examples (issue #26)."""
+    if not examples:
+        return ""
+    return VERIFIED + "\n" + "\n".join(f"Q: {e.question}\n{e.sql.strip()}" for e in examples)
+
+
 def with_definitions(text: str, traces: list[SqlTrace]) -> str:
     """`text`, ending with the definitions the queries relied on (version and effective date) unless it already
     names them all, so no explanation leaves out which definition was used."""
@@ -265,6 +279,7 @@ async def answer(
     vocab: VocabIndex,
     messages: list[AgentMessage],
     question: str,
+    verified: list[SqlExamplePayload] | None = None,
 ) -> DataResult:
     traces: list[SqlTrace] = []
     tables = "\n".join(f"- {name}: {note}" for name, note in layer.tables.items())
@@ -275,7 +290,7 @@ async def answer(
         llm,
         node=NODE,
         system=SYSTEM.format(today=layer.as_of_default, tables=tables, examples=examples, trackers=trackers),
-        context=terms_context(layer, glossary, vocab, question),
+        context="\n\n".join(filter(None, [terms_context(layer, glossary, vocab, question), examples_context(verified or [])])),
         tools=[definition_tool(glossary, layer), sql_tool(warehouse, glossary, layer, traces)],
         messages=messages,
     )

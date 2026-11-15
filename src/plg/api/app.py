@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
@@ -17,7 +20,10 @@ from plg.actions.audit import AuditEntry, AuditLog
 from plg.actions import glossary as glossary_actions
 from plg.actions import tickets
 from plg.actions.letters import unknown_slots
-from plg.actions.model import ApprovalDecision, Decision, GlossaryPayload, LetterPayload, ProposedAction, TicketPayload
+from plg.actions.model import (
+    ApprovalDecision, Decision, ExamplePayload, GlossaryPayload, LetterPayload, ProposedAction, SqlExamplePayload,
+    TeamFactPayload, TicketPayload,
+)
 from plg.actions.outbox import LocalOutbox, OutboxItem
 from plg.config import Settings
 from plg.defects.taxonomy import load_taxonomy
@@ -35,7 +41,12 @@ from plg.entities.local import LocalGraphStore
 from plg.entities.open import LazyGraph, work_linker
 from plg.entities.writer import GraphWriter
 from plg.entities.store import GraphStore
+from plg.feedback import curation as curation_rules
+from plg.feedback.curation import Curation
+from plg.feedback.langsmith import LangSmithFeedback
+from plg.feedback.model import AnsweredTurn, Feedback, FeedbackLog, Score
 from plg.events import InterruptEvent, ProposedActionEvent, RunEvent
+from plg.data.sqlcheck import SqlRejected
 from plg.data.warehouse import Warehouse
 from plg.graph.build import build_graph
 from plg.identity import UserCtx, load_personas
@@ -69,6 +80,31 @@ class ThreadView(BaseModel):
     """The question still being answered, if a run is in progress: resume it with GET /threads/{id}/runs/latest."""
     pending: list[ProposedAction] = []
     """Actions waiting for the officer's decision (POST /threads/{id}/resume)."""
+    turns: list[AnsweredTurn] = []
+    """The answered turns and their run IDs (`message_index` = the answer's index in `messages`), for feedback."""
+
+
+class FeedbackRequest(BaseModel):
+    """An officer's 👍/👎 on one answer of their own thread, named by the run ID its `done` event carried."""
+
+    thread_id: str
+    run_id: str
+    score: Score
+    comment: str = ""
+    correction: str = ""
+    """What the answer should have said (a 👎): proposed to curators as a corrected-answer example."""
+    team_fact: str = ""
+    """A fact about how the team works that the answer missed: proposed to curators as a team fact."""
+
+
+class FeedbackReceipt(BaseModel):
+    feedback_id: str
+    forwarded: bool
+    """Sent to LangSmith against the run."""
+    queued: bool
+    """A 👎 run added to the review annotation queue."""
+    proposals: list[ProposedAction]
+    """What it proposed to the curators (status pending until one of them decides)."""
 
 
 class RunRequest(BaseModel):
@@ -144,7 +180,9 @@ def create_app(
     store: SearchStore | None = None,
     entities: GraphStore | None = None,
     memory: MemoryStore | None = None,
+    langsmith: Any | None = None,
 ) -> FastAPI:
+    """`langsmith`: the LangSmith Client feedback goes to (default: one opened on first use if LANGSMITH_API_KEY is set)."""
     settings = settings or Settings.from_env()
     llm = llm or AnthropicLLMClient(settings)
     entities = entities or LazyGraph(settings)
@@ -155,7 +193,10 @@ def create_app(
     elif isinstance(entities, LocalGraphStore):
         local = entities
         link_work = work_linker(lambda: GraphWriter(settings.graph_dir, local))
-    learner = MemoryService(memory, llm, link_work)
+    curation = Curation(memory)
+    learner = MemoryService(memory, llm, link_work, curation)
+    feedback_log = FeedbackLog(settings.feedback_log)
+    tracer = LangSmithFeedback(langsmith, settings.annotation_queue)
     drafts = DraftStore()
     threads = ThreadStore(settings.threads_db)
     runs = RunRegistry()
@@ -166,11 +207,13 @@ def create_app(
     vocab = load_vocab()
     taxonomy = load_taxonomy(vocab)
     checklists = load_checklists(vocab)
+    warehouse = Warehouse(settings.records_db, settings.trackers_db)
     graph = build_graph(
         llm, searcher or LazySearcher(settings), entities=entities,
-        warehouse=Warehouse(settings.records_db, settings.trackers_db), templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
+        warehouse=warehouse, templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
         settings=settings, memory=learner, outbox=outbox, audit=audit,
         ticket_system=ticket_system, taxonomy=taxonomy, checklists=checklists, glossary_changes=glossary_changes,
+        curation=curation,
     )
 
     @asynccontextmanager
@@ -221,7 +264,7 @@ def create_app(
         return ThreadView(
             thread_id=thread_id, title=title, messages=values.get("messages", []), summary=values.get("summary", ""),
             running=latest.question if latest and not latest.finished and latest.question else None,
-            pending=await waiting(thread_id),
+            pending=await waiting(thread_id), turns=values.get("turns", []),
         )
 
     async def waiting(thread_id: str) -> list[ProposedAction]:
@@ -241,6 +284,76 @@ def create_app(
             for t in threads.all_asked() for action in await waiting(t.thread_id) if action.may_decide(user.staff_id)
         ]
         return sorted(found, key=lambda a: a.proposed_at)
+
+    @app.post("/feedback", status_code=201, responses={404: {"description": "No such answer in your conversations"}})
+    async def give_feedback(request: Request, body: FeedbackRequest, user: User) -> FeedbackReceipt:
+        """Record a 👍/👎 on an answer and send it to LangSmith (`create_feedback` on the run); a 👎 run joins the
+        review annotation queue. What it would teach the team waits for a curator (GET /curation)."""
+        owned(body.thread_id, user)
+        values = (await graph.aget_state({"configurable": {"thread_id": body.thread_id}})).values
+        turn = next((t for t in values.get("turns", []) if t.run_id == body.run_id), None)
+        if turn is None:
+            raise HTTPException(status_code=404, detail="No such answer in this conversation")
+        forwarded = await asyncio.to_thread(tracer.send, body.run_id, body.score, body.comment, body.correction)
+        queued = body.score == "down" and await asyncio.to_thread(tracer.queue, body.run_id)
+        record = Feedback(
+            feedback_id=str(uuid.uuid4()), staff_id=user.staff_id, at=datetime.now(UTC).isoformat(timespec="seconds"),
+            forwarded=forwarded, queued=queued, proposals=[], **body.model_dump(),
+        )
+        personas: dict[str, UserCtx] = request.app.state.personas
+        known = {a.action_id for a in curation.actions() if a.status != "rejected"}  # a rejected pair may come back
+        proposed = curation_rules.proposals(turn, record, user, personas.values(), known)
+        for action in proposed:
+            curation.propose(action)
+        feedback_log.record(record.model_copy(update={"proposals": [a.action_id for a in proposed]}))
+        return FeedbackReceipt(feedback_id=record.feedback_id, forwarded=forwarded, queued=queued, proposals=proposed)
+
+    @app.get("/curation")
+    async def curation_queue(user: User, status: Literal["pending"] = "pending") -> list[ProposedAction]:
+        """What answer feedback proposes to teach the team, waiting for review, oldest first: for a curator
+        (team leads; data analysts for question → SQL examples) the ones they can decide, for the officer who
+        proposed one, their own (to withdraw)."""
+        return sorted(
+            (a for a in curation.actions() if a.status == "pending" and a.may_decide(user.staff_id)),
+            key=lambda a: a.proposed_at,
+        )
+
+    @app.post(
+        "/curation/decide",
+        responses={403: {"description": "Only a curator other than the proposer can approve it"},
+                   404: {"description": "No such proposal for you"}, 409: {"description": "That version is not pending"}},
+    )
+    async def decide_curation(body: ResumeRequest, user: User) -> ProposedAction:
+        """Approve (it goes live at once), edit then approve, or reject (with a reason) a pending team fact,
+        corrected-answer example or question → SQL example. The proposer can only withdraw (reject) it."""
+        action = curation.get(body.action_id)
+        if action is None or not action.may_decide(user.staff_id):
+            raise HTTPException(status_code=404, detail="Proposal not found")
+        decision = ApprovalDecision(**body.model_dump(), approver=user.staff_id, approver_role=user.role)
+        if body.decision != "reject" and user.staff_id == action.proposed_by:
+            raise HTTPException(status_code=403, detail="Another curator must approve what your feedback proposed")
+        if refusal := decision.refusal(action):
+            status = 409 if (body.version != action.version or action.status != "pending") else 403
+            raise HTTPException(status_code=status, detail=refusal)
+        if body.decision == "edit":
+            errors = curation_rules.edit_errors(action, body.edits)
+            if not errors and (sql := body.edits.get("sql")):
+                try:
+                    await asyncio.to_thread(warehouse.dry_run, sql, settings.tasks_today)
+                except SqlRejected as e:
+                    errors.append(f"The SQL was rejected: {e}")
+            if errors:
+                raise HTTPException(status_code=422, detail="; ".join(errors))
+        decided = await asyncio.to_thread(curation.decide, action, decision)
+        payload = decided.payload
+        assert isinstance(payload, TeamFactPayload | ExamplePayload | SqlExamplePayload)
+        audit.record(AuditEntry(
+            action_id=action.action_id, version=action.version, action_type=action.action_type, title=action.title,
+            thread_id=payload.thread_id, decision=body.decision, edits=body.edits, reason=body.reason,
+            approver=user.staff_id, approver_role=user.role, at=datetime.now(UTC).isoformat(timespec="seconds"),
+            run_id=payload.run_id, outbox_id=None,
+        ))
+        return decided
 
     @app.get("/tasks/digest", responses={403: {"description": "Your role can't view this officer's tasks"}})
     def task_digest(

@@ -296,6 +296,200 @@
         }
       }
     },
+    "/feedback": {
+      "post": {
+        "summary": "Give Feedback",
+        "description": "Record a \ud83d\udc4d/\ud83d\udc4e on an answer and send it to LangSmith (`create_feedback` on the run); a \ud83d\udc4e run joins the\nreview annotation queue. What it would teach the team waits for a curator (GET /curation).",
+        "operationId": "give_feedback_feedback_post",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackReceipt"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such answer in your conversations"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/curation": {
+      "get": {
+        "summary": "Curation Queue",
+        "description": "What answer feedback proposes to teach the team, waiting for review, oldest first: for a curator\n(team leads; data analysts for question \u2192 SQL examples) the ones they can decide, for the officer who\nproposed one, their own (to withdraw).",
+        "operationId": "curation_queue_curation_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": "pending",
+              "type": "string",
+              "default": "pending",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProposedAction"
+                  },
+                  "title": "Response Curation Queue Curation Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/curation/decide": {
+      "post": {
+        "summary": "Decide Curation",
+        "description": "Approve (it goes live at once), edit then approve, or reject (with a reason) a pending team fact,\ncorrected-answer example or question \u2192 SQL example. The proposer can only withdraw (reject) it.",
+        "operationId": "decide_curation_curation_decide_post",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedAction"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only a curator other than the proposer can approve it"
+          },
+          "404": {
+            "description": "No such proposal for you"
+          },
+          "409": {
+            "description": "That version is not pending"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tasks/digest": {
       "get": {
         "summary": "Task Digest",
@@ -1240,6 +1434,59 @@
   },
   "components": {
     "schemas": {
+      "AnsweredTurn": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "message_index": {
+            "type": "integer",
+            "title": "Message Index"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "intents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Intents"
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "sql": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sql"
+          },
+          "flagged": {
+            "type": "boolean",
+            "title": "Flagged",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "message_index",
+          "question",
+          "intents",
+          "answer"
+        ],
+        "title": "AnsweredTurn",
+        "description": "One answered turn of a thread, kept in graph state so feedback can name it by its run ID."
+      },
       "AuditRecord": {
         "properties": {
           "action_id": {
@@ -1255,7 +1502,10 @@
             "enum": [
               "send_letter",
               "raise_ticket",
-              "approve_glossary_term"
+              "approve_glossary_term",
+              "approve_team_fact",
+              "approve_example",
+              "approve_sql_example"
             ],
             "title": "Action Type"
           },
@@ -1559,6 +1809,133 @@
           "blocks"
         ],
         "title": "DocumentView"
+      },
+      "ExamplePayload": {
+        "description": "A corrected answer from a \ud83d\udc4e: once approved, shown (as guidance, never a source) for similar questions.",
+        "properties": {
+          "kind": {
+            "const": "example",
+            "default": "example",
+            "title": "Kind",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          },
+          "original": {
+            "title": "Original",
+            "type": "string"
+          },
+          "intents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Intents",
+            "type": "array"
+          },
+          "thread_id": {
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "feedback_id": {
+            "title": "Feedback Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "answer",
+          "original",
+          "intents",
+          "thread_id",
+          "run_id",
+          "feedback_id"
+        ],
+        "title": "ExamplePayload",
+        "type": "object"
+      },
+      "FeedbackReceipt": {
+        "properties": {
+          "feedback_id": {
+            "type": "string",
+            "title": "Feedback Id"
+          },
+          "forwarded": {
+            "type": "boolean",
+            "title": "Forwarded"
+          },
+          "queued": {
+            "type": "boolean",
+            "title": "Queued"
+          },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/ProposedAction"
+            },
+            "type": "array",
+            "title": "Proposals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feedback_id",
+          "forwarded",
+          "queued",
+          "proposals"
+        ],
+        "title": "FeedbackReceipt"
+      },
+      "FeedbackRequest": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "score": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Score"
+          },
+          "comment": {
+            "type": "string",
+            "title": "Comment",
+            "default": ""
+          },
+          "correction": {
+            "type": "string",
+            "title": "Correction",
+            "default": ""
+          },
+          "team_fact": {
+            "type": "string",
+            "title": "Team Fact",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id",
+          "run_id",
+          "score"
+        ],
+        "title": "FeedbackRequest",
+        "description": "An officer's \ud83d\udc4d/\ud83d\udc4e on one answer of their own thread, named by the run ID its `done` event carried."
       },
       "GlossaryPayload": {
         "description": "A change to a business definition: the proposed new version of the term, waiting for the term owner.",
@@ -2037,7 +2414,10 @@
             "enum": [
               "send_letter",
               "raise_ticket",
-              "approve_glossary_term"
+              "approve_glossary_term",
+              "approve_team_fact",
+              "approve_example",
+              "approve_sql_example"
             ],
             "title": "Action Type"
           },
@@ -2055,6 +2435,15 @@
               },
               {
                 "$ref": "#/components/schemas/GlossaryPayload"
+              },
+              {
+                "$ref": "#/components/schemas/TeamFactPayload"
+              },
+              {
+                "$ref": "#/components/schemas/ExamplePayload"
+              },
+              {
+                "$ref": "#/components/schemas/SqlExamplePayload"
               }
             ],
             "title": "Payload"
@@ -2175,7 +2564,10 @@
             "enum": [
               "send_letter",
               "raise_ticket",
-              "approve_glossary_term"
+              "approve_glossary_term",
+              "approve_team_fact",
+              "approve_example",
+              "approve_sql_example"
             ],
             "title": "Action Type"
           },
@@ -2193,6 +2585,15 @@
               },
               {
                 "$ref": "#/components/schemas/GlossaryPayload"
+              },
+              {
+                "$ref": "#/components/schemas/TeamFactPayload"
+              },
+              {
+                "$ref": "#/components/schemas/ExamplePayload"
+              },
+              {
+                "$ref": "#/components/schemas/SqlExamplePayload"
               }
             ],
             "title": "Payload"
@@ -2415,6 +2816,46 @@
         ],
         "title": "RunRequest"
       },
+      "SqlExamplePayload": {
+        "description": "A verified question \u2192 SQL pair from a \ud83d\udc4d on a data answer: once approved, a few-shot example for the data agent.",
+        "properties": {
+          "kind": {
+            "const": "sql_example",
+            "default": "sql_example",
+            "title": "Kind",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "sql": {
+            "title": "Sql",
+            "type": "string"
+          },
+          "thread_id": {
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "feedback_id": {
+            "title": "Feedback Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "sql",
+          "thread_id",
+          "run_id",
+          "feedback_id"
+        ],
+        "title": "SqlExamplePayload",
+        "type": "object"
+      },
       "Submission": {
         "properties": {
           "application_id": {
@@ -2512,6 +2953,46 @@
         ],
         "title": "TaskDigest",
         "description": "An officer's top open tasks on `as_of`, ranked by urgency \u00d7 impact."
+      },
+      "TeamFactPayload": {
+        "description": "A fact about how the team works, from an officer's feedback; once approved it joins every officer's notes.",
+        "properties": {
+          "kind": {
+            "const": "team_fact",
+            "default": "team_fact",
+            "title": "Kind",
+            "type": "string"
+          },
+          "fact": {
+            "title": "Fact",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "thread_id": {
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "feedback_id": {
+            "title": "Feedback Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fact",
+          "question",
+          "thread_id",
+          "run_id",
+          "feedback_id"
+        ],
+        "title": "TeamFactPayload",
+        "type": "object"
       },
       "TermSource": {
         "description": "Where a definition comes from.",
@@ -2630,6 +3111,14 @@
             },
             "type": "array",
             "title": "Pending",
+            "default": []
+          },
+          "turns": {
+            "items": {
+              "$ref": "#/components/schemas/AnsweredTurn"
+            },
+            "type": "array",
+            "title": "Turns",
             "default": []
           }
         },
@@ -4017,7 +4506,10 @@
             "enum": [
               "send_letter",
               "raise_ticket",
-              "approve_glossary_term"
+              "approve_glossary_term",
+              "approve_team_fact",
+              "approve_example",
+              "approve_sql_example"
             ],
             "title": "Action Type",
             "type": "string"
@@ -4036,6 +4528,15 @@
               },
               {
                 "$ref": "#/components/schemas/GlossaryPayload"
+              },
+              {
+                "$ref": "#/components/schemas/TeamFactPayload"
+              },
+              {
+                "$ref": "#/components/schemas/ExamplePayload"
+              },
+              {
+                "$ref": "#/components/schemas/SqlExamplePayload"
               }
             ],
             "title": "Payload"

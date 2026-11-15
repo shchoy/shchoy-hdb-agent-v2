@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { AskScreen } from "@/app/AskScreen";
 import { server } from "@/test/msw";
 import { documentFixture } from "@/test/documents";
-import { fixture, sseResponse } from "@/test/sse";
+import { feedbackFixture, fixture, sseResponse } from "@/test/sse";
 
 const QUESTION = "When do we issue a letter of demand?";
 
@@ -872,5 +872,151 @@ describe("Conversations", () => {
       ),
     );
     expect(screen.getByText(QUESTION)).toBeInTheDocument();
+  });
+});
+
+describe("Answer feedback", () => {
+  const DATA_RUN = "6b54eecd-7625-405e-a0b8-4c30f29b9e3e";
+
+  /** Records what the Ask screen posts to /api/feedback and answers with `receipt`. */
+  function feedbackApi(receipt: Record<string, unknown>, status = 201) {
+    const sent: unknown[] = [];
+    server.use(
+      http.post("/api/feedback", async ({ request }) => {
+        sent.push(await request.json());
+        return HttpResponse.json(receipt, { status });
+      }),
+    );
+    return sent;
+  }
+
+  async function dataAnswer() {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("data"))),
+    );
+    const user = await ask(DATA_QUESTION);
+    await runFinished();
+    return { user, answer: screen.getByRole("region", { name: "Answer" }) };
+  }
+
+  it("sends a thumbs-up on the finished answer, naming its run, and says what it proposed", async () => {
+    const sent = feedbackApi(feedbackFixture("receipt_up.json"));
+    const { user, answer } = await dataAnswer();
+
+    await user.click(within(answer).getByRole("button", { name: "Helpful" }));
+
+    expect(await within(answer).findByRole("status", { name: "Feedback sent" })).toHaveTextContent(
+      "Thanks — sent for review. 1 proposal waiting for a curator.",
+    );
+    expect(sent).toEqual([{ thread_id: "t1", run_id: DATA_RUN, score: "up" }]);
+    expect(within(answer).queryByRole("button", { name: "Helpful" })).not.toBeInTheDocument();
+  });
+
+  it("sends a thumbs-down with the correction, a team fact and a comment", async () => {
+    const sent = feedbackApi(feedbackFixture("receipt_down.json"));
+    const { user, answer } = await dataAnswer();
+
+    await user.click(within(answer).getByRole("button", { name: "Not helpful" }));
+    await user.type(within(answer).getByLabelText("Correct this"), "Only unexpired terms: 1,542.");
+    await user.type(within(answer).getByLabelText("Team fact (optional)"), "Pending Commencement counts as active.");
+    await user.type(within(answer).getByLabelText("Comment (optional)"), "Wrong scope.");
+    await user.click(within(answer).getByRole("button", { name: "Send" }));
+
+    expect(await within(answer).findByRole("status", { name: "Feedback sent" })).toHaveTextContent(
+      "Thanks — sent for review. 2 proposals waiting for a curator.",
+    );
+    expect(sent).toEqual([
+      {
+        thread_id: "t1",
+        run_id: DATA_RUN,
+        score: "down",
+        correction: "Only unexpired terms: 1,542.",
+        team_fact: "Pending Commencement counts as active.",
+        comment: "Wrong scope.",
+      },
+    ]);
+  });
+
+  it("shows why feedback did not go through, and lets the officer try again", async () => {
+    feedbackApi({ detail: "No such answer in this conversation" }, 404);
+    const { user, answer } = await dataAnswer();
+
+    await user.click(within(answer).getByRole("button", { name: "Helpful" }));
+
+    expect(await within(answer).findByRole("alert")).toHaveTextContent("No such answer in this conversation");
+    expect(within(answer).getByRole("button", { name: "Helpful" })).toBeEnabled();
+  });
+
+  it("offers feedback on an earlier answer of a reopened conversation, by the run that answered it", async () => {
+    const thread = feedbackFixture("thread.json") as {
+      thread_id: string;
+      title: string;
+      turns: { run_id: string }[];
+    };
+    const sent = feedbackApi(feedbackFixture("receipt_up.json"));
+    server.use(
+      http.get("/api/threads", () =>
+        HttpResponse.json([{ thread_id: thread.thread_id, title: thread.title, updated_at: "x" }]),
+      ),
+      http.get(`/api/threads/${thread.thread_id}`, () => HttpResponse.json(thread)),
+    );
+    const user = userEvent.setup();
+    render(<AskScreen />);
+
+    await user.click(await screen.findByRole("button", { name: thread.title }));
+    const history = await screen.findByRole("list", { name: "Earlier in this conversation" });
+    expect(within(history).getAllByRole("button", { name: "Helpful" })).toHaveLength(1);
+    await user.click(within(history).getByRole("button", { name: "Helpful" }));
+
+    await waitFor(() =>
+      expect(sent).toEqual([{ thread_id: thread.thread_id, run_id: thread.turns[0].run_id, score: "up" }]),
+    );
+  });
+
+  it("offers no feedback on an answer without a run, nor on a failed one", async () => {
+    server.use(
+      http.get("/api/threads", () =>
+        HttpResponse.json([{ thread_id: "t9", title: "Old", updated_at: "x" }]),
+      ),
+      http.get("/api/threads/t9", () =>
+        HttpResponse.json({
+          thread_id: "t9",
+          title: "Old",
+          messages: [
+            { role: "user", content: "What is a letter of demand?" },
+            { role: "assistant", content: "A formal demand." },
+          ],
+          summary: "",
+          running: null,
+        }),
+      ),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("error"))),
+    );
+    const user = userEvent.setup();
+    render(<AskScreen />);
+
+    await user.click(await screen.findByRole("button", { name: "Old" }));
+    await screen.findByRole("list", { name: "Earlier in this conversation" });
+    await user.type(screen.getByLabelText("Your question"), QUESTION);
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+    await runFinished();
+
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Helpful" })).not.toBeInTheDocument();
+  });
+
+  it("keeps feedback on the previous answer once a follow-up is asked", async () => {
+    feedbackApi(feedbackFixture("receipt_up.json"));
+    const { user } = await dataAnswer();
+    server.use(http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))));
+
+    await user.type(screen.getByLabelText("Your question"), QUESTION);
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+    await runFinished();
+
+    const history = screen.getByRole("list", { name: "Earlier in this conversation" });
+    expect(within(history).getByRole("button", { name: "Helpful" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Answer" })).getByRole("button", { name: "Helpful" })).toBeInTheDocument();
   });
 });

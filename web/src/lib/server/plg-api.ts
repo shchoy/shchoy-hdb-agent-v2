@@ -262,3 +262,31 @@ export async function getTaskTeam(staffId: string): Promise<{ status: number; bo
   });
   return { status: response.status, body: data ?? error };
 }
+
+export type FeedbackRequest = components["schemas"]["FeedbackRequest"];
+
+/** An officer's 👍/👎 on one of their answers; plg-api's status and JSON body (the receipt or a refusal). */
+export async function sendFeedback(staffId: string, body: FeedbackRequest): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().POST("/feedback", {
+    params: { header: { "x-plg-user": staffId } },
+    body,
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** What answer feedback proposes to teach the team, waiting for a decision the caller may make. */
+export async function listCuration(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/curation", {
+    params: { query: { status: "pending" }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** A curator's approve / edit / reject (or the proposer's withdrawal) of a pending team fact or example. */
+export async function decideCuration(staffId: string, body: ResumeRequest): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().POST("/curation/decide", {
+    params: { header: { "x-plg-user": staffId } },
+    body,
+  });
+  return { status: response.status, body: data ?? error };
+}

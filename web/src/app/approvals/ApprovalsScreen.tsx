@@ -97,7 +97,14 @@ function describe({ title, kind, result }: Outcome): string {
   return `${title}: ${edited ? "sent with your edits" : "sent"} as ${result.outbox_id} (version ${result.version}).`;
 }
 
-const NOTHING: Record<Kind, string> = { letter: "sent", ticket: "raised", glossary: "changed" };
+const NOTHING: Record<Kind, string> = {
+  letter: "sent",
+  ticket: "raised",
+  glossary: "changed",
+  team_fact: "taught",
+  example: "taught",
+  sql_example: "taught",
+};
 
 type DecisionBody = { decision: Decision; edits?: Record<string, string>; reason?: string };
 
@@ -146,8 +153,11 @@ function ActionCard({ action, role, staffId, onDecided }: CardProps<PendingAppro
     <TicketCard action={{ ...action, payload }} role={role} staffId={staffId} onDecided={onDecided} />
   ) : payload.kind === "glossary" ? (
     <GlossaryCard action={{ ...action, payload }} role={role} staffId={staffId} onDecided={onDecided} />
-  ) : (
+  ) : payload.kind === "letter" ? (
     <LetterCard action={{ ...action, payload }} role={role} staffId={staffId} onDecided={onDecided} />
+  ) : (
+    // What answer feedback proposes is decided in the curator queue (Memory screen), never at a thread's interrupt.
+    <p>{action.title}: decide it in the curator queue on the Memory screen.</p>
   );
 }
 
@@ -621,12 +631,20 @@ const DECIDED: Record<AuditRecord["action_type"], Record<Decision, string>> = {
   send_letter: { approve: "Approved and sent", edit: "Sent with edits", reject: "Rejected" },
   raise_ticket: { approve: "Approved and raised", edit: "Raised with edits", reject: "Rejected" },
   approve_glossary_term: { approve: "Approved and adopted", edit: "Adopted with edits", reject: "Rejected" },
+  approve_team_fact: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
+  approve_example: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
+  approve_sql_example: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
 };
 const NOTHING_DONE: Record<AuditRecord["action_type"], string> = {
   send_letter: "Nothing was sent.",
   raise_ticket: "Nothing was raised.",
   approve_glossary_term: "Nothing was changed.",
+  approve_team_fact: "Nothing was taught to the team.",
+  approve_example: "Nothing was taught to the team.",
+  approve_sql_example: "Nothing was taught to the team.",
 };
+
+const CURATED = new Set<AuditRecord["action_type"]>(["approve_team_fact", "approve_example", "approve_sql_example"]);
 
 /** Every decision the officer made: who, when, why, what changed, what went to the outbox and the run's trace. */
 function AuditTrail({ entries }: { entries: AuditRecord[] }) {
@@ -660,6 +678,8 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
                 </p>
               ) : e.term_id ? (
                 <p>Adopted as glossary term {e.term_id}.</p>
+              ) : e.decision !== "reject" && CURATED.has(e.action_type) ? (
+                <p>Taught to the team.</p>
               ) : (
                 <p>{NOTHING_DONE[e.action_type]}</p>
               )}

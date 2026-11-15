@@ -65,6 +65,8 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_OUTBOX_DIR` | `.plg/outbox` | Local Outbox: one JSON file per approved letter (nothing is delivered) |
 | `PLG_IEMS_DIR` | `.plg/iems` | i-EMS mock: one JSON file per approved defect ticket (`IEMS-<yymm>-<id>`, linked to its feedback case) |
 | `PLG_AUDIT_LOG` | `.plg/audit.jsonl` | Append-only audit log: one line per decided action (approver, time, LangSmith `run_id`) |
+| `PLG_FEEDBACK_LOG` | `.plg/feedback.jsonl` | Append-only answer feedback (👍/👎, corrections, team facts) |
+| `PLG_ANNOTATION_QUEUE` | `PLG thumbs-down review` | LangSmith annotation queue that thumbs-down runs join (created on first use; needs `LANGSMITH_API_KEY`) |
 | `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
 | `PLG_HISTORY_KEEP_MESSAGES` | `4` | Recent messages kept verbatim when folding |
 | `PLG_RERANK_BACKEND` | `voyage` | `voyage` reranks with Voyage's hosted reranker (uses `VOYAGE_API_KEY`); `local` runs a cross-encoder on this machine (no document text leaves it) |
@@ -318,6 +320,28 @@ curl -s -X DELETE http://127.0.0.1:8000/memory/<id> -H 'X-PLG-User: S05'
 ```
 
 In the web app, the **Memory** link in the header opens `/memory`: list, edit and forget your notes. A flagged note can't be switched back on: edit it to make the exception clear (e.g. "for NC units, 1.0 m under Circular 07/2026"), which clears the flag, or forget it. `PATCH` with `{"status":"active"}` on a flagged note returns 409. Another officer's notes return 404.
+
+### Answer feedback and curation (issue #26)
+
+Under every answer in the web app, 👍 **Helpful** / 👎 **Not helpful**. A 👎 opens **Correct this** (what the answer should have said), an optional **Team fact** and a comment. The feedback is appended to `.plg/feedback.jsonl` and, when `LANGSMITH_API_KEY` is set, sent to LangSmith with `create_feedback(run_id, "user_score")` (text PII-masked); a 👎 run also joins the `PLG thumbs-down review` annotation queue. Without the key, feedback is still recorded locally (`forwarded: false`).
+
+What feedback would teach the team waits in `pending_review` (LanceDB `memory` table, namespace `memory/team/...`) until a curator decides in the **Curator queue** on the Memory screen:
+
+| Feedback | Proposes | Curators | Once approved |
+|---|---|---|---|
+| 👍 on an answer whose query ran | question → SQL example | team leads (director, managers, estate managers) and data analysts | few-shot example in the data agent's context for similar questions |
+| 👎 with a correction | corrected-answer example | team leads | shown (as guidance, never a source) in the memory block for similar questions |
+| a team fact | team fact | team leads | shown to every officer in the memory block (nearest 5) |
+
+The officer whose feedback proposed an item can withdraw it, never approve it. Every decision is written to the audit log.
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/feedback -H 'X-PLG-User: S05' -H 'content-type: application/json' \
+  -d '{"thread_id":"<thread>","run_id":"<run_id from the done event>","score":"up"}'
+curl -s http://127.0.0.1:8000/curation -H 'X-PLG-User: S08'
+curl -s -X POST http://127.0.0.1:8000/curation/decide -H 'X-PLG-User: S08' -H 'content-type: application/json' \
+  -d '{"action_id":"<id>","version":1,"decision":"approve"}'
+```
 
 ### Business glossary
 

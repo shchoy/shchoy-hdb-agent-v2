@@ -100,6 +100,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Give Feedback
+         * @description Record a 👍/👎 on an answer and send it to LangSmith (`create_feedback` on the run); a 👎 run joins the
+         *     review annotation queue. What it would teach the team waits for a curator (GET /curation).
+         */
+        post: operations["give_feedback_feedback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/curation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Curation Queue
+         * @description What answer feedback proposes to teach the team, waiting for review, oldest first: for a curator
+         *     (team leads; data analysts for question → SQL examples) the ones they can decide, for the officer who
+         *     proposed one, their own (to withdraw).
+         */
+        get: operations["curation_queue_curation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/curation/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide Curation
+         * @description Approve (it goes live at once), edit then approve, or reject (with a reason) a pending team fact,
+         *     corrected-answer example or question → SQL example. The proposer can only withdraw (reject) it.
+         */
+        post: operations["decide_curation_curation_decide_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tasks/digest": {
         parameters: {
             query?: never;
@@ -365,6 +429,29 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AnsweredTurn
+         * @description One answered turn of a thread, kept in graph state so feedback can name it by its run ID.
+         */
+        AnsweredTurn: {
+            /** Run Id */
+            run_id: string;
+            /** Message Index */
+            message_index: number;
+            /** Question */
+            question: string;
+            /** Intents */
+            intents: string[];
+            /** Answer */
+            answer: string;
+            /** Sql */
+            sql?: string | null;
+            /**
+             * Flagged
+             * @default false
+             */
+            flagged: boolean;
+        };
+        /**
          * AuditRecord
          * @description A decision from the audit log and, unless it was a rejection, the outbox item it sent or the i-EMS ticket it
          *     raised.
@@ -378,7 +465,7 @@ export interface components {
              * Action Type
              * @enum {string}
              */
-            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term";
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term" | "approve_team_fact" | "approve_example" | "approve_sql_example";
             /**
              * Title
              * @default
@@ -480,6 +567,73 @@ export interface components {
             content_type: string;
             /** Blocks */
             blocks: components["schemas"]["DocumentBlock"][];
+        };
+        /**
+         * ExamplePayload
+         * @description A corrected answer from a 👎: once approved, shown (as guidance, never a source) for similar questions.
+         */
+        ExamplePayload: {
+            /**
+             * Kind
+             * @default example
+             * @constant
+             */
+            kind: "example";
+            /** Question */
+            question: string;
+            /** Answer */
+            answer: string;
+            /** Original */
+            original: string;
+            /** Intents */
+            intents: string[];
+            /** Thread Id */
+            thread_id: string;
+            /** Run Id */
+            run_id: string;
+            /** Feedback Id */
+            feedback_id: string;
+        };
+        /** FeedbackReceipt */
+        FeedbackReceipt: {
+            /** Feedback Id */
+            feedback_id: string;
+            /** Forwarded */
+            forwarded: boolean;
+            /** Queued */
+            queued: boolean;
+            /** Proposals */
+            proposals: components["schemas"]["ProposedAction"][];
+        };
+        /**
+         * FeedbackRequest
+         * @description An officer's 👍/👎 on one answer of their own thread, named by the run ID its `done` event carried.
+         */
+        FeedbackRequest: {
+            /** Thread Id */
+            thread_id: string;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Score
+             * @enum {string}
+             */
+            score: "up" | "down";
+            /**
+             * Comment
+             * @default
+             */
+            comment: string;
+            /**
+             * Correction
+             * @default
+             */
+            correction: string;
+            /**
+             * Team Fact
+             * @default
+             */
+            team_fact: string;
         };
         /**
          * GlossaryPayload
@@ -692,11 +846,11 @@ export interface components {
              * Action Type
              * @enum {string}
              */
-            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term";
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term" | "approve_team_fact" | "approve_example" | "approve_sql_example";
             /** Title */
             title: string;
             /** Payload */
-            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"];
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"] | components["schemas"]["TeamFactPayload"] | components["schemas"]["ExamplePayload"] | components["schemas"]["SqlExamplePayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
@@ -746,11 +900,11 @@ export interface components {
              * Action Type
              * @enum {string}
              */
-            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term";
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term" | "approve_team_fact" | "approve_example" | "approve_sql_example";
             /** Title */
             title: string;
             /** Payload */
-            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"];
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"] | components["schemas"]["TeamFactPayload"] | components["schemas"]["ExamplePayload"] | components["schemas"]["SqlExamplePayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
@@ -848,6 +1002,28 @@ export interface components {
             message: string;
         };
         /**
+         * SqlExamplePayload
+         * @description A verified question → SQL pair from a 👍 on a data answer: once approved, a few-shot example for the data agent.
+         */
+        SqlExamplePayload: {
+            /**
+             * Kind
+             * @default sql_example
+             * @constant
+             */
+            kind: "sql_example";
+            /** Question */
+            question: string;
+            /** Sql */
+            sql: string;
+            /** Thread Id */
+            thread_id: string;
+            /** Run Id */
+            run_id: string;
+            /** Feedback Id */
+            feedback_id: string;
+        };
+        /**
          * Submission
          * @description An application with a submission bundle, as the Document check screen offers it.
          */
@@ -894,6 +1070,28 @@ export interface components {
             overdue_count: number;
             /** Tasks */
             tasks: components["schemas"]["RankedTask"][];
+        };
+        /**
+         * TeamFactPayload
+         * @description A fact about how the team works, from an officer's feedback; once approved it joins every officer's notes.
+         */
+        TeamFactPayload: {
+            /**
+             * Kind
+             * @default team_fact
+             * @constant
+             */
+            kind: "team_fact";
+            /** Fact */
+            fact: string;
+            /** Question */
+            question: string;
+            /** Thread Id */
+            thread_id: string;
+            /** Run Id */
+            run_id: string;
+            /** Feedback Id */
+            feedback_id: string;
         };
         /**
          * TermSource
@@ -950,6 +1148,11 @@ export interface components {
              * @default []
              */
             pending: components["schemas"]["ProposedAction"][];
+            /**
+             * Turns
+             * @default []
+             */
+            turns: components["schemas"]["AnsweredTurn"][];
         };
         /** Ticket */
         Ticket: {
@@ -1526,11 +1729,11 @@ export interface components {
              * Action Type
              * @enum {string}
              */
-            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term";
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term" | "approve_team_fact" | "approve_example" | "approve_sql_example";
             /** Title */
             title: string;
             /** Payload */
-            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"];
+            payload: components["schemas"]["LetterPayload"] | components["schemas"]["TicketPayload"] | components["schemas"]["GlossaryPayload"] | components["schemas"]["TeamFactPayload"] | components["schemas"]["ExamplePayload"] | components["schemas"]["SqlExamplePayload"];
             /** Preview */
             preview: string;
             /** Approver Roles */
@@ -1853,6 +2056,140 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PendingApproval"][];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    give_feedback_feedback_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReceipt"];
+                };
+            };
+            /** @description No such answer in your conversations */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    curation_queue_curation_get: {
+        parameters: {
+            query?: {
+                status?: "pending";
+            };
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposedAction"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_curation_curation_decide_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResumeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposedAction"];
+                };
+            };
+            /** @description Only a curator other than the proposer can approve it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No such proposal for you */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description That version is not pending */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

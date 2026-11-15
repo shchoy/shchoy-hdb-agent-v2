@@ -495,3 +495,31 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.feedbackForm {
+  display: grid;
+  gap: 0.5rem;
+  flex-basis: 100%;
+}
+
+.feedbackForm label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.feedbackForm textarea {
+  font: inherit;
+  padding: 0.5rem;
+}
+
+.feedbackForm button {
+  justify-self: start;
+}

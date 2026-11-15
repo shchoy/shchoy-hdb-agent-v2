@@ -6,6 +6,7 @@ import asyncio
 import logging
 from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
@@ -14,6 +15,9 @@ from plg.entities.ids import find_ids
 from plg.identity import UserCtx
 from plg.llm import Block, LLMClient
 from plg.memory.store import Kind, MemoryStore
+
+if TYPE_CHECKING:
+    from plg.feedback.curation import Curation
 
 log = logging.getLogger(__name__)
 
@@ -24,6 +28,12 @@ CONTEXT_LABEL = (
     "Personal notes about this officer, remembered from earlier sessions. They are private and are not a source: "
     "never cite them. Use them only to tailor the answer (role, towns, preferences, past work). If a note "
     "conflicts with a policy finding above, the policy wins; say so and don't act on the note."
+)
+
+TEAM_LABEL = "Team facts approved by curators (how the team works; not a source, never cite them):"
+CORRECTIONS_LABEL = (
+    "Corrections officers made to earlier answers to similar questions, approved by curators. Use them to avoid the "
+    "same mistake; they are not a source: state facts only from the findings, and never cite them:"
 )
 
 EXTRACT_SYSTEM = """\
@@ -77,8 +87,11 @@ WorkLinker = Callable[[str, list[str]], None]
 
 
 class MemoryService:
-    def __init__(self, store: MemoryStore, llm: LLMClient, link_work: WorkLinker | None = None) -> None:
+    def __init__(
+        self, store: MemoryStore, llm: LLMClient, link_work: WorkLinker | None = None, curation: Curation | None = None,
+    ) -> None:
         self.store = store
+        self._curation = curation
         self._llm = llm
         self._link = link_work
         self._tasks: set[asyncio.Task[None]] = set()
@@ -88,12 +101,19 @@ class MemoryService:
         try:
             self.store.seed_profile(user)
             notes = self.store.recall(user.staff_id, question)
+            facts = self._curation.team_facts(question) if self._curation else []
+            fixes = self._curation.corrections(question) if self._curation else []
         except Exception:
             log.exception("memory recall failed")
             return ""
-        if not notes:
+        parts = [f"- ({n.namespace[2]}) {n.text}" for n in notes]
+        if facts:
+            parts += [TEAM_LABEL, *(f"- {f}" for f in facts)]
+        if fixes:
+            parts += [CORRECTIONS_LABEL, *(f"- Q: {c.question}\n  Corrected answer: {c.answer}" for c in fixes)]
+        if not parts:
             return ""
-        lines = "\n".join(f"- ({n.namespace[2]}) {n.text}" for n in notes)
+        lines = "\n".join(parts)
         return f"<memory>\n{CONTEXT_LABEL}\n{lines}\n</memory>"
 
     def learn_in_background(self, user: UserCtx, thread_id: str, question: str, verified: str) -> None:

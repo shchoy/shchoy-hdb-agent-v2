@@ -10,6 +10,7 @@ node with side effects, is reachable only from there.
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 from collections.abc import AsyncIterator, Sequence
 from typing import Any
@@ -26,7 +27,7 @@ from plg.actions import glossary as glossary_actions
 from plg.actions import letters, tickets
 from plg.actions.audit import AuditEntry, AuditLog
 from plg.actions.model import (
-    ApprovalDecision, GlossaryPayload, LetterPayload, ProposedAction, TicketPayload, pending,
+    ApprovalDecision, GlossaryPayload, LetterPayload, ProposedAction, SqlExamplePayload, TicketPayload, pending,
 )
 from plg.actions.outbox import LocalOutbox, Outbox, OutboxItem
 from plg.agents import data, drafting, knowledge
@@ -53,6 +54,8 @@ from plg.guardrails.injection import InjectionFlag
 from plg.identity import UserCtx, load_personas
 from plg.tasks import ask as task_ask
 from plg.tasks import rules as task_rules
+from plg.feedback.curation import Curation
+from plg.feedback.model import AnsweredTurn
 from plg.graph.state import RUN_ID, Finding, Intent, PLGGraph, PLGState
 from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
@@ -185,6 +188,8 @@ NOT_COVERED = (
     "Try rephrasing it, or check with the policy owner."
 )
 
+logger = logging.getLogger(__name__)
+
 
 class ScoredIntent(BaseModel):
     intent: Intent
@@ -225,6 +230,7 @@ def build_graph(
     taxonomy: Taxonomy | None = None,
     checklists: Checklists | None = None,
     glossary_changes: GlossaryChanges | None = None,
+    curation: Curation | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
@@ -350,15 +356,28 @@ def build_graph(
             update["injections"] = list(planted.values())
         return update
 
+    def verified_examples(question: str) -> list[SqlExamplePayload]:
+        """Approved question → SQL pairs for the data agent: best-effort, never failing the turn."""
+        if curation is None:
+            return []
+        try:
+            return curation.sql_examples(question)
+        except Exception:
+            logger.exception("Reading verified SQL examples failed")
+            return []
+
     async def data_node(state: PLGState) -> PLGState:
+        verified = await asyncio.to_thread(verified_examples, state["question"])
         result = await data.answer(
-            llm, warehouse, live_glossary(), changes.layer(base_layer), vocab, agent_conversation(state), state["question"]
+            llm, warehouse, live_glossary(), changes.layer(base_layer), vocab, agent_conversation(state), state["question"],
+            verified,
         )
         write = get_stream_writer()
         for trace in result.traces:
             write({"sql_trace": trace.model_dump(mode="json")})
-        ran = any(t.status == "ok" for t in result.traces)
-        return {"findings": [Finding(specialist=DATA, text=result.text, citations=[], traced=ran)]}
+        ran = [t for t in result.traces if t.status == "ok"]
+        sql = ran[-1].sql if ran else None
+        return {"findings": [Finding(specialist=DATA, text=result.text, citations=[], traced=bool(ran), sql=sql)]}
 
     async def drafting_node(state: PLGState) -> PLGState:
         result = await drafting.answer(
@@ -440,7 +459,7 @@ def build_graph(
         )
         return {"findings": [Finding(specialist=GLOSSARY, text=text, citations=[], traced=True)], "proposals": [outcome]}
 
-    async def merge(state: PLGState) -> PLGState:
+    async def merge(state: PLGState, config: RunnableConfig) -> PLGState:
         """Answer the turn, and commit what its specialists propose, unless the turn met a prompt injection: then
         nothing is proposed, and the officer is warned first."""
         write = get_stream_writer()
@@ -461,7 +480,15 @@ def build_graph(
             write({"node": MERGE, "token": text})
         answer = "".join(parts)
         question: Message = {"role": "user", "content": state["question"]}
-        update: PLGState = {"answer": answer, "messages": [question, {"role": "assistant", "content": answer}]}
+        flagged = bool(planted or state.get("screened"))
+        turn = AnsweredTurn(
+            run_id=str(config.get("configurable", {}).get(RUN_ID, "")), message_index=len(state.get("messages", [])) + 1,
+            question=state["question"], intents=list(state.get("intents", [])), answer=answer, flagged=flagged,
+            sql=next((f.sql for f in reversed(findings) if f.sql), None),
+        )
+        update: PLGState = {
+            "answer": answer, "messages": [question, {"role": "assistant", "content": answer}], "turns": [turn],
+        }
         if not planted and not state.get("screened"):
             update["proposed_actions"] = state.get("proposals", [])
         return update

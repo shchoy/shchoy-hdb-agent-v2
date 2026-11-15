@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { roleLabel } from "@/lib/events";
 import { currentUser } from "@/lib/server/session";
 import { SignOutButton } from "../SignOutButton";
+import { CuratorQueue } from "./CuratorQueue";
 import { MemoryScreen } from "./MemoryScreen";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function MemoryPage() {
       <main>
         <h1>What I remember about you</h1>
         <MemoryScreen />
+        <CuratorQueue staffId={user.staff_id} />
       </main>
     </>
   );

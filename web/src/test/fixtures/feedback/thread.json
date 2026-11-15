@@ -1,0 +1,30 @@
+{
+  "thread_id": "8a79bb4b-0f66-4181-9feb-d8a963201c5a",
+  "title": "How many tenancies are active?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "How many tenancies are active?"
+    },
+    {
+      "role": "assistant",
+      "content": "There are **1587** active tenancies."
+    }
+  ],
+  "summary": "",
+  "running": null,
+  "pending": [],
+  "turns": [
+    {
+      "run_id": "3e6d3c5e-eb00-4ec2-832f-cf1a0fe3147c",
+      "message_index": 1,
+      "question": "How many tenancies are active?",
+      "intents": [
+        "data"
+      ],
+      "answer": "There are **1587** active tenancies.",
+      "sql": "SELECT COUNT(*) AS active FROM tenancies WHERE status = 'Active'",
+      "flagged": false
+    }
+  ]
+}

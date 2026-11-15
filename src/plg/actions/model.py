@@ -16,8 +16,13 @@ from plg.drafting.model import PiiFinding, UnfilledSlot
 from plg.identity import Role
 from plg.ontology.changes import GlossaryVersion
 
-ActionType = Literal["send_letter", "raise_ticket", "approve_glossary_term"]
-"""Grows with the flows that propose actions (record updates, team facts, ...)."""
+ActionType = Literal[
+    "send_letter", "raise_ticket", "approve_glossary_term", "approve_team_fact", "approve_example", "approve_sql_example",
+]
+"""Grows with the flows that propose actions. The `approve_*` kinds from answer feedback (#26) are decided by curators
+outside any conversation (POST /curation/decide), the others at the thread's `approval` interrupt."""
+
+LEADS: list[Role] = ["director", "manager", "estate_manager"]
 
 Decision = Literal["approve", "edit", "reject"]
 
@@ -25,10 +30,14 @@ APPROVER_ROLES: dict[ActionType, list[Role]] = {
     "send_letter": ["officer", "estate_manager", "manager", "director", "legal"],
     "raise_ticket": ["officer", "estate_manager", "manager", "director"],
     "approve_glossary_term": ["director", "manager", "estate_manager", "officer", "analyst", "legal"],
+    "approve_team_fact": LEADS,
+    "approve_example": LEADS,
+    "approve_sql_example": [*LEADS, "analyst"],
 }
 """Who may approve (or edit) each action type. Analysts can draft letters and classify feedback but not send or raise
 anything; anyone can reject their own proposal. A glossary change is approved by the term's owner whatever their role
-(`ProposedAction.approvers`)."""
+(`ProposedAction.approvers`). Curators of what feedback teaches the team: team leads, and data analysts for question → SQL
+examples; never the officer whose feedback proposed it (`approvers` lists the others)."""
 
 
 class LetterPayload(BaseModel):
@@ -83,13 +92,54 @@ class GlossaryPayload(BaseModel):
     owner_name: str
 
 
+class TeamFactPayload(BaseModel):
+    """A fact about how the team works, from an officer's feedback; once approved it joins every officer's notes."""
+
+    kind: Literal["team_fact"] = "team_fact"
+    fact: str
+    question: str
+    """The question whose answer the feedback was on."""
+    thread_id: str
+    run_id: str
+    feedback_id: str
+
+
+class ExamplePayload(BaseModel):
+    """A corrected answer from a 👎: once approved, shown (as guidance, never a source) for similar questions."""
+
+    kind: Literal["example"] = "example"
+    question: str
+    answer: str
+    """The officer's correction."""
+    original: str
+    """The answer they corrected."""
+    intents: list[str]
+    thread_id: str
+    run_id: str
+    feedback_id: str
+
+
+class SqlExamplePayload(BaseModel):
+    """A verified question → SQL pair from a 👍 on a data answer: once approved, a few-shot example for the data agent."""
+
+    kind: Literal["sql_example"] = "sql_example"
+    question: str
+    sql: str
+    thread_id: str
+    run_id: str
+    feedback_id: str
+
+
+CurationPayload = TeamFactPayload | ExamplePayload | SqlExamplePayload
+
+
 class ProposedAction(BaseModel):
     action_id: str
     """Stable across versions: a revised proposal keeps its ID and gets the next version."""
     version: int
     action_type: ActionType
     title: str
-    payload: LetterPayload | TicketPayload | GlossaryPayload
+    payload: LetterPayload | TicketPayload | GlossaryPayload | TeamFactPayload | ExamplePayload | SqlExamplePayload
     preview: str
     """What will happen, as an escaped HTML fragment (the letter, the ticket)."""
     approver_roles: list[Role]

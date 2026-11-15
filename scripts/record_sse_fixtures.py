@@ -6,7 +6,8 @@ Writes `web/src/test/fixtures/*.sse`, `documents/*.json` (a document and a cited
 `approvals/*` (two letters and an i-EMS ticket proposed in three conversations: the pending list, a ticket raised with
 edits, a letter edit and a rejection, the audit trail), `submissions.json` (the Document check screen's list) and
 `tasks/*.json` (the Tasks screen: an estate manager's own digest, a team member's, and the team list) and
-`approvals/glossary_*` (a glossary change proposed by a policy owner: the term owner's inbox, approval, audit trail). Streams come from the real API and graph with a scripted
+`approvals/glossary_*` (a glossary change proposed by a policy owner: the term owner's inbox, approval, audit trail) and
+`feedback/*.json` (answer feedback on a data answer and the curator queue it fills). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -285,6 +286,78 @@ def record_glossary() -> dict[str, str]:
     return recorded
 
 
+FEEDBACK_QUESTION = "How many tenancies are active?"
+FEEDBACK_SQL = "SELECT COUNT(*) AS active FROM tenancies WHERE status = 'Active'"
+CURATOR = {"X-PLG-User": "S03"}
+"""Nurul Huda Rahman, Senior Manager: a team lead, curates every kind of feedback proposal."""
+
+
+class RecordingLangSmith:
+    """Stands in for the LangSmith Client, so feedback is `forwarded` and a 👎 `queued` without the network."""
+
+    def __init__(self) -> None:
+        self.queues: dict[str, str] = {}
+
+    def create_feedback(self, run_id: str, key: str, **_: Any) -> None:
+        pass
+
+    def list_annotation_queues(self, *, name: str | None = None, **_: Any) -> list[Any]:
+        return [type("Queue", (), {"id": qid, "name": n})() for n, qid in self.queues.items() if n == name]
+
+    def create_annotation_queue(self, *, name: str, **_: Any) -> Any:
+        self.queues[name] = f"queue-{len(self.queues) + 1}"
+        return type("Queue", (), {"id": self.queues[name], "name": name})()
+
+    def add_runs_to_annotation_queue(self, queue_id: str, *, run_ids: list[str], **_: Any) -> None:
+        pass
+
+
+def record_feedback() -> dict[str, str]:
+    """An officer's data answer (the thread with its turns), a 👍 on it (proposes its question → SQL pair) and a 👎 with
+    a correction and a team fact (proposes both); the team lead's curator queue lists all three and approves the fact."""
+    llm = ScriptedLLMClient()
+    llm.script_turns("route", FEEDBACK_QUESTION, routed("data"))
+    llm.script_turns(
+        "data", FEEDBACK_QUESTION,
+        turn(tool_call("run_sql", plan="Count active tenancies.", sql=FEEDBACK_SQL, concepts=[])),
+        turn(text("There are 1587 active tenancies.")),
+    )
+    llm.script("merge", FEEDBACK_QUESTION, "There are **1587** active tenancies.")
+    responses: dict[str, Any] = {}
+    with tempfile.TemporaryDirectory() as scratch:
+        app = create_app(
+            scratch_settings(Path(scratch)), llm=llm, memory=scratch_memory(Path(scratch) / "memory"),
+            langsmith=RecordingLangSmith(),
+        )
+        with TestClient(app) as client:
+            thread_id = client.post("/threads", headers=USER).json()["thread_id"]
+            client.post(f"/threads/{thread_id}/runs", json={"message": FEEDBACK_QUESTION}, headers=USER).read()
+            thread = client.get(f"/threads/{thread_id}", headers=USER).json()
+            (answered,) = thread["turns"]
+            responses["thread.json"] = thread
+            given = {"thread_id": thread_id, "run_id": answered["run_id"]}
+            up = client.post("/feedback", json={**given, "score": "up"}, headers=USER)
+            assert up.status_code == 201, up.text
+            responses["receipt_up.json"] = up.json()
+            down = client.post("/feedback", json={
+                **given, "score": "down", "comment": "Wrong scope.",
+                "correction": "Count only tenancies with an unexpired term: 1,542.",
+                "team_fact": "Tenancy Management counts Pending Commencement tenancies as active.",
+            }, headers=USER)
+            assert down.status_code == 201, down.text
+            responses["receipt_down.json"] = down.json()
+            queue = client.get("/curation", params={"status": "pending"}, headers=CURATOR).json()
+            assert {a["action_type"] for a in queue} == {"approve_sql_example", "approve_example", "approve_team_fact"}, queue
+            responses["curation.json"] = queue
+            fact = next(a for a in queue if a["action_type"] == "approve_team_fact")
+            decided = client.post("/curation/decide", json={
+                "action_id": fact["action_id"], "version": fact["version"], "decision": "approve",
+            }, headers=CURATOR)
+            assert decided.status_code == 200, decided.text
+            responses["decided.json"] = decided.json()
+    return {name: json.dumps(body, indent=2) + "\n" for name, body in responses.items()}
+
+
 def data(llm: ScriptedLLMClient) -> None:
     """A rejected query, then the corrected one over the Arrears binding, so the Reasoning panel shows both."""
     binding = load_semantic_layer().binding("plg:Arrears_v1")
@@ -448,6 +521,7 @@ def scratch_settings(scratch: Path) -> Settings:
     return Settings(
         graph_dir=scratch / "graph", threads_db=scratch / "threads.sqlite", outbox_dir=scratch / "outbox",
         iems_dir=scratch / "iems", audit_log=scratch / "audit.jsonl", glossary_changes=scratch / "glossary_changes.jsonl",
+        feedback_log=scratch / "feedback.jsonl",
     )
 
 
@@ -472,7 +546,7 @@ def _stream(app: Any, question: str) -> str:
 
 
 def main(only: list[str]) -> None:
-    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`)."""
+    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`, `feedback`)."""
     OUT.mkdir(parents=True, exist_ok=True)
     if not only or "submissions" in only:
         path = OUT / "submissions.json"
@@ -490,7 +564,13 @@ def main(only: list[str]) -> None:
             path = OUT / "approvals" / name
             path.write_text(content)
             print(f"wrote {path.relative_to(REPO_ROOT)}")
-    if only and set(only) <= {"submissions", "tasks_api", "glossary"}:
+    if not only or "feedback" in only:
+        (OUT / "feedback").mkdir(exist_ok=True)
+        for name, content in record_feedback().items():
+            path = OUT / "feedback" / name
+            path.write_text(content)
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
+    if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback"}:
         return
     with tempfile.TemporaryDirectory() as index, tempfile.TemporaryDirectory() as graph_dir:
         search, store = searcher(Path(index))

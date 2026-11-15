@@ -1,0 +1,40 @@
+{
+  "feedback_id": "c5dbbe65-326b-4ea9-bf88-05d6ab1b6896",
+  "forwarded": true,
+  "queued": false,
+  "proposals": [
+    {
+      "action_id": "sql-95ffb0be917c-66abd98c",
+      "version": 1,
+      "action_type": "approve_sql_example",
+      "title": "SQL example: How many tenancies are active?",
+      "payload": {
+        "kind": "sql_example",
+        "question": "How many tenancies are active?",
+        "sql": "SELECT COUNT(*) AS active FROM tenancies WHERE status = 'Active'",
+        "thread_id": "8a79bb4b-0f66-4181-9feb-d8a963201c5a",
+        "run_id": "3e6d3c5e-eb00-4ec2-832f-cf1a0fe3147c",
+        "feedback_id": "c5dbbe65-326b-4ea9-bf88-05d6ab1b6896"
+      },
+      "preview": "<p><strong>Question:</strong> How many tenancies are active?</p><pre>SELECT COUNT(*) AS active FROM tenancies WHERE status = &#x27;Active&#x27;</pre>",
+      "approver_roles": [
+        "director",
+        "manager",
+        "estate_manager",
+        "analyst"
+      ],
+      "proposed_by": "S05",
+      "approvers": [
+        "S01",
+        "S02",
+        "S03",
+        "S04",
+        "S07",
+        "S08",
+        "S12"
+      ],
+      "proposed_at": "2026-11-15T06:05:05.173195+00:00",
+      "status": "pending"
+    }
+  ]
+}

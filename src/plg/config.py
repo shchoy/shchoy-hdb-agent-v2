@@ -43,6 +43,10 @@ class Settings(BaseModel):
     """The i-EMS mock: raised tickets, one JSON file each."""
     glossary_changes: Path = REPO_ROOT / ".plg" / "glossary_changes.jsonl"
     """Approved glossary changes (append-only), layered over the generated glossary and semantic layer."""
+    feedback_log: Path = REPO_ROOT / ".plg" / "feedback.jsonl"
+    """Answer feedback (👍/👎, corrections), append-only; it is also sent to LangSmith."""
+    annotation_queue: str = "PLG thumbs-down review"
+    """The LangSmith annotation queue thumbs-down runs join (created on first use)."""
     tasks_today: dt.date = dt.date(2026, 9, 30)
     """The day tasks are ranked on (overdue, due this week): PLG Records is a snapshot taken on 30 Sep 2026."""
     # Above this many (estimated) tokens of history, older turns are folded into a summary, keeping the last

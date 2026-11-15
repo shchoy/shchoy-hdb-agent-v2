@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from plg.actions.model import ApprovalDecision, ProposedAction, upsert_actions
 from plg.agents.runtime import Citation
+from plg.feedback.model import AnsweredTurn
 from plg.guardrails.injection import InjectionFlag
 from plg.identity import UserCtx
 from plg.llm import Message
@@ -26,6 +27,8 @@ class Finding(BaseModel):
     citations: list[Citation]
     traced: bool = False
     """The finding rests on a query that ran (the data specialist's counterpart of a citation)."""
+    sql: str | None = None
+    """The last query that ran for it (data specialist), offered to curators as a question → SQL example on a 👍."""
 
 
 T = TypeVar("T")
@@ -54,6 +57,8 @@ class PLGState(TypedDict, total=False):
     screened: list[InjectionFlag]
     injections: Annotated[list[InjectionFlag], per_turn]
     answer: str
+    # Every answered turn with the run that answered it, so feedback can name an answer by its run ID (see plg.feedback).
+    turns: Annotated[list[AnsweredTurn], operator.add]
     # The labelled block of the officer's private notes for this turn (see plg.memory).
     memory: str
     # What this turn's specialists propose; `merge` commits it to `proposed_actions` unless the turn met an injection.

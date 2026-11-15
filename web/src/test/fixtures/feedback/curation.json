@@ -1,0 +1,101 @@
+[
+  {
+    "action_id": "sql-95ffb0be917c-66abd98c",
+    "version": 1,
+    "action_type": "approve_sql_example",
+    "title": "SQL example: How many tenancies are active?",
+    "payload": {
+      "kind": "sql_example",
+      "question": "How many tenancies are active?",
+      "sql": "SELECT COUNT(*) AS active FROM tenancies WHERE status = 'Active'",
+      "thread_id": "8a79bb4b-0f66-4181-9feb-d8a963201c5a",
+      "run_id": "3e6d3c5e-eb00-4ec2-832f-cf1a0fe3147c",
+      "feedback_id": "c5dbbe65-326b-4ea9-bf88-05d6ab1b6896"
+    },
+    "preview": "<p><strong>Question:</strong> How many tenancies are active?</p><pre>SELECT COUNT(*) AS active FROM tenancies WHERE status = &#x27;Active&#x27;</pre>",
+    "approver_roles": [
+      "director",
+      "manager",
+      "estate_manager",
+      "analyst"
+    ],
+    "proposed_by": "S05",
+    "approvers": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S07",
+      "S08",
+      "S12"
+    ],
+    "proposed_at": "2026-11-15T06:05:05.173195+00:00",
+    "status": "pending"
+  },
+  {
+    "action_id": "ex-77ed7ba4-b6e7-4acb-b0fc-04672e243aba",
+    "version": 1,
+    "action_type": "approve_example",
+    "title": "Corrected answer: How many tenancies are active?",
+    "payload": {
+      "kind": "example",
+      "question": "How many tenancies are active?",
+      "answer": "Count only tenancies with an unexpired term: 1,542.",
+      "original": "There are **1587** active tenancies.",
+      "intents": [
+        "data"
+      ],
+      "thread_id": "8a79bb4b-0f66-4181-9feb-d8a963201c5a",
+      "run_id": "3e6d3c5e-eb00-4ec2-832f-cf1a0fe3147c",
+      "feedback_id": "13335ddb-9e43-436b-ae73-aa731f5f7303"
+    },
+    "preview": "<p><strong>Question:</strong> How many tenancies are active?</p><p><strong>Corrected answer:</strong> Count only tenancies with an unexpired term: 1,542.</p><p><strong>Answer given:</strong> There are **1587** active tenancies.</p>",
+    "approver_roles": [
+      "director",
+      "manager",
+      "estate_manager"
+    ],
+    "proposed_by": "S05",
+    "approvers": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S07",
+      "S12"
+    ],
+    "proposed_at": "2026-11-15T06:05:05.183843+00:00",
+    "status": "pending"
+  },
+  {
+    "action_id": "fact-a7a913e2-2710-4108-b947-7ce47092da55",
+    "version": 1,
+    "action_type": "approve_team_fact",
+    "title": "Team fact: Tenancy Management counts Pending Commencement tenancies as active.",
+    "payload": {
+      "kind": "team_fact",
+      "fact": "Tenancy Management counts Pending Commencement tenancies as active.",
+      "question": "How many tenancies are active?",
+      "thread_id": "8a79bb4b-0f66-4181-9feb-d8a963201c5a",
+      "run_id": "3e6d3c5e-eb00-4ec2-832f-cf1a0fe3147c",
+      "feedback_id": "13335ddb-9e43-436b-ae73-aa731f5f7303"
+    },
+    "preview": "<p><strong>Team fact:</strong> Tenancy Management counts Pending Commencement tenancies as active.</p><p>From feedback on: How many tenancies are active?</p>",
+    "approver_roles": [
+      "director",
+      "manager",
+      "estate_manager"
+    ],
+    "proposed_by": "S05",
+    "approvers": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S07",
+      "S12"
+    ],
+    "proposed_at": "2026-11-15T06:05:05.184071+00:00",
+    "status": "pending"
+  }
+]

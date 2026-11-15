@@ -15,6 +15,7 @@ import {
   type ThreadSummary,
   type ThreadView,
 } from "@/lib/events";
+import { AnswerFeedback } from "./AnswerFeedback";
 import { AnswerText } from "./AnswerText";
 import { ClassificationCard } from "./ClassificationCard";
 import { DocCheckCard } from "./DocCheckCard";
@@ -41,6 +42,8 @@ type Answer = {
   tasks: TasksEvent[];
   traces: SqlTraceEvent[];
   trajectory: Step[];
+  /** The run that answered, from its `done` event: what feedback on the answer names. */
+  runId?: string;
 };
 
 type Run =
@@ -62,6 +65,8 @@ export function AskScreen() {
   const [question, setQuestion] = useState("");
   const [run, setRun] = useState<Run>({ status: "idle" });
   const [history, setHistory] = useState<ThreadView["messages"]>([]);
+  /** The run that answered each earlier answer, by its index in `history`. */
+  const [answeredBy, setAnsweredBy] = useState<Record<number, string>>({});
   const [threads, setThreads] = useState<ThreadSummary[]>([]);
   const threadId = useRef<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -131,6 +136,7 @@ export function AskScreen() {
               case "error":
                 throw new RunFailed(event.message);
               case "done":
+                acc.runId = event.run_id;
                 update("done");
                 void refreshThreads();
                 return;
@@ -177,6 +183,8 @@ export function AskScreen() {
 
   async function ask(text: string) {
     if (run.status === "done") {
+      const { runId } = run;
+      if (runId) setAnsweredBy((by) => ({ ...by, [history.length + 1]: runId }));
       setHistory((h) => [
         ...h,
         { role: "user", content: run.question },
@@ -216,6 +224,7 @@ export function AskScreen() {
     setActive(id);
     sessionStorage.setItem(ACTIVE_THREAD, id);
     setHistory(thread.messages);
+    setAnsweredBy(Object.fromEntries((thread.turns ?? []).map((t) => [t.message_index, t.run_id])));
     setRun({ status: "idle" });
     if (thread.running) {
       await follow(thread.running, () =>
@@ -232,6 +241,7 @@ export function AskScreen() {
     setActive(null);
     sessionStorage.removeItem(ACTIVE_THREAD);
     setHistory([]);
+    setAnsweredBy({});
     setRun({ status: "idle" });
   }
 
@@ -285,6 +295,9 @@ export function AskScreen() {
                   {m.role === "user" ? "You asked:" : "Answer:"}
                 </span>
                 <AnswerText markdown={m.content} />
+                {m.role === "assistant" && answeredBy[i] && active && (
+                  <AnswerFeedback threadId={active} runId={answeredBy[i]} />
+                )}
               </li>
             ))}
           </ol>
@@ -369,6 +382,9 @@ export function AskScreen() {
                 {run.drafts.map((draft) => (
                   <DraftPreview key={draft.draft_id} draft={draft} />
                 ))}
+                {run.status === "done" && run.runId && active && (
+                  <AnswerFeedback key={run.runId} threadId={active} runId={run.runId} />
+                )}
               </section>
             )}
           </>

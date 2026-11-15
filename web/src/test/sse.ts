@@ -70,3 +70,16 @@ export function sseResponse(body: string, chunkSize = 7): HttpResponse<ReadableS
     headers: { "Content-Type": "text/event-stream; charset=utf-8" },
   });
 }
+
+/**
+ * A recorded answer-feedback response: `thread.json` (S05's data answer with its turns), `receipt_up.json` (👍: an SQL
+ * example proposed), `receipt_down.json` (👎 with a correction and a team fact), `curation.json` (S03's curator queue: all
+ * three proposed by S05), `decided.json` (S03 approving the team fact).
+ */
+export function feedbackFixture(name: "curation.json"): Record<string, unknown>[];
+export function feedbackFixture(
+  name: "thread.json" | "receipt_up.json" | "receipt_down.json" | "decided.json",
+): Record<string, unknown>;
+export function feedbackFixture(name: string): unknown {
+  return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/feedback", name), "utf8"));
+}

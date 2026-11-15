@@ -18,6 +18,7 @@ src/plg/
 │                    outbox_dir (.plg/outbox, local Outbox), audit_log (.plg/audit.jsonl, append-only) and iems_dir (.plg/iems, i-EMS mock).
 │                    tasks_today (2026-09-30, the PLG Records snapshot date the tasks are ranked on).
 │                    glossary_changes (.plg/glossary_changes.jsonl: approved glossary changes, append-only).
+│                    feedback_log (.plg/feedback.jsonl, append-only), annotation_queue (LangSmith queue for 👎 runs).
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
@@ -39,6 +40,8 @@ src/plg/
 │   │                and PII-checked → next version), unknown_slots. outbox.py: Outbox protocol + LocalOutbox (one JSON per item, id
 │   │                `<action_id>-v<version>`, overwrite = idempotent; item(id)). audit.py: AuditLog (JSONL, append-only, one entry per action ID:
 │   │                title, thread_id, decision, edits, reason, approver + role, at, run_id, outbox_id, ticket_id, term_id; decided_by(staff_id) newest first).
+│   │                Curated kinds (#26): approve_team_fact / approve_example (LEADS: director, manager, estate_manager) and approve_sql_example
+│   │                (+ analyst); payloads TeamFactPayload / ExamplePayload / SqlExamplePayload (CurationPayload); decided over REST, not an interrupt.
 │   │                tickets.py (#20): propose_ticket(Classification → raise_ticket), edit_errors/edited (EDITABLE: category_code (i-EMS only;
 │   │                re-routes team/vendor), severity (resets SLA), unit_id, description, feedback_id), to_ticket (ticket_id IEMS-<yymm>-<action id>), preview HTML.
 ├── defects/         Defect classification (issue #20). taxonomy.py: Taxonomy (load_taxonomy(vocab): the 11 feedback categories with
@@ -66,6 +69,15 @@ src/plg/
 │   │                digest(); render() (plain text: console, file, merge finding); can_view / team (self; directors all; manager/estate_manager
 │   │                their dept's non-lead staff). ask.py (NODE "tasks"): whose (full name, staff ID or a possessive unique first name, else the
 │   │                asker), how_many ("top N"), NOT_ALLOWED / RATIONALE (asks merge for one sentence per task).
+├── feedback/        Answer feedback and curation (issue #26). model.py: AnsweredTurn (run_id, message_index, question, intents, answer,
+│   │                sql?, flagged; kept in graph state `turns`), Feedback + FeedbackLog (JSONL, append-only). langsmith.py: LangSmithFeedback
+│   │                (Client or stand-in; none opened without LANGSMITH_API_KEY): send() = create_feedback(run_id, "user_score", score 1/0,
+│   │                PII-masked comment/correction), queue() = add_runs_to_annotation_queue (queue found or created by name). Best-effort.
+│   │                curation.py: proposals(turn, feedback, user, staff, existing): 👍 + ran SQL → approve_sql_example (ID sql-<hash>-<rand>; not
+│   │                again while one is pending/approved), 👎 + correction → approve_example, team_fact → approve_team_fact; none for a flagged
+│   │                turn; approvers = qualifying staff minus the proposer. Curation: ProposedActions stored in MemoryStore namespace
+│   │                ("memory","team","fact"|"example"|"sql") with status pending_review → active (approved) / retired (rejected); decide(),
+│   │                edit_errors (EDITABLE per type), sql_examples(question) (data agent few-shot), corrections(question), team_facts(question).
 ├── guardrails/      Prompt injection (issue #23). injection.py: rule-based (no Claude, user decision) screen(text, marker) → Screening
 │   │                (hits: rule override|ai_address|approval_bypass|authority_claim|concealment|prompt_leak|role_change + span = its sentence or
 │   │                the whole hidden <!-- --> comment; text with spans replaced by MARKER "[Removed at ingestion: ..." or MESSAGE_MARKER
@@ -131,7 +143,8 @@ src/plg/
 │                    findings fan in by appending (per_turn reducer: an empty update resets, so specialists never send []); screen_input and route reset them each turn.
 │                    screened (flags in the officer's message), injections (flagged documents read this turn), proposals (this turn's
 │                    actions: merge commits them to proposed_actions only if the turn met no injection). `clarification` = route's question back (reset each turn). `memory` = this turn's labelled notes block.
-│                    proposed_actions (upserted by action ID), decision (what `approval` received). RUN_ID = configurable key carrying the run_id to nodes.
+│                    proposed_actions (upserted by action ID), decision (what `approval` received). turns (AnsweredTurn per answer, appended
+│                    by merge with the run_id; Finding.sql = the data finding's last query that ran), for feedback by run ID. RUN_ID = configurable key carrying the run_id to nodes.
 │   ├── summary.py   summarise_history: fold(llm, older messages, previous summary) (Haiku, node summarise_history); entity IDs missing from the reply are re-appended verbatim.
 │   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → screen_input (flagged message → merge:
 │                    fixed MESSAGE_FLAGGED, no Claude; streams `injection`; history gets the redacted message) → (summarise_history if history > threshold) → load_memory → route → knowledge, data, drafting, defect, doc_check and/or tasks (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END
@@ -147,6 +160,8 @@ src/plg/
 │                    proposals; write_memory learns nothing from a flagged turn.
 │                    merge fuses findings keeping [n] markers (with 2+ supported findings, cited or traced, in one `## ` section per part); findings with neither a citation nor a successful query (Finding.traced) → fixed NOT_COVERED
 │                    answer with no Claude call. merge is the only node that streams tokens. Checkpointer: InMemorySaver by default (CLI); plg-api swaps in AsyncSqliteSaver (threads_db) in its lifespan. State keeps the full `messages` plus `summary`/`summarised` (offset folded).
+│                    curation (#26): data_node passes approved question → SQL pairs (Curation.sql_examples, best-effort) to data.answer
+│                    (`verified`: shown in the per-run context as few-shot examples).
 │                    glossary_node (#25): read_change → propose_change over the live glossary (GlossaryChanges overlay); traced finding; proposal = approve_glossary_term.
 │                    data and knowledge read the live glossary/semantic layer each run, so an approval takes effect at once. execute_action for
 │                    approve_glossary_term: GlossaryChanges.approve (old version superseded, never deleted), action_result/audit carry term_id.
@@ -165,6 +180,8 @@ src/plg/
 │   │                officer's question + verified findings, saves notes and flags `conflicts` (status pending_review, dropped from
 │   │                recall); WORKED_ON edges for IDs in the question via a WorkLinker (entities/open.py work_linker → GraphWriter).
 │   │                drain() awaits pending writes (plg-api lifespan shutdown). Memory never yields citations.
+│   │                Given a Curation (#26), context() also lists approved team facts and corrected answers nearest the question
+│   │                (guidance, never a source). store.put_curated / nearest serve the team namespace.
 ├── threads.py       ThreadStore (SQLite plg_threads: owner + title; a thread is listed once asked; all_asked() only for curators' approvals), RunBuffer (every event of a run, follow(after=seq)) and
 │                    RunRegistry (latest run per thread, runs as background tasks so they outlive the client; 409 while one is answering).
 ├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data), classification (Classification), doc_check (DocCheck), tasks (TaskDigest), injection (InjectionFlag),
@@ -237,6 +254,11 @@ src/plg/
 │                    Glossary resume: 403 not the term owner (the proposer can only reject), 422 bad edits, 409 the term changed since proposed.
 │                    GET /submissions: applications with a submission bundle (Submission list, newest first).
 │                    GET /tasks/digest?staff_id&limit (TaskDigest; default own; 404 unknown staff, 403 role can't view), GET /tasks/team (UserCtx list the caller may view, self first).
+                    POST /feedback (#26) {thread_id, run_id, score up|down, comment, correction, team_fact} → FeedbackReceipt (forwarded,
+                    queued, proposals); 404 not your thread / not one of its runs. ThreadView.turns lists answered turns by run ID.
+                    GET /curation: pending curated proposals you may decide (curators; the proposer sees their own to withdraw).
+                    POST /curation/decide (ResumeRequest body) → decided ProposedAction; 404 not visible, 403 the proposer approving or a
+                    role that can't, 409 not the pending version, 422 bad edits / SQL rejected by the dry run; each decision → AuditLog.
                     GET /audit: own decisions, newest first (AuditRecord = AuditEntry + `sent`: the OutboxItem, `ticket`: the i-EMS Ticket; null when not applicable).
 │                    Resume edits for a ticket are validated by tickets.edit_errors (422).
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers),
@@ -260,6 +282,7 @@ tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLL
                      (real local cross-encoder; each search costs seconds). That sync also loads the trackers (`trackers_db` fixture);
                      test_guardrail_api.py (#23): ATTACKS (guardrail cases, 100%) / BENIGN controls, redacted history, ingestion screening of the synced
                      corpus (only the planted email), the planted email via knowledge + defect → flagged, no proposed/executed action, and a pre-#23 index chunk withheld.
+                     test_feedback_api.py (#26): feedback → FakeLangSmith (create_feedback, annotation queue), proposals, curator visibility/decisions/audit, no self-approval, few-shot SQL in the data agent's prompt, team facts/corrections in merge's memory block (make_api(langsmith=...)).
                      test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).
@@ -272,19 +295,20 @@ scripts/record_sse_fixtures.py
                      with the corpus synced into a temp index (threads, memory, graph, outbox and audit writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json, and the approvals flow (two letters in two
                      threads + a ticket → fixtures/approvals/pending.json, edit.sse, reject.sse, ticket_edit.sse, audit.json), and defect.sse (ambiguous feedback → ELE, low confidence), doc_check.sse (APP-2026-0294), doc_check_problem.sse (APP-2026-0288,
-                     illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`), injection.sse (flagged message), injection_email.sse (planted email via knowledge), approvals/glossary_{pending.json,approve.sse,audit.json} (`glossary`: S02 proposes, S08 approves). Optional scenario names record only those.
+                     illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`), injection.sse (flagged message), injection_email.sse (planted email via knowledge), approvals/glossary_{pending.json,approve.sse,audit.json} (`glossary`: S02 proposes, S08 approves), feedback/{thread,receipt_up,receipt_down,curation,decided}.json (`feedback`: S05 rates, S03 curates; a recording LangSmith stand-in). Optional scenario names record only those.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
                      /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay),
                      /api/memory (GET list), /api/submissions (GET), /api/tasks/digest (GET; staff_id, limit), /api/tasks/team (GET), /api/memory/[id] (PATCH, DELETE), /api/approvals (GET pending), /api/audit (GET),
-                     /api/threads/[id]/resume (POST decision, SSE through; refusals relayed). SSE pass-through = relaySse (src/lib/server/plg-api.ts).
+                     /api/threads/[id]/resume (POST decision, SSE through; refusals relayed), /api/feedback (POST), /api/curation (GET),
+                     /api/curation/decide (POST). SSE pass-through = relaySse (src/lib/server/plg-api.ts).
                      Pages: /doc-check (doc-check/DocCheckScreen.tsx: pick an application from /api/submissions → new thread + run
                      "Is application <ID> complete? ..." (shared helpers in runClient.ts), DocCheckCard + notice preview + link to Approvals and
                      to the conversation (sessionStorage plg_active_thread)), /tasks (tasks/TasksScreen.tsx: own top tasks via TaskList.tsx; Officer picker when /api/tasks/team has more than one; Show 5/10/20/50; 403 message), /sign-in, /approvals (Approvals inbox, approvals/ApprovalsScreen.tsx: pending actions across threads (letters, glossary changes (GlossaryCard: now vs proposed definition/value/effective date, reason, SQL binding, owner; approve/edit only for `approvers`, the proposer can only withdraw) and i-EMS tickets: TicketCard with classification details, editable category/priority/unit/description/case, 'Approve and raise') with letter preview,
                      open slots, PII flags, editable slots shown as <del>/<ins> diff, approve / send edited / reject with reason, approve+edit
                      hidden for roles that can't send or while open slots are blank; then the result (outbox ID, version sent) and the audit
-                     trail (who, role, when, reason, edits, outbox item + letter as sent, run_id)), /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
+                     trail (who, role, when, reason, edits, outbox item + letter as sent, run_id)), /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten; memory/CuratorQueue.tsx: pending team facts, corrected answers and SQL examples, approve / edit then approve (only for `approvers`) / reject or withdraw with a reason), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; AnswerFeedback.tsx under each answer with a run_id (live: `done`; history: ThreadView.turns by message_index): 👍 Helpful / 👎 Not helpful with Correct this, Team fact, comment; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
                      answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), TaskList under the answer (`tasks` event: ranked table, 'Overdue · N days' marker, urgency × impact = score, reasons), DocCheckCard under the answer (✓/✗/– checklist table, problem + reason, files identified, scan marker), ClassificationCard under the answer (category, severity, team, vendor, SLA or 'not a maintenance defect', confidence + low-confidence flag, other candidates, rationale), DraftPreview under the answer (sandboxed HTML preview via LetterFrame.tsx, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry; InjectionAlert.tsx: role="alert" above the answer for `injection` events, rule labels, excerpt as plain text).
                      dates.ts: day() / period() / when() date formatting shared by the cards.
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
@@ -322,7 +346,8 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 - The data agent only runs one read-only SELECT over PLG Records (not `staff`) and the Excel trackers (`trackers.<table>`), validated and EXPLAIN-dry-run first; business
   terms use the glossary version in force on the reporting date. The DuckDB `sqlite` extension is downloaded on first use.
 - Side effects (letters to the Outbox, tickets to i-EMS via `TicketSystem`) exist only as `ProposedAction`s; `execute_action` runs only after the `approval` interrupt, and no model
-  toolset holds a tool that acts. Outbox and audit writes go through the `Outbox` / `AuditLog` adapters.
+  toolset holds a tool that acts. Curated team items from feedback (#26) are `ProposedAction`s too, decided by a curator over `POST /curation/decide` (they change only
+  team memory), audited the same way. Feedback sent to LangSmith is telemetry, not an action. Outbox and audit writes go through the `Outbox` / `AuditLog` adapters.
 - Every claim in a knowledge answer is cited through the Messages API search_result citations; an answer
   with no surviving citation becomes the fixed "not covered" answer. Agent tools are read-only.
 - `wrap_anthropic` is not used for streaming: langsmith 0.14.8's stream reducer crashes with anthropic 1.13.

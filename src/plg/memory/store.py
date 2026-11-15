@@ -175,6 +175,21 @@ class MemoryStore(BaseStore):
         )
         return [*standing, *episodes]
 
+    def put_curated(
+        self, ns: tuple[str, ...], key: str, text: str, value: dict[str, Any], *, status: MemoryStatus, provenance: str,
+    ) -> None:
+        """Write one item as given (no masking or merging): the team's curated items (plg.feedback.curation)."""
+        now = datetime.now(UTC)
+        earlier = self.index.get_memory(ns, key)
+        self.index.put_memory(MemoryItem(
+            namespace=ns, key=key, value=value, text=text, vector=self._embedder.embed_query(text), status=status,
+            provenance=provenance, created_at=earlier.created_at if earlier else now, updated_at=now,
+        ))
+
+    def nearest(self, ns: tuple[str, ...], question: str, *, limit: int) -> list[MemoryItem]:
+        """Active items under `ns`, nearest the question first."""
+        return self.index.search_memory(ns, self._embedder.embed_query(question), now=datetime.now(UTC), limit=limit)
+
     # ------------------------------------------------------------------ BaseStore
     def batch(self, ops: Iterable[Op]) -> list[Result]:
         return [self._apply(op) for op in ops]

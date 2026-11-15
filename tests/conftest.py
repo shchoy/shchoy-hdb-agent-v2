@@ -106,6 +106,7 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         store: LanceSearchStore | None = None,
         entities: GraphStore | None = None,
         memory: MemoryStore | None = None,
+        langsmith: object | None = None,
         **settings: object,
     ) -> Api:
         settings.setdefault("threads_db", tmp_path / "threads.sqlite")
@@ -115,10 +116,12 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         settings.setdefault("audit_log", tmp_path / "audit.jsonl")
         settings.setdefault("iems_dir", tmp_path / "iems")  # raised i-EMS tickets land here
         settings.setdefault("glossary_changes", tmp_path / "glossary_changes.jsonl")  # approved definition changes
+        settings.setdefault("feedback_log", tmp_path / "feedback.jsonl")
         embedder = HashingEmbedder(dim=128)
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]
-            Settings(**settings), llm=llm, searcher=searcher, store=store, entities=entities, memory=memory
+            Settings(**settings), llm=llm, searcher=searcher, store=store, entities=entities, memory=memory,
+            langsmith=langsmith,
         )
         client = TestClient(app)
         clients.append(client.__enter__())

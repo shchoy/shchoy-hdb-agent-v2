@@ -47,6 +47,8 @@ class Settings(BaseModel):
     """Answer feedback (👍/👎, corrections), append-only; it is also sent to LangSmith."""
     annotation_queue: str = "PLG thumbs-down review"
     """The LangSmith annotation queue thumbs-down runs join (created on first use)."""
+    developers: str = "S08"
+    """Staff IDs (comma-separated) of the developer personas: they see a "view trace" link on their answers."""
     tasks_today: dt.date = dt.date(2026, 9, 30)
     """The day tasks are ranked on (overdue, due this week): PLG Records is a snapshot taken on 30 Sep 2026."""
     # Above this many (estimated) tokens of history, older turns are folded into a summary, keeping the last
@@ -78,6 +80,10 @@ class Settings(BaseModel):
     def transcripts_dir(self) -> Path:
         """Saved transcripts of scanned PDFs, beside the index (`plg sync --full` keeps them)."""
         return self.search_db.with_name(f"{self.search_db.name}-transcripts")
+
+    @property
+    def developer_ids(self) -> frozenset[str]:
+        return frozenset(s.strip() for s in self.developers.split(",") if s.strip())
 
     def model_for(self, tier: Tier) -> str:
         return {"haiku": self.model_haiku, "sonnet": self.model_sonnet, "opus": self.model_opus}[tier]

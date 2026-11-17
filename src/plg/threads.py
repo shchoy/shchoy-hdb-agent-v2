@@ -22,6 +22,7 @@ from plg.events import DoneEvent, ErrorEvent, RunEvent
 from plg.graph.state import PLGGraph
 from plg.identity import UserCtx
 from plg.runs import stream_run
+from plg.tracing import Tracer
 
 
 class ThreadSummary(BaseModel):
@@ -131,7 +132,9 @@ class RunInProgress(Exception):
 class RunRegistry:
     """The latest run of each thread. A run goes on when its client goes away."""
 
-    def __init__(self) -> None:
+    def __init__(self, tracer: Tracer | None = None) -> None:
+        """`tracer`: each run is traced to LangSmith through it (None: not traced)."""
+        self._tracer = tracer
         self._runs: dict[str, RunBuffer] = {}
         self._tasks: set[asyncio.Task[None]] = set()
 
@@ -149,7 +152,7 @@ class RunRegistry:
 
         async def pump() -> None:
             try:
-                async for event in stream_run(graph, thread_id, message, user, decision=decision):
+                async for event in stream_run(graph, thread_id, message, user, decision=decision, tracer=self._tracer):
                     await buffer.add(event)
             finally:
                 await buffer.close()  # followers never hang, and the thread can be asked again

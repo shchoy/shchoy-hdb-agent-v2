@@ -504,6 +504,12 @@
   margin: 0.5rem 0 0;
 }
 
+.traceLink {
+  display: inline-block;
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
 .feedbackForm {
   display: grid;
   gap: 0.5rem;

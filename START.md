@@ -41,7 +41,8 @@ ANTHROPIC_API_KEY=sk-ant-...
 # Required to index the corpus (`plg sync`) and to search it when answering
 VOYAGE_API_KEY=pa-...
 
-# Optional: LangSmith tracing of graph runs and Claude calls
+# Optional: LangSmith tracing (issue #27): one trace per run (nodes, branches, Claude, tool and search calls),
+# tenant PII masked before upload; both variables are needed for tracing to be on
 LANGSMITH_API_KEY=lsv2_...
 LANGSMITH_TRACING=true
 LANGSMITH_PROJECT=plg-poc
@@ -67,6 +68,8 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_AUDIT_LOG` | `.plg/audit.jsonl` | Append-only audit log: one line per decided action (approver, time, LangSmith `run_id`) |
 | `PLG_FEEDBACK_LOG` | `.plg/feedback.jsonl` | Append-only answer feedback (👍/👎, corrections, team facts) |
 | `PLG_ANNOTATION_QUEUE` | `PLG thumbs-down review` | LangSmith annotation queue that thumbs-down runs join (created on first use; needs `LANGSMITH_API_KEY`) |
+| `PLG_DEVELOPERS` | `S08` | Comma-separated staff IDs of developer personas: they get a **View trace** link under their answers |
+| `PLG_GIT_SHA` | (from `git rev-parse HEAD`) | Commit recorded on every trace, for running outside a git checkout |
 | `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
 | `PLG_HISTORY_KEEP_MESSAGES` | `4` | Recent messages kept verbatim when folding |
 | `PLG_RERANK_BACKEND` | `voyage` | `voyage` reranks with Voyage's hosted reranker (uses `VOYAGE_API_KEY`); `local` runs a cross-encoder on this machine (no document text leaves it) |
@@ -320,6 +323,12 @@ curl -s -X DELETE http://127.0.0.1:8000/memory/<id> -H 'X-PLG-User: S05'
 ```
 
 In the web app, the **Memory** link in the header opens `/memory`: list, edit and forget your notes. A flagged note can't be switched back on: edit it to make the exception clear (e.g. "for NC units, 1.0 m under Circular 07/2026"), which clears the flag, or forget it. `PATCH` with `{"status":"active"}` on a flagged note returns 409. Another officer's notes return 404.
+
+### Tracing and "View trace" (issue #27)
+
+With `LANGSMITH_API_KEY` set and `LANGSMITH_TRACING=true`, `plg serve` and `plg ask` trace every run to LangSmith (project `LANGSMITH_PROJECT`). Each question, and each approval decision (resume), is one trace whose root `plg_run` has the run ID shown in `done` (the same ID feedback uses). Its metadata holds `thread_id`, `user_id`, `user_role`, `channel` (`api` or `cli`), `git_sha`, `kind` (`question` or `resume` + `action_id`/`decision`), the routed `intents`, and `interrupted` when the run stopped for an approval. Nested runs are the graph nodes and `Send()` branches, Claude calls (`wrap_anthropic`, with `node` and `tier` metadata), tool calls and searches. NRIC/FIN numbers, emails, phone numbers and tenant contact names are masked before upload; `plg sync` and `plg graph lineage` use the same masking client.
+
+Sign in as a developer persona (default **Kelvin Goh, S08**; set `PLG_DEVELOPERS`) to see **View trace** under each of your answers. It opens the trace in a new tab (BFF `/api/threads/{id}/runs/{run_id}/trace` → plg-api `GET /threads/{id}/runs/{run_id}/trace` → redirect). Other personas get 403 and see no link. Without tracing on, the endpoint returns 503.
 
 ### Answer feedback and curation (issue #26)
 

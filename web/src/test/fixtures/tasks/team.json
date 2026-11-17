@@ -4,20 +4,23 @@
     "name": "Marcus Lim",
     "title": "Estate Manager (East)",
     "dept": "Estate Management",
-    "role": "estate_manager"
+    "role": "estate_manager",
+    "developer": false
   },
   {
     "staff_id": "S06",
     "name": "Daniel Ong",
     "title": "Property Officer (Inspections)",
     "dept": "Estate Management",
-    "role": "officer"
+    "role": "officer",
+    "developer": false
   },
   {
     "staff_id": "S10",
     "name": "Ahmad Faizal Ismail",
     "title": "Maintenance Coordinator (i-EMS)",
     "dept": "Estate Management",
-    "role": "officer"
+    "role": "officer",
+    "developer": false
   }
 ]

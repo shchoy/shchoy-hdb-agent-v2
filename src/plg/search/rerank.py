@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 import httpx2
+from langsmith import traceable
 
 from plg.config import Settings
 from plg.search.embed import Embedder
@@ -92,11 +93,20 @@ class Searcher:
         self._reranker = reranker
         self._candidates = candidates
 
+    @traceable(run_type="retriever", name="search", process_inputs=lambda i: {k: v for k, v in i.items() if k != "self"},  # the query, filters and k
+               process_outputs=lambda hits: {"output": [_document(h) for h in hits]})
     def search(self, query: str, *, filters: SearchFilter | None = None, k: int = 8) -> list[SearchHit]:
         candidates = self._store.search(
             query, self._embedder.embed_query(query), filters=filters, limit=self._candidates
         )
         return self._reranker.rerank(query, candidates)[:k]
+
+
+def _document(hit: SearchHit) -> dict[str, object]:
+    """A hit as LangSmith shows retrieved documents."""
+    chunk = hit.chunk
+    return {"page_content": chunk.text, "type": "Document",
+            "metadata": {"chunk_id": chunk.chunk_id, "doc_id": chunk.doc_id, "score": hit.score}}
 
 
 def open_searcher(settings: Settings) -> Searcher:

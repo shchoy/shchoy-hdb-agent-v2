@@ -100,6 +100,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/threads/{thread_id}/runs/{run_id}/trace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Trace Link
+         * @description The LangSmith trace of one of your answers (the run ID its `done` event carried). Developers only.
+         */
+        get: operations["trace_link_threads__thread_id__runs__run_id__trace_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/feedback": {
         parameters: {
             query?: never;
@@ -1237,6 +1257,14 @@ export interface components {
             /** Candidates */
             candidates: components["schemas"]["Candidate"][];
         };
+        /**
+         * TraceLink
+         * @description Where a run's LangSmith trace can be read.
+         */
+        TraceLink: {
+            /** Url */
+            url: string;
+        };
         /** UnfilledSlot */
         UnfilledSlot: {
             /** Slot */
@@ -1262,6 +1290,11 @@ export interface components {
              * @enum {string}
              */
             role: "director" | "manager" | "estate_manager" | "officer" | "analyst" | "legal";
+            /**
+             * Developer
+             * @default false
+             */
+            developer: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -2065,6 +2098,69 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    trace_link_threads__thread_id__runs__run_id__trace_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                thread_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceLink"];
+                };
+            };
+            /** @description Not a developer */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No such answer in your conversations */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description LangSmith could not be reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Tracing is off */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

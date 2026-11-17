@@ -19,6 +19,8 @@ class UserCtx(BaseModel):
     title: str
     dept: str
     role: Role
+    developer: bool = False
+    """A developer persona: may open the LangSmith trace of their answers."""
 
 
 def role_for(title: str) -> Role:
@@ -36,15 +38,16 @@ def role_for(title: str) -> Role:
     return "officer"
 
 
-def load_personas(records_db: Path) -> dict[str, UserCtx]:
-    """Every staff member, keyed by staff ID, in staff ID order."""
+def load_personas(records_db: Path, developers: frozenset[str] = frozenset()) -> dict[str, UserCtx]:
+    """Every staff member, keyed by staff ID, in staff ID order. `developers`: staff IDs of developer personas."""
     with sqlite3.connect(f"file:{records_db}?mode=ro", uri=True) as conn:
         rows = conn.execute(
             "SELECT staff_id, name, title, dept FROM staff ORDER BY staff_id"
         ).fetchall()
     return {
         staff_id: UserCtx(
-            staff_id=staff_id, name=name, title=title, dept=dept, role=role_for(title)
+            staff_id=staff_id, name=name, title=title, dept=dept, role=role_for(title),
+            developer=staff_id in developers,
         )
         for staff_id, name, title, dept in rows
     }

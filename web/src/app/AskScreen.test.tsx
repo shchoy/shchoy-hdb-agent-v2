@@ -1020,3 +1020,36 @@ describe("Answer feedback", () => {
     expect(within(screen.getByRole("region", { name: "Answer" })).getByRole("button", { name: "Helpful" })).toBeInTheDocument();
   });
 });
+
+describe("View trace", () => {
+  const DATA_RUN = "6b54eecd-7625-405e-a0b8-4c30f29b9e3e";
+
+  async function dataAnswer(developer: boolean) {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("data"))),
+    );
+    const user = userEvent.setup();
+    render(<AskScreen developer={developer} />);
+    await user.type(screen.getByLabelText("Your question"), DATA_QUESTION);
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+    await runFinished();
+    return screen.getByRole("region", { name: "Answer" });
+  }
+
+  it("links a developer to the LangSmith trace of the answer's run, in a new tab", async () => {
+    const answer = await dataAnswer(true);
+
+    const link = within(answer).getByRole("link", { name: "View trace" });
+    expect(link).toHaveAttribute("href", `/api/threads/t1/runs/${DATA_RUN}/trace`);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("shows no trace link to anyone else", async () => {
+    const answer = await dataAnswer(false);
+
+    expect(within(answer).getByRole("button", { name: "Helpful" })).toBeInTheDocument();
+    expect(within(answer).queryByRole("link", { name: "View trace" })).not.toBeInTheDocument();
+  });
+});

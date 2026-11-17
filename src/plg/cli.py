@@ -31,6 +31,7 @@ from plg.search.embed import Embedder, VoyageEmbedder
 from plg.search.models import DocStatus, SearchFilter
 from plg.search.rerank import LazySearcher, Reranker
 from plg.search.rerank import make_reranker as build_reranker
+from plg.tracing import Tracer, install_tracer
 
 app = typer.Typer(help="PLG Super-Librarian", no_args_is_help=True)
 graph_app = typer.Typer(help="Entity graph built from PLG Records.", no_args_is_help=True)
@@ -43,6 +44,11 @@ app.add_typer(memory_app, name="memory")
 
 def make_llm(settings: Settings) -> LLMClient:
     return AnthropicLLMClient(settings)
+
+
+def make_tracer(settings: Settings) -> Tracer | None:
+    """LangSmith tracing with tenant PII masked, when configured; also the default for Claude calls outside a run."""
+    return install_tracer(settings)
 
 
 def make_embedder(settings: Settings) -> Embedder:
@@ -67,10 +73,11 @@ def ask(question: str) -> None:
     """Ask a question and stream the answer."""
     settings = Settings.from_env()
     graph = build_graph(make_llm(settings), LazySearcher(settings), entities=LazyGraph(settings), warehouse=Warehouse(settings.records_db, settings.trackers_db))
+    tracer = make_tracer(settings)
 
     async def run() -> bool:
         citations: list[CitationEvent] = []
-        async for event in stream_run(graph, str(uuid.uuid4()), question):
+        async for event in stream_run(graph, str(uuid.uuid4()), question, tracer=tracer, channel="cli"):
             if isinstance(event, TokenEvent):
                 typer.echo(event.text, nl=False)
             elif isinstance(event, CitationEvent):
@@ -110,6 +117,7 @@ def sync(
     store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
     entities, tagger = load_entity_spine(settings.records_db)
     sources: list[DocumentSource] = [SharePointSource(settings.corpus_dir), LotusNotesSource(settings.corpus_dir)]
+    make_tracer(settings)  # scan transcription is traced (PII masked) when LangSmith is configured
     scans = ScanReader(make_llm(settings), TranscriptStore(settings.transcripts_dir))
     report = run_sync(store, embedder, sources, entities, tagger, scans)
 
@@ -227,6 +235,7 @@ def graph_lineage() -> None:
     embedder = make_embedder(settings)
     store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
     graph = open_graph(settings)
+    make_tracer(settings)  # lineage extraction is traced (PII masked) when LangSmith is configured
     report = asyncio.run(extract_lineage(make_llm(settings), store, GraphWriter(settings.graph_dir, graph)))
     typer.echo(f"Wrote {report.nodes} nodes and {report.edges} edges to {settings.graph_dir / 'delta'}")
     for problem in report.dropped:

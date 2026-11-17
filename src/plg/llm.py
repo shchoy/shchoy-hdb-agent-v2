@@ -6,12 +6,15 @@ import asyncio
 import itertools
 import re
 from collections.abc import AsyncIterator, Callable, Sequence
+from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
 from typing import Any, Literal, NamedTuple, Protocol, TypedDict
 
 import httpx2
 from anthropic import AsyncAnthropic
-from langsmith import traceable
+from langsmith import get_tracing_context, tracing_context
+from langsmith.utils import tracing_is_enabled
+from langsmith.wrappers import wrap_anthropic
 
 from plg.config import Settings, Tier
 
@@ -60,41 +63,40 @@ class LLMClient(Protocol):
         ...
 
 
-def _join_text(chunks: Sequence[Any]) -> dict[Any, Any]:
-    return {"output": "".join(chunks)}
-
-
-def _drop_self(inputs: dict[Any, Any]) -> dict[Any, Any]:
-    return {k: v for k, v in inputs.items() if k != "self"}
+def _traced(node: str, tier: Tier) -> AbstractContextManager[None]:
+    """The Claude call's trace names the graph node and model tier (on top of the run's thread, user, ...)."""
+    context = get_tracing_context()
+    metadata = {**(context.get("metadata") or {}), "node": node, "tier": tier}
+    return tracing_context(metadata=metadata, tags=[*(context.get("tags") or []), f"tier:{tier}"])
 
 
 class AnthropicLLMClient:
-    """Native Anthropic SDK client. Each call is traced to LangSmith as an `llm` run.
+    """Native Anthropic SDK client, wrapped with `wrap_anthropic`: each call is a LangSmith `llm` run (inside the
+    graph run's trace when there is one) whose metadata names the graph node and model tier.
 
-    Streaming is traced with `@traceable` rather than `wrap_anthropic`: langsmith 0.14.8's
-    stream reducer is incompatible with anthropic 1.13 (`accumulate_event` needs `json_bufs`).
-    """
+    langsmith 0.14.8's wrapper can only stream through `text_stream`, and only while tracing (untraced, it looks for
+    a run that isn't there; iterating events hits `accumulate_event`'s missing `json_bufs`), so an untraced stream
+    goes through the bare client."""
 
     def __init__(self, settings: Settings, http_client: httpx2.AsyncClient | None = None) -> None:
         self._settings = settings
-        self._client = AsyncAnthropic(http_client=http_client)
+        self._bare = AsyncAnthropic(http_client=http_client)
+        self._client = wrap_anthropic(AsyncAnthropic(http_client=http_client))  # wraps in place: a second SDK client
 
-    @traceable(
-        run_type="llm", name="ChatAnthropic", reduce_fn=_join_text, process_inputs=_drop_self
-    )
     async def stream_text(
         self, *, node: str, tier: Tier, system: str, messages: list[Message]
     ) -> AsyncIterator[str]:
-        async with self._client.messages.stream(
-            model=self._settings.model_for(tier),
-            max_tokens=self._settings.max_tokens,
-            system=system,
-            messages=messages,  # type: ignore[arg-type]
-        ) as stream:
-            async for text in stream.text_stream:
-                yield text
+        client = self._client if tracing_is_enabled() else self._bare
+        with _traced(node, tier):
+            async with client.messages.stream(
+                model=self._settings.model_for(tier),
+                max_tokens=self._settings.max_tokens,
+                system=system,
+                messages=messages,  # type: ignore[arg-type]
+            ) as stream:
+                async for text in stream.text_stream:
+                    yield text
 
-    @traceable(run_type="llm", name="ChatAnthropic", process_inputs=_drop_self)
     async def complete(
         self,
         *,
@@ -107,14 +109,15 @@ class AnthropicLLMClient:
         max_tokens: int | None = None,
     ) -> AgentTurn:
         extra: dict[str, Any] = {"tool_choice": tool_choice} if tool_choice else {}
-        response = await self._client.messages.create(
-            model=self._settings.model_for(tier),
-            max_tokens=max_tokens or self._settings.max_tokens,
-            system=system,  # type: ignore[arg-type]
-            messages=messages,  # type: ignore[arg-type]
-            tools=tools,  # type: ignore[arg-type]
-            **extra,
-        )
+        with _traced(node, tier):
+            response = await self._client.messages.create(
+                model=self._settings.model_for(tier),
+                max_tokens=max_tokens or self._settings.max_tokens,
+                system=system,  # type: ignore[arg-type]
+                messages=messages,  # type: ignore[arg-type]
+                tools=tools,  # type: ignore[arg-type]
+                **extra,
+            )
         return AgentTurn(
             content=[b.model_dump(mode="json", exclude_none=True) for b in response.content],
             stop_reason=response.stop_reason or "end_turn",

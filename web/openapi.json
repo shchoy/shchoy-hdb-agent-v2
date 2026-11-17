@@ -296,6 +296,85 @@
         }
       }
     },
+    "/threads/{thread_id}/runs/{run_id}/trace": {
+      "get": {
+        "summary": "Trace Link",
+        "description": "The LangSmith trace of one of your answers (the run ID its `done` event carried). Developers only.",
+        "operationId": "trace_link_threads__thread_id__runs__run_id__trace_get",
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id"
+            }
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceLink"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a developer"
+          },
+          "404": {
+            "description": "No such answer in your conversations"
+          },
+          "502": {
+            "description": "LangSmith could not be reached"
+          },
+          "503": {
+            "description": "Tracing is off"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/feedback": {
       "post": {
         "summary": "Give Feedback",
@@ -3349,6 +3428,20 @@
         "title": "TicketPayload",
         "type": "object"
       },
+      "TraceLink": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "TraceLink",
+        "description": "Where a run's LangSmith trace can be read."
+      },
       "UnfilledSlot": {
         "properties": {
           "slot": {
@@ -3396,6 +3489,11 @@
               "legal"
             ],
             "title": "Role"
+          },
+          "developer": {
+            "type": "boolean",
+            "title": "Developer",
+            "default": false
           }
         },
         "type": "object",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -60,9 +61,12 @@ from plg.search.store import SearchStore
 from plg.tasks import rules as task_rules
 from plg.tasks.rules import TaskDigest
 from plg.threads import RunBuffer, RunInProgress, RunRegistry, ThreadStore, ThreadSummary
+from plg.tracing import Tracer, install_tracer
 
 
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+logger = logging.getLogger(__name__)
 
 
 class ThreadCreated(BaseModel):
@@ -82,6 +86,12 @@ class ThreadView(BaseModel):
     """Actions waiting for the officer's decision (POST /threads/{id}/resume)."""
     turns: list[AnsweredTurn] = []
     """The answered turns and their run IDs (`message_index` = the answer's index in `messages`), for feedback."""
+
+
+class TraceLink(BaseModel):
+    """Where a run's LangSmith trace can be read."""
+
+    url: str
 
 
 class FeedbackRequest(BaseModel):
@@ -181,8 +191,10 @@ def create_app(
     entities: GraphStore | None = None,
     memory: MemoryStore | None = None,
     langsmith: Any | None = None,
+    tracer: Tracer | None = None,
 ) -> FastAPI:
-    """`langsmith`: the LangSmith Client feedback goes to (default: one opened on first use if LANGSMITH_API_KEY is set)."""
+    """`langsmith`: the LangSmith Client feedback goes to (default: the tracer's, else one opened on first use if
+    LANGSMITH_API_KEY is set). `tracer`: runs are traced to LangSmith through it (None: not traced)."""
     settings = settings or Settings.from_env()
     llm = llm or AnthropicLLMClient(settings)
     entities = entities or LazyGraph(settings)
@@ -196,10 +208,10 @@ def create_app(
     curation = Curation(memory)
     learner = MemoryService(memory, llm, link_work, curation)
     feedback_log = FeedbackLog(settings.feedback_log)
-    tracer = LangSmithFeedback(langsmith, settings.annotation_queue)
+    feedback_sink = LangSmithFeedback(langsmith or (tracer.client if tracer else None), settings.annotation_queue)
     drafts = DraftStore()
     threads = ThreadStore(settings.threads_db)
-    runs = RunRegistry()
+    runs = RunRegistry(tracer)
     outbox = LocalOutbox(settings.outbox_dir)
     audit = AuditLog(settings.audit_log)
     ticket_system = LocalTicketSystem(settings.iems_dir)
@@ -230,7 +242,7 @@ def create_app(
 
     app = FastAPI(title="plg-api", version="0.1.0", lifespan=lifespan)
 
-    app.state.personas = load_personas(settings.records_db)
+    app.state.personas = load_personas(settings.records_db, settings.developer_ids)
 
     @app.get("/personas")
     async def list_personas(request: Request) -> list[UserCtx]:
@@ -285,6 +297,29 @@ def create_app(
         ]
         return sorted(found, key=lambda a: a.proposed_at)
 
+    @app.get(
+        "/threads/{thread_id}/runs/{run_id}/trace",
+        responses={
+            403: {"description": "Not a developer"}, 404: {"description": "No such answer in your conversations"},
+            502: {"description": "LangSmith could not be reached"}, 503: {"description": "Tracing is off"},
+        },
+    )
+    async def trace_link(thread_id: str, run_id: str, user: User) -> TraceLink:
+        """The LangSmith trace of one of your answers (the run ID its `done` event carried). Developers only."""
+        owned(thread_id, user)
+        if not user.developer:
+            raise HTTPException(status_code=403, detail="Only developers can open traces")
+        values = (await graph.aget_state({"configurable": {"thread_id": thread_id}})).values
+        if not any(t.run_id == run_id for t in values.get("turns", [])):
+            raise HTTPException(status_code=404, detail="No such answer in this conversation")
+        if tracer is None:
+            raise HTTPException(status_code=503, detail="Tracing is off: set LANGSMITH_API_KEY and LANGSMITH_TRACING=true")
+        try:
+            return TraceLink(url=await asyncio.to_thread(tracer.url, run_id))
+        except Exception:
+            logger.exception("Looking up the trace of run %s failed", run_id)
+            raise HTTPException(status_code=502, detail="LangSmith could not be reached") from None
+
     @app.post("/feedback", status_code=201, responses={404: {"description": "No such answer in your conversations"}})
     async def give_feedback(request: Request, body: FeedbackRequest, user: User) -> FeedbackReceipt:
         """Record a 👍/👎 on an answer and send it to LangSmith (`create_feedback` on the run); a 👎 run joins the
@@ -294,8 +329,8 @@ def create_app(
         turn = next((t for t in values.get("turns", []) if t.run_id == body.run_id), None)
         if turn is None:
             raise HTTPException(status_code=404, detail="No such answer in this conversation")
-        forwarded = await asyncio.to_thread(tracer.send, body.run_id, body.score, body.comment, body.correction)
-        queued = body.score == "down" and await asyncio.to_thread(tracer.queue, body.run_id)
+        forwarded = await asyncio.to_thread(feedback_sink.send, body.run_id, body.score, body.comment, body.correction)
+        queued = body.score == "down" and await asyncio.to_thread(feedback_sink.queue, body.run_id)
         record = Feedback(
             feedback_id=str(uuid.uuid4()), staff_id=user.staff_id, at=datetime.now(UTC).isoformat(timespec="seconds"),
             forwarded=forwarded, queued=queued, proposals=[], **body.model_dump(),
@@ -599,4 +634,4 @@ def serve() -> None:
 
     load_dotenv(find_dotenv(usecwd=True))
     settings = Settings.from_env()
-    uvicorn.run(create_app(settings), host=settings.api_host, port=settings.api_port)
+    uvicorn.run(create_app(settings, tracer=install_tracer(settings)), host=settings.api_host, port=settings.api_port)

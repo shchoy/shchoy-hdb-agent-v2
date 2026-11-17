@@ -117,3 +117,23 @@ def test_complete_sends_cached_system_and_tools_and_returns_cited_text_and_tool_
     assert sent["system"] == system
     assert sent["tools"] == tools
     assert sent["tool_choice"] == {"type": "tool", "name": "search_corpus"}
+
+
+def test_calls_are_traced_as_llm_runs_naming_node_and_tier_under_the_run(
+    monkeypatch: pytest.MonkeyPatch, http_client: httpx2.AsyncClient,
+) -> None:
+    from tests.conftest import LangSmithApi
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    langsmith = LangSmithApi()
+    tracer = langsmith.tracer()
+    client = AnthropicLLMClient(Settings.from_env(), http_client=http_client)
+
+    with tracer.run("0193a3c2-0000-7000-8000-000000000001", thread_id="t-1", user=None, channel="cli", inputs={}):
+        assert collect(client, "haiku") == "Hello, officer."
+
+    (llm_run,) = [r for r in langsmith.runs().values() if r.get("run_type") == "llm"]
+    meta = llm_run["extra"]["metadata"]
+    assert (meta["node"], meta["tier"], meta["thread_id"], meta["ls_model_name"]) == ("merge", "haiku", "t-1", "claude-haiku-5-5")
+    assert llm_run["parent_run_id"] == "0193a3c2-0000-7000-8000-000000000001"
+    assert "Hello, officer." in json.dumps(llm_run["outputs"])

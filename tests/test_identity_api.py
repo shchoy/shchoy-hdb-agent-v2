@@ -15,6 +15,7 @@ def test_forwarded_staff_id_identifies_the_user_and_their_role(api: Api) -> None
         "title": "Estate Manager (East)",
         "dept": "Estate Management",
         "role": "estate_manager",
+        "developer": False,
     }
 
 

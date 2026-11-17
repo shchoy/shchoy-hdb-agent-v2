@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from typing import Any, cast
 
 from langchain_core.runnables import RunnableConfig
@@ -17,17 +17,53 @@ from plg.events import (
 )
 from plg.graph.state import RUN_ID, PLGGraph, PLGState
 from plg.identity import UserCtx
+from plg.tracing import Channel, Tracer
 
 logger = logging.getLogger(__name__)
 
 
 async def stream_run(
     graph: PLGGraph, thread_id: str, message: str, user: UserCtx | None = None,
-    *, decision: ApprovalDecision | None = None,
+    *, decision: ApprovalDecision | None = None, tracer: Tracer | None = None, channel: Channel = "api",
 ) -> AsyncIterator[RunEvent]:
-    """Answer `message`, or, given a `decision`, resume the thread's pending approval with it."""
+    """Answer `message`, or, given a `decision`, resume the thread's pending approval with it.
+
+    With a `tracer`, the run is one LangSmith trace whose root carries the run ID reported in `done`/`error`."""
     run_id = uuid.uuid4()
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id, RUN_ID: str(run_id)}, "run_id": run_id}
+    if tracer is None:
+        async for event in _stream(graph, run_id, thread_id, message, user, decision):
+            yield event
+        return
+    if decision is None:
+        inputs: dict[str, Any] = {"question": message}
+        extra: dict[str, Any] = {"kind": "question"}
+    else:
+        inputs = {"decision": decision.model_dump(mode="json")}
+        extra = {"kind": "resume", "action_id": decision.action_id, "decision": decision.decision}
+    with tracer.run(str(run_id), thread_id=thread_id, user=user, channel=channel, inputs=inputs, extra=extra) as root:
+        answer: list[str] = []
+        waiting: list[str] = []  # actions the run stopped at (the approval interrupt)
+        failed: str | None = None
+        async for event in _stream(graph, run_id, thread_id, message, user, decision, root.add_metadata):
+            if isinstance(event, TokenEvent):
+                answer.append(event.text)
+            elif isinstance(event, InterruptEvent):
+                waiting.append(f"{event.action_id} v{event.version}")
+            elif isinstance(event, ErrorEvent):
+                failed = event.message
+            yield event
+        if waiting:
+            root.add_metadata({"interrupted": True})
+        root.end(outputs={"answer": "".join(answer), "awaiting_approval": waiting}, error=failed)
+
+
+async def _stream(
+    graph: PLGGraph, run_id: uuid.UUID, thread_id: str, message: str, user: UserCtx | None,
+    decision: ApprovalDecision | None, annotate: Callable[[dict[str, Any]], None] | None = None,
+) -> AsyncIterator[RunEvent]:
+    """`annotate` adds trace metadata as the run learns what it is about (its intents, once routed)."""
+    # The run ID is carried in `configurable`, not as LangGraph's own run ID: a traced run's root is `plg_run`.
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id, RUN_ID: str(run_id)}}
     seq = 0
     inputs: PLGState | Command[None]
     if decision is not None:
@@ -52,6 +88,9 @@ async def stream_run(
             if mode == "tasks":
                 if chunk.get("error"):
                     continue  # reported once, as the run's error event below
+                if annotate is not None and chunk["name"] == "route" and "result" in chunk:
+                    routed = dict(chunk["result"])
+                    annotate({"intents": list(routed.get("intents") or [])})
                 yield NodeEvent(
                     seq=next_seq(),
                     node=chunk["name"],

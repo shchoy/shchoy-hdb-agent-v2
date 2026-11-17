@@ -6,8 +6,11 @@ import json
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import pytest
+import requests
+from langchain_core.tracers.langchain import wait_for_all_tracers
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner, Result
 
@@ -22,6 +25,7 @@ from plg.search.embed import HashingEmbedder
 from plg.search.lance import LanceSearchStore
 from plg.search.models import DocumentMeta
 from plg.search.rerank import CrossEncoderReranker, Searcher
+from plg.tracing import Tracer, tracing_client
 
 
 @dataclass
@@ -58,6 +62,59 @@ def parse_sse(body: str) -> SseStream:
 
 USER = {"X-PLG-User": "S05"}
 """A signed-in leasing officer, as forwarded by the BFF."""
+
+
+PROJECT_ID = "6f1a3c2e-0000-4000-8000-000000000001"
+TENANT_ID = "6f1a3c2e-0000-4000-8000-000000000002"
+"""The LangSmith project and workspace `LangSmithApi` reports."""
+
+
+class LangSmithApi:
+    """Records the runs posted to LangSmith and answers its project lookups."""
+
+    def __init__(self) -> None:
+        self.bodies: list[dict[str, Any]] = []
+        self.raw: list[str] = []
+
+    def request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
+        payload = kwargs.get("data") or kwargs.get("json")
+        if payload is not None and "/runs" in url:
+            raw = payload.decode() if isinstance(payload, bytes) else json.dumps(payload)
+            self.raw.append(raw)
+            self.bodies.append(json.loads(raw))
+        body: Any = {}
+        if method == "GET" and url.rstrip("/").endswith("/sessions"):
+            body = [{"id": PROJECT_ID, "name": "plg-test", "tenant_id": TENANT_ID, "start_time": "2026-01-01T00:00:00",
+                     "reference_dataset_id": None}]
+        response = requests.Response()
+        response.status_code = 200
+        response._content = json.dumps(body).encode()
+        return response
+
+    def close(self) -> None: ...
+
+    def mount(self, *_: Any) -> None: ...
+
+    def runs(self) -> dict[str, dict[str, Any]]:
+        """Every run, its create and update merged, keyed by ID."""
+        wait_for_all_tracers()
+        merged: dict[str, dict[str, Any]] = {}
+        for body in self.bodies:
+            run = merged.setdefault(str(body["id"]), {})
+            extra = {**run.get("extra", {}), **(body.get("extra") or {})}
+            run.update({k: v for k, v in body.items() if v is not None})
+            run["extra"] = extra
+        return merged
+
+    def root(self, run_id: str) -> dict[str, Any]:
+        return self.runs()[run_id]
+
+    def tracer(self) -> Tracer:
+        """A plg tracer (its masking client) posting here."""
+        client = tracing_client(
+            Settings().records_db, api_url="https://langsmith.test", api_key="test", session=self, auto_batch_tracing=False,
+        )
+        return Tracer(client, project="plg-test")
 
 
 @dataclass
@@ -107,6 +164,7 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         entities: GraphStore | None = None,
         memory: MemoryStore | None = None,
         langsmith: object | None = None,
+        tracer: Tracer | None = None,
         **settings: object,
     ) -> Api:
         settings.setdefault("threads_db", tmp_path / "threads.sqlite")
@@ -121,7 +179,7 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]
             Settings(**settings), llm=llm, searcher=searcher, store=store, entities=entities, memory=memory,
-            langsmith=langsmith,
+            langsmith=langsmith, tracer=tracer,
         )
         client = TestClient(app)
         clients.append(client.__enter__())

@@ -263,6 +263,18 @@ export async function getTaskTeam(staffId: string): Promise<{ status: number; bo
   return { status: response.status, body: data ?? error };
 }
 
+/** The LangSmith trace URL of one of a developer's answers; plg-api's status and JSON body (the link or a refusal). */
+export async function getTraceLink(
+  staffId: string,
+  threadId: string,
+  runId: string,
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/threads/{thread_id}/runs/{run_id}/trace", {
+    params: { header: { "x-plg-user": staffId }, path: { thread_id: threadId, run_id: runId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
 export type FeedbackRequest = components["schemas"]["FeedbackRequest"];
 
 /** An officer's 👍/👎 on one of their answers; plg-api's status and JSON body (the receipt or a refusal). */

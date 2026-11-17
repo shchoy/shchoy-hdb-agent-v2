@@ -17,6 +17,7 @@ import {
 } from "@/lib/events";
 import { AnswerFeedback } from "./AnswerFeedback";
 import { AnswerText } from "./AnswerText";
+import { TraceLink } from "./TraceLink";
 import { ClassificationCard } from "./ClassificationCard";
 import { DocCheckCard } from "./DocCheckCard";
 import { DraftPreview } from "./DraftPreview";
@@ -61,7 +62,8 @@ const RESUME_ATTEMPTS = 3;
 /** The run's stream stopped before `done`; it may be picked up again from the last event seen. */
 class Interrupted extends Error {}
 
-export function AskScreen() {
+/** `developer`: the signed-in persona is a developer, who gets a "View trace" link on each answer. */
+export function AskScreen({ developer = false }: { developer?: boolean }) {
   const [question, setQuestion] = useState("");
   const [run, setRun] = useState<Run>({ status: "idle" });
   const [history, setHistory] = useState<ThreadView["messages"]>([]);
@@ -296,7 +298,10 @@ export function AskScreen() {
                 </span>
                 <AnswerText markdown={m.content} />
                 {m.role === "assistant" && answeredBy[i] && active && (
-                  <AnswerFeedback threadId={active} runId={answeredBy[i]} />
+                  <>
+                    <AnswerFeedback threadId={active} runId={answeredBy[i]} />
+                    {developer && <TraceLink threadId={active} runId={answeredBy[i]} />}
+                  </>
                 )}
               </li>
             ))}
@@ -383,7 +388,10 @@ export function AskScreen() {
                   <DraftPreview key={draft.draft_id} draft={draft} />
                 ))}
                 {run.status === "done" && run.runId && active && (
-                  <AnswerFeedback key={run.runId} threadId={active} runId={run.runId} />
+                  <>
+                    <AnswerFeedback key={run.runId} threadId={active} runId={run.runId} />
+                    {developer && <TraceLink threadId={active} runId={run.runId} />}
+                  </>
                 )}
               </section>
             )}

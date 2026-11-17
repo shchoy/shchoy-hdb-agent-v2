@@ -25,7 +25,7 @@ export default async function AskPage() {
       </header>
       <main>
         <h1>Ask the Super-Librarian</h1>
-        <AskScreen />
+        <AskScreen developer={user.developer} />
       </main>
     </>
   );

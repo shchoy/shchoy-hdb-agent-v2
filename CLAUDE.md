@@ -19,12 +19,14 @@ src/plg/
 │                    tasks_today (2026-09-30, the PLG Records snapshot date the tasks are ranked on).
 │                    glossary_changes (.plg/glossary_changes.jsonl: approved glossary changes, append-only).
 │                    feedback_log (.plg/feedback.jsonl, append-only), annotation_queue (LangSmith queue for 👎 runs).
+│                    developers ("S08": comma-separated staff IDs of developer personas → UserCtx.developer, "View trace"; developer_ids).
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
 │                    returns AgentTurn = Messages API content blocks + stop_reason; optional max_tokens override; messages may carry
 │                    document blocks, e.g. PDF input).
-│                    AnthropicLLMClient (real, traced with LangSmith @traceable) and ScriptedLLMClient (test double:
+│                    AnthropicLLMClient (real, wrap_anthropic: each call an `llm` run with node + tier metadata via tracing_context;
+│                    untraced streams use a bare client, see Conventions) and ScriptedLLMClient (test double:
 │                    script() for streamed replies, script_turns() for complete() turns, keyed by (node, latest plain-
 │                    text user message, or the text block of a block message without tool results); a turn may be a callable of the messages, e.g. to cite a search result it was
 │                    shown; `sent` records messages, `requests` system+tools). Turn builders: turn, text, tool_call.
@@ -84,7 +86,7 @@ src/plg/
 │   │                "[Removed: ..."), flags_in(text) (rules recorded in an ingestion marker), excerpt, InjectionFlag (source message|document,
 │   │                rules, doc_id, title, excerpt), SCREENED_DOC_TYPE "email". Rules are tuned so the corpus and PLG Records flag only the
 │   │                planted suspicious_refund_request email; officer questions about approvals/rules must not trip them.
-├── identity.py      UserCtx (staff_id, name, title, dept, role) loaded read-only from the `staff` table;
+├── identity.py      UserCtx (staff_id, name, title, dept, role, developer) loaded read-only from the `staff` table (developer: settings.developer_ids);
 │                    role is derived from the job title (role_for). POC identity, replaced by OIDC later.
 ├── agents/
 │   ├── runtime.py   run_agent(llm, node, system, context, tools, messages, tier): the shared tool-use loop. Loops
@@ -183,12 +185,22 @@ src/plg/
 │   │                Given a Curation (#26), context() also lists approved team facts and corrected answers nearest the question
 │   │                (guidance, never a source). store.put_curated / nearest serve the team namespace.
 ├── threads.py       ThreadStore (SQLite plg_threads: owner + title; a thread is listed once asked; all_asked() only for curators' approvals), RunBuffer (every event of a run, follow(after=seq)) and
-│                    RunRegistry (latest run per thread, runs as background tasks so they outlive the client; 409 while one is answering).
+│                    RunRegistry(tracer?) (latest run per thread, runs as background tasks so they outlive the client; 409 while one is answering).
+├── tracing.py       (#27) LangSmith tracing. pii_masker(records_db) (NRIC/FIN, email, phone, tenants.contact_person → "[tenant contact]"),
+│                    tracing_client(records_db, **Client kwargs) (langsmith Client with that anonymizer: inputs, outputs, errors, metadata),
+│                    git_sha() (PLG_GIT_SHA or git rev-parse HEAD), Tracer(client, project).run(run_id, thread_id, user, channel api|cli, inputs,
+│                    extra) → root RunTree `plg_run` (id = the run ID of done/error; tracing_context metadata thread_id/user_id/user_role/
+│                    channel/git_sha inherited by every child run), Tracer.url(run_id) (read_project(...).url + /r/<id>, project looked up once).
+│                    open_tracer(settings) (None unless LANGSMITH_API_KEY and LANGSMITH_TRACING), install_tracer (also langsmith.configure:
+│                    default client for traces outside a run: plg sync scans, lineage). Tools (runtime._call) are @traceable run_type tool,
+│                    Searcher.search run_type retriever (hits as documents).
 ├── events.py        Pydantic run events: node (started/finished), token, citation (Citation + index = its [n]), sql_trace (SqlTrace), policy_stance (PolicyLineage: card data), classification (Classification), doc_check (DocCheck), tasks (TaskDigest), injection (InjectionFlag),
 │                    draft (Draft: html preview, unfilled slots, pii flags), proposed_action (ProposedAction), interrupt (action_id, version,
 │                    approver_roles), action_result (action_id, version sent, decision, outbox_id|null, ticket_id|null, term_id|null), done (run_id), error (run_id).
-├── runs.py          stream_run(graph, thread_id, message, user?, *, decision?): runs the graph (or resumes it with Command(resume=decision)),
+├── runs.py          stream_run(graph, thread_id, message, user?, *, decision?, tracer?, channel): runs the graph (or resumes it with Command(resume=decision)),
 │                    yields numbered RunEvents (an interrupted task → proposed_action + interrupt per pending action), turns any failure into an error event. Shared by the API and the CLI.
+│                    With a tracer: one root trace (kind question|resume + action_id/decision; intents added when route finishes; outputs
+│                    answer + awaiting_approval, metadata interrupted). The run ID rides in configurable[RUN_ID], not as LangGraph's run_id.
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
 │                    structure-aware chunking with contextual headers, metadata + entity tagging from PLG Records,
 │                    incremental by content hash; superseded versions are marked, never deleted. Emails (doc_type email) are screened
@@ -254,6 +266,8 @@ src/plg/
 │                    Glossary resume: 403 not the term owner (the proposer can only reject), 422 bad edits, 409 the term changed since proposed.
 │                    GET /submissions: applications with a submission bundle (Submission list, newest first).
 │                    GET /tasks/digest?staff_id&limit (TaskDigest; default own; 404 unknown staff, 403 role can't view), GET /tasks/team (UserCtx list the caller may view, self first).
+                    GET /threads/{id}/runs/{run_id}/trace (#27) → TraceLink {url}: 404 not your thread / not one of its answered runs, 403 not a
+                    developer, 503 no tracer, 502 LangSmith unreachable. create_app(..., tracer?) (serve() passes install_tracer); feedback reuses its client.
                     POST /feedback (#26) {thread_id, run_id, score up|down, comment, correction, team_fact} → FeedbackReceipt (forwarded,
                     queued, proposals); 404 not your thread / not one of its runs. ThreadView.turns lists answered turns by run ID.
                     GET /curation: pending curated proposals you may decide (curators; the proposer sees their own to withdraw).
@@ -283,7 +297,8 @@ tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLL
                      test_guardrail_api.py (#23): ATTACKS (guardrail cases, 100%) / BENIGN controls, redacted history, ingestion screening of the synced
                      corpus (only the planted email), the planted email via knowledge + defect → flagged, no proposed/executed action, and a pre-#23 index chunk withheld.
                      test_feedback_api.py (#26): feedback → FakeLangSmith (create_feedback, annotation queue), proposals, curator visibility/decisions/audit, no self-approval, few-shot SQL in the data agent's prompt, team facts/corrections in merge's memory block (make_api(langsmith=...)).
-                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_anthropic_client.py runs the real client against a
+                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_tracing_api.py (#27): conftest LangSmithApi (records posted runs, answers project lookups; .tracer() = plg's masking client)
+                     → root metadata, nodes/Send branch/tool children, PII masked, resume + interrupt, trace URL role/ownership, CLI channel. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).
 scripts/build_ontology.py
@@ -301,14 +316,14 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
                      /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay),
                      /api/memory (GET list), /api/submissions (GET), /api/tasks/digest (GET; staff_id, limit), /api/tasks/team (GET), /api/memory/[id] (PATCH, DELETE), /api/approvals (GET pending), /api/audit (GET),
-                     /api/threads/[id]/resume (POST decision, SSE through; refusals relayed), /api/feedback (POST), /api/curation (GET),
+                     /api/threads/[id]/resume (POST decision, SSE through; refusals relayed), /api/feedback (POST), /api/threads/[id]/runs/[runId]/trace (GET: 307 to the plg-api trace URL, http(s) only; refusals relayed), /api/curation (GET),
                      /api/curation/decide (POST). SSE pass-through = relaySse (src/lib/server/plg-api.ts).
                      Pages: /doc-check (doc-check/DocCheckScreen.tsx: pick an application from /api/submissions → new thread + run
                      "Is application <ID> complete? ..." (shared helpers in runClient.ts), DocCheckCard + notice preview + link to Approvals and
                      to the conversation (sessionStorage plg_active_thread)), /tasks (tasks/TasksScreen.tsx: own top tasks via TaskList.tsx; Officer picker when /api/tasks/team has more than one; Show 5/10/20/50; 403 message), /sign-in, /approvals (Approvals inbox, approvals/ApprovalsScreen.tsx: pending actions across threads (letters, glossary changes (GlossaryCard: now vs proposed definition/value/effective date, reason, SQL binding, owner; approve/edit only for `approvers`, the proposer can only withdraw) and i-EMS tickets: TicketCard with classification details, editable category/priority/unit/description/case, 'Approve and raise') with letter preview,
                      open slots, PII flags, editable slots shown as <del>/<ins> diff, approve / send edited / reject with reason, approve+edit
                      hidden for roles that can't send or while open slots are blank; then the result (outbox ID, version sent) and the audit
-                     trail (who, role, when, reason, edits, outbox item + letter as sent, run_id)), /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten; memory/CuratorQueue.tsx: pending team facts, corrected answers and SQL examples, approve / edit then approve (only for `approvers`) / reject or withdraw with a reason), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; AnswerFeedback.tsx under each answer with a run_id (live: `done`; history: ThreadView.turns by message_index): 👍 Helpful / 👎 Not helpful with Correct this, Team fact, comment; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
+                     trail (who, role, when, reason, edits, outbox item + letter as sent, run_id)), /memory (Memory screen: list own memories with provenance, edit, forget; flagged notes can only be edited or forgotten; memory/CuratorQueue.tsx: pending team facts, corrected answers and SQL examples, approve / edit then approve (only for `approvers`) / reject or withdraw with a reason), / (Ask screen: Conversations list + New conversation, earlier turns, reconnect via Last-Event-ID (3 tries), refresh recovery via sessionStorage; TraceLink.tsx ("View trace", new tab, only when AskScreen's `developer` prop, from currentUser) and AnswerFeedback.tsx under each answer with a run_id (live: `done`; history: ThreadView.turns by message_index): 👍 Helpful / 👎 Not helpful with Correct this, Team fact, comment; streamed answer (AnswerText.tsx: split at `## ` headings outside code fences into labelled sections, live and in history), node trajectory, citation chips under the
                      answer (expand to read the quoted span; SourceViewer opens the document with the span highlighted), TaskList under the answer (`tasks` event: ranked table, 'Overdue · N days' marker, urgency × impact = score, reasons), DocCheckCard under the answer (✓/✗/– checklist table, problem + reason, files identified, scan marker), ClassificationCard under the answer (category, severity, team, vendor, SLA or 'not a maintenance defect', confidence + low-confidence flag, other candidates, rationale), DraftPreview under the answer (sandboxed HTML preview via LetterFrame.tsx, unfilled slots, PII flags, DOCX download), PolicyStanceCard at the top of the Sources panel (current version, struck-through superseded versions, circular overrides with unit scope and evidence), ReasoningPanel under a data answer (collapsible; per sql_trace: plan, as-of date, status, SQL + Copy SQL, rejection reason, glossary definitions used with dates in force (ok queries only), data-quality warnings, result table (first 10 rows) + Export CSV (every row, client-side data: URL, formula-injection guarded), then the explanation), error + Retry; InjectionAlert.tsx: role="alert" above the answer for `injection` events, rule labels, excerpt as plain text).
                      dates.ts: day() / period() / when() date formatting shared by the cards.
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
@@ -350,7 +365,9 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
   team memory), audited the same way. Feedback sent to LangSmith is telemetry, not an action. Outbox and audit writes go through the `Outbox` / `AuditLog` adapters.
 - Every claim in a knowledge answer is cited through the Messages API search_result citations; an answer
   with no surviving citation becomes the fixed "not covered" answer. Agent tools are read-only.
-- `wrap_anthropic` is not used for streaming: langsmith 0.14.8's stream reducer crashes with anthropic 1.13.
+- AnthropicLLMClient uses `wrap_anthropic`, but langsmith 0.14.8's wrapped stream only works through `text_stream` while tracing (untraced it
+  looks for a missing run; iterating events crashes on `json_bufs`), so untraced streams use a second, bare SDK client (wrapping is in place).
+- Everything uploaded to LangSmith goes through `tracing_client` (PII masked); never open a plain `langsmith.Client` for tracing.
 
 ## Agent skills
 

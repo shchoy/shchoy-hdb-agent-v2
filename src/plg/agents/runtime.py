@@ -13,6 +13,7 @@ from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from langsmith import traceable
 from pydantic import BaseModel
 
 from plg.config import Tier
@@ -192,7 +193,18 @@ async def _call(tools: dict[str, Tool], call: Block) -> ToolOutput:
     tool = tools.get(call["name"])
     if tool is None:
         return f"Unknown tool {call['name']!r}."
-    return await tool.run(call["input"])
+    traced = traceable(run_type="tool", name=tool.name, process_outputs=_tool_outputs)(tool.run)
+    return await traced(call["input"])
+
+
+def _tool_outputs(output: Any) -> dict[str, Any]:
+    """A tool's output as the trace shows it: its text, or each passage (title, location, text) and note."""
+    if isinstance(output, str):
+        return {"output": output}
+    return {"output": [
+        item if isinstance(item, str) else {"chunk_id": item.chunk.chunk_id, "title": item.title, "text": item.chunk.text}
+        for item in output
+    ]}
 
 
 def _result(content: list[Block], retrieved: dict[str, Source]) -> AgentResult:

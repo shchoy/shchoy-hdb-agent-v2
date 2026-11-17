@@ -10,8 +10,8 @@ const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
 
 const personas = [
-  { staff_id: "S01", name: "Tan Wei Ling", title: "Director", dept: "PLG", role: "director" },
-  { staff_id: "S04", name: "Marcus Lim", title: "Estate Manager", dept: "PLG", role: "estate_manager" },
+  { staff_id: "S01", name: "Tan Wei Ling", title: "Director", dept: "PLG", role: "director", developer: false },
+  { staff_id: "S04", name: "Marcus Lim", title: "Estate Manager", dept: "PLG", role: "estate_manager", developer: false },
 ] as const;
 
 describe("Sign-in", () => {

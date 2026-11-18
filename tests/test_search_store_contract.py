@@ -86,6 +86,17 @@ def test_lifecycle_update_marks_every_chunk_superseded(store: SearchStore) -> No
     assert store.documents()[0].status == "superseded"
 
 
+def test_category_update_sets_and_clears_it_on_every_chunk(store: SearchStore) -> None:
+    store.replace_document("A", [chunk("A", i, f"part {i}") for i in range(3)])
+
+    store.set_category("A", "CAT-1")
+    assert {c.category for c in store.chunks("A")} == {"CAT-1"}
+    assert search(store, "part", category="CAT-1")
+
+    store.set_category("A", None)
+    assert {c.category for c in store.chunks("A")} == {None}
+
+
 def test_hybrid_search_ranks_the_matching_chunk_first(store: SearchStore) -> None:
     store.replace_document("A", [
         chunk("A", 0, "Letter of Demand is issued when rent is 60 days overdue."),

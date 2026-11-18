@@ -472,6 +472,33 @@
       "title": "Document",
       "type": "object"
     },
+    "DocumentCategory": {
+      "additionalProperties": false,
+      "description": "A named group of similar Library documents, found by clustering their embeddings (`plg categorise`).",
+      "properties": {
+        "definition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "description": "Human-readable name.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "DocumentCategory",
+      "type": "object"
+    },
     "DocumentStatus": {
       "description": "",
       "enum": [
@@ -867,6 +894,39 @@
         "in_scheme"
       ],
       "title": "LetterType",
+      "type": "object"
+    },
+    "LibraryDocument": {
+      "additionalProperties": false,
+      "description": "An indexed corpus document as the Library lists it (its doc_id), whatever its document type.",
+      "properties": {
+        "doc_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "document_category": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "description": "Human-readable name.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "LibraryDocument",
       "type": "object"
     },
     "NeighbourhoodCentre": {

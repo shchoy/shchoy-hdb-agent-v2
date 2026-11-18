@@ -1,0 +1,80 @@
+.meta {
+  color: #555;
+}
+
+.groups,
+.documents {
+  list-style: none;
+  padding: 0;
+}
+
+.group {
+  border-top: 1px solid #ddd;
+  padding: 0.5rem 0;
+}
+
+.heading {
+  font-size: 1.1rem;
+  margin: 0.25rem 0;
+}
+
+.heading button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.heading button::before {
+  content: "▸ ";
+}
+
+.heading button[aria-expanded="true"]::before {
+  content: "▾ ";
+}
+
+.count {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: normal;
+}
+
+.description {
+  margin: 0.25rem 0 0.5rem;
+}
+
+.panel {
+  margin-left: 1rem;
+}
+
+.panel h3 {
+  font-size: 0.95rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.document {
+  padding: 0.25rem 0;
+}
+
+.title {
+  font-weight: 500;
+}
+
+.docType {
+  background: #eef;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  padding: 0 0.3rem;
+}
+
+.superseded {
+  background: #fde8e8;
+  border-radius: 3px;
+  color: #8a1c1c;
+  font-size: 0.8rem;
+  margin-left: 0.3rem;
+  padding: 0 0.3rem;
+}

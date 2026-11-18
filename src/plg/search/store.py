@@ -23,6 +23,10 @@ class SearchStore(Protocol):
         """Update a document's status and end date on all its chunks, without re-embedding them."""
         ...
 
+    def set_category(self, doc_id: str, category: str | None) -> None:
+        """Set (or clear) a document's Library category on all its chunks, without re-embedding them."""
+        ...
+
     def chunks(self, doc_id: str) -> list[Chunk]:
         """A document's chunks in reading order."""
         ...

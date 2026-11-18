@@ -222,6 +222,14 @@ export async function listSubmissions(staffId: string): Promise<{ status: number
   return { status: response.status, body: data ?? error };
 }
 
+/** The Library's document categories from the last `plg categorise`, with the documents in each. */
+export async function listCategories(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/categories", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
 /** The officer's own decisions on proposed actions, newest first, with what each sent. */
 export async function getAuditTrail(staffId: string): Promise<{ status: number; body: unknown }> {
   const { data, error, response } = await client().GET("/audit", {

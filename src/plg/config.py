@@ -47,6 +47,10 @@ class Settings(BaseModel):
     """Answer feedback (👍/👎, corrections), append-only; it is also sent to LangSmith."""
     annotation_queue: str = "PLG thumbs-down review"
     """The LangSmith annotation queue thumbs-down runs join (created on first use)."""
+    categories_file: Path = REPO_ROOT / ".plg" / "categories.json"
+    """The Library's document categories, written by `plg categorise`."""
+    category_min_size: int = 3
+    """The fewest similar documents that make a category (HDBSCAN min_cluster_size)."""
     developers: str = "S08"
     """Staff IDs (comma-separated) of the developer personas: they see a "view trace" link on their answers."""
     tasks_today: dt.date = dt.date(2026, 9, 30)

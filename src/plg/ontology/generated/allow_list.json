@@ -21,6 +21,8 @@
     "Template",
     "Clause",
     "Precedent",
+    "LibraryDocument",
+    "DocumentCategory",
     "Trade",
     "DefectCategory",
     "Team",
@@ -404,6 +406,8 @@
         "Staff",
         "Clause",
         "Precedent",
+        "LibraryDocument",
+        "DocumentCategory",
         "Policy",
         "Sop",
         "Circular",
@@ -438,6 +442,8 @@
         "Staff",
         "Clause",
         "Precedent",
+        "LibraryDocument",
+        "DocumentCategory",
         "Policy",
         "Sop",
         "Circular",
@@ -487,6 +493,8 @@
         "Staff",
         "Clause",
         "Precedent",
+        "LibraryDocument",
+        "DocumentCategory",
         "Policy",
         "Sop",
         "Circular",
@@ -581,6 +589,21 @@
       ],
       "range_labels": [
         "NeighbourhoodCentre"
+      ]
+    },
+    {
+      "type": "IN_CATEGORY",
+      "slot": "document_category",
+      "domain": "LibraryDocument",
+      "range": "DocumentCategory",
+      "cardinality": "0..1",
+      "extracted": false,
+      "description": null,
+      "domain_labels": [
+        "LibraryDocument"
+      ],
+      "range_labels": [
+        "DocumentCategory"
       ]
     },
     {

@@ -137,7 +137,7 @@ class Document(Entity):
 
     doc_type: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'vocabulary': {'tag': 'vocabulary',
                                         'value': 'document_types'}},
-         'domain_of': ['Document']} })
+         'domain_of': ['Document', 'LibraryDocument']} })
     version: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_from: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_to: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
@@ -165,7 +165,7 @@ class Concept(ConfiguredBaseModel):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -368,7 +368,7 @@ class Policy(Document):
          'domain_of': ['Policy']} })
     doc_type: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'vocabulary': {'tag': 'vocabulary',
                                         'value': 'document_types'}},
-         'domain_of': ['Document']} })
+         'domain_of': ['Document', 'LibraryDocument']} })
     version: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_from: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_to: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
@@ -395,7 +395,7 @@ class Sop(Document):
          'domain_of': ['Sop']} })
     doc_type: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'vocabulary': {'tag': 'vocabulary',
                                         'value': 'document_types'}},
-         'domain_of': ['Document']} })
+         'domain_of': ['Document', 'LibraryDocument']} })
     version: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_from: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_to: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
@@ -420,7 +420,7 @@ class Circular(Document):
          'domain_of': ['Circular']} })
     doc_type: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'vocabulary': {'tag': 'vocabulary',
                                         'value': 'document_types'}},
-         'domain_of': ['Document']} })
+         'domain_of': ['Document', 'LibraryDocument']} })
     version: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_from: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_to: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
@@ -444,7 +444,7 @@ class Template(Document):
          'domain_of': ['Letter', 'Template']} })
     doc_type: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'vocabulary': {'tag': 'vocabulary',
                                         'value': 'document_types'}},
-         'domain_of': ['Document']} })
+         'domain_of': ['Document', 'LibraryDocument']} })
     version: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_from: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
     effective_to: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'GlossaryTerm']} })
@@ -492,6 +492,34 @@ class Precedent(Entity):
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
 
 
+class LibraryDocument(Entity):
+    """
+    An indexed corpus document as the Library lists it (its doc_id), whatever its document type.
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'annotations': {'node': {'tag': 'node', 'value': True}},
+         'from_schema': 'https://w3id.org/heb/plg'})
+
+    doc_type: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'vocabulary': {'tag': 'vocabulary',
+                                        'value': 'document_types'}},
+         'domain_of': ['Document', 'LibraryDocument']} })
+    document_category: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'IN_CATEGORY'}},
+         'domain_of': ['LibraryDocument']} })
+    id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
+    label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
+
+
+class DocumentCategory(Entity):
+    """
+    A named group of similar Library documents, found by clustering their embeddings (`plg categorise`).
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'annotations': {'node': {'tag': 'node', 'value': True}},
+         'from_schema': 'https://w3id.org/heb/plg'})
+
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
+    id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
+    label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
+
+
 class Trade(Concept):
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'annotations': {'node': {'tag': 'node', 'value': True}},
          'from_schema': 'https://w3id.org/heb/plg'})
@@ -503,7 +531,7 @@ class Trade(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -522,7 +550,7 @@ class DefectCategory(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -534,7 +562,7 @@ class Team(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -546,7 +574,7 @@ class Vendor(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -557,7 +585,7 @@ class UnitType(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -568,7 +596,7 @@ class UnitStatus(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -582,7 +610,7 @@ class PlaceType(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -594,7 +622,7 @@ class LetterType(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -605,7 +633,7 @@ class DocumentType(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -616,7 +644,7 @@ class SubmissionDocumentType(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -628,7 +656,7 @@ class ApplicationType(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -681,7 +709,7 @@ class GlossaryTerm(Concept):
     notation: Optional[str] = Field(default=None, description="""Short code, e.g. SEP.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     pref_label: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:prefLabel'} })
     alt_labels: Optional[list[str]] = Field(default=None, description="""Synonyms and abbreviations, resolved by the vocabulary index.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:altLabel'} })
-    definition: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:definition'} })
+    definition: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'DocumentCategory'], 'slot_uri': 'skos:definition'} })
     in_scheme: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:inScheme'} })
 
 
@@ -721,6 +749,8 @@ Circular.model_rebuild()
 Template.model_rebuild()
 Clause.model_rebuild()
 Precedent.model_rebuild()
+LibraryDocument.model_rebuild()
+DocumentCategory.model_rebuild()
 Trade.model_rebuild()
 DefectCategory.model_rebuild()
 Team.model_rebuild()

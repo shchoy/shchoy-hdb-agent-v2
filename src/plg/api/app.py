@@ -26,6 +26,7 @@ from plg.actions.model import (
     TeamFactPayload, TicketPayload,
 )
 from plg.actions.outbox import LocalOutbox, OutboxItem
+from plg.categories.model import Categorisation, load_categorisation
 from plg.config import Settings
 from plg.defects.taxonomy import load_taxonomy
 from plg.defects.tickets import LocalTicketSystem, Ticket
@@ -236,9 +237,15 @@ def create_app(
             yield
             await learner.drain()
 
-    library = DocumentLibrary(
-        lambda: store or _open_store(settings), settings.corpus_dir, SavedScans(TranscriptStore(settings.transcripts_dir))
-    )
+    opened: list[SearchStore] = []
+
+    def index() -> SearchStore:
+        """The search index, opened on first use."""
+        if not opened:
+            opened.append(store or _open_store(settings))
+        return opened[0]
+
+    library = DocumentLibrary(index, settings.corpus_dir, SavedScans(TranscriptStore(settings.transcripts_dir)))
 
     app = FastAPI(title="plg-api", version="0.1.0", lifespan=lifespan)
 
@@ -549,6 +556,13 @@ def create_app(
             raise HTTPException(status_code=404, detail="No run to resume")
         after = int(last_event_id) if last_event_id and last_event_id.isdigit() else 0
         return sse(buffer, after)
+
+    @app.get("/categories", dependencies=[Depends(current_user)])
+    async def get_categories() -> Categorisation:
+        """The Library's document categories from the last `plg categorise`, with each document's current title and
+        status; documents indexed since then (or that no category took) are `uncategorised`."""
+        saved = load_categorisation(settings.categories_file)
+        return saved.overlay(await asyncio.to_thread(lambda: index().documents()))
 
     @app.get("/documents/{doc_id}", dependencies=[Depends(current_user)])
     async def get_document(doc_id: str) -> DocumentView:

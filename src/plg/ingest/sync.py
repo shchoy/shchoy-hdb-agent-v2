@@ -90,9 +90,9 @@ def sync(
                 report.skipped.append(Skipped(item.rel_path, "no text layer (image-only scan)"))
                 continue
             if (prior := before.get(item.doc_id)) is not None:
-                # Re-indexed chunks keep the lifecycle already set, so a superseded version never reads as current
+                # Re-indexed chunks keep the lifecycle (and Library category) already set, so a superseded version never reads as current
                 # to a running plg-api mid-sync; the pass below changes it only if it really changed.
-                kept = {"status": prior.status, "effective_to": prior.effective_to}
+                kept = {"status": prior.status, "effective_to": prior.effective_to, "category": prior.category}
                 chunks = [c.model_copy(update=kept) for c in chunks]
             store.replace_document(item.doc_id, chunks)
             (report.updated if item.doc_id in indexed else report.added).append(item.rel_path)

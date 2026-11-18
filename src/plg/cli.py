@@ -155,6 +155,48 @@ def sync(
 
 
 @app.command()
+def categorise() -> None:
+    """Group the indexed documents into named categories for the Library: HDBSCAN over their embeddings, each group
+    named and summarised by Haiku. Writes the categories file, each chunk's category and IN_CATEGORY graph edges. Run
+    after `plg sync` (it takes the same index lock); a re-run over an unchanged index changes nothing."""
+    from datetime import UTC, datetime
+
+    from plg.categories.categorise import categorise as run_categorise
+    from plg.categories.model import load_categorisation
+    from plg.entities.writer import GraphWriter
+    from plg.ingest.sync import SyncRunning, sync_lock
+    from plg.search.lance import LanceSearchStore
+    from plg.tracing import pii_masker
+
+    settings = Settings.from_env()
+    try:
+        with sync_lock(settings.search_db):
+            store = LanceSearchStore(settings.search_db, dim=settings.embed_dim, vector_weight=settings.vector_weight)
+            if not store.documents():
+                typer.echo("Nothing is indexed yet: run `plg sync` first.", err=True)
+                raise typer.Exit(code=1)
+            make_tracer(settings)  # the naming call is traced (PII masked) when LangSmith is configured
+            report = asyncio.run(run_categorise(
+                store, make_llm(settings), GraphWriter(settings.graph_dir, open_graph(settings)),
+                settings.categories_file, min_size=settings.category_min_size,
+                previous=load_categorisation(settings.categories_file), now=datetime.now(UTC),
+                mask=pii_masker(settings.records_db),
+            ))
+    except SyncRunning as exc:
+        typer.echo(f"{exc}; try again when it finishes.", err=True)
+        raise typer.Exit(code=1) from None
+
+    result = report.categorisation
+    placed = sum(len(c.documents) for c in result.categories)
+    typer.echo(
+        f"Categorised {placed} documents into {len(result.categories)} categories "
+        f"({len(result.uncategorised)} uncategorised, {report.changed} changed category)."
+    )
+    for category in result.categories:
+        typer.echo(f"{category.id}  {category.name} ({len(category.documents)})")
+
+
+@app.command()
 def search(
     query: str,
     k: int = typer.Option(8, help="Number of results."),

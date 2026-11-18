@@ -7,7 +7,8 @@ Writes `web/src/test/fixtures/*.sse`, `documents/*.json` (a document and a cited
 edits, a letter edit and a rejection, the audit trail), `submissions.json` (the Document check screen's list) and
 `tasks/*.json` (the Tasks screen: an estate manager's own digest, a team member's, and the team list) and
 `approvals/glossary_*` (a glossary change proposed by a policy owner: the term owner's inbox, approval, audit trail) and
-`feedback/*.json` (answer feedback on a data answer and the curator queue it fills). Streams come from the real API and graph with a scripted
+`feedback/*.json` (answer feedback on a data answer and the curator queue it fills) and `categories.json` (the Library's
+document categories after `plg categorise` over the synced corpus). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -20,12 +21,17 @@ import re
 import sys
 import tempfile
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from fastapi.testclient import TestClient
 
 from plg.api.app import create_app
+from plg.categories.categorise import NAME_REQUEST
+from plg.categories.categorise import NODE as CATEGORISE_NODE
+from plg.categories.categorise import categorise
+from plg.categories.model import Categorisation
 from plg.config import REPO_ROOT, Settings
 from plg.data.semantic import load_semantic_layer
 from plg.doccheck.identify import IDENTIFY_NODE, identify_prompt
@@ -454,6 +460,61 @@ def injection_email(llm: ScriptedLLMClient) -> None:
     llm.script("merge", INBOX_QUESTION, "The email asks PLG to change the bank details for deposit refunds [1].")
 
 
+CLUSTER = re.compile(r"^Cluster (\d+) \((\d+) documents\)\nDocuments:\n((?:- .+\n?)+)", re.M)
+LISTED = re.compile(r"^- (.+) \((\w+), (current|superseded)\)$", re.M)
+ID_OR_VERSION = re.compile(r"\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b|\bv\d+(?:\.\d+)*\b|\([^)]*\)|^(?:RE|FW|FWD):\s*")
+
+
+def short_name(title: str) -> str:
+    """A browsable phrase from a title: reply prefixes, IDs, versions and brackets dropped; the first part of a
+    dashed title unless it is mostly a reference number; at most five words."""
+    parts = [p.strip() for p in ID_OR_VERSION.sub(" ", title).split(" - ") if p.strip()]
+    if not parts:
+        return title
+    pick = parts[1] if len(parts) > 1 and re.search(r"\d", parts[0]) else parts[0]
+    return " ".join(pick.split()[:5])
+
+
+def name_clusters(messages: list[AgentMessage]) -> AgentTurn:
+    """The scripted Haiku: each cluster named after its first title, described and summarised from its titles."""
+    content = messages[-1]["content"]
+    assert not isinstance(content, str)
+    named = []
+    for n, size, block in CLUSTER.findall(str(content[1]["text"])):
+        listed = LISTED.findall(block)
+        titles = [title for title, _, _ in listed]
+        kinds = sorted({kind for _, kind, _ in listed})
+        superseded = sum(1 for *_, status in listed if status == "superseded")
+        summary = f"These {size} documents include {', '.join(titles[:3])}."
+        if superseded:
+            summary += f" {superseded} of them {'has' if superseded == 1 else 'have'} been superseded by a later version."
+        named.append({
+            "cluster": int(n), "name": short_name(titles[0]),
+            "description": f"{', '.join(kinds).capitalize()} documents about {short_name(titles[0])}.",
+            "summary": summary,
+        })
+    return turn(tool_call("name_categories", categories=named))
+
+
+def record_categories(store: LanceSearchStore) -> str:
+    """The Library's categories after a real `plg categorise` of the synced corpus (HDBSCAN real, naming scripted)."""
+    llm = ScriptedLLMClient()
+    llm.script_turns(CATEGORISE_NODE, NAME_REQUEST, name_clusters)
+    with tempfile.TemporaryDirectory() as scratch:
+        settings = scratch_settings(Path(scratch)).model_copy(update={"categories_file": Path(scratch) / "categories.json"})
+        write_spine(settings.records_db, settings.graph_dir / "spine")
+        writer = GraphWriter(settings.graph_dir, LocalGraphStore.from_dirs(settings.graph_dir / "spine"))
+        asyncio.run(categorise(
+            store, llm, writer, settings.categories_file, min_size=settings.category_min_size,
+            previous=Categorisation(), now=datetime.now(UTC),
+        ))
+        app = create_app(settings, llm=ScriptedLLMClient(), store=store, memory=scratch_memory(Path(scratch) / "memory"))
+        with TestClient(app) as client:
+            response = client.get("/categories", headers=USER)
+            assert response.status_code == 200, response.text
+            return json.dumps(response.json(), indent=2) + "\n"
+
+
 def lineage_graph(store: LanceSearchStore, graph_dir: Path) -> LocalGraphStore:
     """The records spine plus lineage edges extracted (by the scripted Haiku) from the synced corpus."""
     write_spine(Settings().records_db, graph_dir / "spine")
@@ -546,7 +607,8 @@ def _stream(app: Any, question: str) -> str:
 
 
 def main(only: list[str]) -> None:
-    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`, `feedback`)."""
+    """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`, `feedback`,
+    `categories`)."""
     OUT.mkdir(parents=True, exist_ok=True)
     if not only or "submissions" in only:
         path = OUT / "submissions.json"
@@ -574,6 +636,12 @@ def main(only: list[str]) -> None:
         return
     with tempfile.TemporaryDirectory() as index, tempfile.TemporaryDirectory() as graph_dir:
         search, store = searcher(Path(index))
+        if not only or "categories" in only:
+            path = OUT / "categories.json"
+            path.write_text(record_categories(store))
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
+            if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback", "categories"}:
+                return
         graph = lineage_graph(store, Path(graph_dir))
         for name, (question, script) in SCRIPTS.items():
             if only and name not in only:

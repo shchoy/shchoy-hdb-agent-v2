@@ -19,6 +19,7 @@ src/plg/
 │                    tasks_today (2026-09-30, the PLG Records snapshot date the tasks are ranked on).
 │                    glossary_changes (.plg/glossary_changes.jsonl: approved glossary changes, append-only).
 │                    feedback_log (.plg/feedback.jsonl, append-only), annotation_queue (LangSmith queue for 👎 runs).
+│                    categories_file (.plg/categories.json, written by `plg categorise`), category_min_size (3: HDBSCAN min_cluster_size).
 │                    developers ("S08": comma-separated staff IDs of developer personas → UserCtx.developer, "View trace"; developer_ids).
 │                    Every field can be overridden with a PLG_<FIELD> env var (e.g. PLG_MODEL_SONNET).
 ├── llm.py           LLMClient protocol: the ONLY path to Claude. stream_text (merge's streamed answer) and
@@ -71,6 +72,15 @@ src/plg/
 │   │                digest(); render() (plain text: console, file, merge finding); can_view / team (self; directors all; manager/estate_manager
 │   │                their dept's non-lead staff). ask.py (NODE "tasks"): whose (full name, staff ID or a possessive unique first name, else the
 │   │                asker), how_many ("top N"), NOT_ALLOWED / RATIONALE (asks merge for one sentence per task).
+├── categories/      Library document categories (issue #29). model.py: Categorisation (categorised_at, categories, uncategorised;
+│   │                overlay(documents): live titles/status, docs indexed since → uncategorised), Category (id CAT-<hash of member doc_ids>,
+│   │                name, description, summary, documents: CategoryDocument), load_/save_categorisation (atomic JSON). categorise.py
+│   │                (`plg categorise`): document vector = normalised mean of chunk vectors; HDBSCAN (min_size; -1 = uncategorised);
+│   │                one Haiku call (node categorise, forced name_categories; user message = NAME_REQUEST + listing of titles and
+│   │                central excerpts) names/describes/summarises every cluster; writes the file, store.set_category per chunk and
+│   │                DocumentCategory nodes + IN_CATEGORY edges from LibraryDocument nodes via GraphWriter (append-only: existing ones
+│   │                kept). ask.py (NODE "category_summary", no Claude): match(question) by name words (x2) + description words;
+│   │                answer() = summary + documents, or the category list, or NOT_CATEGORISED.
 ├── feedback/        Answer feedback and curation (issue #26). model.py: AnsweredTurn (run_id, message_index, question, intents, answer,
 │   │                sql?, flagged; kept in graph state `turns`), Feedback + FeedbackLog (JSONL, append-only). langsmith.py: LangSmithFeedback
 │   │                (Client or stand-in; none opened without LANGSMITH_API_KEY): send() = create_feedback(run_id, "user_score", score 1/0,
@@ -151,7 +161,7 @@ src/plg/
 │   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → screen_input (flagged message → merge:
 │                    fixed MESSAGE_FLAGGED, no Claude; streams `injection`; history gets the redacted message) → (summarise_history if history > threshold) → load_memory → route → knowledge, data, drafting, defect, doc_check and/or tasks (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END
 │                    (load_memory/write_memory only when a MemoryService is given: plg-api yes, `plg ask` no). The memory block is appended to merge's system prompt.
-│                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting, defect, doc_check, tasks, glossary) + optional
+│                    route = Haiku, forced `route` tool → scored intents [{intent, confidence}] (knowledge, data, drafting, defect, doc_check, tasks, glossary, category_summary) + optional
 │                    clarifying_question (RouteDecision). Labels below route_min_confidence are dropped; if none is left but some were
 │                    named (or a question was given), `clarification` is set: no fan-out, merge streams it word by word with no Claude
 │                    call, and it joins `messages` so the officer's reply is routed with it. Otherwise fan_out sends one
@@ -164,6 +174,7 @@ src/plg/
 │                    answer with no Claude call. merge is the only node that streams tokens. Checkpointer: InMemorySaver by default (CLI); plg-api swaps in AsyncSqliteSaver (threads_db) in its lifespan. State keeps the full `messages` plus `summary`/`summarised` (offset folded).
 │                    curation (#26): data_node passes approved question → SQL pairs (Curation.sql_examples, best-effort) to data.answer
 │                    (`verified`: shown in the per-run context as few-shot examples).
+│                    category_summary_node (#29): reads settings.categories_file each run → category_ask.answer, traced finding.
 │                    glossary_node (#25): read_change → propose_change over the live glossary (GlossaryChanges overlay); traced finding; proposal = approve_glossary_term.
 │                    data and knowledge read the live glossary/semantic layer each run, so an approval takes effect at once. execute_action for
 │                    approve_glossary_term: GlossaryChanges.approve (old version superseded, never deleted), action_result/audit carry term_id.
@@ -205,7 +216,7 @@ src/plg/
 │                    structure-aware chunking with contextual headers, metadata + entity tagging from PLG Records,
 │                    incremental by content hash; superseded versions are marked, never deleted. Schedulable (#28): sync_lock
 │                    (one run per index, `<search_db>.sync.lock`, a second run → SyncRunning, exit 1); sync(full=True) re-processes
-│                    in place (never drops the index: it holds memory too; re-indexed chunks keep their prior status); SyncReport.failed (unreadable doc/scan: run continues,
+│                    in place (never drops the index: it holds memory too; re-indexed chunks keep their prior status and category); SyncReport.failed (unreadable doc/scan: run continues,
 │                    exit 1) and .missing (indexed docs no source listed: kept, printed `No longer available from its source (kept)`). Emails (doc_type email) are screened
 │                    (guardrails.injection) before chunking: planted spans → ingestion marker; SyncReport.flagged, printed `Flagged: ...`.
 │                    lineage.py: `plg graph lineage` - Policy/Sop/Circular/Clause/Precedent nodes from index metadata; Haiku (node extract_lineage,
@@ -218,7 +229,7 @@ src/plg/
 │                    Transcript is saved by file hash (TranscriptStore) so unchanged scans, --full re-syncs and the
 │                    source viewer (SavedScans, read-only) never call Claude again. Page headings give page locations.
 │                    A scan Claude can't read is skipped with a reason. Application-bundle scans stay excluded.
-├── search/          SearchStore protocol (store.py) and LanceSearchStore (lance.py): chunks / entities / memory,
+├── search/          SearchStore protocol (store.py; set_lifecycle, set_category) and LanceSearchStore (lance.py): chunks / entities / memory,
 │                    hybrid FTS + vector search with metadata pre-filters (SearchFilter); connected with read_consistency_interval=0
 │                    so a running plg-api sees a later `plg sync` (another process) without a restart. Embedder (Voyage; hashing
 │                    embedder for tests). rerank.py: Reranker protocol; VoyageReranker (hosted, falls back to the hybrid order on any error or
@@ -268,7 +279,8 @@ src/plg/
 │                    Curators (#25): a glossary term owner sees changes to their terms proposed in anyone's thread (title "Proposed by <ID>"), and may
 │                    resume that thread only to decide (else 404; the thread itself stays 404); their resume stream drops other actions' events.
 │                    Glossary resume: 403 not the term owner (the proposer can only reject), 422 bad edits, 409 the term changed since proposed.
-│                    GET /submissions: applications with a submission bundle (Submission list, newest first).
+│                    GET /categories (#29): Categorisation (saved file overlaid with the index's current documents).
+                    GET /submissions: applications with a submission bundle (Submission list, newest first).
 │                    GET /tasks/digest?staff_id&limit (TaskDigest; default own; 404 unknown staff, 403 role can't view), GET /tasks/team (UserCtx list the caller may view, self first).
                     GET /threads/{id}/runs/{run_id}/trace (#27) → TraceLink {url}: 404 not your thread / not one of its answered runs, 403 not a
                     developer, 503 no tracer, 502 LangSmith unreachable. create_app(..., tracer?) (serve() passes install_tracer); feedback reuses its client.
@@ -279,7 +291,7 @@ src/plg/
                     role that can't, 409 not the pending version, 422 bad edits / SQL rejected by the dry run; each decision → AuditLog.
                     GET /audit: own decisions, newest first (AuditRecord = AuditEntry + `sent`: the OutboxItem, `ticket`: the i-EMS Ticket; null when not applicable).
 │                    Resume edits for a ticket are validated by tickets.edit_errors (422).
-└── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers),
+└── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers), `plg categorise` (after sync; same index lock),
                      `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
                      `plg glossary list [--all] | show <term>` (with approved changes), `plg memory list | show | edit | forget --user <staff ID>`,
                      `plg digest [--user S12] [--limit N] [--out file]` (task digest to console or file; no --user = every officer with open tasks; no role check). make_llm() builds the real LLMClient.
@@ -301,7 +313,7 @@ tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLL
                      test_guardrail_api.py (#23): ATTACKS (guardrail cases, 100%) / BENIGN controls, redacted history, ingestion screening of the synced
                      corpus (only the planted email), the planted email via knowledge + defect → flagged, no proposed/executed action, and a pre-#23 index chunk withheld.
                      test_feedback_api.py (#26): feedback → FakeLangSmith (create_feedback, annotation queue), proposals, curator visibility/decisions/audit, no self-approval, few-shot SQL in the data agent's prompt, team facts/corrections in merge's memory block (make_api(langsmith=...)).
-                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_sync.py (#28): small corpora (make_corpus) through `plg sync`: incremental, superseded/missing docs kept, --full keeps memory, a store opened before a sync sees it, a failed doc → exit 1, an overlapping sync refused. test_tracing_api.py (#27): conftest LangSmithApi (records posted runs, answers project lookups; .tracer() = plg's masking client)
+                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_sync.py (#28): small corpora (make_corpus) through `plg sync`: incremental, superseded/missing docs kept, --full keeps memory, a store opened before a sync sees it, a failed doc → exit 1, an overlapping sync refused. test_categories_api.py (#29): `plg categorise` over a copy of the synced index (HDBSCAN real, naming scripted: cluster named after its first title) → GET /categories, chunk category + filter, graph IN_CATEGORY, idempotent re-run, category_summary findings. test_tracing_api.py (#27): conftest LangSmithApi (records posted runs, answers project lookups; .tracer() = plg's masking client)
                      → root metadata, nodes/Send branch/tool children, PII masked, resume + interrupt, trace URL role/ownership, CLI channel. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).
@@ -314,15 +326,17 @@ scripts/record_sse_fixtures.py
                      with the corpus synced into a temp index (threads, memory, graph, outbox and audit writes in scratch dirs, never .plg/), into web/src/test/fixtures/*.sse, plus the source
                      viewer's document + span-location responses per file type into fixtures/documents/*.json, and the approvals flow (two letters in two
                      threads + a ticket → fixtures/approvals/pending.json, edit.sse, reject.sse, ticket_edit.sse, audit.json), and defect.sse (ambiguous feedback → ELE, low confidence), doc_check.sse (APP-2026-0294), doc_check_problem.sse (APP-2026-0288,
-                     illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`), injection.sse (flagged message), injection_email.sse (planted email via knowledge), approvals/glossary_{pending.json,approve.sse,audit.json} (`glossary`: S02 proposes, S08 approves), feedback/{thread,receipt_up,receipt_down,curation,decided}.json (`feedback`: S05 rates, S03 curates; a recording LangSmith stand-in). Optional scenario names record only those.
+                     illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`), injection.sse (flagged message), injection_email.sse (planted email via knowledge), approvals/glossary_{pending.json,approve.sse,audit.json} (`glossary`: S02 proposes, S08 approves), feedback/{thread,receipt_up,receipt_down,curation,decided}.json (`feedback`: S05 rates, S03 curates; a recording LangSmith stand-in), categories.json (`categories`: real categorise over the temp index, naming scripted from titles). Optional scenario names record only those.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
                      /api/documents/[id], /[id]/chunks/[chunkId], /[id]/file (relay of the plg-api document endpoints), /api/drafts/[id]/file (DOCX relay),
-                     /api/memory (GET list), /api/submissions (GET), /api/tasks/digest (GET; staff_id, limit), /api/tasks/team (GET), /api/memory/[id] (PATCH, DELETE), /api/approvals (GET pending), /api/audit (GET),
+                     /api/memory (GET list), /api/submissions (GET), /api/categories (GET, #29), /api/tasks/digest (GET; staff_id, limit), /api/tasks/team (GET), /api/memory/[id] (PATCH, DELETE), /api/approvals (GET pending), /api/audit (GET),
                      /api/threads/[id]/resume (POST decision, SSE through; refusals relayed), /api/feedback (POST), /api/threads/[id]/runs/[runId]/trace (GET: 307 to the plg-api trace URL, http(s) only; refusals relayed), /api/curation (GET),
                      /api/curation/decide (POST). SSE pass-through = relaySse (src/lib/server/plg-api.ts).
-                     Pages: /doc-check (doc-check/DocCheckScreen.tsx: pick an application from /api/submissions → new thread + run
+                     Pages: /library (#29, library/LibraryScreen.tsx: categories from /api/categories with description and count; expand → summary +
+                     documents (Superseded marker) opening in DocumentViewer (SourceViewer.tsx: whole document, no highlight); Uncategorised last;
+                     not-yet-categorised message; 'Library' link in every page's nav), /doc-check (doc-check/DocCheckScreen.tsx: pick an application from /api/submissions → new thread + run
                      "Is application <ID> complete? ..." (shared helpers in runClient.ts), DocCheckCard + notice preview + link to Approvals and
                      to the conversation (sessionStorage plg_active_thread)), /tasks (tasks/TasksScreen.tsx: own top tasks via TaskList.tsx; Officer picker when /api/tasks/team has more than one; Show 5/10/20/50; 403 message), /sign-in, /approvals (Approvals inbox, approvals/ApprovalsScreen.tsx: pending actions across threads (letters, glossary changes (GlossaryCard: now vs proposed definition/value/effective date, reason, SQL binding, owner; approve/edit only for `approvers`, the proposer can only withdraw) and i-EMS tickets: TicketCard with classification details, editable category/priority/unit/description/case, 'Approve and raise') with letter preview,
                      open slots, PII flags, editable slots shown as <del>/<ins> diff, approve / send edited / reject with reason, approve+edit
@@ -348,6 +362,7 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 - Tests: `uv run pytest` (single file: `uv run pytest tests/test_runs_api.py`)
 - Typecheck: `uv run mypy` (strict)
 - Index the corpus (needs VOYAGE_API_KEY): `uv run plg sync [--full]` · check it: `uv run plg search "<query>"`
+- Categorise the Library (after a sync; needs ANTHROPIC_API_KEY): `uv run plg categorise`
 - Ask: `uv run plg ask "hello"` · Serve: `uv run plg serve` (http://127.0.0.1:8000). Knowledge answers need the index.
 - Web (in `web/`): `npm ci` · `npm run dev` (http://localhost:3000) · `npm test` · `npm run typecheck` · `npm run lint`
 - After editing anything under `ontology/`: `make ontology` and commit `src/plg/ontology/generated/` (CI fails on drift).

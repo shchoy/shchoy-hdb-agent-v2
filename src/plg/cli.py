@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import shutil
 import uuid
 from pathlib import Path
 from datetime import date
@@ -99,45 +98,60 @@ def ask(question: str) -> None:
 
 @app.command()
 def sync(
-    full: bool = typer.Option(False, "--full", help="Drop the index and re-ingest everything."),
+    full: bool = typer.Option(
+        False, "--full", help="Re-read and re-embed every document (in place: history and memories are kept)."
+    ),
 ) -> None:
     """Ingest changed corpus documents (SharePoint and Lotus Notes mocks) into the search index, and load the Excel
-    trackers into DuckDB for data questions."""
+    trackers into DuckDB for data questions. Safe to schedule: one run at a time per index; exits 1 if another run
+    holds the index or any document could not be read (the rest are still ingested)."""
     from plg.data.trackers import load_trackers
     from plg.ingest.metadata import load_entity_spine
     from plg.ingest.scans import ScanReader, TranscriptStore
     from plg.ingest.sources import DocumentSource, LotusNotesSource, SharePointSource
+    from plg.ingest.sync import SyncRunning, sync_lock
     from plg.ingest.sync import sync as run_sync
     from plg.search.lance import LanceSearchStore
 
     settings = Settings.from_env()
     embedder = make_embedder(settings)
-    if full and settings.search_db.exists():
-        shutil.rmtree(settings.search_db)
-    store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
-    entities, tagger = load_entity_spine(settings.records_db)
-    sources: list[DocumentSource] = [SharePointSource(settings.corpus_dir), LotusNotesSource(settings.corpus_dir)]
-    make_tracer(settings)  # scan transcription is traced (PII masked) when LangSmith is configured
-    scans = ScanReader(make_llm(settings), TranscriptStore(settings.transcripts_dir))
-    report = run_sync(store, embedder, sources, entities, tagger, scans)
+    try:
+        with sync_lock(settings.search_db):
+            store = LanceSearchStore(settings.search_db, dim=embedder.dim, vector_weight=settings.vector_weight)
+            entities, tagger = load_entity_spine(settings.records_db)
+            sources: list[DocumentSource] = [
+                SharePointSource(settings.corpus_dir), LotusNotesSource(settings.corpus_dir)
+            ]
+            make_tracer(settings)  # scan transcription is traced (PII masked) when LangSmith is configured
+            scans = ScanReader(make_llm(settings), TranscriptStore(settings.transcripts_dir))
+            report = run_sync(store, embedder, sources, entities, tagger, scans, full=full)
+            workbooks = load_trackers(settings.corpus_dir, settings.trackers_db)
+    except SyncRunning as exc:
+        typer.echo(f"{exc}; not starting another.", err=True)
+        raise typer.Exit(code=1) from None
 
     typer.echo(
         f"Added {len(report.added)}, updated {len(report.updated)}, unchanged {len(report.unchanged)}, "
-        f"skipped {len(report.skipped)} documents; wrote {report.chunks_written} chunks."
+        f"skipped {len(report.skipped)}, failed {len(report.failed)} documents; wrote {report.chunks_written} chunks."
     )
     for path in report.superseded:
         typer.echo(f"Superseded: {path}")
     for path in report.flagged:
         typer.echo(f"Flagged: {path} (suspected prompt injection; instructions removed)")
+    for path in report.missing:
+        typer.echo(f"No longer available from its source (kept): {path}")
     for skipped in report.skipped:
         typer.echo(f"Skipped: {skipped.rel_path} ({skipped.reason})")
+    for failed in report.failed:
+        typer.echo(f"Failed: {failed.rel_path} ({failed.reason})")
 
-    workbooks = load_trackers(settings.corpus_dir, settings.trackers_db)
     tables = [t for wb in workbooks for t in wb.tables]
     typer.echo(
         f"Loaded {len(workbooks)} trackers into {len(tables)} tables ({sum(t.rows for t in tables)} rows); "
         f"restart plg-api to query them."
     )
+    if report.failed:
+        raise typer.Exit(code=1)
 
 
 @app.command()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
@@ -89,7 +89,9 @@ class LanceSearchStore:
         self.path = path
         self._vector_weight = vector_weight
         path.mkdir(parents=True, exist_ok=True)
-        self._db = lancedb.connect(path)
+        # Check for newer table versions on every read: a long-running plg-api must see what a scheduled
+        # `plg sync` (another process) wrote, without a restart.
+        self._db = lancedb.connect(path, read_consistency_interval=timedelta(0))
         self._chunks = self._open("chunks", _chunk_schema(dim))
         self._entities = self._open("entities", _ENTITY_SCHEMA)
         self._memory = self._open("memory", _memory_schema(dim))
@@ -98,7 +100,7 @@ class LanceSearchStore:
             if existing != dim:
                 raise ValueError(
                     f"{path}: the {name} table holds {existing}-d vectors but the embedder makes {dim}-d ones; "
-                    "rebuild the index with `plg sync --full`"
+                    "move the folder aside (it also holds officers' memories) and run `plg sync`"
                 )
 
     def _open(self, name: str, schema: pa.Schema) -> Table:

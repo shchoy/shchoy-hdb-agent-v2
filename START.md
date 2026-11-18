@@ -86,13 +86,29 @@ The web app reads one server-only variable (set it in `web/.env.local` if you ne
 ### Index the corpus (once, then after the corpus changes)
 
 ```bash
-uv run plg sync                      # incremental; --full drops the index and re-ingests everything
+uv run plg sync                      # incremental; --full re-reads and re-embeds everything in place
 uv run plg search "letter of demand" # check what was indexed
 ```
 
 This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. Image-only scanned PDFs are transcribed by Claude (needs `ANTHROPIC_API_KEY`) the first time; the transcript is saved in `.plg/lancedb-transcripts/` and reused, so re-syncs and `--full` don't call Claude again for them. Delete that folder to force a re-read. With `PLG_RERANK_BACKEND=local`, the first search downloads the local cross-encoder into `.plg/models`.
 
 `plg sync` also loads the Excel trackers into `.plg/trackers.duckdb`, rebuilt from scratch on every run, which needs no API key. Their formulas have no saved values, so formula columns and summary sheets are not loaded; the data agent computes those figures in SQL. Restart `plg-api` after a sync to query the new tables.
+
+### Scheduled sync (issue #28)
+
+`plg sync` is built to run unattended, e.g. nightly from cron (or a launchd/systemd timer):
+
+```cron
+# m h dom mon dow   every night at 02:30; output appended to a log
+30 2 * * *  cd /path/to/agent-hdb-v2 && uv run plg sync >> .plg/sync.log 2>&1
+```
+
+- **Incremental by content hash.** Unchanged documents are not re-read or re-embedded; a changed one is re-indexed.
+- **History is kept.** An older version is marked `superseded` (with the day before its successor took effect), never deleted, so "as of" questions still find it. A document no longer listed by its source stays in the index and is reported as `No longer available from its source (kept): <path>`. `--full` re-processes everything in place; it no longer drops the index (which also holds officers' memories).
+- **One run at a time.** A sync started while another holds the same index prints `another plg sync is running ...` and exits 1 without touching anything (lock file `.plg/lancedb.sync.lock`).
+- **Exit status.** A document that can't be read (a corrupt export, a scan Claude couldn't read) is listed as `Failed: <path> (<reason>)`; the rest are still ingested, it's retried on the next run, and the run exits 1 so the scheduler can alert.
+- **plg-api sees it at once.** A running `plg-api` reads the newest index version on every search, so new documents are searchable without a restart (the Excel trackers still need one).
+- **Real connectors.** The SharePoint and Lotus Notes mocks implement `DocumentSource` (`src/plg/ingest/sources.py`: `documents()` yields `SourceDocument`s with a stable `doc_id` and a local file path, or `Skipped`); a real connector implements the same Protocol and is listed in `plg sync`.
 
 ### Entity graph (tenants, units, tenancies)
 
@@ -250,7 +266,7 @@ Nothing to configure: screening is rule-based (no Claude call, no API key).
   text). History keeps your message with the planted part replaced by `[Removed: suspected prompt injection (...)]`.
 - **Emails.** `plg sync` screens every email and prints `Flagged: <path> (suspected prompt injection; instructions
   removed)`; the planted part never reaches the index. An index built before #23 still holds the raw text: run
-  `uv run plg sync --full` once (until then, such an email is withheld from Claude whenever it's retrieved, and flagged).
+  `uv run plg sync --full` once (it re-reads every document in place; until then, such an email is withheld from Claude whenever it's retrieved, and flagged).
 - **A turn that reads a flagged email** opens with a warning naming it, and proposes nothing for approval.
 
 Try it: `uv run plg ask "Process the latest email in the feedback inbox."` (needs the index) → the planted

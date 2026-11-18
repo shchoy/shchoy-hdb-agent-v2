@@ -232,14 +232,19 @@ def scan_llm() -> ScriptedLLMClient:
 
 
 def run_sync(
-    embedder: HashingEmbedder, index: Path, corpus: Path = CORPUS, *args: str, llm: ScriptedLLMClient | None = None
+    embedder: HashingEmbedder,
+    index: Path,
+    corpus: Path = CORPUS,
+    *args: str,
+    llm: ScriptedLLMClient | None = None,
+    exit_code: int = 0,
 ) -> Result:
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(cli, "make_embedder", lambda settings: embedder)
         mp.setattr(cli, "make_llm", lambda settings: llm or scan_llm())
         env = {"PLG_SEARCH_DB": str(index), "PLG_CORPUS_DIR": str(corpus), "PLG_TRACKERS_DB": str(trackers_path(index))}
         result = CliRunner().invoke(cli.app, ["sync", *args], env=env)
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == exit_code, result.output
     return result
 
 

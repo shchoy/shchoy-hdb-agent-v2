@@ -13,7 +13,7 @@ type Source =
   | { status: "closed" }
   | { status: "loading" }
   | { status: "failed" }
-  | { status: "open"; document: DocumentView; location: ChunkLocation };
+  | { status: "open"; document: DocumentView; location: ChunkLocation | null };
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
@@ -66,13 +66,49 @@ export function SourceViewer({ citation }: { citation: CitationEvent }) {
   );
 }
 
+/**
+ * Opens a whole document in place (no cited span), e.g. from the Library. `label` names the button, so a list of
+ * documents gets one distinct "Open" button each.
+ */
+export function DocumentViewer({ docId, label }: { docId: string; label: string }) {
+  const [source, setSource] = useState<Source>({ status: "closed" });
+
+  async function open() {
+    setSource({ status: "loading" });
+    try {
+      const document = await getJson<DocumentView>(`/api/documents/${encodeURIComponent(docId)}`);
+      setSource({ status: "open", document, location: null });
+    } catch {
+      setSource({ status: "failed" });
+    }
+  }
+
+  return (
+    <>
+      {source.status !== "open" && (
+        <button type="button" onClick={() => void open()} disabled={source.status === "loading"} aria-label={label}>
+          Open
+        </button>
+      )}
+      {source.status === "failed" && (
+        <p role="alert" className={styles.sourceError}>
+          The document could not be loaded.
+        </p>
+      )}
+      {source.status === "open" && (
+        <Document document={source.document} location={null} onClose={() => setSource({ status: "closed" })} />
+      )}
+    </>
+  );
+}
+
 function Document({
   document,
   location,
   onClose,
 }: {
   document: DocumentView;
-  location: ChunkLocation;
+  location: ChunkLocation | null;
   onClose: () => void;
 }) {
   const first = useRef<HTMLElement | null>(null);
@@ -81,8 +117,9 @@ function Document({
   }, []);
 
   const byBlock = new Map<number, Highlight[]>();
-  for (const h of location.highlights) byBlock.set(h.block, [...(byBlock.get(h.block) ?? []), h]);
-  const firstBlock = location.highlights.length ? Math.min(...location.highlights.map((h) => h.block)) : -1;
+  const highlights = location?.highlights ?? [];
+  for (const h of highlights) byBlock.set(h.block, [...(byBlock.get(h.block) ?? []), h]);
+  const firstBlock = highlights.length ? Math.min(...highlights.map((h) => h.block)) : -1;
   const file = `/api/documents/${encodeURIComponent(document.doc_id)}/file`;
   const paged = document.blocks.some((b) => b.page !== null);
 
@@ -92,8 +129,8 @@ function Document({
         <strong>{document.title}</strong>
         {document.version && <span className={styles.location}> v{document.version}</span>}
         {document.kind === "pdf" ? (
-          <a href={`${file}#page=${location.page ?? 1}`} target="_blank" rel="noopener noreferrer">
-            Open original PDF{location.page ? ` (page ${location.page})` : ""}
+          <a href={`${file}#page=${location?.page ?? 1}`} target="_blank" rel="noopener noreferrer">
+            Open original PDF{location?.page ? ` (page ${location.page})` : ""}
           </a>
         ) : (
           <a href={file} download={document.filename}>
@@ -101,10 +138,10 @@ function Document({
           </a>
         )}
         <button type="button" onClick={onClose}>
-          Close source
+          {location ? "Close source" : "Close document"}
         </button>
       </header>
-      {location.highlights.length === 0 && (
+      {location && highlights.length === 0 && (
         <p role="note" className={styles.sourceNote}>
           The cited text is no longer found in the file. It read: <q>{location.quote}</q>
         </p>

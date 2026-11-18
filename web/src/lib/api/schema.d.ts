@@ -364,6 +364,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Categories
+         * @description The Library's document categories from the last `plg categorise`, with each document's current title and
+         *     status; documents indexed since then (or that no category took) are `uncategorised`.
+         */
+        get: operations["get_categories_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{doc_id}": {
         parameters: {
             query?: never;
@@ -540,6 +561,51 @@ export interface components {
             severity: "Low" | "Medium" | "High" | "Critical";
             /** Confidence */
             confidence: number;
+        };
+        /** Categorisation */
+        Categorisation: {
+            /** Categorised At */
+            categorised_at?: string | null;
+            /**
+             * Categories
+             * @default []
+             */
+            categories: components["schemas"]["Category"][];
+            /**
+             * Uncategorised
+             * @default []
+             */
+            uncategorised: components["schemas"]["CategoryDocument"][];
+        };
+        /** Category */
+        Category: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Summary */
+            summary: string;
+            /** Documents */
+            documents: components["schemas"]["CategoryDocument"][];
+        };
+        /**
+         * CategoryDocument
+         * @description A document as the Library lists it.
+         */
+        CategoryDocument: {
+            /** Doc Id */
+            doc_id: string;
+            /** Title */
+            title: string;
+            /** Doc Type */
+            doc_type: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "current" | "superseded";
         };
         /**
          * ChunkLocation
@@ -2684,6 +2750,38 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": components["schemas"]["RunEvent"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_categories_categories_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Categorisation"];
                 };
             };
             /** @description Validation Error */

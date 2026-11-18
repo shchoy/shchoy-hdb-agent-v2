@@ -1,0 +1,441 @@
+{
+  "categorised_at": "2026-11-18T07:46:09.061628Z",
+  "categories": [
+    {
+      "id": "CAT-2cf106f6",
+      "name": "Display area at NCs",
+      "description": "Circular, email documents about Display area at NCs.",
+      "summary": "These 15 documents include RE: PLG Circular 07/2026 - Display area at NCs (pilot from 1 Aug), RE: vacant units - QBR vs Aug report, RE: Golden Leaf Minimart - June rent outstanding (TA-2024-00542).",
+      "documents": [
+        {
+          "doc_id": "LN-210ad3b2a261",
+          "title": "RE: PLG Circular 07/2026 - Display area at NCs (pilot from 1 Aug)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-3401694d42b9",
+          "title": "RE: vacant units - QBR vs Aug report",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-3750442c7191",
+          "title": "RE: Golden Leaf Minimart - June rent outstanding (TA-2024-00542)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-5c8ef2dfa4ce",
+          "title": "RE: FW: Feedback FB-2026-00707 - ceiling leak Blk 214 #01-07",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-7feb15c7123f",
+          "title": "RE: Golden Leaf Minimart - June rent outstanding (TA-2024-00542)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-8dc01e603b43",
+          "title": "RE: Golden Leaf Minimart - June rent outstanding (TA-2024-00542)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-8fbe97e1a76b",
+          "title": "RE: PLG Circular 07/2026 - Display area at NCs (pilot from 1 Aug)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-a80e13c72336",
+          "title": "RE: FW: Feedback FB-2026-00707 - ceiling leak Blk 214 #01-07",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-ba593845e863",
+          "title": "RE: vacant units - QBR vs Aug report",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-bbe2a384d056",
+          "title": "RE: Unauthorised subletting - Lucky Star Hair Studio U-RH455-01-20",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-beb45e68c456",
+          "title": "RE: Unauthorised subletting - Lucky Star Hair Studio U-RH455-01-20",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-d885a01a5932",
+          "title": "FW: Feedback FB-2026-00707 - ceiling leak Blk 214 #01-07",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-ed669d8ba1ce",
+          "title": "RE: vacant units - QBR vs Aug report",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-ff2991dc6082",
+          "title": "PLG Circular 07/2026 - Display area at NCs (pilot from 1 Aug)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-398077",
+          "title": "PLG Circular 07/2026 - Display Area at NCs (Pilot)",
+          "doc_type": "circular",
+          "status": "current"
+        }
+      ]
+    },
+    {
+      "id": "CAT-e0223c61",
+      "name": "Tenancy Renewal & Security Deposit",
+      "description": "Circular, policy documents about Tenancy Renewal & Security Deposit.",
+      "summary": "These 5 documents include PLG-POL-002 Tenancy Renewal & Security Deposit Policy (v2.1), PLG-POL-003 Rental Arrears Management Policy (v2.0), PLG-POL-003 Rental Arrears Management Policy (v1.0). 1 of them has been superseded by a later version.",
+      "documents": [
+        {
+          "doc_id": "SP-138811",
+          "title": "PLG-POL-002 Tenancy Renewal & Security Deposit Policy (v2.1)",
+          "doc_type": "policy",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-888995",
+          "title": "PLG-POL-003 Rental Arrears Management Policy (v2.0)",
+          "doc_type": "policy",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-905529",
+          "title": "PLG-POL-003 Rental Arrears Management Policy (v1.0)",
+          "doc_type": "policy",
+          "status": "superseded"
+        },
+        {
+          "doc_id": "SP-908076",
+          "title": "PLG Circular 03/2026 - Revised Rental Arrears Management Policy",
+          "doc_type": "circular",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-912007",
+          "title": "PLG Circular 03/2026 (plain-text copy)",
+          "doc_type": "circular",
+          "status": "current"
+        }
+      ]
+    },
+    {
+      "id": "CAT-d179f58c",
+      "name": "Change of trade application",
+      "description": "Email documents about Change of trade application.",
+      "summary": "These 4 documents include Change of trade application - Mutiara Provision Shop to bubble tea, RE: Change of trade application - Mutiara Provision Shop to bubble tea, RE: Change of trade application - Mutiara Provision Shop to bubble tea.",
+      "documents": [
+        {
+          "doc_id": "LN-06da450fba27",
+          "title": "Change of trade application - Mutiara Provision Shop to bubble tea",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-39e8e3d34bc2",
+          "title": "RE: Change of trade application - Mutiara Provision Shop to bubble tea",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-8c37340f0fb9",
+          "title": "RE: Change of trade application - Mutiara Provision Shop to bubble tea",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-b97eaa72e4e6",
+          "title": "RE: Change of trade application - Mutiara Provision Shop to bubble tea",
+          "doc_type": "email",
+          "status": "current"
+        }
+      ]
+    },
+    {
+      "id": "CAT-d78f138e",
+      "name": "Tenancy Management",
+      "description": "Report documents about Tenancy Management.",
+      "summary": "These 4 documents include Internal Audit Report IA/2026/07 - Tenancy Management, PLG Monthly Operations Report - August 2026, Inspection Report - Rimba Heights, June 2026.",
+      "documents": [
+        {
+          "doc_id": "SP-057392",
+          "title": "Internal Audit Report IA/2026/07 - Tenancy Management",
+          "doc_type": "report",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-189905",
+          "title": "PLG Monthly Operations Report - August 2026",
+          "doc_type": "report",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-440413",
+          "title": "Inspection Report - Rimba Heights, June 2026",
+          "doc_type": "report",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-642795",
+          "title": "PLG Monthly Operations Report - July 2026",
+          "doc_type": "report",
+          "status": "current"
+        }
+      ]
+    },
+    {
+      "id": "CAT-6e3a501f",
+      "name": "Incident report",
+      "description": "Email, report documents about Incident report.",
+      "summary": "These 3 documents include FW: Incident report - fire at Sin Hock Eating House (PLG-INC-2026-011), Incident report - fire at Sin Hock Eating House (PLG-INC-2026-011), Incident Report PLG-INC-2026-011 - Fire at Eating House.",
+      "documents": [
+        {
+          "doc_id": "LN-233eda6820d5",
+          "title": "FW: Incident report - fire at Sin Hock Eating House (PLG-INC-2026-011)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-d961d34c5232",
+          "title": "Incident report - fire at Sin Hock Eating House (PLG-INC-2026-011)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-363036",
+          "title": "Incident Report PLG-INC-2026-011 - Fire at Eating House",
+          "doc_type": "report",
+          "status": "current"
+        }
+      ]
+    },
+    {
+      "id": "CAT-255a319a",
+      "name": "Renewal of tenancy",
+      "description": "Email documents about Renewal of tenancy.",
+      "summary": "These 3 documents include RE: Renewal of tenancy - Wellcare Family Clinic (U-KR305-01-12), Renewal of tenancy - Wellcare Family Clinic (U-KR305-01-12), RE: Renewal of tenancy - Wellcare Family Clinic (U-KR305-01-12).",
+      "documents": [
+        {
+          "doc_id": "LN-a77bdb6dd1b5",
+          "title": "RE: Renewal of tenancy - Wellcare Family Clinic (U-KR305-01-12)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-ae9d8bbb9ce1",
+          "title": "Renewal of tenancy - Wellcare Family Clinic (U-KR305-01-12)",
+          "doc_type": "email",
+          "status": "current"
+        },
+        {
+          "doc_id": "LN-d442c3a67718",
+          "title": "RE: Renewal of tenancy - Wellcare Family Clinic (U-KR305-01-12)",
+          "doc_type": "email",
+          "status": "current"
+        }
+      ]
+    },
+    {
+      "id": "CAT-929f0559",
+      "name": "Missing Documents Notice",
+      "description": "Template documents about Missing Documents Notice.",
+      "summary": "These 3 documents include TPL-DOC-02 Missing Documents Notice (Approved Template), TPL-REM-01 Arrears Reminder Letter (Approved Template), TPL-FBK-03 Feedback Update Reply (Approved Template).",
+      "documents": [
+        {
+          "doc_id": "SP-609080",
+          "title": "TPL-DOC-02 Missing Documents Notice (Approved Template)",
+          "doc_type": "template",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-737501",
+          "title": "TPL-REM-01 Arrears Reminder Letter (Approved Template)",
+          "doc_type": "template",
+          "status": "current"
+        },
+        {
+          "doc_id": "SP-794788",
+          "title": "TPL-FBK-03 Feedback Update Reply (Approved Template)",
+          "doc_type": "template",
+          "status": "current"
+        }
+      ]
+    }
+  ],
+  "uncategorised": [
+    {
+      "doc_id": "LN-33675c00dc96",
+      "title": "RE: Security deposit - Prima Dental Care (Blk 512 #01-33)",
+      "doc_type": "email",
+      "status": "current"
+    },
+    {
+      "doc_id": "LN-36bfaf52924c",
+      "title": "APP-2026-0228 - outstanding documents",
+      "doc_type": "email",
+      "status": "current"
+    },
+    {
+      "doc_id": "LN-37ace321c871",
+      "title": "Golden Leaf Minimart - June rent outstanding (TA-2024-00542)",
+      "doc_type": "email",
+      "status": "current"
+    },
+    {
+      "doc_id": "LN-40e0965bfb65",
+      "title": "RE: APP-2026-0228 - outstanding documents",
+      "doc_type": "email",
+      "status": "current"
+    },
+    {
+      "doc_id": "LN-4e408a5a4188",
+      "title": "Security deposit - Prima Dental Care (Blk 512 #01-33)",
+      "doc_type": "email",
+      "status": "current"
+    },
+    {
+      "doc_id": "LN-793af1b89c70",
+      "title": "URGENT: Updated bank details for deposit refunds",
+      "doc_type": "email",
+      "status": "current"
+    },
+    {
+      "doc_id": "LN-8c933e23168e",
+      "title": "Unauthorised subletting - Lucky Star Hair Studio U-RH455-01-20",
+      "doc_type": "email",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-061136",
+      "title": "Tender Notice PLG/T/2026/09",
+      "doc_type": "tender_notice",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-115308",
+      "title": "Letter of Demand - Golden Leaf Minimart Pte Ltd",
+      "doc_type": "letter",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-117108",
+      "title": "PLG Quarterly Business Review Q3 2026",
+      "doc_type": "deck",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-255244",
+      "title": "Minutes of PLG Management Meeting No. 4/2026",
+      "doc_type": "minutes",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-306737",
+      "title": "Tenant hotline call log Sep 2026",
+      "doc_type": "note",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-309824",
+      "title": "PLG-SOP-011 Commercial Unit Inspection SOP (v1.0)",
+      "doc_type": "sop",
+      "status": "superseded"
+    },
+    {
+      "doc_id": "SP-379982",
+      "title": "Welcome to PLG - Guide for New Officers",
+      "doc_type": "note",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-500954",
+      "title": "PLG-SOP-011 Commercial Unit Inspection SOP (v1.1)",
+      "doc_type": "sop",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-608457",
+      "title": "PLG-POL-001 Trade Mix & Usage Policy (v3.0)",
+      "doc_type": "policy",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-613706",
+      "title": "NC Rejuvenation Programme - Kickoff",
+      "doc_type": "deck",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-630501",
+      "title": "PLG Precedent Case Compendium 2023-2026",
+      "doc_type": "precedent_compendium",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-631014",
+      "title": "FAQ for Commercial Tenants (2025 Edition)",
+      "doc_type": "faq",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-725742",
+      "title": "Handover notes - East (Marcus Lim)",
+      "doc_type": "note",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-745530",
+      "title": "Rental Arrears Process 2026 - Officer Training",
+      "doc_type": "deck",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-747159",
+      "title": "Guidelines on A&A Works for Commercial Tenants (2025)",
+      "doc_type": "guideline",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-799342",
+      "title": "PLG Glossary of Business Terms",
+      "doc_type": "note",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-803800",
+      "title": "PLG-SOP-014 Rental Arrears Recovery SOP (v1.2)",
+      "doc_type": "sop",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-814964",
+      "title": "FAQ for Commercial Tenants (2025 Edition) - copy",
+      "doc_type": "faq",
+      "status": "current"
+    },
+    {
+      "doc_id": "SP-862168",
+      "title": "PLG-SOP-020 Public Feedback & Defect Routing SOP (v2.0)",
+      "doc_type": "sop",
+      "status": "current"
+    }
+  ]
+}

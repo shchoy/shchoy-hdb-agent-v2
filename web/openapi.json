@@ -1245,6 +1245,55 @@
         }
       }
     },
+    "/categories": {
+      "get": {
+        "summary": "Get Categories",
+        "description": "The Library's document categories from the last `plg categorise`, with each document's current title and\nstatus; documents indexed since then (or that no category took) are `uncategorised`.",
+        "operationId": "get_categories_categories_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Categorisation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/documents/{doc_id}": {
       "get": {
         "summary": "Get Document",
@@ -1748,6 +1797,109 @@
         ],
         "title": "Candidate",
         "type": "object"
+      },
+      "Categorisation": {
+        "properties": {
+          "categorised_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categorised At"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            },
+            "type": "array",
+            "title": "Categories",
+            "default": []
+          },
+          "uncategorised": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryDocument"
+            },
+            "type": "array",
+            "title": "Uncategorised",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "Categorisation"
+      },
+      "Category": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryDocument"
+            },
+            "type": "array",
+            "title": "Documents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "summary",
+          "documents"
+        ],
+        "title": "Category"
+      },
+      "CategoryDocument": {
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "title": "Doc Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_id",
+          "title",
+          "doc_type",
+          "status"
+        ],
+        "title": "CategoryDocument",
+        "description": "A document as the Library lists it."
       },
       "ChunkLocation": {
         "properties": {

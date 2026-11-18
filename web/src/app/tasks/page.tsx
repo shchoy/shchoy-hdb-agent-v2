@@ -21,6 +21,7 @@ export default async function TasksPage() {
         <Link href="/approvals">Approvals</Link>
         <Link href="/memory">Memory</Link>
         <Link href="/doc-check">Document check</Link>
+        <Link href="/library">Library</Link>
         <SignOutButton />
       </header>
       <main>

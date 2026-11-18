@@ -279,6 +279,21 @@ def test_full_sync_keeps_history_and_officers_memories(tmp_path: Path, index: Pa
     assert store.get_memory(("memory", "S05", "preference"), "tone") is not None
 
 
+def test_a_changed_document_keeps_its_library_category_until_the_next_categorise(
+    tmp_path: Path, index: Path, embedder: CountingEmbedder
+) -> None:
+    corpus = make_corpus(tmp_path / "corpus", [NOTE])
+    run_sync(embedder, index, corpus)
+    note = by_path(open_store(index, embedder))[NOTE]
+    open_store(index, embedder).set_category(note.doc_id, "CAT-0000beef")  # as `plg categorise` leaves it
+    with (corpus / NOTE).open("a") as f:
+        f.write("\n## Addendum\nA new paragraph.\n")
+
+    run_sync(embedder, index, corpus)
+
+    assert {c.category for c in open_store(index, embedder).chunks(note.doc_id)} == {"CAT-0000beef"}
+
+
 class WatchingEmbedder(CountingEmbedder):
     """Records which policy versions a reader of the index sees as current each time the sync embeds."""
 

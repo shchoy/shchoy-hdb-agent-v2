@@ -22,6 +22,8 @@
 - Template
 - Clause: A numbered clause of a policy version, e.g. PLG-POL-001 v3.0 cl. 7.3.
 - Precedent: A decided case in the precedent compendium.
+- LibraryDocument: An indexed corpus document as the Library lists it (its doc_id), whatever its document type.
+- DocumentCategory: A named group of similar Library documents, found by clustering their embeddings (`plg categorise`).
 - Trade
 - DefectCategory
 - Team
@@ -61,6 +63,7 @@
 - Precedent -APPLIES-> Clause [0..*]*
 - Precedent -CONCERNS_TRADE-> Trade [0..*]
 - Precedent -IN_NC-> NeighbourhoodCentre [0..1]
+- LibraryDocument -IN_CATEGORY-> DocumentCategory [0..1]
 - DefectCategory -HANDLED_BY-> Team [1]
 - DefectCategory -DEFAULT_VENDOR-> Vendor [0..1]
 - GlossaryTerm -OWNED_BY-> Staff [1]

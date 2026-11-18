@@ -132,6 +132,9 @@ class LanceSearchStore:
             where=f"doc_id = {_q(doc_id)}", values={"status": status, "effective_to": effective_to}
         )
 
+    def set_category(self, doc_id: str, category: str | None) -> None:
+        self._chunks.update(where=f"doc_id = {_q(doc_id)}", values={"category": category})
+
     def chunks(self, doc_id: str) -> list[Chunk]:
         rows = self._chunks.search().where(f"doc_id = {_q(doc_id)}").limit(None).to_arrow().to_pylist()
         return sorted((Chunk.model_validate(r) for r in rows), key=lambda c: c.seq)

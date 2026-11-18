@@ -68,6 +68,8 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_AUDIT_LOG` | `.plg/audit.jsonl` | Append-only audit log: one line per decided action (approver, time, LangSmith `run_id`) |
 | `PLG_FEEDBACK_LOG` | `.plg/feedback.jsonl` | Append-only answer feedback (👍/👎, corrections, team facts) |
 | `PLG_ANNOTATION_QUEUE` | `PLG thumbs-down review` | LangSmith annotation queue that thumbs-down runs join (created on first use; needs `LANGSMITH_API_KEY`) |
+| `PLG_CATEGORIES_FILE` | `.plg/categories.json` | The Library's document categories, written by `plg categorise` |
+| `PLG_CATEGORY_MIN_SIZE` | `3` | The fewest similar documents that make a category |
 | `PLG_DEVELOPERS` | `S08` | Comma-separated staff IDs of developer personas: they get a **View trace** link under their answers |
 | `PLG_GIT_SHA` | (from `git rev-parse HEAD`) | Commit recorded on every trace, for running outside a git checkout |
 | `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
@@ -109,6 +111,18 @@ This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/l
 - **Exit status.** A document that can't be read (a corrupt export, a scan Claude couldn't read) is listed as `Failed: <path> (<reason>)`; the rest are still ingested, it's retried on the next run, and the run exits 1 so the scheduler can alert.
 - **plg-api sees it at once.** A running `plg-api` reads the newest index version on every search, so new documents are searchable without a restart (the Excel trackers still need one).
 - **Real connectors.** The SharePoint and Lotus Notes mocks implement `DocumentSource` (`src/plg/ingest/sources.py`: `documents()` yields `SourceDocument`s with a stable `doc_id` and a local file path, or `Skipped`); a real connector implements the same Protocol and is listed in `plg sync`.
+
+### Document categories and the Library (issue #29)
+
+```bash
+uv run plg categorise    # after `plg sync`; needs ANTHROPIC_API_KEY (Haiku names the groups)
+```
+
+This groups the indexed documents (superseded versions included) by similarity: each document's embedding is the mean of its chunks', and HDBSCAN finds groups of at least `PLG_CATEGORY_MIN_SIZE` documents. Documents too unlike the rest stay **Uncategorised**. One Haiku call names every group and writes a one-line description and a short summary. The result is saved to `.plg/categories.json`. Each chunk's `category` metadata is set, so search can filter on it. The entity graph gets a `DocumentCategory` node per category, with `IN_CATEGORY` edges from `LibraryDocument` nodes. It prints each category's ID, name and size.
+
+- **Re-runs.** A category's ID is a hash of its members, so re-running over an unchanged index changes nothing (`0 changed category`). Run it after a sync that added documents; until then, new documents show as Uncategorised. It takes the same lock as `plg sync`, so the two never write the index at once.
+- **Library page.** In the web app, **Library** (`/library`) lists the categories with their descriptions. Open one for its summary and documents (superseded ones marked).
+- **Asking about a category.** Ask the assistant e.g. "Summarise the rental arrears category". The `category_summary` specialist matches the question to a category by name and answers from the saved summary and document list. If no category matches, it lists the categories there are.
 
 ### Entity graph (tenants, units, tenancies)
 

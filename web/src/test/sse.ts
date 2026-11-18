@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { HttpResponse } from "msw";
+import type { Categorisation } from "@/lib/events";
 
 /** A recorded plg-api SSE stream (see scripts/record_sse_fixtures.py at the repo root). */
 export function fixture(
@@ -29,6 +30,11 @@ export function submissionsFixture(): Record<string, unknown>[] {
     string,
     unknown
   >[];
+}
+
+/** The recorded GET /categories response: the Library's categories after `plg categorise` over the synced corpus. */
+export function categoriesFixture(): Categorisation {
+  return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/categories.json"), "utf8")) as Categorisation;
 }
 
 /** A recorded task response: `digest.json` (S04's own), `digest_S06.json` (S04 viewing S06, limit 10), `team.json` (S04's team). */

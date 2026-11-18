@@ -52,6 +52,8 @@ from plg.graph import summary as history
 from plg.guardrails import injection
 from plg.guardrails.injection import InjectionFlag
 from plg.identity import UserCtx, load_personas
+from plg.categories import ask as category_ask
+from plg.categories.model import load_categorisation
 from plg.tasks import ask as task_ask
 from plg.tasks import rules as task_rules
 from plg.feedback.curation import Curation
@@ -73,6 +75,7 @@ DEFECT = DEFECT_NODE
 DOC_CHECK = DOC_CHECK_NODE
 TASKS = task_ask.NODE
 GLOSSARY = glossary_agent.NODE
+CATEGORY_SUMMARY = category_ask.NODE
 MERGE = "merge"
 SUMMARISE = history.NODE
 LOAD_MEMORY = "load_memory"
@@ -99,6 +102,9 @@ for that notice about a named application goes here, not to drafting.
 queue or task digest, ranked and explained. Counts and statistics of tasks across PLG go to data.
 - glossary: the officer proposes or asks to change a business definition in the glossary (what a term such as \
 vacant, arrears or the LOD trigger means from a date). Questions about what a term means go to knowledge.
+- category_summary: the officer asks for a summary or overview of a category (group) of documents in the Library, \
+e.g. "summarise the rental arrears category", or which categories of documents there are. Questions about what the \
+documents say on a specific point go to knowledge.
 A question can have several parts, each needing a different specialist: name every specialist needed. Choose no \
 specialist for greetings, thanks and questions about how to use the assistant.
 Give each specialist your confidence (0 to 1) that the question needs it. If you can't tell what the officer is asking \
@@ -116,7 +122,7 @@ ROUTE_TOOL: Block = {
                 "items": {
                     "type": "object",
                     "properties": {
-                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect", "doc_check", "tasks", "glossary"]},
+                        "intent": {"type": "string", "enum": ["knowledge", "data", "drafting", "defect", "doc_check", "tasks", "glossary", "category_summary"]},
                         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                     },
                     "required": ["intent", "confidence"],
@@ -435,6 +441,13 @@ def build_graph(
         get_stream_writer()({"tasks": found.model_dump(mode="json")})
         return {"findings": [Finding(specialist=TASKS, text=task_rules.render(found) + "\n" + task_ask.RATIONALE, citations=[], traced=True)]}
 
+    async def category_summary_node(state: PLGState) -> PLGState:
+        """Summarise a Library category from the saved categorisation (read each run, so a re-categorisation shows at
+        once). Deterministic; its finding counts as traced (the categorisation output it was read from)."""
+        found = await asyncio.to_thread(load_categorisation, settings.categories_file)
+        text = category_ask.answer(state["question"], found)
+        return {"findings": [Finding(specialist=CATEGORY_SUMMARY, text=text, citations=[], traced=True)]}
+
     async def glossary_node(state: PLGState) -> PLGState:
         """Read the officer's change to a business definition and, if it checks out, propose it: the new version
         waits at `approval` for the term owner. Nothing changes here."""
@@ -585,6 +598,7 @@ def build_graph(
     graph.add_node(DOC_CHECK, doc_check_node)
     graph.add_node(TASKS, tasks_node)
     graph.add_node(GLOSSARY, glossary_node)
+    graph.add_node(CATEGORY_SUMMARY, category_summary_node)
     graph.add_node(MERGE, merge)
     graph.add_node(SUMMARISE, summarise_history)
     graph.add_node(APPROVAL, approval)
@@ -598,7 +612,7 @@ def build_graph(
         graph.add_node(LOAD_MEMORY, load_memory)
         graph.add_node(WRITE_MEMORY, write_memory)
         graph.add_edge(LOAD_MEMORY, ROUTE)
-    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, DOC_CHECK, TASKS, GLOSSARY, MERGE])
+    graph.add_conditional_edges(ROUTE, fan_out, [KNOWLEDGE, DATA, DRAFTING, DEFECT, DOC_CHECK, TASKS, GLOSSARY, CATEGORY_SUMMARY, MERGE])
     graph.add_edge(KNOWLEDGE, MERGE)
     graph.add_edge(DATA, MERGE)
     graph.add_edge(DRAFTING, MERGE)
@@ -606,6 +620,7 @@ def build_graph(
     graph.add_edge(DOC_CHECK, MERGE)
     graph.add_edge(TASKS, MERGE)
     graph.add_edge(GLOSSARY, MERGE)
+    graph.add_edge(CATEGORY_SUMMARY, MERGE)
     answered = WRITE_MEMORY if memory else MERGE
     if memory:
         graph.add_edge(MERGE, WRITE_MEMORY)

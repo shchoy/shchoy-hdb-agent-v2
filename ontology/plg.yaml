@@ -147,6 +147,18 @@ classes:
     annotations: {node: true}
     slots: [decision, applies, concerns_trade, in_nc]
 
+  LibraryDocument:
+    is_a: Entity
+    description: An indexed corpus document as the Library lists it (its doc_id), whatever its document type.
+    annotations: {node: true}
+    slots: [doc_type, document_category]
+
+  DocumentCategory:
+    is_a: Entity
+    description: A named group of similar Library documents, found by clustering their embeddings (`plg categorise`).
+    annotations: {node: true}
+    slots: [definition]
+
   # ---------------------------------------------------------------- vocabulary concepts
   Trade:
     is_a: Concept
@@ -361,6 +373,9 @@ slots:
     annotations: {edge: ABOUT_UNIT}
   feedback_category:
     range: DefectCategory
+    annotations: {edge: IN_CATEGORY}
+  document_category:
+    range: DocumentCategory
     annotations: {edge: IN_CATEGORY}
   raised_ticket:
     range: IemsTicket

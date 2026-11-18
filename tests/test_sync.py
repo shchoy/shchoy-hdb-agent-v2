@@ -10,19 +10,19 @@ import csv
 import json
 import shutil
 from collections.abc import Iterator, Sequence
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
+from typer.testing import CliRunner, Result
 
 from plg import cli
 from plg.config import Settings
 from plg.ontology.vocab import load_vocab
 from plg.search.lance import LanceSearchStore
-from plg.search.models import Chunk, DocumentMeta
+from plg.search.models import Chunk, DocumentMeta, MemoryItem
 
-from tests.conftest import CORPUS, HENG_ANN_SCAN, CountingEmbedder, by_path, open_store, run_sync
+from tests.conftest import CORPUS, HENG_ANN_SCAN, CountingEmbedder, by_path, open_store, run_sync, trackers_path
 
 TEXT_TYPES = {"docx", "pdf", "pptx", "eml", "md", "txt"}
 
@@ -238,7 +238,7 @@ def test_a_new_version_supersedes_the_old_one_without_re_embedding_it(
     assert f"Superseded: {POL_V1}" in result.output
 
 
-def test_full_sync_rebuilds_the_index(tmp_path: Path, index: Path, embedder: CountingEmbedder) -> None:
+def test_full_sync_reprocesses_every_document_in_place(tmp_path: Path, index: Path, embedder: CountingEmbedder) -> None:
     corpus = make_corpus(tmp_path / "corpus", [NOTE])
     run_sync(embedder, index, corpus)
     embedder.embedded.clear()
@@ -246,7 +246,118 @@ def test_full_sync_rebuilds_the_index(tmp_path: Path, index: Path, embedder: Cou
     result = run_sync(embedder, index, corpus, "--full")
 
     assert embedder.embedded
-    assert "Added 1, updated 0, unchanged 0" in result.output
+    assert "Added 0, updated 1, unchanged 0" in result.output
+
+
+# ---------------------------------------------------------------- scheduled runs (issue #28)
+
+
+def test_a_document_gone_from_its_source_is_kept_for_historical_questions(
+    tmp_path: Path, index: Path, embedder: CountingEmbedder
+) -> None:
+    run_sync(embedder, index, make_corpus(tmp_path / "both", [POL_V1, POL_V2]))
+
+    result = run_sync(embedder, index, make_corpus(tmp_path / "v2-only", [POL_V2]))
+
+    docs = by_path(open_store(index, embedder))
+    assert (docs[POL_V1].status, docs[POL_V1].effective_to) == ("superseded", date(2026, 3, 31))
+    assert f"No longer available from its source (kept): {POL_V1}" in result.output
+
+
+def test_full_sync_keeps_history_and_officers_memories(tmp_path: Path, index: Path, embedder: CountingEmbedder) -> None:
+    run_sync(embedder, index, make_corpus(tmp_path / "both", [POL_V1, POL_V2]))
+    now = datetime(2026, 11, 18, tzinfo=UTC)
+    open_store(index, embedder).put_memory(MemoryItem(
+        namespace=("memory", "S05", "preference"), key="tone", value={}, text="Prefers short answers.",
+        vector=embedder.embed_query("Prefers short answers."), provenance="test", created_at=now, updated_at=now,
+    ))
+
+    run_sync(embedder, index, make_corpus(tmp_path / "v2-only", [POL_V2]), "--full")
+
+    store = open_store(index, embedder)
+    assert by_path(store)[POL_V1].status == "superseded"
+    assert store.get_memory(("memory", "S05", "preference"), "tone") is not None
+
+
+class WatchingEmbedder(CountingEmbedder):
+    """Records which policy versions a reader of the index sees as current each time the sync embeds."""
+
+    def __init__(self, index: Path) -> None:
+        super().__init__()
+        self.index = index
+        self.current_seen: list[set[str]] = []
+
+    def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+        if self.index.exists():
+            docs = open_store(self.index, self).documents()
+            self.current_seen.append({d.source_path for d in docs if d.status == "current"})
+        return super().embed_documents(texts)
+
+
+def test_a_superseded_version_never_reads_as_current_while_it_is_re_indexed(tmp_path: Path, index: Path) -> None:
+    corpus = make_corpus(tmp_path / "both", [POL_V1, POL_V2])
+    embedder = WatchingEmbedder(index)
+    run_sync(embedder, index, corpus)
+    embedder.current_seen.clear()
+
+    result = run_sync(embedder, index, corpus, "--full")
+
+    assert embedder.current_seen and all(POL_V1 not in seen for seen in embedder.current_seen)
+    assert "Superseded:" not in result.output  # not newly superseded
+
+
+def test_a_running_api_sees_what_a_later_sync_wrote(tmp_path: Path, index: Path, embedder: CountingEmbedder) -> None:
+    run_sync(embedder, index, make_corpus(tmp_path / "before", [NOTE]))
+    serving = open_store(index, embedder)  # opened once, as plg-api does
+    assert set(by_path(serving)) == {NOTE}
+
+    run_sync(embedder, index, make_corpus(tmp_path / "after", [NOTE, POL_V2]))
+
+    assert set(by_path(serving)) == {NOTE, POL_V2}
+    assert serving.search("rental arrears", embedder.embed_query("rental arrears"), limit=3)
+
+
+def test_an_unreadable_document_fails_the_run_but_not_the_others(
+    tmp_path: Path, index: Path, embedder: CountingEmbedder
+) -> None:
+    corpus = make_corpus(tmp_path / "corpus", [NOTE], planted=["docs/Broken_Export.docx"])
+
+    result = run_sync(embedder, index, corpus, exit_code=1)
+
+    assert set(by_path(open_store(index, embedder))) == {NOTE}
+    assert "Failed: docs/Broken_Export.docx (could not be read:" in result.output
+    assert "failed 1 documents" in result.output
+
+
+class OverlappingEmbedder(CountingEmbedder):
+    """Starts a second `plg sync` of the same index while the first is still embedding."""
+
+    def __init__(self, index: Path, corpus: Path) -> None:
+        super().__init__()
+        self.index, self.corpus = index, corpus
+        self.second: Result | None = None
+        self._started = False
+
+    def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+        if not self._started:
+            self._started = True
+            env = {
+                "PLG_SEARCH_DB": str(self.index), "PLG_CORPUS_DIR": str(self.corpus),
+                "PLG_TRACKERS_DB": str(trackers_path(self.index)),
+            }
+            self.second = CliRunner().invoke(cli.app, ["sync"], env=env)
+        return super().embed_documents(texts)
+
+
+def test_overlapping_scheduled_syncs_do_not_both_write(tmp_path: Path, index: Path) -> None:
+    corpus = make_corpus(tmp_path / "corpus", [NOTE])
+    embedder = OverlappingEmbedder(index, corpus)
+
+    first = run_sync(embedder, index, corpus)
+
+    assert embedder.second is not None and embedder.second.exit_code == 1
+    assert "another plg sync is running" in embedder.second.stderr
+    assert "Added 1" in first.output
 
 
 def test_sync_without_a_voyage_key_explains_what_to_set(monkeypatch: pytest.MonkeyPatch, index: Path) -> None:

@@ -203,7 +203,10 @@ src/plg/
 │                    answer + awaiting_approval, metadata interrupted). The run ID rides in configurable[RUN_ID], not as LangGraph's run_id.
 ├── ingest/          `plg sync`: DocumentSource mocks (SharePoint, Lotus Notes) over corpus_dir, text extraction,
 │                    structure-aware chunking with contextual headers, metadata + entity tagging from PLG Records,
-│                    incremental by content hash; superseded versions are marked, never deleted. Emails (doc_type email) are screened
+│                    incremental by content hash; superseded versions are marked, never deleted. Schedulable (#28): sync_lock
+│                    (one run per index, `<search_db>.sync.lock`, a second run → SyncRunning, exit 1); sync(full=True) re-processes
+│                    in place (never drops the index: it holds memory too; re-indexed chunks keep their prior status); SyncReport.failed (unreadable doc/scan: run continues,
+│                    exit 1) and .missing (indexed docs no source listed: kept, printed `No longer available from its source (kept)`). Emails (doc_type email) are screened
 │                    (guardrails.injection) before chunking: planted spans → ingestion marker; SyncReport.flagged, printed `Flagged: ...`.
 │                    lineage.py: `plg graph lineage` - Policy/Sop/Circular/Clause/Precedent nodes from index metadata; Haiku (node extract_lineage,
 │                    forced record_edges tool built from generated/extraction/*.json) proposes SUPERSEDES/OVERRIDES/APPLIES; an edge is kept only with a
@@ -212,11 +215,12 @@ src/plg/
 │                    decision, reasoning, outcome, chunk_id, location) with CONCERNS_TRADE / IN_NC edges from the chunk tags.
 │                    scans.py: image-only PDFs (no text layer) are read by Claude PDF input through LLMClient
 │                    (node ingest_scan, forced record_transcript tool: title, control fields, text per page); the
-│                    Transcript is saved by file hash (TranscriptStore) so unchanged scans, --full rebuilds and the
+│                    Transcript is saved by file hash (TranscriptStore) so unchanged scans, --full re-syncs and the
 │                    source viewer (SavedScans, read-only) never call Claude again. Page headings give page locations.
 │                    A scan Claude can't read is skipped with a reason. Application-bundle scans stay excluded.
 ├── search/          SearchStore protocol (store.py) and LanceSearchStore (lance.py): chunks / entities / memory,
-│                    hybrid FTS + vector search with metadata pre-filters (SearchFilter). Embedder (Voyage; hashing
+│                    hybrid FTS + vector search with metadata pre-filters (SearchFilter); connected with read_consistency_interval=0
+│                    so a running plg-api sees a later `plg sync` (another process) without a restart. Embedder (Voyage; hashing
 │                    embedder for tests). rerank.py: Reranker protocol; VoyageReranker (hosted, falls back to the hybrid order on any error or
 │                    unreadable reply), CrossEncoderReranker (local fastembed); make_reranker(settings) picks by rerank_backend;
 │                    Searcher (embed → hybrid
@@ -297,7 +301,7 @@ tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLL
                      test_guardrail_api.py (#23): ATTACKS (guardrail cases, 100%) / BENIGN controls, redacted history, ingestion screening of the synced
                      corpus (only the planted email), the planted email via knowledge + defect → flagged, no proposed/executed action, and a pre-#23 index chunk withheld.
                      test_feedback_api.py (#26): feedback → FakeLangSmith (create_feedback, annotation queue), proposals, curator visibility/decisions/audit, no self-approval, few-shot SQL in the data agent's prompt, team facts/corrections in merge's memory block (make_api(langsmith=...)).
-                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_tracing_api.py (#27): conftest LangSmithApi (records posted runs, answers project lookups; .tracer() = plg's masking client)
+                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_sync.py (#28): small corpora (make_corpus) through `plg sync`: incremental, superseded/missing docs kept, --full keeps memory, a store opened before a sync sees it, a failed doc → exit 1, an overlapping sync refused. test_tracing_api.py (#27): conftest LangSmithApi (records posted runs, answers project lookups; .tracer() = plg's masking client)
                      → root metadata, nodes/Send branch/tool children, PII masked, resume + interrupt, trace URL role/ownership, CLI channel. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).

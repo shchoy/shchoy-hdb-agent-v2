@@ -90,14 +90,14 @@ def test_full_resync_reuses_the_saved_transcript(corpus: Path, index: Path) -> N
     assert llm.sent == []
 
 
-def test_unreadable_scan_is_skipped_with_a_reason(corpus: Path, index: Path) -> None:
+def test_unreadable_scan_fails_the_run_with_a_reason(corpus: Path, index: Path) -> None:
     embedder = CountingEmbedder()
     llm = ScriptedLLMClient()  # the reader fails
 
-    result = run_sync(embedder, index, corpus, llm=llm)
+    result = run_sync(embedder, index, corpus, llm=llm, exit_code=1)
 
     assert HENG_ANN_SCAN not in by_path(open_store(index, embedder))
-    assert f"Skipped: {HENG_ANN_SCAN} (scan could not be read" in result.output
+    assert f"Failed: {HENG_ANN_SCAN} (scan could not be read" in result.output
 
 
 @pytest.fixture

@@ -8,7 +8,8 @@ edits, a letter edit and a rejection, the audit trail), `submissions.json` (the 
 `tasks/*.json` (the Tasks screen: an estate manager's own digest, a team member's, and the team list) and
 `approvals/glossary_*` (a glossary change proposed by a policy owner: the term owner's inbox, approval, audit trail) and
 `feedback/*.json` (answer feedback on a data answer and the curator queue it fills) and `categories.json` (the Library's
-document categories after `plg categorise` over the synced corpus). Streams come from the real API and graph with a scripted
+document categories after `plg categorise` over the synced corpus) and `audit_report.json` (`GET /audit/reports/latest`
+after `plg audit` over the synced corpus: planted conflicts and duplicates confirmed by a scripted Opus). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -515,6 +516,156 @@ def record_categories(store: LanceSearchStore) -> str:
             return json.dumps(response.json(), indent=2) + "\n"
 
 
+AUDIT_DUPLICATES = {
+    frozenset(("pdfs/Tenant_FAQ_Commercial_2025.pdf", "pdfs/Tenant_FAQ_Commercial_2025_final(1).pdf")): "near_duplicate",
+    frozenset(("docs/PLG-SOP-011_Commercial_Unit_Inspection_SOP_v1.0.docx",
+               "docs/PLG-SOP-011_Commercial_Unit_Inspection_SOP_v1.1.docx")): "earlier_version",
+    frozenset(("pdfs/PLG_Circular_03-2026_Revised_Arrears_Policy.pdf", "docs/notes/PLG_Circular_03-2026.txt")): "same_content",
+}
+"""`_report.md` §2's duplicates, as the scripted Opus confirms them."""
+
+AUDIT_CONFLICTS: dict[frozenset[str], tuple[str, dict[str, str], str, str]] = {
+    frozenset(("docs/PLG-SOP-014_Rental_Arrears_Recovery_SOP_v1.2.docx",
+               "docs/PLG-POL-003_Rental_Arrears_Management_Policy_v2.0.docx")): (
+        "Letter of demand trigger for rental arrears",
+        {"docs/PLG-SOP-014_Rental_Arrears_Recovery_SOP_v1.2.docx": "Refer to HEB Legal to issue Letter of Demand",
+         "docs/PLG-POL-003_Rental_Arrears_Management_Policy_v2.0.docx": "60 days overdue"},
+        "PLG-POL-003 v2.0 prevails (LOD at 60 days overdue); SOP-014 v1.2 was not updated after the policy revision.",
+        "docs/PLG-POL-003_Rental_Arrears_Management_Policy_v2.0.docx"),
+    frozenset(("docs/PLG-POL-002_Tenancy_Renewal_and_Security_Deposit_Policy_v2.1.docx",
+               "pdfs/Tenant_FAQ_Commercial_2025.pdf")): (
+        "Security deposit amount",
+        {"docs/PLG-POL-002_Tenancy_Renewal_and_Security_Deposit_Policy_v2.1.docx": "three (3) months' rent",
+         "pdfs/Tenant_FAQ_Commercial_2025.pdf": "two (2) months' rent"},
+        "The policy prevails: the deposit is 3 months' rent. The FAQ is outdated.",
+        "docs/PLG-POL-002_Tenancy_Renewal_and_Security_Deposit_Policy_v2.1.docx"),
+    frozenset(("docs/PLG-POL-002_Tenancy_Renewal_and_Security_Deposit_Policy_v2.1.docx",
+               "docs/notes/onboarding_guide_new_officers.md")): (
+        "Lead time to apply for tenancy renewal",
+        {"docs/PLG-POL-002_Tenancy_Renewal_and_Security_Deposit_Policy_v2.1.docx":
+             "at least six (6) months before the tenancy expires",
+         "docs/notes/onboarding_guide_new_officers.md": "Tenants should apply **3 months** before expiry"},
+        "The policy prevails: apply at least 6 months before expiry (cl. 4.2).",
+        "docs/PLG-POL-002_Tenancy_Renewal_and_Security_Deposit_Policy_v2.1.docx"),
+    frozenset(("pdfs/PLG_Circular_07-2026_NC_Display_Area_Pilot.pdf",
+               "docs/PLG-POL-001_Trade_Mix_and_Usage_Policy_v3.0.docx")): (
+        "Permitted display area beyond shopfront",
+        {"pdfs/PLG_Circular_07-2026_NC_Display_Area_Pilot.pdf": "up to 1.0 m beyond the shopfront line",
+         "docs/PLG-POL-001_Trade_Mix_and_Usage_Policy_v3.0.docx":
+             "Tenants may display goods up to 0.6 m beyond the shopfront line"},
+        "Circular 07/2026 supersedes cl. 7.3 for NC units from 1 Aug 2026; 0.6 m still applies to void-deck shops.",
+        "pdfs/PLG_Circular_07-2026_NC_Display_Area_Pilot.pdf"),
+    frozenset(("pdfs/Internal_Audit_Report_IA-2026-07_Tenancy_Management.pdf", "record:TA-2024-00451")): (
+        "Monthly rent of the Heng Ann Confectionery tenancy",
+        {"pdfs/Internal_Audit_Report_IA-2026-07_Tenancy_Management.pdf": "signed agreement states S$4,580.00/month",
+         "record:TA-2024-00451": "Monthly rent: S$4,850.00"},
+        "The signed agreement (S$4,580) is the legal source: PLG Records has a transposition error and invoices are "
+        "over-billed by S$270 a month.",
+        "pdfs/Internal_Audit_Report_IA-2026-07_Tenancy_Management.pdf"),
+}
+"""C1-C6 of `_master/planned_conflicts.json` (C4 is the QBR's superseded definition), as the scripted Opus finds them:
+topic, what each side says (by source path), resolution, and the side that prevails."""
+
+AUDIT_SOURCE = re.compile(r'<source side="(a|b)" id="[^"]+">(.*?)</source>', re.S)
+AUDIT_CHUNK = re.compile(r'<chunk id="([^"]+)" location="[^"]*">\n(.*?)\n</chunk>', re.S)
+
+
+def _shown_chunk(chunks: list[tuple[str, str]], phrase: str) -> str:
+    wanted = " ".join(phrase.split())
+    return next(chunk_id for chunk_id, body in chunks if wanted in " ".join(body.split()))
+
+
+def audit_opus(found: Any) -> ScriptedLLMClient:
+    """The scripted Opus for every candidate of an audit: the planted conflicts and duplicates confirmed (quotes taken
+    from the chunks it is shown), the QBR's vacancy figure flagged, everything else judged unrelated."""
+    from plg.audit import judge
+    from plg.audit.candidates import RecordPassage
+
+    llm = ScriptedLLMClient()
+    none = turn(tool_call(judge.PAIR_TOOL, relation="none"))
+    for d in found.duplicates:
+        kind = AUDIT_DUPLICATES.get(frozenset((d.a.source_path, d.b.source_path)))
+        llm.script_turns(judge.NODE, judge.duplicate_request(d), turn(tool_call(
+            judge.PAIR_TOOL, relation="duplicate", duplicate_kind=kind,
+            note=f"{d.b.title} repeats {d.a.title}" + (" in another format." if kind == "same_content" else "."),
+        )) if kind else none)
+    for p in found.conflicts:
+        a_path = p.a.source_path
+        b_path = p.b.chunk_id if isinstance(p.b, RecordPassage) else p.b.source_path
+        planted = AUDIT_CONFLICTS.get(frozenset((a_path, b_path)))
+        if planted is None:
+            llm.script_turns(judge.NODE, judge.pair_request(p), none)
+            continue
+        topic, says, resolution, prevailing = planted
+
+        def reply(messages: list[AgentMessage], a_path: str = a_path, b_path: str = b_path, topic: str = topic,
+                  says: dict[str, str] = says, resolution: str = resolution, prevailing: str = prevailing) -> AgentTurn:
+            content = messages[-1]["content"]
+            assert not isinstance(content, str)
+            sides = {side: AUDIT_CHUNK.findall(body) for side, body in AUDIT_SOURCE.findall(str(content[1]["text"]))}
+            return turn(tool_call(judge.PAIR_TOOL, relation="conflict", conflicts=[{
+                "topic": topic, "a_chunk_id": _shown_chunk(sides["a"], says[a_path]), "a_quote": says[a_path],
+                "b_chunk_id": _shown_chunk(sides["b"], says[b_path]), "b_quote": says[b_path],
+                "resolution": resolution, "prevails": "a" if prevailing == a_path else "b",
+            }]))
+
+        llm.script_turns(judge.NODE, judge.pair_request(p), reply)
+    for d in found.definitions:
+        if d.doc.source_path != "decks/PLG_QBR_Q3_2026.pptx":
+            llm.script_turns(judge.NODE, judge.definition_request(d), turn(tool_call(judge.DEFINITION_TOOL, findings=[])))
+            continue
+
+        def qbr(messages: list[AgentMessage]) -> AgentTurn:
+            content = messages[-1]["content"]
+            assert not isinstance(content, str)
+            quote = "52 vacant units as at 31 Aug 2026"
+            return turn(tool_call(judge.DEFINITION_TOOL, findings=[{
+                "concept": "plg:Vacant", "used_version": "plg:Vacant_v1", "quote": quote,
+                "chunk_id": _shown_chunk(AUDIT_CHUNK.findall(str(content[1]["text"])), quote),
+                "explanation": "The QBR counts the 5 units under tender as vacant, as before April 2026; under the "
+                               "current definition the figure is 47, as in the Monthly Operations Report.",
+            }]))
+
+        llm.script_turns(judge.NODE, judge.definition_request(d), qbr)
+    return llm
+
+
+def record_audit(store: LanceSearchStore) -> str:
+    """`GET /audit/reports/latest` after a real audit of the synced corpus (candidates, rules and gaps real; Opus
+    scripted), with two badly answered questions in the question log."""
+    from plg.audit.audit import run_audit, thresholds_for
+    from plg.audit.candidates import Corpus, candidates
+    from plg.audit.questions import QuestionEntry, QuestionLog
+    from plg.ontology.glossary import load_glossary
+    from plg.ontology.vocab import load_vocab
+
+    with tempfile.TemporaryDirectory() as scratch:
+        settings = scratch_settings(Path(scratch))
+        log = QuestionLog(settings.question_log)
+        for n, (question, score, not_covered) in enumerate([
+            ("What is the parking fee for loading bays?", None, True),
+            ("what is the parking fee for loading bays", None, True),
+            ("Who approves a bubble tea kiosk at a void deck?", 0.12, False),
+        ]):
+            log.record(QuestionEntry(
+                at=datetime(2026, 11, 2, 9, 30 + n, tzinfo=UTC), thread_id="thread", run_id=f"run-{n}", staff_id="S05",
+                question=question, intents=["knowledge"], top_score=score, not_covered=not_covered,
+            ))
+        glossary = load_glossary()
+        found = candidates(Corpus.of(store), settings.records_db, glossary, thresholds_for(settings))
+        write_spine(settings.records_db, settings.graph_dir / "spine")
+        writer = GraphWriter(settings.graph_dir, LocalGraphStore.from_dirs(settings.graph_dir / "spine"))
+        asyncio.run(run_audit(
+            store, audit_opus(found), writer, settings, vocab=load_vocab(), glossary=glossary,
+            now=datetime(2026, 11, 19, 2, 0, tzinfo=UTC),
+        ))
+        app = create_app(settings, llm=ScriptedLLMClient(), store=store, memory=scratch_memory(Path(scratch) / "memory"))
+        with TestClient(app) as client:
+            response = client.get("/audit/reports/latest", headers=USER)
+            assert response.status_code == 200, response.text
+            return json.dumps(response.json(), indent=2) + "\n"
+
+
 def lineage_graph(store: LanceSearchStore, graph_dir: Path) -> LocalGraphStore:
     """The records spine plus lineage edges extracted (by the scripted Haiku) from the synced corpus."""
     write_spine(Settings().records_db, graph_dir / "spine")
@@ -582,7 +733,8 @@ def scratch_settings(scratch: Path) -> Settings:
     return Settings(
         graph_dir=scratch / "graph", threads_db=scratch / "threads.sqlite", outbox_dir=scratch / "outbox",
         iems_dir=scratch / "iems", audit_log=scratch / "audit.jsonl", glossary_changes=scratch / "glossary_changes.jsonl",
-        feedback_log=scratch / "feedback.jsonl",
+        feedback_log=scratch / "feedback.jsonl", question_log=scratch / "questions.jsonl",
+        audit_reports_dir=scratch / "audit-reports",
     )
 
 
@@ -608,7 +760,7 @@ def _stream(app: Any, question: str) -> str:
 
 def main(only: list[str]) -> None:
     """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`, `feedback`,
-    `categories`)."""
+    `categories`, `audit`)."""
     OUT.mkdir(parents=True, exist_ok=True)
     if not only or "submissions" in only:
         path = OUT / "submissions.json"
@@ -640,8 +792,12 @@ def main(only: list[str]) -> None:
             path = OUT / "categories.json"
             path.write_text(record_categories(store))
             print(f"wrote {path.relative_to(REPO_ROOT)}")
-            if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback", "categories"}:
-                return
+        if not only or "audit" in only:
+            path = OUT / "audit_report.json"
+            path.write_text(record_audit(store))
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
+        if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback", "categories", "audit"}:
+            return
         graph = lineage_graph(store, Path(graph_dir))
         for name, (question, script) in SCRIPTS.items():
             if only and name not in only:

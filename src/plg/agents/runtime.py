@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -51,6 +51,8 @@ class AgentResult(BaseModel):
     text: str
     """The answer, with `[n]` after each cited passage; `n` is the 1-based position in `citations`."""
     citations: list[Citation]
+    top_score: float | None = None
+    """The best retrieval score of the passages the run's searches returned (None if it searched nothing)."""
 
 
 @dataclass
@@ -59,6 +61,8 @@ class Source:
 
     chunk: Chunk
     title: str
+    score: float | None = None
+    """Its retrieval score, when it came from a search."""
     sentences: list[tuple[int, int]] = field(init=False)
 
     def __post_init__(self) -> None:
@@ -136,7 +140,7 @@ async def run_agent(
         reply = await llm.complete(node=node, tier=tier, system=system_blocks, messages=scratchpad, tools=definitions)
         calls = [b for b in reply.content if b["type"] == "tool_use"]
         if reply.stop_reason != "tool_use" or not calls:
-            return _result(reply.content, retrieved)
+            return _result(reply.content, retrieved).model_copy(update={"top_score": top_score(retrieved.values())})
         outputs = await asyncio.gather(*(_call(by_name, c) for c in calls))
         results: list[Block] = []
         for call, output in zip(calls, outputs, strict=True):
@@ -205,6 +209,11 @@ def _tool_outputs(output: Any) -> dict[str, Any]:
         item if isinstance(item, str) else {"chunk_id": item.chunk.chunk_id, "title": item.title, "text": item.chunk.text}
         for item in output
     ]}
+
+
+def top_score(sources: Iterable[Source]) -> float | None:
+    scores = [s.score for s in sources if s.score is not None]
+    return max(scores) if scores else None
 
 
 def _result(content: list[Block], retrieved: dict[str, Source]) -> AgentResult:

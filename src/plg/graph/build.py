@@ -13,6 +13,7 @@ import asyncio
 import logging
 import re
 from collections.abc import AsyncIterator, Sequence
+from datetime import UTC, datetime
 from typing import Any
 
 from langchain_core.runnables import RunnableConfig
@@ -24,6 +25,7 @@ from langgraph.types import Send, interrupt
 from pydantic import BaseModel
 
 from plg.actions import glossary as glossary_actions
+from plg.audit.questions import QuestionEntry, QuestionLog
 from plg.actions import letters, tickets
 from plg.actions.audit import AuditEntry, AuditLog
 from plg.actions.model import (
@@ -237,6 +239,7 @@ def build_graph(
     checklists: Checklists | None = None,
     glossary_changes: GlossaryChanges | None = None,
     curation: Curation | None = None,
+    question_log: QuestionLog | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
@@ -356,7 +359,9 @@ def build_graph(
             write({"policy_stance": stance.model_dump(mode="json")})
         for n, citation in enumerate(result.citations, start=1):
             write({"citation": citation.model_dump(), "index": n})
-        finding = Finding(specialist=KNOWLEDGE, text=result.text, citations=result.citations)
+        finding = Finding(
+            specialist=KNOWLEDGE, text=result.text, citations=result.citations, top_score=result.top_score,
+        )
         update: PLGState = {"findings": [finding]}
         if planted:  # never an empty list: that would start the turn's flags afresh
             update["injections"] = list(planted.values())
@@ -502,9 +507,28 @@ def build_graph(
         update: PLGState = {
             "answer": answer, "messages": [question, {"role": "assistant", "content": answer}], "turns": [turn],
         }
+        if question_log and not flagged and not clarification:
+            log_question(state, config, findings)
         if not planted and not state.get("screened"):
             update["proposed_actions"] = state.get("proposals", [])
         return update
+
+    def log_question(state: PLGState, config: RunnableConfig, findings: list[Finding]) -> None:
+        """Append the answered question to the question log (the audit's gaps). Never fails the run."""
+        assert question_log is not None
+        scores = [f.top_score for f in findings if f.top_score is not None]
+        user = state.get("user")
+        configurable = config.get("configurable", {})
+        try:
+            question_log.record(QuestionEntry(
+                at=datetime.now(UTC), thread_id=str(configurable.get("thread_id", "")),
+                run_id=str(configurable.get(RUN_ID, "")), staff_id=user.staff_id if user else None,
+                question=state["question"], intents=list(state.get("intents", [])),
+                top_score=max(scores) if scores else None,
+                not_covered=bool(findings) and not any(f.citations or f.traced for f in findings),
+            ))
+        except Exception:
+            logger.warning("Could not write the question log", exc_info=True)
 
     async def write_memory(state: PLGState, config: RunnableConfig) -> PLGState:
         """Learn from the answered turn in the background: only the officer's own words and verified findings."""

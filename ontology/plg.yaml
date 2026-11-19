@@ -31,7 +31,7 @@ classes:
     abstract: true
     is_a: Entity
     description: A versioned corpus document. Superseded versions are kept, never deleted.
-    slots: [doc_type, version, effective_from, effective_to, doc_status, supersedes, conflicts_with, duplicate_of]
+    slots: [doc_type, version, effective_from, effective_to, doc_status, supersedes]
 
   Concept:
     abstract: true
@@ -151,7 +151,7 @@ classes:
     is_a: Entity
     description: An indexed corpus document as the Library lists it (its doc_id), whatever its document type.
     annotations: {node: true}
-    slots: [doc_type, document_category]
+    slots: [doc_type, document_category, conflicts_with, duplicate_of]
 
   DocumentCategory:
     is_a: Entity
@@ -431,11 +431,13 @@ slots:
     range: Document
     annotations: {edge: SUPERSEDES, extracted: true}
   conflicts_with:
-    range: Document
+    description: Found by `plg audit` to state something different on the same point (from the non-prevailing document).
+    range: LibraryDocument
     multivalued: true
     annotations: {edge: CONFLICTS_WITH}
   duplicate_of:
-    range: Document
+    description: Found by `plg audit` to repeat another document (from the copy or later version to the original).
+    range: LibraryDocument
     multivalued: true
     annotations: {edge: DUPLICATE_OF}
   has_clause:

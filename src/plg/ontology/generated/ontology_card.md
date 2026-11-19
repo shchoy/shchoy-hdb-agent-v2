@@ -32,8 +32,6 @@
 
 ## Relations (domain -TYPE-> range [cardinality]; * = extracted from documents)
 - Document -SUPERSEDES-> Document [0..1]*
-- Document -CONFLICTS_WITH-> Document [0..*]
-- Document -DUPLICATE_OF-> Document [0..*]
 - NeighbourhoodCentre -IN_TOWN-> Town [1]
 - Block -IN_NC-> NeighbourhoodCentre [0..1]
 - Unit -IN_BLOCK-> Block [1]
@@ -64,6 +62,8 @@
 - Precedent -CONCERNS_TRADE-> Trade [0..*]
 - Precedent -IN_NC-> NeighbourhoodCentre [0..1]
 - LibraryDocument -IN_CATEGORY-> DocumentCategory [0..1]
+- LibraryDocument -CONFLICTS_WITH-> LibraryDocument [0..*]
+- LibraryDocument -DUPLICATE_OF-> LibraryDocument [0..*]
 - DefectCategory -HANDLED_BY-> Team [1]
 - DefectCategory -DEFAULT_VENDOR-> Vendor [0..1]
 - GlossaryTerm -OWNED_BY-> Staff [1]

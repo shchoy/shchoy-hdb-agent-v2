@@ -102,6 +102,67 @@ export function DocumentViewer({ docId, label }: { docId: string; label: string 
   );
 }
 
+/**
+ * Opens a document in place with a quoted passage of one of its chunks highlighted, e.g. a side of an audit conflict:
+ * the whole chunk is located first, then narrowed to the quote when it appears verbatim in the chunk's text (else the
+ * whole chunk stays highlighted).
+ */
+export function QuoteViewer({
+  docId,
+  chunkId,
+  quote,
+  label,
+}: {
+  docId: string;
+  chunkId: string;
+  quote: string;
+  label: string;
+}) {
+  const [source, setSource] = useState<Source>({ status: "closed" });
+
+  async function open() {
+    setSource({ status: "loading" });
+    const chunk = `/api/documents/${encodeURIComponent(docId)}/chunks/${encodeURIComponent(chunkId)}`;
+    try {
+      const [document, whole] = await Promise.all([
+        getJson<DocumentView>(`/api/documents/${encodeURIComponent(docId)}`),
+        getJson<ChunkLocation>(chunk),
+      ]);
+      let location = whole;
+      const start = quote ? whole.quote.indexOf(quote) : -1;
+      if (start >= 0) {
+        const span = new URLSearchParams({ start: String(start), end: String(start + quote.length) });
+        location = await getJson<ChunkLocation>(`${chunk}?${span}`).catch(() => whole);
+      }
+      setSource({ status: "open", document, location });
+    } catch {
+      setSource({ status: "failed" });
+    }
+  }
+
+  return (
+    <>
+      {source.status !== "open" && (
+        <button type="button" onClick={() => void open()} disabled={source.status === "loading"} aria-label={label}>
+          Open
+        </button>
+      )}
+      {source.status === "failed" && (
+        <p role="alert" className={styles.sourceError}>
+          The document could not be loaded.
+        </p>
+      )}
+      {source.status === "open" && (
+        <Document
+          document={source.document}
+          location={source.location}
+          onClose={() => setSource({ status: "closed" })}
+        />
+      )}
+    </>
+  );
+}
+
 function Document({
   document,
   location,

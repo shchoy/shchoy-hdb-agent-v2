@@ -1245,6 +1245,55 @@
         }
       }
     },
+    "/audit/reports/latest": {
+      "get": {
+        "summary": "Latest Audit Report",
+        "description": "The newest corpus audit report (`plg audit`): conflicting documents with both sides cited, duplicates, stale\nSOPs, figures using superseded definitions, PLG Records rule violations and gaps.",
+        "operationId": "latest_audit_report_audit_reports_latest_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/categories": {
       "get": {
         "summary": "Get Categories",
@@ -1764,6 +1813,74 @@
         "title": "AuditRecord",
         "description": "A decision from the audit log and, unless it was a rejection, the outbox item it sent or the i-EMS ticket it\nraised."
       },
+      "AuditReport": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "documents": {
+            "type": "integer",
+            "title": "Documents"
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/Conflict"
+            },
+            "type": "array",
+            "title": "Conflicts"
+          },
+          "duplicates": {
+            "items": {
+              "$ref": "#/components/schemas/Duplicate"
+            },
+            "type": "array",
+            "title": "Duplicates"
+          },
+          "stale": {
+            "items": {
+              "$ref": "#/components/schemas/StaleDocument"
+            },
+            "type": "array",
+            "title": "Stale"
+          },
+          "superseded_definitions": {
+            "items": {
+              "$ref": "#/components/schemas/SupersededDefinition"
+            },
+            "type": "array",
+            "title": "Superseded Definitions"
+          },
+          "rule_violations": {
+            "items": {
+              "$ref": "#/components/schemas/RuleViolation"
+            },
+            "type": "array",
+            "title": "Rule Violations"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Gap"
+            },
+            "type": "array",
+            "title": "Gaps"
+          },
+          "dropped": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Dropped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_at",
+          "documents"
+        ],
+        "title": "AuditReport"
+      },
       "Candidate": {
         "properties": {
           "code": {
@@ -1950,6 +2067,109 @@
         "title": "ChunkLocation",
         "description": "Where a cited span sits in its document."
       },
+      "Conflict": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "a": {
+            "$ref": "#/components/schemas/Side"
+          },
+          "b": {
+            "$ref": "#/components/schemas/Side"
+          },
+          "resolution": {
+            "type": "string",
+            "title": "Resolution"
+          },
+          "prevails": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prevails"
+          },
+          "found_by": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "similarity",
+                "lineage",
+                "records"
+              ]
+            },
+            "type": "array",
+            "title": "Found By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "topic",
+          "a",
+          "b",
+          "resolution",
+          "found_by"
+        ],
+        "title": "Conflict"
+      },
+      "DocRef": {
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "title": "Doc Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "title": "Status",
+            "default": "current"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_id",
+          "title",
+          "doc_type"
+        ],
+        "title": "DocRef",
+        "description": "A document as the report names it."
+      },
       "DocumentBlock": {
         "properties": {
           "text": {
@@ -2040,6 +2260,42 @@
           "blocks"
         ],
         "title": "DocumentView"
+      },
+      "Duplicate": {
+        "properties": {
+          "a": {
+            "$ref": "#/components/schemas/DocRef"
+          },
+          "b": {
+            "$ref": "#/components/schemas/DocRef"
+          },
+          "similarity": {
+            "type": "number",
+            "title": "Similarity"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "near_duplicate",
+              "same_content",
+              "earlier_version"
+            ],
+            "title": "Kind"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "a",
+          "b",
+          "similarity",
+          "kind",
+          "note"
+        ],
+        "title": "Duplicate"
       },
       "ExamplePayload": {
         "description": "A corrected answer from a \ud83d\udc4e: once approved, shown (as guidance, never a source) for similar questions.",
@@ -2167,6 +2423,55 @@
         ],
         "title": "FeedbackRequest",
         "description": "An officer's \ud83d\udc4d/\ud83d\udc4e on one answer of their own thread, named by the run ID its `done` event carried."
+      },
+      "Gap": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "asked": {
+            "type": "integer",
+            "title": "Asked"
+          },
+          "last_asked": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Asked"
+          },
+          "reasons": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "not_covered",
+                "low_score",
+                "thumbs_down"
+              ]
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "top_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "asked",
+          "last_asked",
+          "reasons"
+        ],
+        "title": "Gap",
+        "description": "A question the corpus answers badly: not covered, weakly matched, or marked unhelpful."
       },
       "GlossaryPayload": {
         "description": "A change to a business definition: the proposed new version of the term, waiting for the term owner.",
@@ -3034,6 +3339,38 @@
         "title": "ResumeRequest",
         "description": "The officer's decision on the exact pending version of an action."
       },
+      "RuleViolation": {
+        "properties": {
+          "rule": {
+            "type": "string",
+            "enum": [
+              "overlapping_tenancies",
+              "two_current_policy_versions",
+              "trade_not_allowed",
+              "duplicate_tenants"
+            ],
+            "title": "Rule"
+          },
+          "entity_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entity Ids"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule",
+          "entity_ids",
+          "detail"
+        ],
+        "title": "RuleViolation"
+      },
       "RunRequest": {
         "properties": {
           "message": {
@@ -3046,6 +3383,71 @@
           "message"
         ],
         "title": "RunRequest"
+      },
+      "Side": {
+        "properties": {
+          "doc_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "chunk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Id"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_id",
+          "title",
+          "chunk_id",
+          "quote"
+        ],
+        "title": "Side",
+        "description": "One side of a conflict, cited: a span of a document chunk, or of a PLG Records row (`doc_id` None,\n`chunk_id` `record:<id>`)."
       },
       "SqlExamplePayload": {
         "description": "A verified question \u2192 SQL pair from a \ud83d\udc4d on a data answer: once approved, a few-shot example for the data agent.",
@@ -3086,6 +3488,57 @@
         ],
         "title": "SqlExamplePayload",
         "type": "object"
+      },
+      "StaleDocument": {
+        "properties": {
+          "doc": {
+            "$ref": "#/components/schemas/DocRef"
+          },
+          "policy_id": {
+            "type": "string",
+            "title": "Policy Id"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "relies_on": {
+            "type": "string",
+            "title": "Relies On"
+          },
+          "current_version": {
+            "type": "string",
+            "title": "Current Version"
+          },
+          "current_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current From"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc",
+          "policy_id",
+          "quote",
+          "relies_on",
+          "current_version",
+          "current_from",
+          "reason"
+        ],
+        "title": "StaleDocument",
+        "description": "A document implementing a policy version that has since been superseded."
       },
       "Submission": {
         "properties": {
@@ -3136,6 +3589,67 @@
         ],
         "title": "Submission",
         "description": "An application with a submission bundle, as the Document check screen offers it."
+      },
+      "SupersededDefinition": {
+        "properties": {
+          "doc": {
+            "$ref": "#/components/schemas/DocRef"
+          },
+          "chunk_id": {
+            "type": "string",
+            "title": "Chunk Id"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "concept": {
+            "type": "string",
+            "title": "Concept"
+          },
+          "used_version": {
+            "type": "string",
+            "title": "Used Version"
+          },
+          "current_version": {
+            "type": "string",
+            "title": "Current Version"
+          },
+          "current_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current From"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc",
+          "chunk_id",
+          "location",
+          "quote",
+          "concept",
+          "used_version",
+          "current_version",
+          "current_from",
+          "explanation"
+        ],
+        "title": "SupersededDefinition",
+        "description": "A figure in a report that counts by a business definition no longer in force."
       },
       "TaskDigest": {
         "properties": {

@@ -1,0 +1,267 @@
+{
+  "generated_at": "2026-11-19T02:00:00Z",
+  "documents": 63,
+  "conflicts": [
+    {
+      "id": "CF-0d904999f4",
+      "topic": "Letter of demand trigger for rental arrears",
+      "a": {
+        "doc_id": "SP-803800",
+        "title": "PLG-SOP-014 Rental Arrears Recovery SOP (v1.2)",
+        "chunk_id": "SP-803800#004",
+        "location": "3. Recovery Timeline",
+        "version": "1.2",
+        "quote": "Refer to HEB Legal to issue Letter of Demand"
+      },
+      "b": {
+        "doc_id": "SP-888995",
+        "title": "PLG-POL-003 Rental Arrears Management Policy (v2.0)",
+        "chunk_id": "SP-888995#009",
+        "location": "4. Policy Statements > 4.5 Letter of Demand",
+        "version": "2.0",
+        "quote": "60 days overdue"
+      },
+      "resolution": "PLG-POL-003 v2.0 prevails (LOD at 60 days overdue); SOP-014 v1.2 was not updated after the policy revision.",
+      "prevails": "b",
+      "found_by": [
+        "lineage",
+        "similarity"
+      ]
+    },
+    {
+      "id": "CF-0c63983447",
+      "topic": "Monthly rent of the Heng Ann Confectionery tenancy",
+      "a": {
+        "doc_id": "SP-057392",
+        "title": "Internal Audit Report IA/2026/07 - Tenancy Management",
+        "chunk_id": "SP-057392#004",
+        "location": "IA-02 Rent master data does not match the tenancy agreement (p. 2)",
+        "version": null,
+        "quote": "signed agreement states S$4,580.00/month"
+      },
+      "b": {
+        "doc_id": null,
+        "title": "PLG Records: tenancies TA-2024-00451",
+        "chunk_id": "record:TA-2024-00451",
+        "location": "PLG Records",
+        "version": null,
+        "quote": "Monthly rent: S$4,850.00"
+      },
+      "resolution": "The signed agreement (S$4,580) is the legal source: PLG Records has a transposition error and invoices are over-billed by S$270 a month.",
+      "prevails": "a",
+      "found_by": [
+        "records"
+      ]
+    },
+    {
+      "id": "CF-89a16767b8",
+      "topic": "Lead time to apply for tenancy renewal",
+      "a": {
+        "doc_id": "SP-138811",
+        "title": "PLG-POL-002 Tenancy Renewal & Security Deposit Policy (v2.1)",
+        "chunk_id": "SP-138811#006",
+        "location": "4. Application > 4.2 Application lead time",
+        "version": "2.1",
+        "quote": "at least six (6) months before the tenancy expires"
+      },
+      "b": {
+        "doc_id": "SP-379982",
+        "title": "Welcome to PLG - Guide for New Officers",
+        "chunk_id": "SP-379982#003",
+        "location": "Welcome to PLG - Guide for New Officers > 3. Key processes in a nutshell",
+        "version": null,
+        "quote": "Tenants should apply **3 months** before expiry"
+      },
+      "resolution": "The policy prevails: apply at least 6 months before expiry (cl. 4.2).",
+      "prevails": "a",
+      "found_by": [
+        "similarity"
+      ]
+    },
+    {
+      "id": "CF-5aae4d15dc",
+      "topic": "Security deposit amount",
+      "a": {
+        "doc_id": "SP-138811",
+        "title": "PLG-POL-002 Tenancy Renewal & Security Deposit Policy (v2.1)",
+        "chunk_id": "SP-138811#010",
+        "location": "6. Security Deposit > 6.1 Amount",
+        "version": "2.1",
+        "quote": "three (3) months' rent"
+      },
+      "b": {
+        "doc_id": "SP-631014",
+        "title": "FAQ for Commercial Tenants (2025 Edition)",
+        "chunk_id": "SP-631014#000",
+        "location": "(body) (p. 1) [part 1/2]",
+        "version": null,
+        "quote": "two (2) months' rent"
+      },
+      "resolution": "The policy prevails: the deposit is 3 months' rent. The FAQ is outdated.",
+      "prevails": "a",
+      "found_by": [
+        "similarity"
+      ]
+    },
+    {
+      "id": "CF-90911ca0c2",
+      "topic": "Permitted display area beyond shopfront",
+      "a": {
+        "doc_id": "SP-398077",
+        "title": "PLG Circular 07/2026 - Display Area at NCs (Pilot)",
+        "chunk_id": "SP-398077#000",
+        "location": "(body) (p. 1)",
+        "version": null,
+        "quote": "up to 1.0 m beyond the shopfront line"
+      },
+      "b": {
+        "doc_id": "SP-608457",
+        "title": "PLG-POL-001 Trade Mix & Usage Policy (v3.0)",
+        "chunk_id": "SP-608457#015",
+        "location": "7. Usage Rules > 7.3 Display area beyond shopfront",
+        "version": "3.0",
+        "quote": "Tenants may display goods up to 0.6 m beyond the shopfront line"
+      },
+      "resolution": "Circular 07/2026 supersedes cl. 7.3 for NC units from 1 Aug 2026; 0.6 m still applies to void-deck shops.",
+      "prevails": "a",
+      "found_by": [
+        "similarity"
+      ]
+    }
+  ],
+  "duplicates": [
+    {
+      "a": {
+        "doc_id": "SP-631014",
+        "title": "FAQ for Commercial Tenants (2025 Edition)",
+        "doc_type": "faq",
+        "version": null,
+        "status": "current"
+      },
+      "b": {
+        "doc_id": "SP-814964",
+        "title": "FAQ for Commercial Tenants (2025 Edition) - copy",
+        "doc_type": "faq",
+        "version": null,
+        "status": "current"
+      },
+      "similarity": 0.93,
+      "kind": "near_duplicate",
+      "note": "FAQ for Commercial Tenants (2025 Edition) - copy repeats FAQ for Commercial Tenants (2025 Edition)."
+    },
+    {
+      "a": {
+        "doc_id": "SP-309824",
+        "title": "PLG-SOP-011 Commercial Unit Inspection SOP (v1.0)",
+        "doc_type": "sop",
+        "version": "1.0",
+        "status": "superseded"
+      },
+      "b": {
+        "doc_id": "SP-500954",
+        "title": "PLG-SOP-011 Commercial Unit Inspection SOP (v1.1)",
+        "doc_type": "sop",
+        "version": "1.1",
+        "status": "current"
+      },
+      "similarity": 0.734,
+      "kind": "earlier_version",
+      "note": "PLG-SOP-011 Commercial Unit Inspection SOP (v1.1) repeats PLG-SOP-011 Commercial Unit Inspection SOP (v1.0)."
+    },
+    {
+      "a": {
+        "doc_id": "SP-908076",
+        "title": "PLG Circular 03/2026 - Revised Rental Arrears Management Policy",
+        "doc_type": "circular",
+        "version": null,
+        "status": "current"
+      },
+      "b": {
+        "doc_id": "SP-912007",
+        "title": "PLG Circular 03/2026 (plain-text copy)",
+        "doc_type": "circular",
+        "version": null,
+        "status": "current"
+      },
+      "similarity": 0.68,
+      "kind": "same_content",
+      "note": "PLG Circular 03/2026 (plain-text copy) repeats PLG Circular 03/2026 - Revised Rental Arrears Management Policy in another format."
+    }
+  ],
+  "stale": [
+    {
+      "doc": {
+        "doc_id": "SP-803800",
+        "title": "PLG-SOP-014 Rental Arrears Recovery SOP (v1.2)",
+        "doc_type": "sop",
+        "version": "1.2",
+        "status": "current"
+      },
+      "policy_id": "PLG-POL-003",
+      "quote": "This SOP gives Finance & Arrears officers step-by-step instructions to recover rental arrears in line with PLG-POL-003.",
+      "relies_on": "PLG-POL-003 v1.0, the version in force on 2025-06-02",
+      "current_version": "PLG-POL-003 v2.0",
+      "current_from": "2026-04-01",
+      "reason": "PLG-SOP-014 Rental Arrears Recovery SOP (v1.2) took effect on 2025-06-02 and implements PLG-POL-003, whose current version v2.0 took effect later, on 2026-04-01; it has not been revised since."
+    }
+  ],
+  "superseded_definitions": [
+    {
+      "doc": {
+        "doc_id": "SP-117108",
+        "title": "PLG Quarterly Business Review Q3 2026",
+        "doc_type": "deck",
+        "version": null,
+        "status": "current"
+      },
+      "chunk_id": "SP-117108#003",
+      "location": "Slide 4: Vacancy (p. 4)",
+      "quote": "52 vacant units as at 31 Aug 2026",
+      "concept": "plg:Vacant",
+      "used_version": "plg:Vacant_v1",
+      "current_version": "plg:Vacant_v2",
+      "current_from": "2026-04-15",
+      "explanation": "The QBR counts the 5 units under tender as vacant, as before April 2026; under the current definition the figure is 47, as in the Monthly Operations Report."
+    }
+  ],
+  "rule_violations": [
+    {
+      "rule": "overlapping_tenancies",
+      "entity_ids": [
+        "U-ST512-01-33",
+        "TA-2024-00079",
+        "TA-2026-00614"
+      ],
+      "detail": "Unit U-ST512-01-33 has overlapping tenancies: TA-2024-00079 (Active, 2024-01-01 to 2026-12-31) and TA-2026-00614 (Pending Commencement, 2026-10-01 to 2029-09-30)."
+    },
+    {
+      "rule": "duplicate_tenants",
+      "entity_ids": [
+        "T-10514",
+        "T-19807"
+      ],
+      "detail": "Tenants T-10514 (Kim Hiap Trading), T-19807 (Kim Hiap Trading Pte. Ltd.) share BRN 201754388R."
+    }
+  ],
+  "gaps": [
+    {
+      "question": "what is the parking fee for loading bays",
+      "asked": 2,
+      "last_asked": "2026-11-02T09:31:00Z",
+      "reasons": [
+        "not_covered"
+      ],
+      "top_score": null
+    },
+    {
+      "question": "Who approves a bubble tea kiosk at a void deck?",
+      "asked": 1,
+      "last_asked": "2026-11-02T09:32:00Z",
+      "reasons": [
+        "low_score"
+      ],
+      "top_score": 0.12
+    }
+  ],
+  "dropped": []
+}

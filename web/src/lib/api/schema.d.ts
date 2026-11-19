@@ -364,6 +364,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/audit/reports/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Latest Audit Report
+         * @description The newest corpus audit report (`plg audit`): conflicting documents with both sides cited, duplicates, stale
+         *     SOPs, figures using superseded definitions, PLG Records rule violations and gaps.
+         */
+        get: operations["latest_audit_report_audit_reports_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/categories": {
         parameters: {
             query?: never;
@@ -548,6 +569,30 @@ export interface components {
             sent: components["schemas"]["OutboxItem"] | null;
             ticket: components["schemas"]["Ticket"] | null;
         };
+        /** AuditReport */
+        AuditReport: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Documents */
+            documents: number;
+            /** Conflicts */
+            conflicts?: components["schemas"]["Conflict"][];
+            /** Duplicates */
+            duplicates?: components["schemas"]["Duplicate"][];
+            /** Stale */
+            stale?: components["schemas"]["StaleDocument"][];
+            /** Superseded Definitions */
+            superseded_definitions?: components["schemas"]["SupersededDefinition"][];
+            /** Rule Violations */
+            rule_violations?: components["schemas"]["RuleViolation"][];
+            /** Gaps */
+            gaps?: components["schemas"]["Gap"][];
+            /** Dropped */
+            dropped?: string[];
+        };
         /** Candidate */
         Candidate: {
             /** Code */
@@ -625,6 +670,41 @@ export interface components {
             /** Highlights */
             highlights: components["schemas"]["Highlight"][];
         };
+        /** Conflict */
+        Conflict: {
+            /** Id */
+            id: string;
+            /** Topic */
+            topic: string;
+            a: components["schemas"]["Side"];
+            b: components["schemas"]["Side"];
+            /** Resolution */
+            resolution: string;
+            /** Prevails */
+            prevails?: ("a" | "b") | null;
+            /** Found By */
+            found_by: ("similarity" | "lineage" | "records")[];
+        };
+        /**
+         * DocRef
+         * @description A document as the report names it.
+         */
+        DocRef: {
+            /** Doc Id */
+            doc_id: string;
+            /** Title */
+            title: string;
+            /** Doc Type */
+            doc_type: string;
+            /** Version */
+            version?: string | null;
+            /**
+             * Status
+             * @default current
+             * @enum {string}
+             */
+            status: "current" | "superseded";
+        };
         /** DocumentBlock */
         DocumentBlock: {
             /** Text */
@@ -653,6 +733,20 @@ export interface components {
             content_type: string;
             /** Blocks */
             blocks: components["schemas"]["DocumentBlock"][];
+        };
+        /** Duplicate */
+        Duplicate: {
+            a: components["schemas"]["DocRef"];
+            b: components["schemas"]["DocRef"];
+            /** Similarity */
+            similarity: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "near_duplicate" | "same_content" | "earlier_version";
+            /** Note */
+            note: string;
         };
         /**
          * ExamplePayload
@@ -720,6 +814,25 @@ export interface components {
              * @default
              */
             team_fact: string;
+        };
+        /**
+         * Gap
+         * @description A question the corpus answers badly: not covered, weakly matched, or marked unhelpful.
+         */
+        Gap: {
+            /** Question */
+            question: string;
+            /** Asked */
+            asked: number;
+            /**
+             * Last Asked
+             * Format: date-time
+             */
+            last_asked: string;
+            /** Reasons */
+            reasons: ("not_covered" | "low_score" | "thumbs_down")[];
+            /** Top Score */
+            top_score?: number | null;
         };
         /**
          * GlossaryPayload
@@ -1082,10 +1195,41 @@ export interface components {
              */
             reason: string;
         };
+        /** RuleViolation */
+        RuleViolation: {
+            /**
+             * Rule
+             * @enum {string}
+             */
+            rule: "overlapping_tenancies" | "two_current_policy_versions" | "trade_not_allowed" | "duplicate_tenants";
+            /** Entity Ids */
+            entity_ids: string[];
+            /** Detail */
+            detail: string;
+        };
         /** RunRequest */
         RunRequest: {
             /** Message */
             message: string;
+        };
+        /**
+         * Side
+         * @description One side of a conflict, cited: a span of a document chunk, or of a PLG Records row (`doc_id` None,
+         *     `chunk_id` `record:<id>`).
+         */
+        Side: {
+            /** Doc Id */
+            doc_id: string | null;
+            /** Title */
+            title: string;
+            /** Chunk Id */
+            chunk_id: string | null;
+            /** Location */
+            location?: string | null;
+            /** Version */
+            version?: string | null;
+            /** Quote */
+            quote: string;
         };
         /**
          * SqlExamplePayload
@@ -1108,6 +1252,25 @@ export interface components {
             run_id: string;
             /** Feedback Id */
             feedback_id: string;
+        };
+        /**
+         * StaleDocument
+         * @description A document implementing a policy version that has since been superseded.
+         */
+        StaleDocument: {
+            doc: components["schemas"]["DocRef"];
+            /** Policy Id */
+            policy_id: string;
+            /** Quote */
+            quote: string;
+            /** Relies On */
+            relies_on: string;
+            /** Current Version */
+            current_version: string;
+            /** Current From */
+            current_from: string | null;
+            /** Reason */
+            reason: string;
         };
         /**
          * Submission
@@ -1133,6 +1296,29 @@ export interface components {
             status: string;
             /** Files */
             files: number;
+        };
+        /**
+         * SupersededDefinition
+         * @description A figure in a report that counts by a business definition no longer in force.
+         */
+        SupersededDefinition: {
+            doc: components["schemas"]["DocRef"];
+            /** Chunk Id */
+            chunk_id: string;
+            /** Location */
+            location: string;
+            /** Quote */
+            quote: string;
+            /** Concept */
+            concept: string;
+            /** Used Version */
+            used_version: string;
+            /** Current Version */
+            current_version: string;
+            /** Current From */
+            current_from: string | null;
+            /** Explanation */
+            explanation: string;
         };
         /**
          * TaskDigest
@@ -2750,6 +2936,38 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": components["schemas"]["RunEvent"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    latest_audit_report_audit_reports_latest_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditReport"];
                 };
             };
             /** @description Validation Error */

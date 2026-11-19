@@ -52,48 +52,6 @@
       ]
     },
     {
-      "type": "CONFLICTS_WITH",
-      "slot": "conflicts_with",
-      "domain": "Document",
-      "range": "Document",
-      "cardinality": "0..*",
-      "extracted": false,
-      "description": null,
-      "domain_labels": [
-        "Policy",
-        "Sop",
-        "Circular",
-        "Template"
-      ],
-      "range_labels": [
-        "Policy",
-        "Sop",
-        "Circular",
-        "Template"
-      ]
-    },
-    {
-      "type": "DUPLICATE_OF",
-      "slot": "duplicate_of",
-      "domain": "Document",
-      "range": "Document",
-      "cardinality": "0..*",
-      "extracted": false,
-      "description": null,
-      "domain_labels": [
-        "Policy",
-        "Sop",
-        "Circular",
-        "Template"
-      ],
-      "range_labels": [
-        "Policy",
-        "Sop",
-        "Circular",
-        "Template"
-      ]
-    },
-    {
       "type": "IN_TOWN",
       "slot": "in_town",
       "domain": "NeighbourhoodCentre",
@@ -604,6 +562,36 @@
       ],
       "range_labels": [
         "DocumentCategory"
+      ]
+    },
+    {
+      "type": "CONFLICTS_WITH",
+      "slot": "conflicts_with",
+      "domain": "LibraryDocument",
+      "range": "LibraryDocument",
+      "cardinality": "0..*",
+      "extracted": false,
+      "description": "Found by `plg audit` to state something different on the same point (from the non-prevailing document).",
+      "domain_labels": [
+        "LibraryDocument"
+      ],
+      "range_labels": [
+        "LibraryDocument"
+      ]
+    },
+    {
+      "type": "DUPLICATE_OF",
+      "slot": "duplicate_of",
+      "domain": "LibraryDocument",
+      "range": "LibraryDocument",
+      "cardinality": "0..*",
+      "extracted": false,
+      "description": "Found by `plg audit` to repeat another document (from the copy or later version to the original).",
+      "domain_labels": [
+        "LibraryDocument"
+      ],
+      "range_labels": [
+        "LibraryDocument"
       ]
     },
     {

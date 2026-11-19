@@ -145,10 +145,6 @@ class Document(Entity):
     supersedes: Optional[str] = Field(default=None, description="""A later version replaces an earlier one (POL-003 v2.0 supersedes v1.0).""", json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'SUPERSEDES'},
                          'extracted': {'tag': 'extracted', 'value': True}},
          'domain_of': ['Document', 'GlossaryTerm']} })
-    conflicts_with: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'CONFLICTS_WITH'}},
-         'domain_of': ['Document']} })
-    duplicate_of: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'DUPLICATE_OF'}},
-         'domain_of': ['Document']} })
     id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
 
@@ -376,10 +372,6 @@ class Policy(Document):
     supersedes: Optional[str] = Field(default=None, description="""A later version replaces an earlier one (POL-003 v2.0 supersedes v1.0).""", json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'SUPERSEDES'},
                          'extracted': {'tag': 'extracted', 'value': True}},
          'domain_of': ['Document', 'GlossaryTerm']} })
-    conflicts_with: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'CONFLICTS_WITH'}},
-         'domain_of': ['Document']} })
-    duplicate_of: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'DUPLICATE_OF'}},
-         'domain_of': ['Document']} })
     id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
 
@@ -403,10 +395,6 @@ class Sop(Document):
     supersedes: Optional[str] = Field(default=None, description="""A later version replaces an earlier one (POL-003 v2.0 supersedes v1.0).""", json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'SUPERSEDES'},
                          'extracted': {'tag': 'extracted', 'value': True}},
          'domain_of': ['Document', 'GlossaryTerm']} })
-    conflicts_with: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'CONFLICTS_WITH'}},
-         'domain_of': ['Document']} })
-    duplicate_of: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'DUPLICATE_OF'}},
-         'domain_of': ['Document']} })
     id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
 
@@ -428,10 +416,6 @@ class Circular(Document):
     supersedes: Optional[str] = Field(default=None, description="""A later version replaces an earlier one (POL-003 v2.0 supersedes v1.0).""", json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'SUPERSEDES'},
                          'extracted': {'tag': 'extracted', 'value': True}},
          'domain_of': ['Document', 'GlossaryTerm']} })
-    conflicts_with: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'CONFLICTS_WITH'}},
-         'domain_of': ['Document']} })
-    duplicate_of: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'DUPLICATE_OF'}},
-         'domain_of': ['Document']} })
     id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
 
@@ -452,10 +436,6 @@ class Template(Document):
     supersedes: Optional[str] = Field(default=None, description="""A later version replaces an earlier one (POL-003 v2.0 supersedes v1.0).""", json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'SUPERSEDES'},
                          'extracted': {'tag': 'extracted', 'value': True}},
          'domain_of': ['Document', 'GlossaryTerm']} })
-    conflicts_with: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'CONFLICTS_WITH'}},
-         'domain_of': ['Document']} })
-    duplicate_of: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'DUPLICATE_OF'}},
-         'domain_of': ['Document']} })
     id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })
 
@@ -503,6 +483,10 @@ class LibraryDocument(Entity):
                                         'value': 'document_types'}},
          'domain_of': ['Document', 'LibraryDocument']} })
     document_category: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'IN_CATEGORY'}},
+         'domain_of': ['LibraryDocument']} })
+    conflicts_with: Optional[list[str]] = Field(default=None, description="""Found by `plg audit` to state something different on the same point (from the non-prevailing document).""", json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'CONFLICTS_WITH'}},
+         'domain_of': ['LibraryDocument']} })
+    duplicate_of: Optional[list[str]] = Field(default=None, description="""Found by `plg audit` to repeat another document (from the copy or later version to the original).""", json_schema_extra = { "linkml_meta": {'annotations': {'edge': {'tag': 'edge', 'value': 'DUPLICATE_OF'}},
          'domain_of': ['LibraryDocument']} })
     id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Entity', 'Concept']} })
     label: Optional[str] = Field(default=None, description="""Human-readable name.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Entity']} })

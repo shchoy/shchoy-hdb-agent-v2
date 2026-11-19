@@ -175,6 +175,8 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         settings.setdefault("iems_dir", tmp_path / "iems")  # raised i-EMS tickets land here
         settings.setdefault("glossary_changes", tmp_path / "glossary_changes.jsonl")  # approved definition changes
         settings.setdefault("feedback_log", tmp_path / "feedback.jsonl")
+        settings.setdefault("question_log", tmp_path / "questions.jsonl")  # answered questions (the audit's gaps)
+        settings.setdefault("audit_reports_dir", tmp_path / "audit-reports")
         embedder = HashingEmbedder(dim=128)
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]

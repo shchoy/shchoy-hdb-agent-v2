@@ -29,6 +29,8 @@ class Finding(BaseModel):
     """The finding rests on a query that ran (the data specialist's counterpart of a citation)."""
     sql: str | None = None
     """The last query that ran for it (data specialist), offered to curators as a question → SQL example on a 👍."""
+    top_score: float | None = None
+    """The best retrieval score of the passages the specialist was shown (knowledge), for the question log."""
 
 
 T = TypeVar("T")

@@ -153,15 +153,6 @@
       "additionalProperties": false,
       "description": "",
       "properties": {
-        "conflicts_with": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
         "doc_status": {
           "anyOf": [
             {
@@ -175,15 +166,6 @@
         "doc_type": {
           "type": [
             "string",
-            "null"
-          ]
-        },
-        "duplicate_of": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
             "null"
           ]
         },
@@ -394,15 +376,6 @@
       "additionalProperties": false,
       "description": "A versioned corpus document. Superseded versions are kept, never deleted.",
       "properties": {
-        "conflicts_with": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
         "doc_status": {
           "anyOf": [
             {
@@ -416,15 +389,6 @@
         "doc_type": {
           "type": [
             "string",
-            "null"
-          ]
-        },
-        "duplicate_of": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
             "null"
           ]
         },
@@ -900,6 +864,16 @@
       "additionalProperties": false,
       "description": "An indexed corpus document as the Library lists it (its doc_id), whatever its document type.",
       "properties": {
+        "conflicts_with": {
+          "description": "Found by `plg audit` to state something different on the same point (from the non-prevailing document).",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
         "doc_type": {
           "type": [
             "string",
@@ -909,6 +883,16 @@
         "document_category": {
           "type": [
             "string",
+            "null"
+          ]
+        },
+        "duplicate_of": {
+          "description": "Found by `plg audit` to repeat another document (from the copy or later version to the original).",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
             "null"
           ]
         },
@@ -1003,15 +987,6 @@
       "additionalProperties": false,
       "description": "One version of a PLG policy, e.g. PLG-POL-003 v2.0.",
       "properties": {
-        "conflicts_with": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
         "doc_status": {
           "anyOf": [
             {
@@ -1025,15 +1000,6 @@
         "doc_type": {
           "type": [
             "string",
-            "null"
-          ]
-        },
-        "duplicate_of": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
             "null"
           ]
         },
@@ -1201,15 +1167,6 @@
       "additionalProperties": false,
       "description": "One version of a standard operating procedure.",
       "properties": {
-        "conflicts_with": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
         "doc_status": {
           "anyOf": [
             {
@@ -1223,15 +1180,6 @@
         "doc_type": {
           "type": [
             "string",
-            "null"
-          ]
-        },
-        "duplicate_of": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
             "null"
           ]
         },
@@ -1489,15 +1437,6 @@
       "additionalProperties": false,
       "description": "",
       "properties": {
-        "conflicts_with": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
         "doc_status": {
           "anyOf": [
             {
@@ -1511,15 +1450,6 @@
         "doc_type": {
           "type": [
             "string",
-            "null"
-          ]
-        },
-        "duplicate_of": {
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
             "null"
           ]
         },

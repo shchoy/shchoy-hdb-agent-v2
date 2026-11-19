@@ -70,6 +70,10 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_ANNOTATION_QUEUE` | `PLG thumbs-down review` | LangSmith annotation queue that thumbs-down runs join (created on first use; needs `LANGSMITH_API_KEY`) |
 | `PLG_CATEGORIES_FILE` | `.plg/categories.json` | The Library's document categories, written by `plg categorise` |
 | `PLG_CATEGORY_MIN_SIZE` | `3` | The fewest similar documents that make a category |
+| `PLG_AUDIT_REPORTS_DIR` | `.plg/audit` | Corpus audit reports, one JSON per `plg audit` run |
+| `PLG_QUESTION_LOG` | `.plg/questions.jsonl` | Append-only log of answered questions (plg-api), the source of audit gaps |
+| `PLG_GAP_MIN_SCORE` | `0.3` | A question whose best retrieval score is below this counts as a gap |
+| `PLG_AUDIT_MAX_PAIRS` | `40` | Most document pairs sent to Opus per audit |
 | `PLG_DEVELOPERS` | `S08` | Comma-separated staff IDs of developer personas: they get a **View trace** link under their answers |
 | `PLG_GIT_SHA` | (from `git rev-parse HEAD`) | Commit recorded on every trace, for running outside a git checkout |
 | `PLG_HISTORY_TOKEN_THRESHOLD` | `6000` | Above this (estimated) many tokens, older turns are folded into a summary |
@@ -123,6 +127,14 @@ This groups the indexed documents (superseded versions included) by similarity: 
 - **Re-runs.** A category's ID is a hash of its members, so re-running over an unchanged index changes nothing (`0 changed category`). Run it after a sync that added documents; until then, new documents show as Uncategorised. It takes the same lock as `plg sync`, so the two never write the index at once.
 - **Library page.** In the web app, **Library** (`/library`) lists the categories with their descriptions. Open one for its summary and documents (superseded ones marked).
 - **Asking about a category.** Ask the assistant e.g. "Summarise the rental arrears category". The `category_summary` specialist matches the question to a category by name and answers from the saved summary and document list. If no category matches, it lists the categories there are.
+
+### Corpus audit (issue #30)
+
+```bash
+uv run plg audit         # after `plg sync`; needs ANTHROPIC_API_KEY (Opus judges the candidate pairs)
+```
+
+Finds candidate pairs without Claude: near-duplicates by MinHash and document vectors, conflicting statements of the same quantity (days, months, metres, S$, units) in similar passages, SOPs older than the current version of the policy they name, rents in documents that differ from PLG Records, and reports that use a glossary term near a number after its definition changed. Opus judges each pair, quoting both sides. A quote that is not word for word in the passage is dropped. Conflicts and duplicates become `CONFLICTS_WITH` / `DUPLICATE_OF` edges in the entity graph. Deterministic checks over PLG Records add rule violations: overlapping tenancies, two current policy versions, a trade not allowed for its unit type, and duplicate tenants. Gaps come from `.plg/questions.jsonl`: questions answered "not covered", with a low retrieval score, or rated 👎. The report is saved under `.plg/audit/`. View it under **Library → Audit findings**, or fetch `GET /audit/reports/latest`.
 
 ### Entity graph (tenants, units, tenancies)
 

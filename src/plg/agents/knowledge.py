@@ -106,7 +106,7 @@ def search_tool(retriever: Retriever, vocab: VocabIndex, doc_types: list[str]) -
             doc_type=args.doc_types or None,
         )
         hits = await asyncio.to_thread(retriever.search, expand(args.query, vocab), filters=filters)
-        return [Source(h.chunk, title(h)) for h in hits]
+        return [Source(h.chunk, title(h), h.score) for h in hits]
 
     return Tool(
         name="search_corpus",

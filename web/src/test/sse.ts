@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { HttpResponse } from "msw";
-import type { Categorisation } from "@/lib/events";
+import type { AuditReport, Categorisation } from "@/lib/events";
 
 /** A recorded plg-api SSE stream (see scripts/record_sse_fixtures.py at the repo root). */
 export function fixture(
@@ -88,4 +88,9 @@ export function feedbackFixture(
 ): Record<string, unknown>;
 export function feedbackFixture(name: string): unknown {
   return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/feedback", name), "utf8"));
+}
+
+/** The recorded GET /audit/reports/latest response: the corpus audit report over the synced corpus. */
+export function auditReportFixture(): AuditReport {
+  return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/audit_report.json"), "utf8")) as AuditReport;
 }

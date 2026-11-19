@@ -230,6 +230,14 @@ export async function listCategories(staffId: string): Promise<{ status: number;
   return { status: response.status, body: data ?? error };
 }
 
+/** The latest corpus audit report (`plg audit`); 404 until one has run. */
+export async function getLatestAuditReport(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/audit/reports/latest", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
 /** The officer's own decisions on proposed actions, newest first, with what each sent. */
 export async function getAuditTrail(staffId: string): Promise<{ status: number; body: unknown }> {
   const { data, error, response } = await client().GET("/audit", {

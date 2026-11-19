@@ -51,6 +51,19 @@ class Settings(BaseModel):
     """The Library's document categories, written by `plg categorise`."""
     category_min_size: int = 3
     """The fewest similar documents that make a category (HDBSCAN min_cluster_size)."""
+    audit_reports_dir: Path = REPO_ROOT / ".plg" / "audit"
+    """Corpus audit reports (`plg audit`), one JSON file per run; the newest is served."""
+    question_log: Path = REPO_ROOT / ".plg" / "questions.jsonl"
+    """Every answered question with its best retrieval score and whether it was covered (append-only); the audit's gaps."""
+    gap_min_score: float = 0.3
+    """A question whose best retrieved passage scored below this is a gap (Voyage rerank relevance, 0-1; the local
+    cross-encoder scores on another scale)."""
+    audit_max_pairs: int = 40
+    """Candidate conflict pairs judged by Opus per audit, at most (lineage and PLG Records pairs first)."""
+    audit_duplicate_jaccard: float = 0.5
+    """Estimated Jaccard similarity (MinHash) at which two documents are judged as possible duplicates."""
+    audit_concurrency: int = 4
+    """Opus judgements in flight at once."""
     developers: str = "S08"
     """Staff IDs (comma-separated) of the developer personas: they see a "view trace" link on their answers."""
     tasks_today: dt.date = dt.date(2026, 9, 30)

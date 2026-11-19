@@ -18,6 +18,8 @@ from pydantic import BaseModel, TypeAdapter, model_validator
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.actions.audit import AuditEntry, AuditLog
+from plg.audit.model import AuditReport, latest_report
+from plg.audit.questions import QuestionLog
 from plg.actions import glossary as glossary_actions
 from plg.actions import tickets
 from plg.actions.letters import unknown_slots
@@ -62,7 +64,7 @@ from plg.search.store import SearchStore
 from plg.tasks import rules as task_rules
 from plg.tasks.rules import TaskDigest
 from plg.threads import RunBuffer, RunInProgress, RunRegistry, ThreadStore, ThreadSummary
-from plg.tracing import Tracer, install_tracer
+from plg.tracing import Tracer, install_tracer, pii_masker
 
 
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -226,7 +228,7 @@ def create_app(
         warehouse=warehouse, templates=TemplateLibrary(settings.corpus_dir), drafts=drafts,
         settings=settings, memory=learner, outbox=outbox, audit=audit,
         ticket_system=ticket_system, taxonomy=taxonomy, checklists=checklists, glossary_changes=glossary_changes,
-        curation=curation,
+        curation=curation, question_log=QuestionLog(settings.question_log, mask=pii_masker(settings.records_db)),
     )
 
     @asynccontextmanager
@@ -556,6 +558,15 @@ def create_app(
             raise HTTPException(status_code=404, detail="No run to resume")
         after = int(last_event_id) if last_event_id and last_event_id.isdigit() else 0
         return sse(buffer, after)
+
+    @app.get("/audit/reports/latest", dependencies=[Depends(current_user)])
+    async def latest_audit_report() -> AuditReport:
+        """The newest corpus audit report (`plg audit`): conflicting documents with both sides cited, duplicates, stale
+        SOPs, figures using superseded definitions, PLG Records rule violations and gaps."""
+        report = await asyncio.to_thread(latest_report, settings.audit_reports_dir)
+        if report is None:
+            raise HTTPException(status_code=404, detail="No corpus audit has run yet: run `plg audit`.")
+        return report
 
     @app.get("/categories", dependencies=[Depends(current_user)])
     async def get_categories() -> Categorisation:

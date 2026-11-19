@@ -197,6 +197,61 @@ def categorise() -> None:
 
 
 @app.command()
+def audit() -> None:
+    """Audit the indexed corpus for a policy owner: conflicting documents (both sides cited, with the expected
+    resolution), near-duplicates, stale SOPs, report figures using superseded definitions, PLG Records rule
+    violations and gaps (questions answered badly). Candidates are found deterministically and judged by Opus;
+    CONFLICTS_WITH / DUPLICATE_OF edges go into the entity graph. Run after `plg sync` (it takes the same index lock).
+    The report is saved under the audit reports directory and served at GET /audit/reports/latest."""
+    from datetime import UTC, datetime
+
+    from plg.audit.audit import report_location, run_audit
+    from plg.entities.writer import GraphWriter
+    from plg.ingest.sync import SyncRunning, sync_lock
+    from plg.ontology.vocab import load_vocab
+    from plg.search.lance import LanceSearchStore
+    from plg.tracing import pii_masker
+
+    settings = Settings.from_env()
+    try:
+        with sync_lock(settings.search_db):
+            store = LanceSearchStore(settings.search_db, dim=settings.embed_dim, vector_weight=settings.vector_weight)
+            if not store.documents():
+                typer.echo("Nothing is indexed yet: run `plg sync` first.", err=True)
+                raise typer.Exit(code=1)
+            make_tracer(settings)  # the Opus judgements are traced (PII masked) when LangSmith is configured
+            report = asyncio.run(run_audit(
+                store, make_llm(settings), GraphWriter(settings.graph_dir, open_graph(settings)), settings,
+                vocab=load_vocab(), glossary=GlossaryChanges(settings.glossary_changes).glossary(load_glossary()),
+                now=datetime.now(UTC), mask=pii_masker(settings.records_db),
+            ))
+    except SyncRunning as exc:
+        typer.echo(f"{exc}; try again when it finishes.", err=True)
+        raise typer.Exit(code=1) from None
+
+    typer.echo(f"Audited {report.documents} documents.")
+    typer.echo(f"Conflicts: {len(report.conflicts)}")
+    for c in report.conflicts:
+        typer.echo(f"  {c.id}  {c.topic}: {c.a.title} / {c.b.title}")
+    typer.echo(f"Duplicates: {len(report.duplicates)}")
+    for d in report.duplicates:
+        typer.echo(f"  {d.b.title} duplicates {d.a.title} ({d.kind}, similarity {d.similarity:.2f})")
+    typer.echo(f"Stale documents: {len(report.stale)}")
+    for s in report.stale:
+        typer.echo(f"  {s.doc.title}: implements {s.relies_on}; current is {s.current_version}")
+    typer.echo(f"Superseded definitions: {len(report.superseded_definitions)}")
+    for u in report.superseded_definitions:
+        typer.echo(f"  {u.doc.title} ({u.location}): uses {u.used_version}, current is {u.current_version}")
+    typer.echo(f"Rule violations: {len(report.rule_violations)}")
+    for v in report.rule_violations:
+        typer.echo(f"  {v.rule}: {v.detail}")
+    typer.echo(f"Gaps: {len(report.gaps)}")
+    if report.dropped:
+        typer.echo(f"Dropped judgements: {len(report.dropped)} (unverified quotes or failed calls; see the report)")
+    typer.echo(f"Report: {report_location(settings, report)}")
+
+
+@app.command()
 def search(
     query: str,
     k: int = typer.Option(8, help="Number of results."),

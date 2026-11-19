@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Categorisation, CategoryDocument } from "@/lib/events";
 import { when } from "../dates";
 import { DocumentViewer } from "../SourceViewer";
+import { AuditFindings } from "./AuditFindings";
 import styles from "./library.module.css";
 
 type Loaded = { status: "loading" } | { status: "failed"; error: string } | { status: "ok"; view: Categorisation };
@@ -20,11 +21,54 @@ function count(n: number): string {
 /** A group of documents: a category (with its description and summary) or the uncategorised remainder. */
 type Group = { id: string; name: string; description: string; summary: string | null; documents: CategoryDocument[] };
 
+type View = "categories" | "audit";
+const VIEWS: { id: View; label: string }[] = [
+  { id: "categories", label: "Categories" },
+  { id: "audit", label: "Audit findings" },
+];
+
+/** The Library: its document categories, or the findings of the latest corpus audit, one tab each. */
+export function LibraryScreen() {
+  const [view, setView] = useState<View>("categories");
+
+  function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    const at = VIEWS.findIndex((v) => v.id === view);
+    const next = VIEWS[(at + (event.key === "ArrowRight" ? 1 : VIEWS.length - 1)) % VIEWS.length];
+    setView(next.id);
+    document.getElementById(`library-tab-${next.id}`)?.focus();
+  }
+
+  return (
+    <>
+      <div role="tablist" aria-label="Library views" className={styles.tabs} onKeyDown={onKeyDown}>
+        {VIEWS.map((v) => (
+          <button
+            key={v.id}
+            id={`library-tab-${v.id}`}
+            type="button"
+            role="tab"
+            aria-selected={view === v.id}
+            aria-controls={`library-panel-${v.id}`}
+            tabIndex={view === v.id ? 0 : -1}
+            onClick={() => setView(v.id)}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`library-panel-${view}`} aria-labelledby={`library-tab-${view}`}>
+        {view === "categories" ? <Categories /> : <AuditFindings />}
+      </div>
+    </>
+  );
+}
+
 /**
- * The Library: the document categories `plg categorise` found, each expandable to its summary and documents; each
+ * The document categories `plg categorise` found, each expandable to its summary and documents; each
  * document opens in place. Documents no category took (or indexed since the last run) are listed last.
  */
-export function LibraryScreen() {
+function Categories() {
   const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
   const [open, setOpen] = useState<Set<string>>(new Set());
 

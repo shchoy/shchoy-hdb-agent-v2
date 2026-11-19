@@ -190,6 +190,8 @@ class ScriptedLLMClient:
     sent: list[list[AgentMessage]] = field(default_factory=list)
     # The system blocks and tools sent on each `complete` call, in order.
     requests: list[tuple[list[Block], list[Block]]] = field(default_factory=list)
+    tool_choices: list[Block | None] = field(default_factory=list)
+    """The tool_choice of every complete() call, in order."""
     # Each `stream_text` call (the answer), in order: its system prompt and messages.
     streamed: list[Streamed] = field(default_factory=list)
 
@@ -222,6 +224,7 @@ class ScriptedLLMClient:
     ) -> AgentTurn:
         self.sent.append(list(messages))
         self.requests.append((system, tools))
+        self.tool_choices.append(tool_choice)
         user_input = _latest_question(messages)
         pending = self.turns.get((node, user_input))
         if not pending:

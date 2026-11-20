@@ -211,7 +211,9 @@ def create_app(
     curation = Curation(memory)
     learner = MemoryService(memory, llm, link_work, curation)
     feedback_log = FeedbackLog(settings.feedback_log)
-    feedback_sink = LangSmithFeedback(langsmith or (tracer.client if tracer else None), settings.annotation_queue)
+    feedback_sink = LangSmithFeedback(
+        langsmith or (tracer.client if tracer else None), settings.annotation_queue, tracer.project if tracer else None,
+    )
     drafts = DraftStore()
     threads = ThreadStore(settings.threads_db)
     runs = RunRegistry(tracer)
@@ -338,8 +340,10 @@ def create_app(
         turn = next((t for t in values.get("turns", []) if t.run_id == body.run_id), None)
         if turn is None:
             raise HTTPException(status_code=404, detail="No such answer in this conversation")
-        forwarded = await asyncio.to_thread(feedback_sink.send, body.run_id, body.score, body.comment, body.correction)
-        queued = body.score == "down" and await asyncio.to_thread(feedback_sink.queue, body.run_id)
+        forwarded = await asyncio.to_thread(
+            feedback_sink.send, body.run_id, body.score, body.comment, body.correction, turn.started_at,
+        )
+        queued = body.score == "down" and await feedback_sink.queue(body.run_id, turn.started_at)
         record = Feedback(
             feedback_id=str(uuid.uuid4()), staff_id=user.staff_id, at=datetime.now(UTC).isoformat(timespec="seconds"),
             forwarded=forwarded, queued=queued, proposals=[], **body.model_dump(),

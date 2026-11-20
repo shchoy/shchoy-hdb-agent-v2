@@ -1617,6 +1617,17 @@
             "type": "string",
             "title": "Run Id"
           },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
           "message_index": {
             "type": "integer",
             "title": "Message Index"

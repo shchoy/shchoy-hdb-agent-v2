@@ -497,6 +497,8 @@ export interface components {
         AnsweredTurn: {
             /** Run Id */
             run_id: string;
+            /** Started At */
+            started_at?: string | null;
             /** Message Index */
             message_index: number;
             /** Question */

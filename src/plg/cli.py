@@ -7,7 +7,7 @@ import os
 import uuid
 from pathlib import Path
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 from dotenv import find_dotenv, load_dotenv
@@ -28,7 +28,8 @@ from plg.runs import stream_run
 from plg.tasks.rules import DEFAULT_LIMIT as DEFAULT_TASKS
 from plg.search.embed import Embedder, VoyageEmbedder
 from plg.search.models import DocStatus, SearchFilter
-from plg.search.rerank import LazySearcher, Reranker
+from plg.search.rerank import LazySearcher, Reranker, Retriever
+from plg.search.store import SearchStore
 from plg.search.rerank import make_reranker as build_reranker
 from plg.tracing import Tracer, install_tracer
 
@@ -39,6 +40,8 @@ glossary_app = typer.Typer(help="Business glossary: versioned definitions.", no_
 app.add_typer(glossary_app, name="glossary")
 memory_app = typer.Typer(help="An officer's personal long-term memory.", no_args_is_help=True)
 app.add_typer(memory_app, name="memory")
+eval_app = typer.Typer(help="Golden datasets and quality evaluations (LangSmith).", no_args_is_help=True)
+app.add_typer(eval_app, name="eval")
 
 
 def make_llm(settings: Settings) -> LLMClient:
@@ -494,3 +497,111 @@ def memory_forget(memory_id: str, user: StaffOption) -> None:
         typer.echo("Memory not found.", err=True)
         raise typer.Exit(code=1)
     typer.echo("Forgotten.")
+
+
+# ---------------------------------------------------------------- evals (#31)
+
+def make_eval_client(settings: Settings) -> Any:
+    """The LangSmith client datasets are seeded and experiments uploaded with (tenant PII masked)."""
+    from plg.tracing import tracing_client
+
+    if not os.environ.get("LANGSMITH_API_KEY"):
+        typer.echo("LANGSMITH_API_KEY is not set. Add it to .env, or run with --offline.", err=True)
+        raise typer.Exit(code=1)
+    return tracing_client(settings.records_db)
+
+
+def make_eval_index(settings: Settings, *, audit: bool) -> tuple[Retriever, SearchStore | None]:
+    """The searcher the eval harness asks over (opened on first search) and, for the corpus audit, the `plg sync`
+    index itself."""
+    from plg.search.lance import LanceSearchStore
+
+    store = LanceSearchStore(settings.search_db, dim=settings.embed_dim, vector_weight=settings.vector_weight) if audit else None
+    return LazySearcher(settings), store
+
+
+def _dataset_names(names: list[str]) -> list[str]:
+    from plg.evals.golden import DATASETS
+
+    unknown = [n for n in names if n not in DATASETS]
+    if unknown:
+        typer.echo(f"Unknown dataset(s) {', '.join(unknown)}: one of {', '.join(DATASETS)}.", err=True)
+        raise typer.Exit(code=1)
+    return names or list(DATASETS)
+
+
+@eval_app.command("list")
+def eval_list() -> None:
+    """The golden datasets: examples, the regression gate's subset and the POC target."""
+    from plg.evals.evaluators import TARGETS
+    from plg.evals.golden import DATASETS, dataset
+
+    for name in DATASETS:
+        examples = dataset(name)
+        target = TARGETS[name]
+        typer.echo(f"{name:<11} {len(examples):>3} examples ({sum(e.gate for e in examples)} in the gate)  "
+                   f"target {target.metric} >= {target.threshold:.0%}")
+
+
+@eval_app.command("seed")
+def eval_seed(names: Annotated[list[str] | None, typer.Argument(help="Datasets (default: all).")] = None) -> None:
+    """Create or update the LangSmith datasets `plg-<name>` from the corpus ground truth (idempotent)."""
+    from plg.evals.runner import seed
+
+    settings = Settings.from_env()
+    for result in seed(make_eval_client(settings), _dataset_names(names or [])):
+        typer.echo(f"{result.dataset}: {result.created} created, {result.updated} updated, {result.removed} removed")
+
+
+@eval_app.command("run")
+def eval_run(
+    names: Annotated[list[str] | None, typer.Argument(help="Datasets (default: all).")] = None,
+    gate: bool = typer.Option(False, help="Only the regression gate's subset."),
+    limit: int | None = typer.Option(None, help="At most this many examples per dataset."),
+    offline: bool = typer.Option(False, help="Score locally; upload nothing to LangSmith."),
+    label: str | None = typer.Option(None, help="Experiment label, e.g. the prompt or tier being compared."),
+    model: list[str] = typer.Option([], help="Override a tier's model, e.g. sonnet=claude-haiku-5-5 (repeatable)."),
+    concurrency: int = typer.Option(4, help="Examples run at once."),
+) -> None:
+    """Run golden datasets with real Claude and compare each with its POC target; exits 1 if any falls short."""
+    from plg.evals.evaluators import Judge
+    from plg.evals.harness import Harness
+    from plg.evals.runner import run
+
+    settings = Settings.from_env()
+    for override in model:
+        tier, _, model_id = override.partition("=")
+        if tier not in ("haiku", "sonnet", "opus") or not model_id:
+            typer.echo(f"--model takes tier=model_id (tier haiku, sonnet or opus), not {override!r}.", err=True)
+            raise typer.Exit(code=1)
+        settings = settings.model_copy(update={f"model_{tier}": model_id})
+    selected = _dataset_names(names or [])
+    client = None if offline else make_eval_client(settings)
+    if client is not None:
+        make_tracer(settings)  # the harness's runs are traced under the experiment
+    llm = make_llm(settings)
+    retriever, store = make_eval_index(settings, audit="audit" in selected)
+    harness = Harness(llm, retriever, settings, entities=LazyGraph(settings))
+
+    async def run_all() -> bool:
+        passed = True
+        for name in selected:
+            report = await run(name, harness, Judge(llm), store=store, gate=gate, limit=limit, client=client,
+                               label=label, concurrency=concurrency)
+            score = report.score or 0.0
+            verdict = "PASS" if report.passed else "FAIL"
+            where = f"  experiment {report.experiment}" if report.experiment else ""
+            typer.echo(f"{verdict} {name}: {report.target.metric} {score:.0%} (target {report.target.threshold:.0%}, "
+                       f"{len(report.rows)} examples){where}")
+            for key, value in sorted(report.scores.items()):
+                if key != report.target.metric:
+                    typer.echo(f"    {key} {value:.0%}")
+            for row in report.rows:
+                for m in row.metrics:
+                    if m["score"] < 1 and m["key"] == report.target.metric:
+                        typer.echo(f"    - {row.id}: {m['comment']}")
+            passed = passed and report.passed
+        return passed
+
+    if not asyncio.run(run_all()):
+        raise typer.Exit(code=1)

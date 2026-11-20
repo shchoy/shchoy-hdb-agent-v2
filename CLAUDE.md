@@ -91,6 +91,24 @@ src/plg/
 │   │                DUPLICATE_OF (copy → original) between LibraryDocument nodes via GraphWriter (append-only, idempotent) → rules → gaps → save.
 │   │                model.py: AuditReport {generated_at, documents, conflicts, duplicates, stale, superseded_definitions, rule_violations, gaps, dropped}
 │   │                (Conflict a/b Side, Duplicate, DocRef, StaleDocument, SupersededDefinition, RuleViolation, Gap); saved per run, latest = newest.
+├── evals/           Golden datasets and quality evals (issue #31, `plg eval`). golden.py: Golden (stable id `<dataset>-<key>`, question, user
+│   │                staff ID, reference, source, gate flag) built from poc-data ground truth: samples() parses _report.md §5 (28 questions);
+│   │                DATASETS route (§5 → intents + also_ok, greeting), knowledge (§5 knowledge + C1–C6 questions + key_entities; must_mention),
+│   │                data (§5 9/10/11/13 + data_quality_issues: values / total / row_count), drafting (template + expected slot values),
+│   │                defect (3 clear feedback.json cases per category + §5 19/20), doc_check (20 bundles; INSURANCE_CORRECTIONS = the 3
+│   │                KNOWN_GT_DEVIATIONS renewals expect INS:expired), tasks, glossary (every term version on a day in force), guardrails
+│   │                (§5 28 + message attacks + benign controls), audit (CONFLICT_SIDES source-path pairs for C1–C6, §2 DUPLICATE_PAIRS,
+│   │                duplicate_tenants rule), e2e (all 28 §5, reference answer). harness.py: Harness(llm, retriever, settings, entities?) builds
+│   │                the graph like `plg ask` with scratch threads/outbox/audit/iems dirs, no memory; ask(question, user, route_only?) →
+│   │                Outcome (specialists started = intents, answer, citations, sql, drafts, classification, doc_check, tasks, injections,
+│   │                proposed, error; route_only stops at the fan-out); audit(store) = run_audit with edges into a graph copy → path pairs.
+│   │                evaluators.py: TARGETS (route intent_accuracy .9, knowledge faithfulness .85 (uncited = 0), data execution_accuracy .8,
+│   │                drafting slot_accuracy .9, defect macro_f1 .85, doc_check recall .9, audit conflict_recall .8, glossary correctness .9,
+│   │                guardrails guarded 1.0, tasks .9, e2e correctness .8); row evaluators + summary ones (macro_f1, doc_check_recall);
+│   │                Judge (Opus, node eval_judge, forced `grade` tool: FAITHFULNESS / CORRECTNESS rubrics). runner.py: seed(client, names)
+│   │                mirrors datasets into LangSmith `plg-<name>` (example id uuid5 of the golden id: create / update / delete stale);
+│   │                run(name, harness, judge, gate?, limit?, client?, label?) → EvalReport (offline loop, or aevaluate experiment with
+│   │                metadata: model per tier, rerank backend, git SHA, label) with means vs the target.
 ├── categories/      Library document categories (issue #29). model.py: Categorisation (categorised_at, categories, uncategorised;
 │   │                overlay(documents): live titles/status, docs indexed since → uncategorised), Category (id CAT-<hash of member doc_ids>,
 │   │                name, description, summary, documents: CategoryDocument), load_/save_categorisation (atomic JSON). categorise.py
@@ -314,6 +332,7 @@ src/plg/
                     GET /audit: own decisions, newest first (AuditRecord = AuditEntry + `sent`: the OutboxItem, `ticket`: the i-EMS Ticket; null when not applicable).
 │                    Resume edits for a ticket are validated by tickets.edit_errors (422).
 └── cli.py           Typer app: `plg ask <question>` (prints the answer, then its Sources), `plg sync [--full]` (also loads the trackers), `plg categorise` (after sync; same index lock), `plg audit` (#30; after sync, same lock; Opus; prints counts + items + report path),
+                     `plg eval list | seed [names] | run [names] [--gate] [--limit N] [--offline] [--label X] [--model tier=id]` (#31; run exits 1 below a target; make_eval_client = tracing_client, make_eval_index),
                      `plg search <query>`, `plg graph build | lineage | show <entity>`, `plg serve`, `plg openapi` (prints the OpenAPI JSON, no API key needed),
                      `plg glossary list [--all] | show <term>` (with approved changes), `plg memory list | show | edit | forget --user <staff ID>`,
                      `plg digest [--user S12] [--limit N] [--out file]` (task digest to console or file; no --user = every officer with open tasks; no role check). make_llm() builds the real LLMClient.
@@ -335,7 +354,7 @@ tests/               HTTP-seam tests: in-process FastAPI TestClient + ScriptedLL
                      test_guardrail_api.py (#23): ATTACKS (guardrail cases, 100%) / BENIGN controls, redacted history, ingestion screening of the synced
                      corpus (only the planted email), the planted email via knowledge + defect → flagged, no proposed/executed action, and a pre-#23 index chunk withheld.
                      test_feedback_api.py (#26): feedback → FakeLangSmith (create_feedback, annotation queue), proposals, curator visibility/decisions/audit, no self-approval, few-shot SQL in the data agent's prompt, team facts/corrections in merge's memory block (make_api(langsmith=...)).
-                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_sync.py (#28): small corpora (make_corpus) through `plg sync`: incremental, superseded/missing docs kept, --full keeps memory, a store opened before a sync sees it, a failed doc → exit 1, an overlapping sync refused. test_categories_api.py (#29): `plg categorise` over a copy of the synced index (HDBSCAN real, naming scripted: cluster named after its first title) → GET /categories, chunk category + filter, graph IN_CATEGORY, idempotent re-run, category_summary findings. test_audit_api.py (#30): candidate recall over the synced corpus (C1–C6 + the 3 planted duplicates, SOP-014 stale), `plg audit` with scripted Opus → GET /audit/reports/latest, graph edges, unverified quotes dropped, idempotent, rules, question log + gaps. test_tracing_api.py (#27): conftest LangSmithApi (records posted runs, answers project lookups; .tracer() = plg's masking client)
+                     test_glossary_api.py (#25): definitions with citations, propose → owner-only approval → superseded/new version used by get_definition and run_sql, edits, withdraw, stale 409, curator privacy. test_tasks_api.py: ranking, overdue marking (Lucky Star TSK-2026-0452), role checks via GET /tasks/digest (no Claude), the `tasks` event in a conversation and `plg digest`. test_trackers_api.py queries them through plg-api (make_api(trackers_db=...); without it there are none). test_voyage_reranker.py: VoyageReranker against a fake /rerank endpoint. test_sync.py (#28): small corpora (make_corpus) through `plg sync`: incremental, superseded/missing docs kept, --full keeps memory, a store opened before a sync sees it, a failed doc → exit 1, an overlapping sync refused. test_categories_api.py (#29): `plg categorise` over a copy of the synced index (HDBSCAN real, naming scripted: cluster named after its first title) → GET /categories, chunk category + filter, graph IN_CATEGORY, idempotent re-run, category_summary findings. test_evals.py (#31): `plg eval` offline (ScriptedLLMClient, FakeLangSmith datasets API): datasets from the ground truth, idempotent seed, route pass/fail (route-only stop), doc_check recall over 20 bundles, defect macro-F1, the Opus judge request, failed runs never pass. tests/evals/test_quality_gate.py: the regression gate, every dataset's gate subset (not audit) with real Claude over the session's synced index, `@pytest.mark.langsmith(test_suite_name="plg-quality-gate")` (masking client configured), each case must meet its target; skipped unless PLG_EVALS=1 and ANTHROPIC_API_KEY. test_audit_api.py (#30): candidate recall over the synced corpus (C1–C6 + the 3 planted duplicates, SOP-014 stale), `plg audit` with scripted Opus → GET /audit/reports/latest, graph edges, unverified quotes dropped, idempotent, rules, question log + gaps. test_tracing_api.py (#27): conftest LangSmithApi (records posted runs, answers project lookups; .tracer() = plg's masking client)
                      → root metadata, nodes/Send branch/tool children, PII masked, resume + interrupt, trace URL role/ownership, CLI channel. test_anthropic_client.py runs the real client against a
                      fake Anthropic endpoint. Ontology tests check the committed generated/ artefacts against
                      _master / PLG Records (never re-running the generator, except test_make_ontology's failure case).
@@ -370,7 +389,7 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.
                      Tests: Vitest + RTL + MSW replaying the recorded fixtures.
 .github/workflows/ci.yml
-                     api job (make ontology + fail on generated/ drift, mypy, pytest) and web job (regen OpenAPI types, fail on drift, typecheck,
+                     api job (make ontology + fail on generated/ drift, mypy, pytest), evals job (needs api; PLG_EVALS=1 + ANTHROPIC/LANGSMITH secrets → tests/evals; skipped without the key) and web job (regen OpenAPI types, fail on drift, typecheck,
                      lint, test, build, bundle credential check).
 poc-data/            Synthetic corpus, plg_records.db and _master ground truth (tests/evals only).
 .claude/skills/      Project skills (implement, tdd, code-review, post-implement, ...).
@@ -385,6 +404,7 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 - Typecheck: `uv run mypy` (strict)
 - Index the corpus (needs VOYAGE_API_KEY): `uv run plg sync [--full]` · check it: `uv run plg search "<query>"`
 - Categorise the Library (after a sync; needs ANTHROPIC_API_KEY): `uv run plg categorise`
+- Evals (#31): `uv run plg eval list` · `uv run plg eval seed` (LANGSMITH_API_KEY) · `uv run plg eval run route --gate [--offline]` · gate: `PLG_EVALS=1 uv run pytest tests/evals`
 - Ask: `uv run plg ask "hello"` · Serve: `uv run plg serve` (http://127.0.0.1:8000). Knowledge answers need the index.
 - Web (in `web/`): `npm ci` · `npm run dev` (http://localhost:3000) · `npm test` · `npm run typecheck` · `npm run lint`
 - After editing anything under `ontology/`: `make ontology` and commit `src/plg/ontology/generated/` (CI fails on drift).

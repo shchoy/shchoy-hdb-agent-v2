@@ -23,6 +23,27 @@ jobs:
       - run: uv run mypy
       - run: uv run pytest
 
+  evals:
+    # Quality regression gate (#31): the golden datasets' gate subset with real Claude, logged to LangSmith's
+    # plg-quality-gate test suite. Skipped (every case) when the repository has no ANTHROPIC_API_KEY secret.
+    needs: api  # real Claude only once the offline suite is green
+    runs-on: ubuntu-latest
+    env:
+      PLG_EVALS: "1"
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGSMITH_TEST_TRACKING: ${{ secrets.LANGSMITH_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - name: Cache the local cross-encoder model
+        uses: actions/cache@v4
+        with:
+          path: .plg/models
+          key: rerank-models-${{ hashFiles('src/plg/config.py') }}
+      - run: uv run pytest tests/evals -rs
+
   web:
     runs-on: ubuntu-latest
     defaults:

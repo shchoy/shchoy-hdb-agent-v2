@@ -136,6 +136,19 @@ uv run plg audit         # after `plg sync`; needs ANTHROPIC_API_KEY (Opus judge
 
 Finds candidate pairs without Claude: near-duplicates by MinHash and document vectors, conflicting statements of the same quantity (days, months, metres, S$, units) in similar passages, SOPs older than the current version of the policy they name, rents in documents that differ from PLG Records, and reports that use a glossary term near a number after its definition changed. Opus judges each pair, quoting both sides. A quote that is not word for word in the passage is dropped. Conflicts and duplicates become `CONFLICTS_WITH` / `DUPLICATE_OF` edges in the entity graph. Deterministic checks over PLG Records add rule violations: overlapping tenancies, two current policy versions, a trade not allowed for its unit type, and duplicate tenants. Gaps come from `.plg/questions.jsonl`: questions answered "not covered", with a low retrieval score, or rated 👎. The report is saved under `.plg/audit/`. View it under **Library → Audit findings**, or fetch `GET /audit/reports/latest`.
 
+### Golden datasets and quality evals (issue #31)
+
+```bash
+uv run plg eval list                     # datasets, gate subset sizes and POC targets
+uv run plg eval seed                     # mirror them into LangSmith datasets plg-<name> (LANGSMITH_API_KEY; idempotent)
+uv run plg eval run route knowledge      # LangSmith experiments with real Claude; exits 1 if a target is missed
+uv run plg eval run data --gate --offline            # only the gate subset, scored locally, nothing uploaded
+uv run plg eval run knowledge --model sonnet=claude-haiku-5-5 --label haiku-agents   # compare a tier
+PLG_EVALS=1 uv run pytest tests/evals    # the pytest regression gate (LangSmith pytest integration)
+```
+
+Needs `ANTHROPIC_API_KEY`, and the `plg sync` index (`VOYAGE_API_KEY`) for knowledge, e2e and audit. The datasets come from `poc-data/_report.md` §5 and `_master/` (they are never indexed). Experiment metadata records the model per tier, the rerank backend, the git SHA and `--label`, so tiers and prompts can be compared side by side in LangSmith. Runs write only to a temporary scratch directory; they never approve actions. The gate is skipped unless `PLG_EVALS=1`. In CI the `evals` job runs it when the repository has an `ANTHROPIC_API_KEY` secret.
+
 ### Entity graph (tenants, units, tenancies)
 
 ```

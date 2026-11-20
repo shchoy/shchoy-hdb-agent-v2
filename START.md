@@ -374,7 +374,7 @@ Sign in as a developer persona (default **Kelvin Goh, S08**; set `PLG_DEVELOPERS
 
 ### Answer feedback and curation (issue #26)
 
-Under every answer in the web app, 👍 **Helpful** / 👎 **Not helpful**. A 👎 opens **Correct this** (what the answer should have said), an optional **Team fact** and a comment. The feedback is appended to `.plg/feedback.jsonl` and, when `LANGSMITH_API_KEY` is set, sent to LangSmith with `create_feedback(run_id, "user_score")` (text PII-masked); a 👎 run also joins the `PLG thumbs-down review` annotation queue. Without the key, feedback is still recorded locally (`forwarded: false`).
+Under every answer in the web app, 👍 **Helpful** / 👎 **Not helpful**. A 👎 opens **Correct this** (what the answer should have said), an optional **Team fact** and a comment. The feedback is appended to `.plg/feedback.jsonl` and, when `LANGSMITH_API_KEY` is set, sent to LangSmith with `create_feedback(run_id, "user_score")` (text PII-masked); a 👎 run also joins the `PLG thumbs-down review` annotation queue (only for traced runs: LangSmith finds a run by its project and start time, so `LANGSMITH_TRACING=true` is needed). Without the key, feedback is still recorded locally (`forwarded: false`).
 
 What feedback would teach the team waits in `pending_review` (LanceDB `memory` table, namespace `memory/team/...`) until a curator decides in the **Curator queue** on the Memory screen:
 

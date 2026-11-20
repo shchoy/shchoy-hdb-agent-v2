@@ -315,8 +315,17 @@ class RecordingLangSmith:
         self.queues[name] = f"queue-{len(self.queues) + 1}"
         return type("Queue", (), {"id": self.queues[name], "name": name})()
 
-    def add_runs_to_annotation_queue(self, queue_id: str, *, run_ids: list[str], **_: Any) -> None:
-        pass
+    def read_project(self, *, project_name: str, **_: Any) -> Any:
+        return type("Project", (), {"id": "project-1", "name": project_name})()
+
+    @property
+    def annotation_queues(self) -> Any:
+        """`client.annotation_queues.items.create` (async)."""
+
+        async def create(queue_id: str, *, items: list[dict[str, Any]], **_: Any) -> dict[str, Any]:
+            return {"items": items}
+
+        return type("Queues", (), {"items": type("Items", (), {"create": staticmethod(create)})()})()
 
 
 def record_feedback() -> dict[str, str]:

@@ -10,12 +10,14 @@ LangSmith is the third-party boundary: a recording stand-in for its Client is pa
 
 from __future__ import annotations
 
+from datetime import datetime
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
 from plg.llm import ScriptedLLMClient, text, tool_call, turn
-from tests.conftest import USER, Api, route
+from tests.conftest import USER, Api, LangSmithApi, route
 
 ANALYST = {"X-PLG-User": "S08"}
 """Kelvin Goh, Data Analyst: curates question → SQL examples."""
@@ -28,13 +30,19 @@ QUESTION = "How many tenancies are active?"
 SQL = "SELECT COUNT(*) AS active FROM tenancies WHERE status = 'Active'"
 
 
+PROJECT = "7d2b4e1f-0000-4000-8000-0000000000aa"
+"""The UUID FakeLangSmith reports for the traced project."""
+
+
 class FakeLangSmith:
     """Records what the app sends to LangSmith, as its Client would receive it."""
 
     def __init__(self) -> None:
         self.feedback: list[dict[str, Any]] = []
         self.queues: dict[str, str] = {}
-        self.queued: list[tuple[str, list[str]]] = []
+        self.queued: list[tuple[str, list[dict[str, Any]]]] = []
+        self.projects: list[str] = []
+        self.annotation_queues = SimpleNamespace(items=SimpleNamespace(create=self._add_items))
 
     def create_feedback(self, run_id: str, key: str, **kwargs: Any) -> None:
         self.feedback.append({"run_id": str(run_id), "key": key, **kwargs})
@@ -46,8 +54,14 @@ class FakeLangSmith:
         self.queues[name] = f"queue-{len(self.queues) + 1}"
         return type("Queue", (), {"id": self.queues[name], "name": name})()
 
-    def add_runs_to_annotation_queue(self, queue_id: str, *, run_ids: list[str], **_: Any) -> None:
-        self.queued.append((str(queue_id), [str(r) for r in run_ids]))
+    def read_project(self, *, project_name: str, **_: Any) -> Any:
+        self.projects.append(project_name)
+        return SimpleNamespace(id=PROJECT, name=project_name)
+
+    async def _add_items(self, queue_id: str, *, items: list[dict[str, Any]], **_: Any) -> dict[str, Any]:
+        """`client.annotation_queues.items.create` (async)."""
+        self.queued.append((str(queue_id), list(items)))
+        return {"items": [{"id": f"item-{i}", "queue_id": queue_id, **item} for i, item in enumerate(items)]}
 
 
 @pytest.fixture
@@ -56,8 +70,14 @@ def langsmith() -> FakeLangSmith:
 
 
 @pytest.fixture
-def api(make_api: Any, langsmith: FakeLangSmith) -> Api:
-    return make_api(langsmith=langsmith)
+def traces() -> LangSmithApi:
+    """Where the runs are traced (project "plg-test"), so each answered turn keeps its run's start time."""
+    return LangSmithApi()
+
+
+@pytest.fixture
+def api(make_api: Any, langsmith: FakeLangSmith, traces: LangSmithApi) -> Api:
+    return make_api(langsmith=langsmith, tracer=traces.tracer())
 
 
 def data_answer(api: Api, llm: ScriptedLLMClient, question: str = QUESTION, sql: str = SQL) -> tuple[str, str]:
@@ -78,8 +98,13 @@ def feedback(api: Api, body: dict[str, Any], headers: dict[str, str] | None = No
     return api.client.post("/feedback", json=body, headers=headers or USER)
 
 
+def started(traces: LangSmithApi, run_id: str) -> datetime:
+    """The start time LangSmith recorded for the run's root."""
+    return datetime.fromisoformat(str(traces.root(run_id)["start_time"]))
+
+
 def test_thumbs_up_on_a_data_answer_is_sent_to_langsmith_and_proposes_its_sql(
-    api: Api, llm: ScriptedLLMClient, langsmith: FakeLangSmith
+    api: Api, llm: ScriptedLLMClient, langsmith: FakeLangSmith, traces: LangSmithApi
 ) -> None:
     thread, run_id = data_answer(api, llm)
 
@@ -88,7 +113,12 @@ def test_thumbs_up_on_a_data_answer_is_sent_to_langsmith_and_proposes_its_sql(
     assert response.status_code == 201
     receipt = response.json()
     assert receipt["forwarded"] is True and receipt["queued"] is False
-    assert langsmith.feedback == [{"run_id": run_id, "key": "user_score", "score": 1, "comment": None}]
+    [sent] = langsmith.feedback
+    assert {k: sent[k] for k in ("run_id", "key", "score", "comment", "session_id")} == {
+        "run_id": run_id, "key": "user_score", "score": 1, "comment": None, "session_id": PROJECT,
+    }
+    assert sent["start_time"].replace(tzinfo=None) == started(traces, run_id).replace(tzinfo=None)
+    assert langsmith.projects == ["plg-test"]  # the traced project, looked up once
     [proposal] = receipt["proposals"]
     assert proposal["action_type"] == "approve_sql_example"
     assert proposal["status"] == "pending"
@@ -98,7 +128,7 @@ def test_thumbs_up_on_a_data_answer_is_sent_to_langsmith_and_proposes_its_sql(
 
 
 def test_thumbs_down_joins_the_review_queue_and_proposes_the_correction_and_team_fact(
-    api: Api, llm: ScriptedLLMClient, langsmith: FakeLangSmith
+    api: Api, llm: ScriptedLLMClient, langsmith: FakeLangSmith, traces: LangSmithApi
 ) -> None:
     thread, run_id = data_answer(api, llm)
 
@@ -109,7 +139,13 @@ def test_thumbs_down_joins_the_review_queue_and_proposes_the_correction_and_team
     }).json()
 
     assert receipt["queued"] is True
-    assert langsmith.queued == [("queue-1", [run_id])]
+    [(queue_id, [item])] = langsmith.queued
+    assert queue_id == "queue-1"
+    assert {k: item[k] for k in ("item_type", "run_id", "project_id")} == {
+        "item_type": "RUN", "run_id": run_id, "project_id": PROJECT,
+    }
+    assert datetime.fromisoformat(item["start_time"]).replace(tzinfo=None) == started(traces, run_id).replace(tzinfo=None)
+    assert "extend_trace_retention" not in item
     assert list(langsmith.queues) == ["PLG thumbs-down review"]
     [sent] = langsmith.feedback
     assert (sent["score"], sent["comment"]) == (0, "Wrong scope.")
@@ -123,6 +159,22 @@ def test_thumbs_down_joins_the_review_queue_and_proposes_the_correction_and_team
     assert fact["payload"]["fact"] == "Tenancy Management counts Pending Commencement tenancies as active. Call [phone]."
     assert "S05" not in fact["approvers"] and {"S01", "S03", "S04"} <= set(fact["approvers"])
     assert "S08" not in fact["approvers"]  # analysts curate SQL examples only
+
+
+def test_an_untraced_answer_is_rated_but_not_queued(
+    make_api: Any, llm: ScriptedLLMClient, langsmith: FakeLangSmith
+) -> None:
+    """Without tracing the run never reached LangSmith: there is no start time to find it by, so it can't be queued;
+    the rating still goes out as before."""
+    api = make_api(langsmith=langsmith)
+    thread, run_id = data_answer(api, llm)
+
+    receipt = feedback(api, {"thread_id": thread, "run_id": run_id, "score": "down", "comment": "Wrong."}).json()
+
+    assert (receipt["forwarded"], receipt["queued"]) == (True, False)
+    assert langsmith.queued == []
+    [sent] = langsmith.feedback
+    assert "session_id" not in sent and "start_time" not in sent
 
 
 def test_feedback_on_someone_elses_answer_or_an_unknown_run_is_404(api: Api, llm: ScriptedLLMClient) -> None:

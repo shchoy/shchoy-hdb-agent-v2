@@ -16,6 +16,8 @@ class AnsweredTurn(BaseModel):
 
     run_id: str
     """The LangSmith run ID of the run that answered it."""
+    started_at: str | None = None
+    """When that run started in LangSmith (ISO 8601); None when it wasn't traced. Feedback needs it to find the run."""
     message_index: int
     """The answer's index in the thread's `messages`."""
     question: str

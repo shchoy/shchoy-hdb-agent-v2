@@ -15,7 +15,7 @@ from plg.events import (
     ActionResultEvent, CitationEvent, ClassificationEvent, DocCheckEvent, DoneEvent, DraftEvent, ErrorEvent, InjectionEvent, InterruptEvent, NodeEvent, PolicyStanceEvent,
     ProposedActionEvent, RunEvent, SqlTraceEvent, TasksEvent, TokenEvent,
 )
-from plg.graph.state import RUN_ID, PLGGraph, PLGState
+from plg.graph.state import RUN_ID, RUN_STARTED, PLGGraph, PLGState
 from plg.identity import UserCtx
 from plg.tracing import Channel, Tracer
 
@@ -44,7 +44,8 @@ async def stream_run(
         answer: list[str] = []
         waiting: list[str] = []  # actions the run stopped at (the approval interrupt)
         failed: str | None = None
-        async for event in _stream(graph, run_id, thread_id, message, user, decision, root.add_metadata):
+        started = root.start_time.isoformat()
+        async for event in _stream(graph, run_id, thread_id, message, user, decision, root.add_metadata, started):
             if isinstance(event, TokenEvent):
                 answer.append(event.text)
             elif isinstance(event, InterruptEvent):
@@ -60,10 +61,12 @@ async def stream_run(
 async def _stream(
     graph: PLGGraph, run_id: uuid.UUID, thread_id: str, message: str, user: UserCtx | None,
     decision: ApprovalDecision | None, annotate: Callable[[dict[str, Any]], None] | None = None,
+    started: str | None = None,
 ) -> AsyncIterator[RunEvent]:
-    """`annotate` adds trace metadata as the run learns what it is about (its intents, once routed)."""
+    """`annotate` adds trace metadata as the run learns what it is about (its intents, once routed); `started` is the
+    traced root run's start time."""
     # The run ID is carried in `configurable`, not as LangGraph's own run ID: a traced run's root is `plg_run`.
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id, RUN_ID: str(run_id)}}
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id, RUN_ID: str(run_id), RUN_STARTED: started}}
     seq = 0
     inputs: PLGState | Command[None]
     if decision is not None:

@@ -60,7 +60,7 @@ from plg.tasks import ask as task_ask
 from plg.tasks import rules as task_rules
 from plg.feedback.curation import Curation
 from plg.feedback.model import AnsweredTurn
-from plg.graph.state import RUN_ID, Finding, Intent, PLGGraph, PLGState
+from plg.graph.state import RUN_ID, RUN_STARTED, Finding, Intent, PLGGraph, PLGState
 from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
 from plg.ontology.changes import GlossaryChange, GlossaryChanges, superseded
@@ -501,6 +501,7 @@ def build_graph(
         flagged = bool(planted or state.get("screened"))
         turn = AnsweredTurn(
             run_id=str(config.get("configurable", {}).get(RUN_ID, "")), message_index=len(state.get("messages", [])) + 1,
+            started_at=config.get("configurable", {}).get(RUN_STARTED),
             question=state["question"], intents=list(state.get("intents", [])), answer=answer, flagged=flagged,
             sql=next((f.sql for f in reversed(findings) if f.sql), None),
         )

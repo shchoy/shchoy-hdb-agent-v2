@@ -500,7 +500,15 @@ class _LangSmithStub:
     def list_annotation_queues(self, **_: Any) -> list[Any]:
         return [type("Queue", (), {"id": "q", "name": "PLG thumbs-down review"})()]
 
-    def add_runs_to_annotation_queue(self, *_: Any, **__: Any) -> None: ...
+    def read_project(self, **_: Any) -> Any:
+        return type("Project", (), {"id": "p"})()
+
+    @property
+    def annotation_queues(self) -> Any:
+        async def create(*_: Any, **__: Any) -> dict[str, Any]:
+            return {"items": []}
+
+        return type("Queues", (), {"items": type("Items", (), {"create": staticmethod(create)})()})()
 
 
 @pytest.fixture

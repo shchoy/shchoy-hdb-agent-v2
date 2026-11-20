@@ -100,10 +100,12 @@ src/plg/
 │   │                DocumentCategory nodes + IN_CATEGORY edges from LibraryDocument nodes via GraphWriter (append-only: existing ones
 │   │                kept). ask.py (NODE "category_summary", no Claude): match(question) by name words (x2) + description words;
 │   │                answer() = summary + documents, or the category list, or NOT_CATEGORISED.
-├── feedback/        Answer feedback and curation (issue #26). model.py: AnsweredTurn (run_id, message_index, question, intents, answer,
+├── feedback/        Answer feedback and curation (issue #26). model.py: AnsweredTurn (run_id, started_at?, message_index, question, intents, answer,
 │   │                sql?, flagged; kept in graph state `turns`), Feedback + FeedbackLog (JSONL, append-only). langsmith.py: LangSmithFeedback
 │   │                (Client or stand-in; none opened without LANGSMITH_API_KEY): send() = create_feedback(run_id, "user_score", score 1/0,
-│   │                PII-masked comment/correction), queue() = add_runs_to_annotation_queue (queue found or created by name). Best-effort.
+│   │                PII-masked comment/correction; + session_id (project UUID, read_project once) and start_time for a traced turn), async queue() =
+│   │                annotation_queues.items.create (SmithDB items API: RUN item with run_id, project_id, start_time; queue found or created by name;
+│   │                an untraced turn has no start time → not queued). Best-effort.
 │   │                curation.py: proposals(turn, feedback, user, staff, existing): 👍 + ran SQL → approve_sql_example (ID sql-<hash>-<rand>; not
 │   │                again while one is pending/approved), 👎 + correction → approve_example, team_fact → approve_team_fact; none for a flagged
 │   │                turn; approvers = qualifying staff minus the proposer. Curation: ProposedActions stored in MemoryStore namespace
@@ -175,7 +177,7 @@ src/plg/
 │                    screened (flags in the officer's message), injections (flagged documents read this turn), proposals (this turn's
 │                    actions: merge commits them to proposed_actions only if the turn met no injection). `clarification` = route's question back (reset each turn). `memory` = this turn's labelled notes block.
 │                    proposed_actions (upserted by action ID), decision (what `approval` received). turns (AnsweredTurn per answer, appended
-│                    by merge with the run_id; Finding.sql = the data finding's last query that ran), for feedback by run ID. RUN_ID = configurable key carrying the run_id to nodes.
+│                    by merge with the run_id; Finding.sql = the data finding's last query that ran), for feedback by run ID. RUN_ID = configurable key carrying the run_id to nodes; RUN_STARTED = a traced run's root start time (→ AnsweredTurn.started_at).
 │   ├── summary.py   summarise_history: fold(llm, older messages, previous summary) (Haiku, node summarise_history); entity IDs missing from the reply are re-appended verbatim.
 │   └── build.py     build_graph(llm, retriever, ..., *, warehouse, checkpointer?, settings?, memory?): START → screen_input (flagged message → merge:
 │                    fixed MESSAGE_FLAGGED, no Claude; streams `injection`; history gets the redacted message) → (summarise_history if history > threshold) → load_memory → route → knowledge, data, drafting, defect, doc_check and/or tasks (if intended) → merge → write_memory → (any pending action: approval → execute_action, looping while some are pending) → END

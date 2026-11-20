@@ -73,5 +73,8 @@ class PLGState(TypedDict, total=False):
 
 RUN_ID = "plg_run_id"
 """Configurable key carrying the run's (LangSmith) run ID to the nodes, e.g. for the audit log."""
+RUN_STARTED = "plg_run_started"
+"""Configurable key carrying a traced run's start time (ISO 8601, the root run's `start_time`): with the project, the
+lookup key LangSmith needs to find the run again (annotation queue items, feedback)."""
 
 PLGGraph = CompiledStateGraph[PLGState, Any, PLGState, PLGState]

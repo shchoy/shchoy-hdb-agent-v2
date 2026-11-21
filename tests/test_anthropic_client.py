@@ -137,3 +137,54 @@ def test_calls_are_traced_as_llm_runs_naming_node_and_tier_under_the_run(
     assert (meta["node"], meta["tier"], meta["thread_id"], meta["ls_model_name"]) == ("merge", "haiku", "t-1", "claude-haiku-5-5")
     assert llm_run["parent_run_id"] == "0193a3c2-0000-7000-8000-000000000001"
     assert "Hello, officer." in json.dumps(llm_run["outputs"])
+
+
+def test_a_model_that_rejects_a_forced_tool_choice_is_asked_with_auto_and_nudged_once_to_call_the_tool(
+    monkeypatch: pytest.MonkeyPatch, requests: list[dict[str, object]],
+) -> None:
+    """Sonnet/Opus 5.5 reject tool_choice "tool"/"any" (400): the call falls back to "auto" with the system prompt
+    insisting on the tool, asks once more if the reply is plain text, and remembers the model so later calls skip the 400."""
+    rejected = {"type": "error", "error": {"type": "invalid_request_error",
+                "message": 'tool_choice: type "tool" and "any" are not supported for this model.'}}
+
+    def message(*content: dict[str, object]) -> dict[str, object]:
+        return {"id": "msg_1", "type": "message", "role": "assistant", "model": "m", "content": list(content),
+                "stop_reason": "tool_use" if content[-1]["type"] == "tool_use" else "end_turn",
+                "stop_sequence": None, "usage": {"input_tokens": 1, "output_tokens": 1}}
+
+    grade = {"type": "tool_use", "id": "toolu_1", "name": "grade", "input": {"score": 1}}
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        body = json.loads(request.content)
+        requests.append(body)
+        if body.get("tool_choice", {}).get("type") in ("tool", "any"):
+            return httpx2.Response(400, json=rejected)
+        if len(body["messages"]) == 1 and len(requests) == 2:
+            return httpx2.Response(200, json=message({"type": "text", "text": "I think it is correct."}))
+        return httpx2.Response(200, json=message(grade))
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    client = AnthropicLLMClient(
+        Settings.from_env(), http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(handler))
+    )
+    system = [{"type": "text", "text": "Grade it.", "cache_control": {"type": "ephemeral"}}]
+    tools = [{"name": "grade", "description": "d", "input_schema": {"type": "object"}}]
+
+    def ask() -> object:
+        return asyncio.run(client.complete(
+            node="eval_judge", tier="opus", system=system, messages=[{"role": "user", "content": "Q?"}],
+            tools=tools, tool_choice={"type": "tool", "name": "grade"},
+        ))
+
+    reply = ask()
+
+    assert reply.content == [grade] and reply.stop_reason == "tool_use"  # type: ignore[attr-defined]
+    forced, auto, nudge = requests
+    assert forced["tool_choice"] == {"type": "tool", "name": "grade"}
+    assert auto["tool_choice"] == nudge["tool_choice"] == {"type": "auto"}
+    assert auto["system"][0] == system[0] and "grade tool" in auto["system"][-1]["text"]  # type: ignore[index]
+    assert nudge["messages"][1]["role"] == "assistant" and "grade tool" in json.dumps(nudge["messages"][2])  # type: ignore[index]
+
+    requests.clear()
+    assert ask().content == [grade]  # type: ignore[attr-defined]
+    assert [r["tool_choice"] for r in requests] == [{"type": "auto"}]

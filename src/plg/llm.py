@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, NamedTuple, Protocol, TypedDict
 
 import httpx2
-from anthropic import AsyncAnthropic
+from anthropic import AsyncAnthropic, BadRequestError
 from langsmith import get_tracing_context, tracing_context
 from langsmith.utils import tracing_is_enabled
 from langsmith.wrappers import wrap_anthropic
@@ -82,6 +82,8 @@ class AnthropicLLMClient:
         self._settings = settings
         self._bare = AsyncAnthropic(http_client=http_client)
         self._client = wrap_anthropic(AsyncAnthropic(http_client=http_client))  # wraps in place: a second SDK client
+        self._unforced: set[str] = set()
+        """Models that rejected a forced tool_choice: later calls go straight to the "auto" fallback."""
 
     async def stream_text(
         self, *, node: str, tier: Tier, system: str, messages: list[Message]
@@ -108,10 +110,38 @@ class AnthropicLLMClient:
         tool_choice: Block | None = None,
         max_tokens: int | None = None,
     ) -> AgentTurn:
+        model = self._settings.model_for(tier)
+        forced = tool_choice is not None and tool_choice.get("type") in FORCED
+        if forced and model not in self._unforced:
+            try:
+                return await self._create(node, tier, model, system, messages, tools, tool_choice, max_tokens)
+            except BadRequestError as e:
+                if "tool_choice" not in str(e):
+                    raise
+                self._unforced.add(model)
+        if not forced:
+            return await self._create(node, tier, model, system, messages, tools, tool_choice, max_tokens)
+        # The model rejects a forced choice: offer the tool with "auto", insist on it, and ask once more if it answers in text.
+        assert tool_choice is not None
+        name = tool_choice.get("name")
+        wanted = f"the {name} tool" if name else "one of the tools"
+        prompt = [*system, {"type": "text", "text": f"Answer only by calling {wanted}, never in plain text."}]
+        auto: Block = {"type": "auto"}
+        reply = await self._create(node, tier, model, prompt, messages, tools, auto, max_tokens)
+        if _calls(reply, name):
+            return reply
+        retry = [*messages, {"role": "assistant", "content": reply.content},
+                 {"role": "user", "content": [{"type": "text", "text": f"Respond now by calling {wanted}."}]}]
+        return await self._create(node, tier, model, prompt, retry, tools, auto, max_tokens)
+
+    async def _create(
+        self, node: str, tier: Tier, model: str, system: list[Block], messages: list[AgentMessage],
+        tools: list[Block], tool_choice: Block | None, max_tokens: int | None,
+    ) -> AgentTurn:
         extra: dict[str, Any] = {"tool_choice": tool_choice} if tool_choice else {}
         with _traced(node, tier):
             response = await self._client.messages.create(
-                model=self._settings.model_for(tier),
+                model=model,
                 max_tokens=max_tokens or self._settings.max_tokens,
                 system=system,  # type: ignore[arg-type]
                 messages=messages,  # type: ignore[arg-type]
@@ -122,6 +152,14 @@ class AnthropicLLMClient:
             content=[b.model_dump(mode="json", exclude_none=True) for b in response.content],
             stop_reason=response.stop_reason or "end_turn",
         )
+
+
+FORCED = ("tool", "any")
+"""Forced tool_choice types, which some models (Sonnet/Opus 5.5) reject with a 400."""
+
+
+def _calls(turn: AgentTurn, name: str | None) -> bool:
+    return any(b.get("type") == "tool_use" and (name is None or b.get("name") == name) for b in turn.content)
 
 
 @dataclass

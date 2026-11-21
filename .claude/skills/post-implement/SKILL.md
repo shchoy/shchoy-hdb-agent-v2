@@ -8,4 +8,4 @@ Write a summary of
 - module breakdown table with paths, new or modified and role. 
 - workflow map of how the new or modified modules interact with other components.
 
-Save it in a .md file referencing this issue.
+Save it as .md file referencing this issue in /docs/issues folder.

@@ -28,6 +28,8 @@ src/plg/
 │                    complete (one whole reply that may call tools; system/tools passed as blocks with cache marks;
 │                    returns AgentTurn = Messages API content blocks + stop_reason; optional max_tokens override; messages may carry
 │                    document blocks, e.g. PDF input).
+│                    A forced tool_choice (tool/any) that the model rejects (Sonnet/Opus 5.5: 400) falls back to "auto" + a system line
+│                    insisting on the tool, re-asked once on a text reply; the model is remembered so later calls skip the 400.
 │                    AnthropicLLMClient (real, wrap_anthropic: each call an `llm` run with node + tier metadata via tracing_context;
 │                    untraced streams use a bare client, see Conventions) and ScriptedLLMClient (test double:
 │                    script() for streamed replies, script_turns() for complete() turns, keyed by (node, latest plain-

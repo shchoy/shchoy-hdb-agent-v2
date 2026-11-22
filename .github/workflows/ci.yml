@@ -69,3 +69,37 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run check:bundle
+
+  e2e:
+    # Browser end-to-end and accessibility checks (#32): Playwright drives the web dev server against one plg-api
+    # process with a scripted LLMClient (scripts/e2e_server.py; no API keys, no Docker).
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+        working-directory: .
+      - name: Cache the local cross-encoder model
+        uses: actions/cache@v4
+        with:
+          path: .plg/models
+          key: rerank-models-${{ hashFiles('src/plg/config.py') }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - name: Keep the Playwright report of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            web/playwright-report
+            web/test-results

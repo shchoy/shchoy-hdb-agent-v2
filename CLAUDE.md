@@ -370,6 +370,11 @@ scripts/record_sse_fixtures.py
                      viewer's document + span-location responses per file type into fixtures/documents/*.json, and the approvals flow (two letters in two
                      threads + a ticket → fixtures/approvals/pending.json, edit.sse, reject.sse, ticket_edit.sse, audit.json), and defect.sse (ambiguous feedback → ELE, low confidence), doc_check.sse (APP-2026-0294), doc_check_problem.sse (APP-2026-0288,
                      illegible scan scripted), submissions.json, tasks.sse and tasks/{digest,digest_S06,team}.json (S04; `tasks_api`), injection.sse (flagged message), injection_email.sse (planted email via knowledge), approvals/glossary_{pending.json,approve.sse,audit.json} (`glossary`: S02 proposes, S08 approves), feedback/{thread,receipt_up,receipt_down,curation,decided}.json (`feedback`: S05 rates, S03 curates; a recording LangSmith stand-in), categories.json (`categories`: real categorise over the temp index, naming scripted from titles), audit_report.json (`audit`: run_audit over the temp index, Opus scripted). Optional scenario names record only those.
+scripts/e2e_server.py
+                     plg-api for the Playwright suite (#32): create_app + uvicorn (default :8100) with ReplayingLLMClient (a node's scripted turns
+                     restart on its first call of each run, so a question can be asked again) over the corpus synced into a temp index; scratch stores
+                     (deleted on exit); scripts: QUESTION + FOLLOW_UP (knowledge, cited), two TPL-REM-01 reminders (Golden Leaf,
+                     Hometown), the planted refund email (INBOX_QUESTION). Reuses record_sse_fixtures helpers. Question texts mirror web/e2e/helpers.ts.
 web/                 Next.js App Router app (presentation only) + BFF route handlers under src/app/api/
                      (Node runtime, no buffering): /api/session (mock sign-in, httpOnly `plg_user` cookie),
                      /api/threads (POST create, GET list), /api/threads/[id] (history), /api/threads/[id]/runs (forwards X-PLG-User, streams SSE through), /[id]/runs/latest (resume; forwards Last-Event-ID),
@@ -390,9 +395,15 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      openapi.json + src/lib/api/schema.d.ts are GENERATED (`npm run gen:api`); SSE frames
                      are parsed and zod-validated in src/lib/events.ts. Server-only code in src/lib/server/.
                      Tests: Vitest + RTL + MSW replaying the recorded fixtures.
+                     e2e/ (#32, `npm run e2e`, playwright.config.ts: starts scripts/e2e_server.py and `next dev` on :3100 with
+                     PLG_NEXT_DIST_DIR=.next-e2e (next.config distDir) beside a developer's dev server; baseURL localhost (dev assets
+                     are served to localhost only); one worker: shared server state). helpers.ts: signIn (POST /api/session, retried),
+                     visit (goto + networkidle = hydrated), ask, seriousViolations (axe WCAG 2.1 A/AA, serious|critical; iframes off +
+                     legacy mode: the sandboxed letter frame can't take axe). journeys.spec.ts: cited answer + source, follow-up, approve /
+                     reject letters (+ /api/audit), injection email as inert text, cross-user thread 404s. accessibility.spec.ts: every screen.
 .github/workflows/ci.yml
                      api job (make ontology + fail on generated/ drift, mypy, pytest), evals job (needs api; PLG_EVALS=1 + ANTHROPIC/LANGSMITH secrets → tests/evals; skipped without the key) and web job (regen OpenAPI types, fail on drift, typecheck,
-                     lint, test, build, bundle credential check).
+                     lint, test, build, bundle credential check) and e2e job (#32: Playwright chromium, `npm run e2e`; report artefact on failure).
 poc-data/            Synthetic corpus, plg_records.db and _master ground truth (tests/evals only).
 .claude/skills/      Project skills (implement, tdd, code-review, post-implement, ...).
 ```
@@ -409,6 +420,7 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 - Evals (#31): `uv run plg eval list` · `uv run plg eval seed` (LANGSMITH_API_KEY) · `uv run plg eval run route --gate [--offline]` · gate: `PLG_EVALS=1 uv run pytest tests/evals`
 - Ask: `uv run plg ask "hello"` · Serve: `uv run plg serve` (http://127.0.0.1:8000). Knowledge answers need the index.
 - Web (in `web/`): `npm ci` · `npm run dev` (http://localhost:3000) · `npm test` · `npm run typecheck` · `npm run lint`
+- E2E (in `web/`; once: `npx playwright install chromium`): `npm run e2e` (starts plg-api with scripted Claude on :8100 and the web dev server on :3100; reuses running ones locally)
 - After editing anything under `ontology/`: `make ontology` and commit `src/plg/ontology/generated/` (CI fails on drift).
 - Glossary: `uv run plg glossary list [--all]` · `uv run plg glossary show <id|label|synonym>`
 - After changing any API model: `npm run gen:api` in `web/` and commit the regenerated files (CI fails on drift);
@@ -419,7 +431,8 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 
 - Claude is only ever called through `LLMClient`; tests never hit the network and use `ScriptedLLMClient`.
 - Test at the HTTP seam and assert on received SSE events, not on internals. Web tests assert on rendered UI
-  and BFF responses, with MSW standing in for plg-api.
+  and BFF responses, with MSW standing in for plg-api. Browser e2e tests (web/e2e) drive the real web app and plg-api, with
+  only Claude scripted (scripts/e2e_server.py) and assert on what the officer sees, plus BFF responses.
 - The browser never talks to plg-api and holds no credentials: PLG_API_URL is server-only, never NEXT_PUBLIC_*.
 - The data agent only runs one read-only SELECT over PLG Records (not `staff`) and the Excel trackers (`trackers.<table>`), validated and EXPLAIN-dry-run first; business
   terms use the glossary version in force on the reporting date. The DuckDB `sqlite` extension is downloaded on first use.

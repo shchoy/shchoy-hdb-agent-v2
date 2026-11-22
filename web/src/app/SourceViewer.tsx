@@ -207,7 +207,8 @@ function Document({
           The cited text is no longer found in the file. It read: <q>{location.quote}</q>
         </p>
       )}
-      <div className={styles.document}>
+      {/* Scrolls on its own, so it takes keyboard focus: arrow keys scroll it. */}
+      <div className={styles.document} tabIndex={0} role="region" aria-label="Document text">
         {document.blocks.map((block, i) => {
           const newPage = paged && block.page !== null && block.page !== document.blocks[i - 1]?.page;
           return (

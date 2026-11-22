@@ -500,4 +500,17 @@ npm run gen:api        # regenerate openapi.json and TypeScript types from plg-a
 
 The web tests replay SSE streams recorded from the real API. After changing the API's models, run `npm run gen:api` and commit the result (CI fails if the generated types drift). If the stream changed, re-record the fixtures with `uv run python scripts/record_sse_fixtures.py`.
 
-CI (`.github/workflows/ci.yml`) runs the API checks and the web checks, including the OpenAPI drift check and a scan of the client bundle for credentials.
+### Browser end-to-end and accessibility checks (issue #32)
+
+From `web/`, once per machine: `npx playwright install chromium`. Then:
+
+```bash
+npm run e2e            # Playwright: starts plg-api (scripted Claude) on :8100 and `next dev` on :3100, then runs web/e2e
+npx playwright test e2e/accessibility.spec.ts   # only the axe checks
+```
+
+No API keys, no Docker. `scripts/e2e_server.py` is the API process: the real `plg-api` app with a scripted `LLMClient`, over the poc-data corpus synced into a temporary index (offline embeddings, the local cross-encoder). Every store it writes (threads, memory, outbox, audit log, ...) is in a temporary directory deleted when it stops, so `.plg/` is never touched. The first start syncs the corpus (about a minute). Locally, servers already listening on :8100 / :3100 are reused, so you can keep `uv run python scripts/e2e_server.py` running between runs. The e2e dev server builds into `web/.next-e2e/`, so it runs beside your own `npm run dev`.
+
+The journeys (`web/e2e/journeys.spec.ts`): ask with citations and open the cited source; a follow-up in the same conversation; approve one arrears letter and reject another with a reason (TPL-REM-01: the corpus has no Letter of Demand template); the planted refund email flagged, with its hidden instruction shown only as plain text and nothing proposed; and an officer blocked from another officer's conversation. `web/e2e/accessibility.spec.ts` runs `@axe-core/playwright` (WCAG 2.1 A/AA) on every screen and fails on any serious or critical violation. A new scripted question goes in `scripts/e2e_server.py`, and its text must match `web/e2e/helpers.ts` exactly.
+
+CI (`.github/workflows/ci.yml`) runs the API checks, the web checks (including the OpenAPI drift check and a scan of the client bundle for credentials) and the e2e job (Playwright report uploaded on failure).

@@ -18,7 +18,6 @@ from typing import Any
 
 import uvicorn
 from record_sse_fixtures import (
-    INBOX_QUESTION,
     QUESTION,
     REMINDER_QUESTION,
     RecordingLangSmith,
@@ -31,6 +30,8 @@ from record_sse_fixtures import (
 )
 
 from plg.api.app import create_app
+from plg.memory.service import NODE as EXTRACT_MEMORY
+from plg.memory.service import RECORD as RECORD_MEMORY
 from plg.llm import AgentMessage, AgentTurn, Block, ScriptedLLMClient, Tier, _latest_question, text, tool_call, turn
 
 FOLLOW_UP = "And how long does the tenant have to pay after that?"
@@ -55,6 +56,9 @@ class ReplayingLLMClient(ScriptedLLMClient):
         tool_choice: Block | None = None, max_tokens: int | None = None,
     ) -> AgentTurn:
         key = (node, _latest_question(messages))
+        if node == EXTRACT_MEMORY and key not in self.turns:
+            # Memory is learned in the background after every answer; the suite asserts nothing about it, so it learns nothing.
+            return turn(tool_call(RECORD_MEMORY, memories=[], conflicts=[]))
         if key in self.originals and not _has_tool_results(messages):  # the node's first call in this run
             self.turns[key] = copy.copy(self.originals[key])
         # Only the browser's runs are kept: a long-lived server must not grow without bound.

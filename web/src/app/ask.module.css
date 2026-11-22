@@ -228,6 +228,8 @@
 
 .threads {
   display: grid;
+  /* minmax(0, ...): long titles are cut off with an ellipsis instead of widening the column under the question. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
 }
 
@@ -236,6 +238,7 @@
   margin: 0;
   padding: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.25rem;
 }
 

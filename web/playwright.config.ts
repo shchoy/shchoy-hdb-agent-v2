@@ -17,7 +17,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   timeout: 120_000,
   expect: { timeout: 15_000 },
-  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
+  reporter: [["list"], ["html", { open: "never" }]],
   use: {
     // localhost, not 127.0.0.1: the dev server serves its client bundles only to localhost (allowedDevOrigins).
     baseURL: `http://localhost:${WEB_PORT}`,

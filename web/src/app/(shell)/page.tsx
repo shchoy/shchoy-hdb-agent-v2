@@ -11,7 +11,7 @@ export default async function AskPage() {
   return (
     <>
       <h1>Ask the Super-Librarian</h1>
-      <AskScreen developer={user.developer} />
+      <AskScreen developer={user.developer} user={user} />
     </>
   );
 }

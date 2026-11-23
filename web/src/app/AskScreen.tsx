@@ -13,6 +13,7 @@ import {
   type SqlTraceEvent,
   type TasksEvent,
   type ThreadView,
+  type UserCtx,
 } from "@/lib/events";
 import { AnswerFeedback } from "./AnswerFeedback";
 import { AnswerText } from "./AnswerText";
@@ -25,6 +26,7 @@ import { PolicyStanceCard } from "./PolicyStanceCard";
 import { ReasoningPanel } from "./ReasoningPanel";
 import { SourceViewer } from "./SourceViewer";
 import { TaskList } from "./TaskList";
+import { Welcome } from "./Welcome";
 import styles from "./ask.module.css";
 import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "./runClient";
 import { useConversationControl, useShell } from "./shell/ShellContext";
@@ -102,8 +104,17 @@ function atBottom(): boolean {
 /** The run's stream stopped before `done`; it may be picked up again from the last event seen. */
 class Interrupted extends Error {}
 
-/** `developer`: the signed-in persona is a developer, who gets a "View trace" link on each answer. */
-export function AskScreen({ developer = false }: { developer?: boolean }) {
+/**
+ * `developer`: the signed-in persona is a developer, who gets a "View trace" link on each answer.
+ * `user`: the signed-in persona, greeted with starter prompts for their role in a new conversation.
+ */
+export function AskScreen({
+  developer = false,
+  user,
+}: {
+  developer?: boolean;
+  user?: Pick<UserCtx, "name" | "role">;
+}) {
   const [question, setQuestion] = useState("");
   const [run, setRun] = useState<Run>({ status: "idle" });
   const [history, setHistory] = useState<ThreadView["messages"]>([]);
@@ -113,6 +124,8 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
   const threadId = useRef<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const running = run.status === "running";
+  /** Whether a conversation saved from before a refresh has been looked for, so the welcome never flashes over it. */
+  const [restored, setRestored] = useState(false);
   /** Whether the view follows the conversation's end; it stops once the officer scrolls up. */
   const following = useRef(true);
   const [scrolledUp, setScrolledUp] = useState(false);
@@ -346,7 +359,8 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
   useEffect(() => {
     const active = sessionStorage.getItem(ACTIVE_THREAD);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (active) void open(active);
+    if (active) void open(active).finally(() => setRestored(true));
+    else setRestored(true);
     // Runs once on load: a refresh returns to the conversation (and answer) it interrupted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -362,6 +376,9 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
   return (
     <div className={styles.ask}>
       <section aria-label="Conversation" className={styles.thread}>
+        {user && restored && history.length === 0 && run.status === "idle" && (
+          <Welcome user={user} onAsk={(text) => void ask(text)} />
+        )}
         {history.length > 0 && (
           <ol aria-label="Earlier in this conversation" className={styles.history}>
             {history.map((m, i) => (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import {
   InvalidFrameError,
   parseRunEvents,
@@ -59,6 +59,46 @@ function emptyAnswer(question: string): Answer {
 
 const RESUME_ATTEMPTS = 3;
 
+/**
+ * What each graph node is doing, in plain words, for the status line while an answer is written. The names are
+ * the graph's nodes (src/plg/graph/build.py); a node missing here shows "Working…".
+ */
+const DOING: Record<string, string> = {
+  screen_input: "Checking your message…",
+  summarise_history: "Reading the conversation so far…",
+  load_memory: "Recalling your notes…",
+  route: "Working out what you need…",
+  knowledge: "Searching the library…",
+  data: "Querying PLG Records…",
+  drafting: "Drafting the letter…",
+  defect: "Classifying the feedback…",
+  doc_check: "Checking the documents…",
+  tasks: "Ranking the tasks…",
+  glossary: "Reading the glossary…",
+  category_summary: "Summarising the category…",
+  merge: "Writing the answer…",
+  write_memory: "Saving notes…",
+  approval: "Waiting for approval…",
+  execute_action: "Carrying out the decision…",
+};
+
+/** The status line: the latest step still running (specialists run in parallel), else a generic one. */
+function statusLine(trajectory: Step[]): string {
+  const step = trajectory.findLast((s) => !s.finished);
+  return (step && DOING[step.node]) ?? "Working…";
+}
+
+/** Within this many pixels of the bottom counts as "at the latest": the view keeps following the answer. */
+const FOLLOW_SLACK = 48;
+
+/** Keys that scroll the window up. */
+const SCROLL_UP_KEYS = new Set(["ArrowUp", "PageUp", "Home"]);
+
+function atBottom(): boolean {
+  const page = document.documentElement;
+  return window.innerHeight + window.scrollY >= page.scrollHeight - FOLLOW_SLACK;
+}
+
 /** The run's stream stopped before `done`; it may be picked up again from the last event seen. */
 class Interrupted extends Error {}
 
@@ -73,6 +113,62 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
   const threadId = useRef<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const running = run.status === "running";
+  /** Whether the view follows the conversation's end; it stops once the officer scrolls up. */
+  const following = useRef(true);
+  const [scrolledUp, setScrolledUp] = useState(false);
+  const end = useRef<HTMLDivElement>(null);
+  const composer = useRef<HTMLTextAreaElement>(null);
+
+  /** Keeps the ref (read while rendering tokens) and the Jump to latest control in step. */
+  const setFollowing = useCallback((follow: boolean) => {
+    following.current = follow;
+    setScrolledUp(!follow);
+  }, []);
+
+  const jumpToLatest = useCallback(() => {
+    setFollowing(true);
+    end.current?.scrollIntoView?.({ block: "end" });
+  }, [setFollowing]);
+
+  useEffect(() => {
+    const onScroll = () => setFollowing(atBottom());
+    /**
+     * Scrolling up (wheel, touch drag, keys) stops following at once, before a token can pull the view back down;
+     * the scroll that follows resumes it if the officer is still at the bottom. A page too short to scroll never stops.
+     */
+    const stop = () => {
+      if (document.documentElement.scrollHeight > window.innerHeight) setFollowing(false);
+    };
+    const onWheel = (event: WheelEvent) => {
+      if (event.deltaY < 0) stop();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (SCROLL_UP_KEYS.has(event.key) && !(event.target instanceof HTMLTextAreaElement)) stop();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("touchmove", stop, { passive: true });
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchmove", stop);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [setFollowing]);
+
+  // Keeps the newest of the conversation in view while following it.
+  useEffect(() => {
+    if (following.current) end.current?.scrollIntoView?.({ block: "end" });
+  }, [run, history]);
+
+  // The composer grows with its content; CSS caps it (max-height), past which it scrolls.
+  useLayoutEffect(() => {
+    const box = composer.current;
+    if (!box) return;
+    box.style.height = "auto";
+    if (box.scrollHeight > 0) box.style.height = `${box.scrollHeight}px`;
+  }, [question]);
 
   /** Reads one run to its end, from whatever stream `open` gives. Resumes after a dropped connection. */
   async function follow(
@@ -190,6 +286,7 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
       ]);
     }
     setRun({ status: "running", ...emptyAnswer(text) });
+    jumpToLatest();
     try {
       if (threadId.current === null) {
         threadId.current = await createThread();
@@ -264,87 +361,48 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
 
   return (
     <div className={styles.ask}>
+      <section aria-label="Conversation" className={styles.thread}>
         {history.length > 0 && (
-          <ol
-            aria-label="Earlier in this conversation"
-            className={styles.history}
-          >
+          <ol aria-label="Earlier in this conversation" className={styles.history}>
             {history.map((m, i) => (
               <li key={i} data-role={m.role}>
-                <span className={styles.label}>
-                  {m.role === "user" ? "You asked:" : "Answer:"}
-                </span>
-                <AnswerText markdown={m.content} />
-                {m.role === "assistant" && answeredBy[i] && active && (
-                  <>
-                    <AnswerFeedback threadId={active} runId={answeredBy[i]} />
-                    {developer && <TraceLink threadId={active} runId={answeredBy[i]} />}
-                  </>
+                {m.role === "user" ? (
+                  <Bubble text={m.content} />
+                ) : (
+                  <div className={styles.reply}>
+                    <span className={styles.visuallyHidden}>Answer:</span>
+                    <AnswerText markdown={m.content} />
+                    {answeredBy[i] && active && (
+                      <>
+                        <AnswerFeedback threadId={active} runId={answeredBy[i]} />
+                        {developer && <TraceLink threadId={active} runId={answeredBy[i]} />}
+                      </>
+                    )}
+                  </div>
                 )}
               </li>
             ))}
           </ol>
         )}
-        <form onSubmit={onSubmit} className={styles.form}>
-          <label htmlFor="question">Your question</label>
-          <textarea
-            id="question"
-            name="question"
-            rows={3}
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                e.currentTarget.form?.requestSubmit();
-              }
-            }}
-            aria-describedby="question-hint"
-          />
-          <p id="question-hint" className={styles.hint}>
-            Press Enter to ask, Shift+Enter for a new line.
-          </p>
-          <button type="submit" disabled={running}>
-            Ask
-          </button>
-        </form>
 
         {run.status !== "idle" && (
-          <>
-            <p className={styles.question}>
-              <span className={styles.label}>You asked:</span> {run.question}
-            </p>
-
-            <ol aria-label="Trajectory" className={styles.trajectory}>
-              {run.trajectory.map((step, i) => (
-                <li key={i} data-finished={step.finished}>
-                  {step.node}{" "}
-                  <span aria-hidden="true">{step.finished ? "✓" : "…"}</span>{" "}
-                  <span className={styles.visuallyHidden}>
-                    {step.finished ? "finished" : "running"}
-                  </span>
-                </li>
-              ))}
-            </ol>
+          <div className={styles.turn}>
+            <Bubble text={run.question} />
 
             {run.status === "failed" ? (
               <div role="alert" className={styles.alert}>
                 <p>
-                  <strong>
-                    The answer is incomplete and must not be trusted.
-                  </strong>{" "}
-                  {run.reason}
+                  <strong>The answer is incomplete and must not be trusted.</strong> {run.reason}
                 </p>
                 <button type="button" onClick={() => void ask(run.question)}>
                   Retry
                 </button>
               </div>
             ) : (
-              <section
-                aria-labelledby="answer-heading"
-                className={styles.answer}
-              >
-                <h2 id="answer-heading">Answer</h2>
+              <section aria-labelledby="answer-heading" className={styles.answer}>
+                <h2 id="answer-heading" className={styles.visuallyHidden}>
+                  Answer
+                </h2>
                 <InjectionAlert flags={run.injections} />
                 <div aria-live="polite" aria-busy={running}>
                   <AnswerText markdown={run.answer} />
@@ -352,7 +410,6 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
                 {(run.citations.length > 0 || run.stances.length > 0) && (
                   <Sources citations={run.citations} stances={run.stances} />
                 )}
-                {run.traces.length > 0 && <ReasoningPanel traces={run.traces} />}
                 {run.classifications.map((found) => (
                   <ClassificationCard key={found.seq} found={found} />
                 ))}
@@ -373,9 +430,83 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
                 )}
               </section>
             )}
-          </>
+
+            {!running && (
+              <details className={styles.steps}>
+                <summary>Show steps</summary>
+                <Trajectory steps={run.trajectory} />
+                {run.status === "done" && run.traces.length > 0 && <ReasoningPanel traces={run.traces} />}
+              </details>
+            )}
+          </div>
         )}
+
+        {/* Always present, so screen readers announce each change; empty once the answer is done. */}
+        <p role="status" aria-live="polite" className={styles.status}>
+          {running ? statusLine(run.trajectory) : ""}
+        </p>
+      </section>
+
+      <form onSubmit={onSubmit} className={styles.composer}>
+        {scrolledUp && (
+          <button type="button" className={styles.jump} onClick={jumpToLatest}>
+            Jump to latest
+          </button>
+        )}
+        <label htmlFor="question" className={styles.visuallyHidden}>
+          Your question
+        </label>
+        <div className={styles.composerRow}>
+          <textarea
+            ref={composer}
+            id="question"
+            name="question"
+            rows={1}
+            placeholder="Ask a question…"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                e.currentTarget.form?.requestSubmit();
+              }
+            }}
+            aria-describedby="question-hint"
+          />
+          <button type="submit" disabled={running}>
+            Ask
+          </button>
+        </div>
+        <p id="question-hint" className={styles.hint}>
+          Press Enter to ask, Shift+Enter for a new line.
+        </p>
+      </form>
+      <div ref={end} />
     </div>
+  );
+}
+
+/** The officer's question: a right-aligned bubble. */
+function Bubble({ text }: { text: string }) {
+  return (
+    <p data-bubble className={styles.bubble}>
+      <span className={styles.visuallyHidden}>You asked: </span>
+      {text}
+    </p>
+  );
+}
+
+/** The graph nodes the run went through, each finished or still running. */
+function Trajectory({ steps }: { steps: Step[] }) {
+  return (
+    <ol aria-label="Trajectory" className={styles.trajectory}>
+      {steps.map((step, i) => (
+        <li key={i} data-finished={step.finished}>
+          {step.node} <span aria-hidden="true">{step.finished ? "✓" : "…"}</span>{" "}
+          <span className={styles.visuallyHidden}>{step.finished ? "finished" : "running"}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 

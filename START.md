@@ -191,7 +191,7 @@ Only the thread's owner can decide (another officer gets 404), and only on the e
 
 ### Approvals inbox (issue #19)
 
-In the web app, **Approvals** in the top bar (`/approvals`) lists every action waiting for you across your conversations: the letter as it would be sent, its slot values, open slots and personal-data flags. **Edit slots** turns the slots into inputs and shows each change against the proposal (struck-through old value, new value); **Send edited letter** is enabled once the open slots are filled. **Approve and send** appears only for a complete letter and a role that can send it; **Reject…** asks for a reason. After a decision you see its result (outbox item ID and version sent, or that nothing was sent), and the **Decided** section shows your audit trail from `GET /audit`: who decided, role, when, reason, edits, the outbox item with the letter as sent, and the run's `run_id`.
+In the web app, **Approvals** in the sidebar (`/approvals`) lists every action waiting for you across your conversations: the letter as it would be sent, its slot values, open slots and personal-data flags. **Edit slots** turns the slots into inputs and shows each change against the proposal (struck-through old value, new value); **Send edited letter** is enabled once the open slots are filled. **Approve and send** appears only for a complete letter and a role that can send it; **Reject…** asks for a reason. After a decision you see its result (outbox item ID and version sent, or that nothing was sent), and the **Decided** section shows your audit trail from `GET /audit`: who decided, role, when, reason, edits, the outbox item with the letter as sent, and the run's `run_id`.
 
 ```bash
 curl -s http://127.0.0.1:8000/audit -H 'X-PLG-User: S05'   # your decisions, newest first
@@ -226,7 +226,7 @@ Where it lives: `src/plg/defects/` (taxonomy, classify, `defect_flow`, `TicketSy
 
 ### Check an application's documents (issue #21)
 
-In the web app, **Document check** in the top bar (`/doc-check`) lists the applications that have a submission bundle
+In the web app, **Document check** in the sidebar (`/doc-check`) lists the applications that have a submission bundle
 (`poc-data/pdfs/submissions/<APP-ID>/`, from `GET /submissions`). Pick one, or ask on the Ask screen:
 
 ```bash
@@ -260,7 +260,7 @@ BFF `web/src/app/api/submissions/`, `tests/test_doc_check_api.py`.
 
 ### Top tasks and the task digest (issue #22)
 
-In the web app, **Tasks** in the top bar (`/tasks`) shows your top open tasks. A team lead also gets an **Officer**
+In the web app, **Tasks** in the sidebar (`/tasks`) shows your top open tasks. A team lead also gets an **Officer**
 picker (from `GET /tasks/team`). **Show** sets how many tasks are listed: 5, 10, 20 or 50. You can also ask on the Ask
 screen:
 

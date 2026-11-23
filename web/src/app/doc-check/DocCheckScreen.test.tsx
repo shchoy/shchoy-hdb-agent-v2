@@ -60,7 +60,7 @@ describe("Document check screen", () => {
 
     await user.click(within(result).getByRole("link", { name: "Open the conversation" }));
     expect(sessionStorage.getItem("plg_active_thread")).toBe("t9");
-  });
+  }, 15_000); // renders a whole check with its notice: ~4s alone, more under a full parallel run
 
   it("says the check failed when the run reports an error", async () => {
     server.use(

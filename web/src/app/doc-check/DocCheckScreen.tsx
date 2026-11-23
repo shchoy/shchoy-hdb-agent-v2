@@ -15,6 +15,7 @@ import { day } from "../dates";
 import { DocCheckCard } from "../DocCheckCard";
 import { DraftPreview } from "../DraftPreview";
 import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "../runClient";
+import { useShell } from "../shell/ShellContext";
 import styles from "../ask.module.css";
 
 /** The question the Document check screen asks for an application. */
@@ -39,6 +40,7 @@ export function DocCheckScreen() {
   const [error, setError] = useState<string | null>(null);
   const [check, setCheck] = useState<Check | null>(null);
   const running = check?.status === "running";
+  const shell = useShell();
 
   useEffect(() => {
     let current = true;
@@ -85,6 +87,7 @@ export function DocCheckScreen() {
           case "done":
             acc.status = "done";
             update();
+            shell.refresh(); // the sidebar lists the conversation and counts the proposed notice
             return;
         }
         update();

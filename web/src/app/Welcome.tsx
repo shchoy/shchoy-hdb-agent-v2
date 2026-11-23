@@ -1,9 +1,7 @@
-import type { UserCtx } from "@/lib/events";
+import { ROLES, type UserCtx } from "@/lib/events";
 import styles from "./ask.module.css";
 
 type Role = UserCtx["role"];
-
-const ROLES: readonly Role[] = ["director", "manager", "estate_manager", "officer", "analyst", "legal"];
 
 /**
  * Who may approve what each kind of prompt leads to, mirroring plg-api's APPROVER_ROLES (src/plg/actions/model.py):
@@ -18,7 +16,7 @@ type Starter = { title: string; question: string; roles: readonly Role[] };
  * The curated starter prompts, one per thing the Super-Librarian does. Each question is one the corpus and PLG
  * Records answer. The glossary prompt fills the analysts' welcome, who see none of the prompts that lead to an action.
  */
-export const STARTERS: readonly Starter[] = [
+const STARTERS: readonly Starter[] = [
   { title: "Ask about a policy", question: "How far can a tenant display goods beyond the shopfront?", roles: ROLES },
   { title: "Query PLG Records", question: "Which tenancies have arrears above 3 months' rent?", roles: ROLES },
   {
@@ -40,7 +38,7 @@ export const STARTERS: readonly Starter[] = [
   { title: "My top tasks", question: "What are my top 5 tasks this week and why?", roles: ROLES },
 ];
 
-export function startersFor(role: Role): Starter[] {
+function startersFor(role: Role): Starter[] {
   return STARTERS.filter((s) => s.roles.includes(role));
 }
 

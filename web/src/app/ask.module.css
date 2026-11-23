@@ -478,6 +478,7 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Beats globals.css button[type="button"]: a card, not a teal-text button. */
 .starter[type="button"] {
   background: var(--color-surface);
   color: var(--color-text);

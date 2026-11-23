@@ -11,7 +11,7 @@ import { fixture, sseResponse } from "@/test/sse";
 const OFFICER: UserCtx = {
   staff_id: "S05",
   name: "Siti Aishah Yusof",
-  title: "Senior Estate Officer",
+  title: "Leasing Officer",
   dept: "Estate Management",
   role: "officer",
   developer: false,
@@ -80,7 +80,7 @@ describe("Welcome screen", () => {
     const user = userEvent.setup();
     render(<AskScreen user={OFFICER} />);
 
-    // By keyboard: Tab to the prompt and press Enter.
+    // By keyboard: focus the prompt and press Enter.
     const tasks = within(screen.getByRole("list", { name: "Starter prompts" })).getByRole("button", {
       name: /My top tasks/,
     });
@@ -93,6 +93,25 @@ describe("Welcome screen", () => {
     expect(within(screen.getByRole("region", { name: "Answer" })).getByRole("table")).toBeInTheDocument();
     expect(screen.queryByRole("list", { name: "Starter prompts" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /Good to see you/ })).not.toBeInTheDocument();
+  });
+
+  it("asks a clicked prompt", async () => {
+    let asked = "";
+    server.use(
+      http.post("/api/threads", () => HttpResponse.json({ thread_id: "t1" }, { status: 201 })),
+      http.post("/api/threads/:id/runs", async ({ request }) => {
+        asked = ((await request.json()) as { message: string }).message;
+        return sseResponse(fixture("answer"));
+      }),
+    );
+    const user = userEvent.setup();
+    render(<AskScreen user={OFFICER} />);
+
+    await user.click(screen.getByRole("button", { name: /Ask about a policy/ }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ask" })).toBeEnabled(), { timeout: 5000 });
+    expect(asked).toBe("How far can a tenant display goods beyond the shopfront?");
+    expect(screen.getByRole("region", { name: "Answer" })).toHaveTextContent("POL-003 v2.0");
   });
 
   it("is not shown for a conversation that already has turns", async () => {

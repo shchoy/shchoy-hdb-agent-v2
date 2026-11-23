@@ -125,7 +125,7 @@ export function AskScreen({
   const [active, setActive] = useState<string | null>(null);
   const running = run.status === "running";
   /** Whether a conversation saved from before a refresh has been looked for, so the welcome never flashes over it. */
-  const [restored, setRestored] = useState(false);
+  const [restoreChecked, setRestoreChecked] = useState(false);
   /** Whether the view follows the conversation's end; it stops once the officer scrolls up. */
   const following = useRef(true);
   const [scrolledUp, setScrolledUp] = useState(false);
@@ -359,11 +359,14 @@ export function AskScreen({
   useEffect(() => {
     const active = sessionStorage.getItem(ACTIVE_THREAD);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (active) void open(active).finally(() => setRestored(true));
-    else setRestored(true);
+    if (active) void open(active).finally(() => setRestoreChecked(true));
+    else setRestoreChecked(true);
     // Runs once on load: a refresh returns to the conversation (and answer) it interrupted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** A new conversation, nothing asked yet: the welcome and its starter prompts. */
+  const showWelcome = user !== undefined && restoreChecked && history.length === 0 && run.status === "idle";
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -376,7 +379,7 @@ export function AskScreen({
   return (
     <div className={styles.ask}>
       <section aria-label="Conversation" className={styles.thread}>
-        {user && restored && history.length === 0 && run.status === "idle" && (
+        {showWelcome && user && (
           <Welcome user={user} onAsk={(text) => void ask(text)} />
         )}
         {history.length > 0 && (

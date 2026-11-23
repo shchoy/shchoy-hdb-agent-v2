@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
+import { currentTheme } from "@/lib/server/theme";
 import "./globals.css";
 
 /** Hanken Grotesk (SIL OFL, fonts/HankenGrotesk-OFL.txt), self-hosted: no network at build or run time. */
@@ -17,9 +18,10 @@ export const metadata: Metadata = {
   description: "Answers PLG officers' questions",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+/** A saved Light/Dark choice is rendered on <html data-theme> (no flash); without one, CSS follows the OS. */
+export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-x={hanken.variable ? "" : ""}>
+    <html lang="en" className={hanken.variable} data-theme={await currentTheme()}>
       <body>{children}</body>
     </html>
   );

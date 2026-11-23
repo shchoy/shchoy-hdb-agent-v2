@@ -1,10 +1,17 @@
 /*
  * Design tokens (HDB-inspired). Screens' styles use only these: no hard-coded colours.
  * Teal for main actions, text links and focus; HDB red only for badges, alerts and destructive actions;
- * Bootstrap greys as on hdb.gov.sg. Every text pair below meets WCAG 2.1 AA (4.5:1) on white and on --color-surface.
+ * Bootstrap greys as on hdb.gov.sg.
+ *
+ * Every colour role has a light and a dark value (light-dark(), picked by color-scheme). The app follows the OS
+ * (prefers-color-scheme) unless the officer chose Light or Dark in the sidebar: the server renders that choice on
+ * <html data-theme>, so the first paint is already right. In both themes every text role meets WCAG 2.1 AA (4.5:1) on
+ * every background role, and borders/focus 3:1 (tokens.test.ts). Teal and red are lightened on dark surfaces.
  */
 :root {
-  /* Palette */
+  color-scheme: light dark;
+
+  /* Palette: light */
   --teal-50: #eff8fa;
   --teal-100: #cee6e7;
   --teal-600: #0c8188;
@@ -28,31 +35,54 @@
   --gray-800: #343a40;
   --gray-900: #212529;
 
-  /* Roles */
-  --color-text: var(--gray-900);
-  --color-text-muted: var(--gray-700);
-  --color-bg: var(--gray-0);
-  --color-surface: var(--gray-100);
-  --color-surface-raised: var(--gray-200);
-  --color-border: var(--gray-300);
+  /* Palette: dark (surfaces darkest first; teal, red, green and amber tuned to read on them) */
+  --dark-bg: #15181b;
+  --dark-surface: #1c2024;
+  --dark-surface-raised: #2a2f35;
+  --dark-border: #3a4047;
+  --dark-border-strong: #8a939b;
+  --dark-text: #e9ecef;
+  --dark-text-muted: #b8c0c8;
+  --dark-teal-tint: #10302f;
+  --dark-teal-tint-strong: #17454a;
+  --dark-teal: #5cc4c9;
+  --dark-teal-light: #8ad8db;
+  --dark-on-teal: #0b1d1f;
+  --dark-red-bg: #3a1518;
+  --dark-red: #ff8a8a;
+  --dark-red-light: #ffb4b4;
+  --dark-on-red: #1f0507;
+  --dark-green-bg: #133020;
+  --dark-green: #74d19c;
+  --dark-amber-bg: #33290a;
+  --dark-amber-highlight: #4a3b05;
+  --dark-amber: #f5d36b;
+
+  /* Roles: light-dark(light, dark) */
+  --color-text: light-dark(var(--gray-900), var(--dark-text));
+  --color-text-muted: light-dark(var(--gray-700), var(--dark-text-muted));
+  --color-bg: light-dark(var(--gray-0), var(--dark-bg));
+  --color-surface: light-dark(var(--gray-100), var(--dark-surface));
+  --color-surface-raised: light-dark(var(--gray-200), var(--dark-surface-raised));
+  --color-border: light-dark(var(--gray-300), var(--dark-border));
   /* Borders that must stand out (form controls, chips): 3:1 non-text contrast. */
-  --color-border-strong: var(--gray-600);
-  --color-primary: var(--teal-700);
-  --color-primary-hover: var(--teal-800);
-  --color-primary-tint: var(--teal-50);
-  --color-primary-tint-strong: var(--teal-100);
-  --color-on-primary: var(--gray-0);
-  --color-focus: var(--teal-700);
-  --color-danger: var(--red-600);
-  --color-danger-strong: var(--red-700);
-  --color-danger-bg: var(--red-50);
-  --color-on-danger: var(--gray-0);
-  --color-success: var(--green-700);
-  --color-success-bg: var(--green-50);
-  --color-warning-bg: var(--amber-50);
-  --color-warning-text: var(--amber-800);
-  --color-highlight: var(--amber-100);
-  --color-backdrop: rgb(33 37 41 / 0.5);
+  --color-border-strong: light-dark(var(--gray-600), var(--dark-border-strong));
+  --color-primary: light-dark(var(--teal-700), var(--dark-teal));
+  --color-primary-hover: light-dark(var(--teal-800), var(--dark-teal-light));
+  --color-primary-tint: light-dark(var(--teal-50), var(--dark-teal-tint));
+  --color-primary-tint-strong: light-dark(var(--teal-100), var(--dark-teal-tint-strong));
+  --color-on-primary: light-dark(var(--gray-0), var(--dark-on-teal));
+  --color-focus: light-dark(var(--teal-700), var(--dark-teal));
+  --color-danger: light-dark(var(--red-600), var(--dark-red));
+  --color-danger-strong: light-dark(var(--red-700), var(--dark-red-light));
+  --color-danger-bg: light-dark(var(--red-50), var(--dark-red-bg));
+  --color-on-danger: light-dark(var(--gray-0), var(--dark-on-red));
+  --color-success: light-dark(var(--green-700), var(--dark-green));
+  --color-success-bg: light-dark(var(--green-50), var(--dark-green-bg));
+  --color-warning-bg: light-dark(var(--amber-50), var(--dark-amber-bg));
+  --color-warning-text: light-dark(var(--amber-800), var(--dark-amber));
+  --color-highlight: light-dark(var(--amber-100), var(--dark-amber-highlight));
+  --color-backdrop: light-dark(rgb(33 37 41 / 0.5), rgb(0 0 0 / 0.65));
 
   /* Type */
   --font-sans: var(--font-hanken), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -90,14 +120,23 @@
   --radius-xl: 0.75rem;
   --radius-pill: 999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgb(33 37 41 / 0.08);
-  --shadow-md: 0 2px 8px rgb(33 37 41 / 0.12);
-  --shadow-lg: 0 8px 24px rgb(33 37 41 / 0.18);
+  /* Shadows (deeper on dark surfaces) */
+  --shadow-sm: 0 1px 2px light-dark(rgb(33 37 41 / 0.08), rgb(0 0 0 / 0.4));
+  --shadow-md: 0 2px 8px light-dark(rgb(33 37 41 / 0.12), rgb(0 0 0 / 0.5));
+  --shadow-lg: 0 8px 24px light-dark(rgb(33 37 41 / 0.18), rgb(0 0 0 / 0.6));
 
   /* Layout */
   --sidebar-width: 17rem;
   --content-width: 60rem;
+}
+
+/* The officer's saved choice (sidebar toggle) overrides the OS. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 * {

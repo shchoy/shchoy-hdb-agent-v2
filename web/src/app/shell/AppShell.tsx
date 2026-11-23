@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { roleLabel, type ThreadSummary, type UserCtx } from "@/lib/events";
+import type { Theme } from "@/lib/theme";
 import { ACTIVE_THREAD } from "../runClient";
 import { SignOutButton } from "../SignOutButton";
 import {
@@ -19,6 +20,7 @@ import {
 } from "./icons";
 import { ShellProvider, type ConversationControl, type Shell } from "./ShellContext";
 import styles from "./shell.module.css";
+import { ThemeToggle } from "./ThemeToggle";
 
 const SECTIONS = [
   { href: "/", label: "Ask", Icon: AskIcon },
@@ -40,9 +42,9 @@ function current(pathname: string, href: string): boolean {
 
 /**
  * The signed-in app's frame: a left sidebar (product, New conversation, sections, pending-approvals count, recent
- * conversations, persona) beside the screen. Below a tablet width the sidebar is a drawer behind a Menu button.
+ * conversations, theme toggle, persona) beside the screen. Below a tablet width the sidebar is a drawer behind a Menu button.
  */
-export function AppShell({ user, children }: { user: UserCtx; children: ReactNode }) {
+export function AppShell({ user, theme, children }: { user: UserCtx; theme?: Theme; children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const [threads, setThreads] = useState<ThreadSummary[]>([]);
@@ -233,6 +235,8 @@ export function AppShell({ user, children }: { user: UserCtx; children: ReactNod
               </ul>
             )}
           </nav>
+
+          <ThemeToggle theme={theme} />
 
           <div className={styles.persona}>
             <p>

@@ -53,7 +53,9 @@ type Run =
   | { status: "idle" }
   | ({ status: "running" } & Answer)
   | ({ status: "done" } & Answer)
-  | { status: "failed"; question: string; reason: string; trajectory: Step[] };
+  | { status: "failed"; question: string; reason: string; trajectory: Step[] }
+  /** The officer pressed Stop: plg-api cancelled the run, so nothing of the turn was kept. */
+  | { status: "stopped"; question: string; trajectory: Step[] };
 
 function emptyAnswer(question: string): Answer {
   return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], injections: [], stances: [], tasks: [], traces: [], trajectory: [] };
@@ -241,6 +243,11 @@ export function AskScreen({
                 break;
               case "error":
                 throw new RunFailed(event.message);
+              case "cancelled":
+                setRun({ status: "stopped", question: acc.question, trajectory: acc.trajectory });
+                composer.current?.focus(); // the Stop button is gone: the officer can ask again at once
+                shell.refresh(); // a new conversation is listed, titled by the stopped question
+                return;
               case "done":
                 acc.runId = event.run_id;
                 update("done");
@@ -285,6 +292,17 @@ export function AskScreen({
         reason,
         trajectory: acc.trajectory,
       });
+    }
+  }
+
+  /** Stop generating: plg-api cancels the run, whose stream then ends with `cancelled`. */
+  async function stop() {
+    const id = threadId.current;
+    if (!id) return;
+    try {
+      await fetch(`/api/threads/${encodeURIComponent(id)}/runs/latest/cancel`, { method: "POST" });
+    } catch {
+      // The run goes on (or has just ended): its stream still says how it finished.
     }
   }
 
@@ -418,6 +436,10 @@ export function AskScreen({
                   Retry
                 </button>
               </div>
+            ) : run.status === "stopped" ? (
+              <p className={styles.stopped}>
+                <strong>Stopped.</strong> You stopped this answer, so nothing from it was kept. Ask again when you are ready.
+              </p>
             ) : (
               <section aria-labelledby="answer-heading" className={styles.answer}>
                 <h2 id="answer-heading" className={styles.visuallyHidden}>
@@ -463,7 +485,7 @@ export function AskScreen({
 
         {/* Always present, so screen readers announce each change; empty once the answer is done. */}
         <p role="status" aria-live="polite" className={styles.status}>
-          {running ? statusLine(run.trajectory) : ""}
+          {running ? statusLine(run.trajectory) : run.status === "stopped" ? "Answer stopped." : ""}
         </p>
       </section>
 
@@ -493,9 +515,13 @@ export function AskScreen({
             }}
             aria-describedby="question-hint"
           />
-          <button type="submit" disabled={running}>
-            Ask
-          </button>
+          {running ? (
+            <button type="button" onClick={() => void stop()} disabled={!active}>
+              Stop
+            </button>
+          ) : (
+            <button type="submit">Ask</button>
+          )}
         </div>
         <p id="question-hint" className={styles.hint}>
           Press Enter to ask, Shift+Enter for a new line.

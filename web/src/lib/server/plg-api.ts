@@ -291,6 +291,14 @@ export async function getTraceLink(
   return { status: response.status, body: data ?? error };
 }
 
+/** Stop generating: cancels the thread's running run (204 once stopped; 404 not the officer's thread; 409 nothing running). */
+export async function cancelRun(staffId: string, threadId: string): Promise<{ status: number; body: unknown }> {
+  const { error, response } = await client().POST("/threads/{thread_id}/runs/latest/cancel", {
+    params: { header: { "x-plg-user": staffId }, path: { thread_id: threadId } },
+  });
+  return { status: response.status, body: error ?? null };
+}
+
 export type FeedbackRequest = components["schemas"]["FeedbackRequest"];
 
 /** An officer's 👍/👎 on one of their answers; plg-api's status and JSON body (the receipt or a refusal). */

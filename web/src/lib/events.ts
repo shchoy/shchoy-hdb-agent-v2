@@ -377,6 +377,7 @@ export const runEventSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("done"), seq, run_id: z.string() }),
   z.object({ type: z.literal("error"), seq, run_id: z.string(), message: z.string() }),
+  z.object({ type: z.literal("cancelled"), seq, run_id: z.string() }),
 ]);
 
 type Parsed = z.infer<typeof runEventSchema>;

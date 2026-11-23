@@ -141,8 +141,17 @@ class ErrorEvent(BaseModel):
     message: str
 
 
+class CancelledEvent(BaseModel):
+    """The officer stopped the run (POST /threads/{id}/runs/latest/cancel). Like an error, the turn leaves no trace:
+    any answer streamed so far is discarded and nothing it proposed is pending."""
+
+    type: Literal["cancelled"] = "cancelled"
+    seq: int
+    run_id: str
+
+
 RunEvent = Annotated[
     NodeEvent | TokenEvent | CitationEvent | SqlTraceEvent | DraftEvent | PolicyStanceEvent | ClassificationEvent
     | DocCheckEvent | TasksEvent | InjectionEvent | ProposedActionEvent
-    | InterruptEvent | ActionResultEvent | DoneEvent | ErrorEvent, Field(discriminator="type")
+    | InterruptEvent | ActionResultEvent | DoneEvent | ErrorEvent | CancelledEvent, Field(discriminator="type")
 ]

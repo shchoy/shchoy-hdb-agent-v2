@@ -84,6 +84,8 @@ export function DocCheckScreen() {
             break;
           case "error":
             throw new RunFailed(event.message);
+          case "cancelled": // stopped from the conversation, on the Ask screen
+            throw new RunFailed("The check was stopped before it finished. Run it again.");
           case "done":
             acc.status = "done";
             update();

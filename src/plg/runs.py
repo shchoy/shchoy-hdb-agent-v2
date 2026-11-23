@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from collections.abc import AsyncIterator, Callable
@@ -25,11 +26,13 @@ logger = logging.getLogger(__name__)
 async def stream_run(
     graph: PLGGraph, thread_id: str, message: str, user: UserCtx | None = None,
     *, decision: ApprovalDecision | None = None, tracer: Tracer | None = None, channel: Channel = "api",
+    run_id: uuid.UUID | None = None,
 ) -> AsyncIterator[RunEvent]:
     """Answer `message`, or, given a `decision`, resume the thread's pending approval with it.
 
-    With a `tracer`, the run is one LangSmith trace whose root carries the run ID reported in `done`/`error`."""
-    run_id = uuid.uuid4()
+    With a `tracer`, the run is one LangSmith trace whose root carries the run ID reported in `done`/`error`.
+    `run_id`: use this ID (a caller reporting the run's cancellation itself names it)."""
+    run_id = run_id or uuid.uuid4()
     if tracer is None:
         async for event in _stream(graph, run_id, thread_id, message, user, decision):
             yield event
@@ -45,14 +48,19 @@ async def stream_run(
         waiting: list[str] = []  # actions the run stopped at (the approval interrupt)
         failed: str | None = None
         started = root.start_time.isoformat()
-        async for event in _stream(graph, run_id, thread_id, message, user, decision, root.add_metadata, started):
-            if isinstance(event, TokenEvent):
-                answer.append(event.text)
-            elif isinstance(event, InterruptEvent):
-                waiting.append(f"{event.action_id} v{event.version}")
-            elif isinstance(event, ErrorEvent):
-                failed = event.message
-            yield event
+        try:
+            async for event in _stream(graph, run_id, thread_id, message, user, decision, root.add_metadata, started):
+                if isinstance(event, TokenEvent):
+                    answer.append(event.text)
+                elif isinstance(event, InterruptEvent):
+                    waiting.append(f"{event.action_id} v{event.version}")
+                elif isinstance(event, ErrorEvent):
+                    failed = event.message
+                yield event
+        except asyncio.CancelledError:  # the officer stopped it
+            root.add_metadata({"cancelled": True})
+            root.end(outputs={"answer": "".join(answer), "awaiting_approval": []})  # the trace records the error
+            raise
         if waiting:
             root.add_metadata({"interrupted": True})
         root.end(outputs={"answer": "".join(answer), "awaiting_approval": waiting}, error=failed)

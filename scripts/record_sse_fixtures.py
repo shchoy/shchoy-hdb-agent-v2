@@ -21,6 +21,8 @@ import json
 import re
 import sys
 import tempfile
+import threading
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -215,6 +217,31 @@ def record_submissions() -> str:
         app = create_app(scratch_settings(Path(scratch)), llm=ScriptedLLMClient(), memory=scratch_memory(Path(scratch) / "memory"))
         with TestClient(app) as client:
             return json.dumps(client.get("/submissions", headers=USER).json(), indent=2) + "\n"
+
+
+def record_cancelled() -> str:
+    """Stop generating (#80): the answer is stopped half way (POST .../runs/latest/cancel), so the stream ends `cancelled`."""
+    llm = ScriptedLLMClient()
+    llm.script_turns("route", QUESTION, routed())
+    llm.script("merge", QUESTION, "Under POL-003 v2.0, a letter of demand is issued once " + "arrears " * 200, delay=0.02)
+    with tempfile.TemporaryDirectory() as scratch:
+        app = create_app(scratch_settings(Path(scratch)), llm=llm, memory=scratch_memory(Path(scratch) / "memory"))
+        with TestClient(app) as client:
+            thread_id = client.post("/threads", headers=USER).json()["thread_id"]
+            received: list[str] = []
+
+            def browser() -> None:
+                with client.stream("POST", f"/threads/{thread_id}/runs", json={"message": QUESTION}, headers=USER) as r:
+                    received.append(r.read().decode())
+
+            asking = threading.Thread(target=browser)
+            asking.start()
+            while not client.get(f"/threads/{thread_id}", headers=USER).json()["running"]:
+                time.sleep(0.01)
+            time.sleep(0.6)  # a few words into the answer
+            assert client.post(f"/threads/{thread_id}/runs/latest/cancel", headers=USER).status_code == 204
+            asking.join()
+    return received[0]
 
 
 FEEDBACK_EDITS = {
@@ -769,7 +796,7 @@ def _stream(app: Any, question: str) -> str:
 
 def main(only: list[str]) -> None:
     """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`, `feedback`,
-    `categories`, `audit`)."""
+    `cancelled`, `categories`, `audit`)."""
     OUT.mkdir(parents=True, exist_ok=True)
     if not only or "submissions" in only:
         path = OUT / "submissions.json"
@@ -793,7 +820,11 @@ def main(only: list[str]) -> None:
             path = OUT / "feedback" / name
             path.write_text(content)
             print(f"wrote {path.relative_to(REPO_ROOT)}")
-    if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback"}:
+    if not only or "cancelled" in only:
+        path = OUT / "cancelled.sse"
+        path.write_text(record_cancelled())
+        print(f"wrote {path.relative_to(REPO_ROOT)}")
+    if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback", "cancelled"}:
         return
     with tempfile.TemporaryDirectory() as index, tempfile.TemporaryDirectory() as graph_dir:
         search, store = searcher(Path(index))
@@ -805,7 +836,7 @@ def main(only: list[str]) -> None:
             path = OUT / "audit_report.json"
             path.write_text(record_audit(store))
             print(f"wrote {path.relative_to(REPO_ROOT)}")
-        if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback", "categories", "audit"}:
+        if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback", "cancelled", "categories", "audit"}:
             return
         graph = lineage_graph(store, Path(graph_dir))
         for name, (question, script) in SCRIPTS.items():

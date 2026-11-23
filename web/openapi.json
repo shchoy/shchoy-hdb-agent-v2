@@ -1245,6 +1245,63 @@
         }
       }
     },
+    "/threads/{thread_id}/runs/latest/cancel": {
+      "post": {
+        "summary": "Cancel Run",
+        "description": "Stop generating: the thread's question still being answered stops, its stream ends with a `cancelled` event\nand the turn leaves no trace (no history, no proposed action). Returns once it has stopped, so the thread can be\nasked again. Once merge has answered, or for a decision being carried out, there is nothing to stop (409).",
+        "operationId": "cancel_run_threads__thread_id__runs_latest_cancel_post",
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Thread not found"
+          },
+          "409": {
+            "description": "Nothing to stop: no question being answered (none running, already answered, or a decision being carried out)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/audit/reports/latest": {
       "get": {
         "summary": "Latest Audit Report",
@@ -4300,6 +4357,31 @@
         "title": "ActionResultEvent",
         "type": "object"
       },
+      "CancelledEvent": {
+        "description": "The officer stopped the run (POST /threads/{id}/runs/latest/cancel). Like an error, the turn leaves no trace:\nany answer streamed so far is discarded and nothing it proposed is pending.",
+        "properties": {
+          "type": {
+            "const": "cancelled",
+            "default": "cancelled",
+            "title": "Type",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "run_id"
+        ],
+        "title": "CancelledEvent",
+        "type": "object"
+      },
       "ChecklistLine": {
         "properties": {
           "doc_code": {
@@ -5665,6 +5747,7 @@
         "discriminator": {
           "mapping": {
             "action_result": "#/components/schemas/ActionResultEvent",
+            "cancelled": "#/components/schemas/CancelledEvent",
             "citation": "#/components/schemas/CitationEvent",
             "classification": "#/components/schemas/ClassificationEvent",
             "doc_check": "#/components/schemas/DocCheckEvent",
@@ -5727,6 +5810,9 @@
           },
           {
             "$ref": "#/components/schemas/ErrorEvent"
+          },
+          {
+            "$ref": "#/components/schemas/CancelledEvent"
           }
         ]
       }

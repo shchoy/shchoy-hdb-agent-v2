@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import { currentTheme } from "@/lib/server/theme";
@@ -12,6 +12,9 @@ const hanken = localFont({
   display: "swap",
   variable: "--font-hanken",
 });
+
+/** Lets the browser paint a dark canvas before the stylesheet arrives (globals.css decides the theme). */
+export const viewport: Viewport = { colorScheme: "light dark" };
 
 export const metadata: Metadata = {
   title: "PLG Super-Librarian",

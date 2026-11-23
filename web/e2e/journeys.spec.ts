@@ -12,6 +12,7 @@ import {
   answer,
   ask,
   askInNewConversation,
+  seriousViolations,
   signIn,
   threadId,
 } from "./helpers";
@@ -137,4 +138,40 @@ test("an officer can't open or continue another officer's conversation", async (
 
   await owner.close();
   await other.close();
+});
+
+test("on a phone, the conversation scrolls above a pinned composer and Jump to latest brings it back", async ({ page }) => {
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, QUESTION); // at desktop width: New conversation is in the sidebar
+  await page.setViewportSize({ width: 390, height: 640 });
+  await ask(page, FOLLOW_UP);
+  const composer = page.getByLabel("Your question");
+
+  // Both questions are bubbles in one thread; the steps are folded away once answered.
+  const conversation = page.getByRole("region", { name: "Conversation" });
+  await expect(conversation.locator("[data-bubble]")).toHaveText([`You asked: ${QUESTION}`, `You asked: ${FOLLOW_UP}`]);
+  await expect(conversation.getByText("Show steps")).toBeVisible();
+  await expect(conversation.getByRole("list", { name: "Trajectory" })).toBeHidden();
+
+  // Shift+Enter adds a line and the composer grows; it stays in view at the bottom.
+  const before = (await composer.boundingBox())!.height;
+  await composer.click();
+  await page.keyboard.type("one");
+  await page.keyboard.press("Shift+Enter");
+  await page.keyboard.type("two");
+  await page.keyboard.press("Shift+Enter");
+  await page.keyboard.type("three");
+  await expect(composer).toHaveValue("one\ntwo\nthree");
+  expect((await composer.boundingBox())!.height).toBeGreaterThan(before);
+  await composer.fill("");
+
+  await page.mouse.move(195, 300);
+  await page.mouse.wheel(0, -10_000);
+  await expect(composer).toBeInViewport();
+  const jump = page.getByRole("button", { name: "Jump to latest" });
+  await expect(jump).toBeVisible();
+  await jump.click();
+  await expect(jump).toBeHidden();
+  await expect(answer(page).getByRole("button", { name: "Helpful", exact: true })).toBeInViewport();
+  expect(await seriousViolations(page)).toEqual([]);
 });

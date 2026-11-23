@@ -66,7 +66,12 @@ describe("Ask screen", () => {
     expect(answer).toHaveTextContent(
       "Under POL-003 v2.0, a letter of demand is issued once arrears reach 60 days [1].",
     );
-    const trajectory = screen.getByRole("list", { name: "Trajectory" });
+    // Once answered, the steps fold into a collapsed "Show steps".
+    const steps = screen.getByText("Show steps").closest("details")!;
+    expect(steps).not.toHaveAttribute("open");
+    await userEvent.setup().click(screen.getByText("Show steps"));
+    const trajectory = within(steps).getByRole("list", { name: "Trajectory" });
+    expect(trajectory).toBeVisible();
     expect(
       within(trajectory)
         .getAllByRole("listitem")
@@ -508,6 +513,7 @@ describe("Ask screen", () => {
     expect(screen.getByRole("region", { name: "Answer" })).toHaveTextContent(
       "a prompt-injection attempt",
     );
+    await userEvent.setup().click(screen.getByText("Show steps"));
     const trajectory = screen.getByRole("list", { name: "Trajectory" });
     expect(within(trajectory).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
       "screen_input ✓ finished",
@@ -673,6 +679,7 @@ async function openReasoning() {
   );
   const user = await ask(DATA_QUESTION);
   await runFinished();
+  await user.click(screen.getByText("Show steps"));
   await user.click(screen.getByText("Reasoning"));
   const queries = screen.getByRole("list", { name: "Queries" });
   const [rejected, ok] = within(queries)
@@ -1060,5 +1067,206 @@ describe("View trace", () => {
 
     expect(within(answer).getByRole("button", { name: "Helpful" })).toBeInTheDocument();
     expect(within(answer).queryByRole("link", { name: "View trace" })).not.toBeInTheDocument();
+  });
+});
+
+/** An SSE response that sends `body`, then stays open (a run still being answered) until `rest` is released. */
+function openStream(body: string, rest?: { release: Promise<void>; body: string }): HttpResponse<ReadableStream> {
+  const encode = (text: string) => new TextEncoder().encode(text);
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      controller.enqueue(encode(body));
+      if (!rest) return;
+      await rest.release;
+      controller.enqueue(encode(rest.body));
+      controller.close();
+    },
+  });
+  return new HttpResponse(stream, {
+    headers: { "Content-Type": "text/event-stream; charset=utf-8" },
+  });
+}
+
+/** The recorded data run up to the data agent starting (seq 5), before any answer token. */
+function dataRunUntilQuerying(): string {
+  const recorded = fixture("data");
+  return recorded.slice(0, recorded.indexOf("id: 6\r\n"));
+}
+
+/** The status line of the answer being written (the Reasoning panel's Copy SQL has its own). */
+function answerStatus(): HTMLElement {
+  const conversation = screen.getByRole("region", { name: "Conversation" });
+  return within(conversation).getAllByRole("status").find((el) => el.parentElement === conversation)!;
+}
+
+describe("Chat layout", () => {
+  it("shows each question as a bubble above its full-width answer, earlier turns first", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
+    );
+
+    const user = await ask();
+    await runFinished();
+    await user.type(screen.getByLabelText("Your question"), "And after that?");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+    await runFinished();
+
+    const conversation = screen.getByRole("region", { name: "Conversation" });
+    const bubbles = conversation.querySelectorAll("[data-bubble]");
+    expect([...bubbles].map((b) => b.textContent)).toEqual([
+      `You asked: ${QUESTION}`,
+      "You asked: And after that?",
+    ]);
+    const earlier = within(conversation).getByRole("list", { name: "Earlier in this conversation" });
+    expect(earlier).toHaveTextContent("arrears reach 60 days");
+    const answer = within(conversation).getByRole("region", { name: "Answer" });
+    // The live question's bubble comes before its answer.
+    expect(bubbles[1].compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("sends on Enter, adds a line on Shift+Enter and grows with its content", async () => {
+    const asked: unknown[] = [];
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", async ({ request }) => {
+        asked.push(await request.json());
+        return sseResponse(fixture("answer"));
+      }),
+    );
+    const user = userEvent.setup();
+    render(<AskScreen />);
+    const composer = screen.getByLabelText<HTMLTextAreaElement>("Your question");
+    Object.defineProperty(composer, "scrollHeight", { configurable: true, get: () => 20 * composer.value.split("\n").length });
+
+    await user.type(composer, "First line{Shift>}{Enter}{/Shift}second line");
+    expect(composer.value).toBe("First line\nsecond line");
+    expect(composer.style.height).toBe("40px");
+    expect(asked).toEqual([]);
+
+    await user.type(composer, "{Enter}");
+    await runFinished();
+    expect(asked).toEqual([{ message: "First line\nsecond line" }]);
+    expect(composer.value).toBe("");
+  });
+
+  it("can't send while an answer is being written", async () => {
+    let runs = 0;
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => {
+        runs += 1;
+        return openStream(dataRunUntilQuerying());
+      }),
+    );
+
+    const user = await ask(DATA_QUESTION);
+    await screen.findByText("Querying PLG Records…");
+    expect(screen.getByRole("button", { name: "Ask" })).toBeDisabled();
+    await user.type(screen.getByLabelText("Your question"), "Another{Enter}");
+    expect(runs).toBe(1);
+  });
+
+  it("says in plain words what it is doing, politely, then folds the steps away", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => openStream(dataRunUntilQuerying())),
+    );
+
+    await ask(DATA_QUESTION);
+
+    const status = answerStatus();
+    await waitFor(() => expect(status).toHaveTextContent("Querying PLG Records…"));
+    expect(status).toHaveAttribute("aria-live", "polite");
+    // No step list while answering, only the status line.
+    expect(screen.queryByRole("list", { name: "Trajectory" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Show steps")).not.toBeInTheDocument();
+  });
+
+  it("puts the trajectory and the reasoning panel in Show steps once answered", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("data"))),
+    );
+
+    const user = await ask(DATA_QUESTION);
+    await runFinished();
+
+    expect(answerStatus()).toBeEmptyDOMElement();
+    const steps = screen.getByText("Show steps").closest("details")!;
+    expect(within(steps).getByText("Reasoning")).not.toBeVisible();
+    await user.click(screen.getByText("Show steps"));
+    expect(within(steps).getByRole("list", { name: "Trajectory" })).toHaveTextContent("data ✓ finished");
+    expect(within(steps).getByText("Reasoning")).toBeVisible();
+  });
+
+  describe("following the answer", () => {
+    const scrolled = vi.fn();
+    let scrollHeight = 0;
+
+    beforeEach(() => {
+      scrolled.mockClear();
+      scrollHeight = 0;
+      Element.prototype.scrollIntoView = scrolled;
+      Object.defineProperty(document.documentElement, "scrollHeight", {
+        configurable: true,
+        get: () => scrollHeight,
+      });
+    });
+
+    /** The officer scrolls the window to `y`, the page being `height` tall. */
+    function scrollTo(y: number, height = 5000) {
+      scrollHeight = height;
+      window.scrollY = y;
+      window.dispatchEvent(new Event("scroll"));
+    }
+
+    it("stops following at once when the officer pages up, but not on a page too short to scroll", async () => {
+      server.use(
+        threadsApi(),
+        http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
+      );
+      await ask();
+      await runFinished();
+
+      window.dispatchEvent(new WheelEvent("wheel", { deltaY: -100 }));
+      expect(screen.queryByRole("button", { name: "Jump to latest" })).not.toBeInTheDocument();
+
+      scrollHeight = 5000;
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "PageUp" }));
+      expect(await screen.findByRole("button", { name: "Jump to latest" })).toBeInTheDocument();
+    });
+
+    it("follows the streaming answer until the officer scrolls up, then offers Jump to latest", async () => {
+      let release: () => void = () => {};
+      const recorded = fixture("answer");
+      const merge = recorded.indexOf("event: token");
+      server.use(
+        threadsApi(),
+        http.post("/api/threads/:id/runs", () =>
+          openStream(recorded.slice(0, merge), {
+            release: new Promise<void>((resolve) => (release = resolve)),
+            body: recorded.slice(merge),
+          }),
+        ),
+      );
+
+      const user = await ask();
+      await screen.findByText(/Searching the library…|Writing the answer…/);
+      expect(scrolled).toHaveBeenCalled();
+      expect(screen.queryByRole("button", { name: "Jump to latest" })).not.toBeInTheDocument();
+
+      scrollTo(0);
+      const jump = await screen.findByRole("button", { name: "Jump to latest" });
+      scrolled.mockClear();
+      release();
+      await runFinished();
+      // Scrolled up: the tokens no longer pull the view down.
+      expect(scrolled).not.toHaveBeenCalled();
+
+      await user.click(jump);
+      expect(scrolled).toHaveBeenCalled();
+      expect(screen.queryByRole("button", { name: "Jump to latest" })).not.toBeInTheDocument();
+    });
   });
 });

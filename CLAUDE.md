@@ -385,15 +385,22 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      App shell (#75): every signed-in page lives in the `(shell)` route group, whose layout.tsx (currentUser, else redirect /sign-in)
                      wraps it in shell/AppShell.tsx: a left sidebar with the product name, New conversation, sections (Ask, Approvals, Tasks,
                      Document check, Library, Memory; inline SVG icons in shell/icons.tsx; aria-current on the current one), a red count of
-                     /api/approvals (hidden at 0), recent conversations from /api/threads (picking one opens it on Ask), persona + sign-out.
+                     /api/approvals (hidden at 0), recent conversations from /api/threads (picking one opens it on Ask), theme toggle (shell/ThemeToggle.tsx, #76), persona + sign-out.
                      Below 48rem it is a drawer (Menu button, role=dialog, focus moved in and trapped, Escape → focus back to Menu; top bar
                      and main inert while open). Screens never repeat the nav. shell/ShellContext.tsx: useShell().refresh() (after a run or a
                      decision: count + conversations), useConversationControl (AskScreen hands the sidebar open/startNew and reports its
                      active/busy thread). Tests render screens inside it with src/test/shell.tsx inShell().
                      Design tokens (globals.css): HDB-inspired palette (teal primary, HDB red for badges/danger only, Bootstrap-style greys)
                      exposed as --color-* roles, plus type (--text-*, --weight-*), spacing, radius and shadow scales; screens' CSS uses only
-                     the tokens (the sandboxed letter frame, LetterFrame.tsx, keeps its own). Font: self-hosted Hanken Grotesk
-                     (src/app/fonts/HankenGrotesk-Variable.woff2 + OFL licence, next/font/local in layout.tsx → --font-hanken; no network).
+                     the tokens (the sandboxed letter frame, LetterFrame.tsx, keeps its own: paper-white in both themes). Font: self-hosted Hanken Grotesk
+                     (src/app/fonts/HankenGrotesk-Variable.woff2 + OFL licence, next/font/local in layout.tsx → --font-hanken class on <html>; no network).
+                     Dark mode (#76): every --color-* role is light-dark(light, dark) (dark palette --dark-*: teal/red lightened), picked by
+                     color-scheme: the OS (prefers-color-scheme) by default; Light/Dark/System radios in the sidebar (ThemeToggle) set
+                     <html data-theme> + the plain `plg_theme` cookie (System clears both); the root layout renders data-theme from that
+                     cookie (lib/server/theme.ts currentTheme; lib/theme.ts THEME_COOKIE, savedTheme), so first paint is right, no inline
+                     script; viewport colorScheme "light dark". src/app/tokens.test.ts: every role has a dark value and every text role meets
+                     AA on every background role in both themes. e2e: accessibility.spec.ts runs in light and dark (colorScheme emulated);
+                     theme.spec.ts: OS default, toggle + persistence, first paint with JS off.
                      Pages: /library (#29, library/LibraryScreen.tsx: tabs Categories | Audit findings (#30, library/AuditFindings.tsx: conflicts with both sides quoted, prevailing side marked, resolution; near-duplicates, stale documents, superseded definitions, data rule violations, gaps; 'None found'; 404 → run `plg audit`; document sides open in SourceViewer.tsx QuoteViewer, which locates the quote in the chunk to highlight it); categories from /api/categories with description and count; expand → summary +
                      documents (Superseded marker) opening in DocumentViewer (SourceViewer.tsx: whole document, no highlight); Uncategorised last;
                      not-yet-categorised message), /doc-check (doc-check/DocCheckScreen.tsx: pick an application from /api/submissions → new thread + run

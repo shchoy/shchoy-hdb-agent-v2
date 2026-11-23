@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { currentUser } from "@/lib/server/session";
+import { currentTheme } from "@/lib/server/theme";
 import { AppShell } from "../shell/AppShell";
 
 export const dynamic = "force-dynamic";
@@ -9,5 +10,9 @@ export const dynamic = "force-dynamic";
 export default async function ShellLayout({ children }: { children: ReactNode }) {
   const user = await currentUser();
   if (!user) redirect("/sign-in");
-  return <AppShell user={user}>{children}</AppShell>;
+  return (
+    <AppShell user={user} theme={await currentTheme()}>
+      {children}
+    </AppShell>
+  );
 }

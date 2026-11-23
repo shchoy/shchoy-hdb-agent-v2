@@ -255,3 +255,63 @@
     padding: var(--space-4);
   }
 }
+
+/* Theme: Light / Dark / System as a segmented control (native radios, visible focus). */
+.theme {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+}
+
+.themeLabel {
+  color: var(--color-text-muted);
+}
+
+.themeChoices {
+  display: flex;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.themeChoice {
+  position: relative;
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.themeChoice + .themeChoice {
+  border-left: 1px solid var(--color-border-strong);
+}
+
+.themeChoice input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.themeChoice span {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-text);
+}
+
+.themeChoice:hover span {
+  background: var(--color-surface-raised);
+}
+
+.themeChoice input:checked + span {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.themeChoice input:focus-visible + span {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}

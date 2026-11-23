@@ -313,6 +313,8 @@ describe("Ask screen", () => {
     );
     expect(frame).toHaveAttribute("sandbox", "");
     expect(frame.getAttribute("srcdoc")).toContain("a leaking ceiling");
+    // A letter on paper: light even in the dark theme.
+    expect(frame.getAttribute("srcdoc")).toContain(":root{color-scheme:light;background:#fff}");
     const unfilled = within(preview).getByRole("list", {
       name: "Unfilled slots",
     });

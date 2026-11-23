@@ -1,5 +1,6 @@
 import type { InjectionEvent } from "@/lib/events";
 import styles from "./ask.module.css";
+import { Card } from "./Card";
 
 /** One prompt-injection flag: in the officer's own message, or in a document the assistant read. */
 export type InjectionFlag = Omit<InjectionEvent, "type" | "seq">;
@@ -48,10 +49,10 @@ function Flag({ flag }: { flag: InjectionFlag }) {
 export function InjectionAlert({ flags }: { flags: InjectionFlag[] }) {
   if (flags.length === 0) return null;
   return (
-    <div role="alert" className={`${styles.alert} ${styles.injection}`}>
+    <Card role="alert" tone="danger">
       {flags.map((flag, i) => (
         <Flag key={i} flag={flag} />
       ))}
-    </div>
+    </Card>
   );
 }

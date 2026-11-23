@@ -394,6 +394,11 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      exposed as --color-* roles, plus type (--text-*, --weight-*), spacing, radius and shadow scales; screens' CSS uses only
                      the tokens (the sandboxed letter frame, LetterFrame.tsx, keeps its own: paper-white in both themes). Font: self-hosted Hanken Grotesk
                      (src/app/fonts/HankenGrotesk-Variable.woff2 + OFL licence, next/font/local in layout.tsx → --font-hanken class on <html>; no network).
+                     Result cards (#78): src/app/Card.tsx + card.module.css: Card (header = heading h3|h4 + status badges, body; a region
+                     named by its heading, or role=alert with tone danger), Badge (tone neutral|success|warning|danger, words always; as="strong"),
+                     TableScroll (named, focusable region: tables scroll sideways on a phone), tableClass / fieldsClass (card table, dl fields;
+                     missing/problem/overdue rows get a red inset accent). Used by ClassificationCard, DocCheckCard, TaskList, DraftPreview,
+                     InjectionAlert and PolicyStanceCard. HDB red only for alerts, overdue and problems.
                      Dark mode (#76): every --color-* role is light-dark(light, dark) (dark palette --dark-*: teal/red lightened), picked by
                      color-scheme: the OS (prefers-color-scheme) by default; Light/Dark/System radios in the sidebar (ThemeToggle) set
                      <html data-theme> + the plain `plg_theme` cookie (System clears both); the root layout renders data-theme from that

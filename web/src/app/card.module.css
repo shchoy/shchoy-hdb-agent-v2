@@ -1,0 +1,209 @@
+/*
+ * The shared card for results inside an answer (classification, document check, tasks, draft, injection alert,
+ * policy stance). Tokens only. HDB red (danger) is for alerts, overdue markers and problems; success is green,
+ * everything else grey.
+ */
+.card {
+  min-width: 0;
+  margin: var(--space-4) 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.card[data-tone="danger"] {
+  border: 2px solid var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card[data-tone="danger"] .header {
+  background: transparent;
+  border-bottom-color: var(--color-danger);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+.body {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-wrap: break-word;
+}
+
+/* First in its column (e.g. the policy stance atop the Sources panel): no space above. */
+.card:first-child {
+  margin-top: 0;
+}
+
+.body p {
+  margin: 0 0 var(--space-2);
+}
+
+.body ul {
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-5);
+}
+
+.body > :first-child {
+  margin-top: 0;
+}
+
+.body > :last-child {
+  margin-bottom: 0;
+}
+
+.body h4,
+.body h5 {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.body details {
+  margin-top: var(--space-1);
+}
+
+.body details > summary {
+  cursor: pointer;
+  color: var(--color-primary);
+}
+
+.body details blockquote {
+  margin: var(--space-1) 0;
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--color-border-strong);
+}
+
+/* Status badges: words on a tinted background; the tone is never the only signal. */
+.badge {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-0) var(--space-2);
+}
+
+.badge[data-tone="success"] {
+  background: var(--color-success-bg);
+  border-color: var(--color-success);
+}
+
+.badge[data-tone="warning"] {
+  background: var(--color-highlight);
+  border-color: var(--color-warning-text);
+}
+
+.badge[data-tone="danger"] {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger);
+}
+
+/* Label/value pairs. */
+.fields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-4);
+  margin: var(--space-2) 0;
+}
+
+.fields dt {
+  font-weight: var(--weight-semibold);
+}
+
+.fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Tables scroll sideways inside the card on a narrow screen instead of widening the page. */
+.tableScroll {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-2) 0;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 32rem;
+}
+
+.table caption {
+  text-align: left;
+  font-weight: var(--weight-semibold);
+  padding-bottom: var(--space-1);
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table thead th {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.table tbody th {
+  font-weight: var(--weight-regular);
+}
+
+/* Problem and overdue lines: a red accent at the start of the row, always beside words saying why. */
+.table tr[data-status="missing"] td:first-child,
+.table tr[data-status="problem"] td:first-child,
+.table tr[data-overdue="true"] td:first-child {
+  box-shadow: inset 4px 0 0 var(--color-danger);
+}
+
+.table tr[data-status="missing"] td:first-child,
+.table tr[data-status="problem"] td:first-child {
+  color: var(--color-danger-strong);
+  font-weight: var(--weight-bold);
+}
+
+.table tr[data-status="ok"] td:first-child {
+  color: var(--color-success);
+  font-weight: var(--weight-bold);
+}
+
+.table tr[data-status="not_submitted"] td:first-child {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 48rem) {
+  .header,
+  .body {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+}

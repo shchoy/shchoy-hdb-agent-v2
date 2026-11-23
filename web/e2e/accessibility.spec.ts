@@ -75,6 +75,21 @@ for (const colorScheme of ["light", "dark"] as const) {
       });
     }
 
+    test("a result card's table scrolls inside the card on a phone", async ({ page }) => {
+      await signIn(page, OFFICER);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await visit(page, "/tasks");
+      const table = page.getByRole("region", { name: "Ranked tasks" });
+      await expect(table).toBeVisible();
+      const { scrolls, pageOverflows } = await table.evaluate((el) => ({
+        scrolls: el.scrollWidth > el.clientWidth,
+        pageOverflows: document.documentElement.scrollWidth > window.innerWidth,
+      }));
+      expect(scrolls).toBe(true);
+      expect(pageOverflows).toBe(false);
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
     test("the sidebar as a drawer on a phone", async ({ page }) => {
       await signIn(page, OFFICER); // at desktop width: signIn checks the persona shown in the sidebar
       await page.setViewportSize({ width: 390, height: 844 });

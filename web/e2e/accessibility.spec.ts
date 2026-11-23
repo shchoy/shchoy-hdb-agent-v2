@@ -26,8 +26,9 @@ for (const colorScheme of ["light", "dark"] as const) {
       expect(await seriousViolations(page)).toEqual([]);
     });
 
-    test("ask screen: a cited answer with its source open, then the conversation history", async ({ page }) => {
+    test("ask screen: the welcome, a cited answer with its source open, then the conversation history", async ({ page }) => {
       await signIn(page, OFFICER);
+      await expect(page.getByRole("list", { name: "Starter prompts" })).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
 
       await askInNewConversation(page, QUESTION);

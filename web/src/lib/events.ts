@@ -39,6 +39,8 @@ export function roleLabel(role: UserCtx["role"]): string {
 
 const seq = z.number().int();
 const role = z.enum(["director", "manager", "estate_manager", "officer", "analyst", "legal"]);
+/** Every staff role, as plg-api derives it from the job title. */
+export const ROLES = role.options;
 const decision = z.enum(["approve", "edit", "reject"]);
 const unfilledSlot = z.object({ slot: z.string(), reason: z.string() });
 const piiFinding = z.object({

@@ -1,13 +1,103 @@
+/*
+ * Design tokens (HDB-inspired). Screens' styles use only these: no hard-coded colours.
+ * Teal for main actions, text links and focus; HDB red only for badges, alerts and destructive actions;
+ * Bootstrap greys as on hdb.gov.sg. Every text pair below meets WCAG 2.1 AA (4.5:1) on white and on --color-surface.
+ */
 :root {
-  --fg: #1a1a1a;
-  --bg: #ffffff;
-  --muted: #555555;
-  --border: #8a8a8a;
-  --accent: #0b57d0;
-  --ok: #1e7b34;
-  --danger: #b3261e;
-  --danger-bg: #fdecea;
-  --focus: #0b57d0;
+  /* Palette */
+  --teal-50: #eff8fa;
+  --teal-100: #cee6e7;
+  --teal-600: #0c8188;
+  --teal-700: #0a676d;
+  --teal-800: #085054;
+  --red-50: #fdecec;
+  --red-600: #c3141e;
+  --red-700: #9c1018;
+  --green-50: #e3f4e8;
+  --green-700: #146c43;
+  --amber-50: #fff8e1;
+  --amber-100: #fff3b0;
+  --amber-800: #664d03;
+  --gray-0: #ffffff;
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+
+  /* Roles */
+  --color-text: var(--gray-900);
+  --color-text-muted: var(--gray-700);
+  --color-bg: var(--gray-0);
+  --color-surface: var(--gray-100);
+  --color-surface-raised: var(--gray-200);
+  --color-border: var(--gray-300);
+  /* Borders that must stand out (form controls, chips): 3:1 non-text contrast. */
+  --color-border-strong: var(--gray-600);
+  --color-primary: var(--teal-700);
+  --color-primary-hover: var(--teal-800);
+  --color-primary-tint: var(--teal-50);
+  --color-primary-tint-strong: var(--teal-100);
+  --color-on-primary: var(--gray-0);
+  --color-focus: var(--teal-700);
+  --color-danger: var(--red-600);
+  --color-danger-strong: var(--red-700);
+  --color-danger-bg: var(--red-50);
+  --color-on-danger: var(--gray-0);
+  --color-success: var(--green-700);
+  --color-success-bg: var(--green-50);
+  --color-warning-bg: var(--amber-50);
+  --color-warning-text: var(--amber-800);
+  --color-highlight: var(--amber-100);
+  --color-backdrop: rgb(33 37 41 / 0.5);
+
+  /* Type */
+  --font-sans: var(--font-hanken), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --leading-tight: 1.25;
+  --leading: 1.5;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Spacing */
+  --space-0: 0.125rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgb(33 37 41 / 0.08);
+  --shadow-md: 0 2px 8px rgb(33 37 41 / 0.12);
+  --shadow-lg: 0 8px 24px rgb(33 37 41 / 0.18);
+
+  /* Layout */
+  --sidebar-width: 17rem;
+  --content-width: 60rem;
 }
 
 * {
@@ -16,44 +106,53 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.5;
-  color: var(--fg);
-  background: var(--bg);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading);
+  color: var(--color-text);
+  background: var(--color-bg);
 }
 
-main,
-.banner {
-  max-width: 60rem;
+h1,
+h2,
+h3 {
+  line-height: var(--leading-tight);
+}
+
+h1 {
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-4);
+}
+
+main {
+  max-width: var(--content-width);
   margin: 0 auto;
-  padding: 1rem;
-}
-
-.banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.banner p {
-  margin: 0;
+  padding: var(--space-4);
 }
 
 button {
   font: inherit;
   cursor: pointer;
-  padding: 0.375rem 1rem;
-  border: 1px solid var(--accent);
-  border-radius: 0.25rem;
-  background: var(--accent);
-  color: #fff;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 button[type="button"] {
-  background: var(--bg);
-  color: var(--accent);
+  background: var(--color-bg);
+  color: var(--color-primary);
+}
+
+button[type="button"]:hover:not(:disabled) {
+  background: var(--color-primary-tint);
+  color: var(--color-primary-hover);
 }
 
 button:disabled {
@@ -61,11 +160,30 @@ button:disabled {
   opacity: 0.6;
 }
 
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
 :focus-visible {
-  outline: 3px solid var(--focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
 a {
-  color: var(--accent);
+  color: var(--color-primary);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+mark {
+  background: var(--color-highlight);
+  color: var(--color-text);
 }

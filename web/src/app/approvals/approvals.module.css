@@ -2,30 +2,30 @@
   list-style: none;
   padding: 0;
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .card {
-  border: 1px solid var(--muted);
-  border-radius: 0.25rem;
-  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--color-text-muted);
 }
 
 .alert {
-  border: 2px solid var(--danger);
-  background: var(--danger-bg);
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  margin: 0.5rem 0;
+  border: 2px solid var(--color-danger);
+  background: var(--color-danger-bg);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  margin: var(--space-2) 0;
 }
 
 .slots {
   border-collapse: collapse;
-  margin: 0.5rem 0;
+  margin: var(--space-2) 0;
   width: 100%;
 }
 
@@ -33,36 +33,36 @@
 .slots td {
   text-align: left;
   vertical-align: top;
-  padding: 0.25rem 0.5rem;
-  border-bottom: 1px solid var(--muted);
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .slots del {
-  background: var(--danger-bg);
+  background: var(--color-danger-bg);
 }
 
 .slots ins {
-  background: #e6ffed;
+  background: var(--color-success-bg);
   text-decoration: none;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: flex-end;
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 
 .ticket {
   display: grid;
   grid-template-columns: max-content 1fr;
-  gap: 0.25rem 1rem;
-  margin: 0.5rem 0;
+  gap: var(--space-1) var(--space-4);
+  margin: var(--space-2) 0;
 }
 
 .ticket dt {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .ticket dd {

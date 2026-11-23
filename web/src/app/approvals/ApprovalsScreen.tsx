@@ -6,6 +6,7 @@ import { parseRunEvents, roleLabel, type RunEvent, type UserCtx } from "@/lib/ev
 import { ClassificationDetails } from "../ClassificationCard";
 import { day, period, when } from "../dates";
 import { LetterFrame } from "../LetterFrame";
+import { useShell } from "../shell/ShellContext";
 import styles from "./approvals.module.css";
 
 type PendingApproval = components["schemas"]["PendingApproval"];
@@ -28,6 +29,7 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const shell = useShell();
   const failed = version === 0 ? "Could not load your approvals." : "Could not reload your approvals.";
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
   function decided(outcome: Outcome) {
     setOutcomes((o) => [outcome, ...o]);
     setVersion((v) => v + 1);
+    shell.refresh(); // the sidebar's pending count
   }
 
   if (!pending) return error ? <p role="alert">{error}</p> : <p>Loading…</p>;

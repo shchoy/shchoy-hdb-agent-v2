@@ -1,11 +1,18 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AskScreen } from "@/app/AskScreen";
 import { server } from "@/test/msw";
 import { documentFixture } from "@/test/documents";
+import { inShell } from "@/test/shell";
 import { feedbackFixture, fixture, sseResponse } from "@/test/sse";
+
+// The conversation list is the app shell's sidebar: those tests render the screen in the shell.
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
 
 const QUESTION = "When do we issue a letter of demand?";
 
@@ -41,7 +48,7 @@ const NO_RUN_TO_RESUME = http.get("/api/threads/:id/runs/latest", () =>
 
 beforeEach(() => {
   sessionStorage.clear();
-  server.use(NO_THREADS, NO_RUN_TO_RESUME);
+  server.use(NO_THREADS, NO_RUN_TO_RESUME, http.get("/api/approvals", () => HttpResponse.json([])));
 });
 
 describe("Ask screen", () => {
@@ -634,7 +641,7 @@ describe("Multi-part answer", () => {
       ),
     );
     const user = userEvent.setup();
-    render(<AskScreen />);
+    render(inShell(<AskScreen />));
 
     await user.click(await screen.findByRole("button", { name: MULTI_QUESTION }));
 
@@ -793,7 +800,7 @@ describe("Conversations", () => {
       }),
     );
     const user = userEvent.setup();
-    render(<AskScreen />);
+    render(inShell(<AskScreen />));
 
     await user.click(await screen.findByRole("button", { name: PAST.title }));
 
@@ -819,7 +826,7 @@ describe("Conversations", () => {
       http.get("/api/threads/t9", () => HttpResponse.json(PAST)),
     );
     const user = userEvent.setup();
-    render(<AskScreen />);
+    render(inShell(<AskScreen />));
     await user.click(await screen.findByRole("button", { name: PAST.title }));
     await screen.findByRole("list", { name: "Earlier in this conversation" });
 
@@ -962,7 +969,7 @@ describe("Answer feedback", () => {
       http.get(`/api/threads/${thread.thread_id}`, () => HttpResponse.json(thread)),
     );
     const user = userEvent.setup();
-    render(<AskScreen />);
+    render(inShell(<AskScreen />));
 
     await user.click(await screen.findByRole("button", { name: thread.title }));
     const history = await screen.findByRole("list", { name: "Earlier in this conversation" });
@@ -994,7 +1001,7 @@ describe("Answer feedback", () => {
       http.post("/api/threads/:id/runs", () => sseResponse(fixture("error"))),
     );
     const user = userEvent.setup();
-    render(<AskScreen />);
+    render(inShell(<AskScreen />));
 
     await user.click(await screen.findByRole("button", { name: "Old" }));
     await screen.findByRole("list", { name: "Earlier in this conversation" });

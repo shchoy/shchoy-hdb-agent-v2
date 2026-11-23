@@ -12,7 +12,6 @@ import {
   type PolicyStanceEvent,
   type SqlTraceEvent,
   type TasksEvent,
-  type ThreadSummary,
   type ThreadView,
 } from "@/lib/events";
 import { AnswerFeedback } from "./AnswerFeedback";
@@ -28,6 +27,7 @@ import { SourceViewer } from "./SourceViewer";
 import { TaskList } from "./TaskList";
 import styles from "./ask.module.css";
 import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "./runClient";
+import { useConversationControl, useShell } from "./shell/ShellContext";
 
 type Step = { node: string; finished: boolean };
 
@@ -69,15 +69,10 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
   const [history, setHistory] = useState<ThreadView["messages"]>([]);
   /** The run that answered each earlier answer, by its index in `history`. */
   const [answeredBy, setAnsweredBy] = useState<Record<number, string>>({});
-  const [threads, setThreads] = useState<ThreadSummary[]>([]);
+  const shell = useShell();
   const threadId = useRef<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const running = run.status === "running";
-
-  async function refreshThreads() {
-    const response = await fetch("/api/threads").catch(() => null);
-    if (response?.ok) setThreads((await response.json()) as ThreadSummary[]);
-  }
 
   /** Reads one run to its end, from whatever stream `open` gives. Resumes after a dropped connection. */
   async function follow(
@@ -140,7 +135,8 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
               case "done":
                 acc.runId = event.run_id;
                 update("done");
-                void refreshThreads();
+                // The sidebar lists the conversation (new, or newly titled) and counts any action it proposed.
+                shell.refresh();
                 return;
             }
             update("running");
@@ -247,10 +243,12 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
     setRun({ status: "idle" });
   }
 
+  // The sidebar's conversation list and New conversation act on this screen while it is shown.
+  useConversationControl({ open: (id) => void open(id), startNew }, active, running);
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refreshThreads();
     const active = sessionStorage.getItem(ACTIVE_THREAD);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (active) void open(active);
     // Runs once on load: a refresh returns to the conversation (and answer) it interrupted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -265,27 +263,7 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
   }
 
   return (
-    <div className={styles.layout}>
-      <nav aria-label="Conversations" className={styles.threads}>
-        <button type="button" onClick={startNew} disabled={running}>
-          New conversation
-        </button>
-        <ul>
-          {threads.map((t) => (
-            <li key={t.thread_id}>
-              <button
-                type="button"
-                disabled={running}
-                aria-current={t.thread_id === active ? "true" : undefined}
-                onClick={() => void open(t.thread_id)}
-              >
-                {t.title}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className={styles.ask}>
+    <div className={styles.ask}>
         {history.length > 0 && (
           <ol
             aria-label="Earlier in this conversation"
@@ -397,7 +375,6 @@ export function AskScreen({ developer = false }: { developer?: boolean }) {
             )}
           </>
         )}
-      </div>
     </div>
   );
 }

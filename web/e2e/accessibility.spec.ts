@@ -68,3 +68,20 @@ for (const [path, heading] of [
     expect(await seriousViolations(page)).toEqual([]);
   });
 }
+
+test("the sidebar as a drawer on a phone", async ({ page }) => {
+  await signIn(page, OFFICER); // at desktop width: signIn checks the persona shown in the sidebar
+  await page.setViewportSize({ width: 390, height: 844 });
+  const menu = page.getByRole("button", { name: "Menu", exact: true });
+  await expect(page.getByRole("navigation", { name: "Main" })).toBeHidden();
+  expect(await seriousViolations(page)).toEqual([]);
+
+  await menu.click();
+  const drawer = page.getByRole("dialog", { name: "Menu" });
+  await expect(drawer.getByRole("link", { name: "Ask", exact: true })).toHaveAttribute("aria-current", "page");
+  expect(await seriousViolations(page)).toEqual([]);
+
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden();
+  await expect(menu).toBeFocused();
+});

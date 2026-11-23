@@ -1,6 +1,7 @@
 import type { PolicyStanceEvent } from "@/lib/events";
 import { day, period as span } from "./dates";
 import styles from "./ask.module.css";
+import { Card } from "./Card";
 
 type Stance = PolicyStanceEvent;
 
@@ -23,15 +24,18 @@ function Evidence({ quote }: { quote: string }) {
  * still applies unchanged to every other unit type.
  */
 export function PolicyStanceCard({ stance }: { stance: Stance }) {
-  const heading = `stance-${stance.policy_id.replace(/\W+/g, "-")}`;
   const current = stance.versions.find((v) => v.id === stance.current);
   const superseded = stance.versions.filter((v) => v.status === "superseded");
   const evidenceFor = (older: string) => stance.supersessions.find((s) => s.older === older);
   return (
-    <section aria-labelledby={heading} className={styles.stance}>
-      <h4 id={heading}>
-        Policy stance: {stance.title} <span className={styles.location}>({stance.policy_id})</span>
-      </h4>
+    <Card
+      level={4}
+      heading={
+        <>
+          Policy stance: {stance.title} <span className={styles.location}>({stance.policy_id})</span>
+        </>
+      }
+    >
       <p>
         {current ? (
           <>
@@ -81,6 +85,6 @@ export function PolicyStanceCard({ stance }: { stance: Stance }) {
           </ul>
         </>
       )}
-    </section>
+    </Card>
   );
 }

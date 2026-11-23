@@ -1,5 +1,5 @@
-import { useId } from "react";
 import type { DocCheckEvent } from "@/lib/events";
+import { Badge, Card, TableScroll, fieldsClass, tableClass } from "./Card";
 import styles from "./ask.module.css";
 import { day } from "./dates";
 
@@ -27,14 +27,12 @@ const MARKS: Record<Line["status"], { mark: string; label: string }> = {
  * and why a submitted document can't be accepted; then every file of the bundle and what it was identified as.
  */
 export function DocCheckCard({ check }: { check: DocCheck }) {
-  const heading = useId();
   return (
-    <section aria-labelledby={heading} className={styles.docCheck}>
-      <h3 id={heading}>Document check</h3>
-      <p className={check.complete ? styles.complete : styles.incomplete}>
-        {check.complete ? "Complete" : "Incomplete"}
-      </p>
-      <dl aria-label="Application" className={styles.classificationFields}>
+    <Card
+      heading="Document check"
+      badges={<Badge tone={check.complete ? "success" : "danger"}>{check.complete ? "Complete" : "Incomplete"}</Badge>}
+    >
+      <dl aria-label="Application" className={fieldsClass}>
         <dt>Application</dt>
         <dd>
           {check.application_id} ({check.app_type_label})
@@ -48,44 +46,48 @@ export function DocCheckCard({ check }: { check: DocCheck }) {
         <dt>Submitted</dt>
         <dd>{day(check.submitted_date)}</dd>
       </dl>
-      <table className={styles.checklist}>
-        <caption>Checklist</caption>
-        <thead>
-          <tr>
-            <th scope="col">Status</th>
-            <th scope="col">Document</th>
-            <th scope="col">Files</th>
-            <th scope="col">Problem</th>
-          </tr>
-        </thead>
-        <tbody>
-          {check.checklist.map((line) => {
-            const { mark, label } = MARKS[line.status];
-            return (
-              <tr key={line.doc_code} data-status={line.status}>
-                <td>
-                  <span role="img" aria-label={label} title={label}>
-                    {mark}
-                  </span>
-                </td>
-                <th scope="row">
-                  {line.label}
-                  {!line.mandatory && " (optional)"}
-                </th>
-                <td>{line.files.length > 0 ? line.files.join(", ") : "None"}</td>
-                <td>
-                  {line.problem && (
-                    <>
-                      <strong>{PROBLEMS[line.problem]}</strong>
-                      {line.reason && `: ${line.reason}`}
-                    </>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <TableScroll label="Checklist">
+        <table className={tableClass}>
+          <caption>Checklist</caption>
+          <thead>
+            <tr>
+              <th scope="col">Status</th>
+              <th scope="col">Document</th>
+              <th scope="col">Files</th>
+              <th scope="col">Problem</th>
+            </tr>
+          </thead>
+          <tbody>
+            {check.checklist.map((line) => {
+              const { mark, label } = MARKS[line.status];
+              return (
+                <tr key={line.doc_code} data-status={line.status}>
+                  <td>
+                    <span role="img" aria-label={label} title={label}>
+                      {mark}
+                    </span>
+                  </td>
+                  <th scope="row">
+                    {line.label}
+                    {!line.mandatory && " (optional)"}
+                  </th>
+                  <td>{line.files.length > 0 ? line.files.join(", ") : "None"}</td>
+                  <td>
+                    {line.problem && (
+                      <>
+                        <Badge tone="danger" as="strong">
+                          {PROBLEMS[line.problem]}
+                        </Badge>
+                        {line.reason && `: ${line.reason}`}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </TableScroll>
       <h4>Files submitted</h4>
       <ul aria-label="Files submitted" className={styles.files}>
         {check.files.map((f) => (
@@ -94,12 +96,12 @@ export function DocCheckCard({ check }: { check: DocCheck }) {
             {f.read_by === "scan" && (
               <>
                 {" "}
-                <span className={styles.scan}>scan</span>
+                <Badge>scan</Badge>
               </>
             )}
           </li>
         ))}
       </ul>
-    </section>
+    </Card>
   );
 }

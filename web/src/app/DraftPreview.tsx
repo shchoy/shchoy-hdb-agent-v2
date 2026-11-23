@@ -1,5 +1,6 @@
 import type { DraftEvent } from "@/lib/events";
 import styles from "./ask.module.css";
+import { Card } from "./Card";
 import { LetterFrame } from "./LetterFrame";
 
 /**
@@ -8,10 +9,8 @@ import { LetterFrame } from "./LetterFrame";
  * in a sandboxed frame with no scripts, so nothing in it can run.
  */
 export function DraftPreview({ draft }: { draft: DraftEvent }) {
-  const heading = `draft-${draft.draft_id}`;
   return (
-    <section aria-labelledby={heading} className={styles.draft}>
-      <h3 id={heading}>Draft preview</h3>
+    <Card heading="Draft preview">
       <p>
         {draft.template_title} ({draft.template_id} v{draft.template_version}). Nothing has been sent.
       </p>
@@ -43,6 +42,6 @@ export function DraftPreview({ draft }: { draft: DraftEvent }) {
       <a href={`/api/drafts/${encodeURIComponent(draft.draft_id)}/file`} download>
         Download DOCX
       </a>
-    </section>
+    </Card>
   );
 }

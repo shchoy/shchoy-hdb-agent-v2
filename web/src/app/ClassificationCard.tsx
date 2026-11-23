@@ -1,6 +1,5 @@
-import { useId } from "react";
 import type { ClassificationEvent } from "@/lib/events";
-import styles from "./ask.module.css";
+import { Badge, Card, fieldsClass } from "./Card";
 
 /** What the classifier decided about a piece of feedback (the event's fields, or a proposed ticket's). */
 export type Classification = Omit<ClassificationEvent, "type" | "seq">;
@@ -22,9 +21,11 @@ export function ClassificationDetails({ found }: { found: Classification }) {
   return (
     <>
       {found.low_confidence && (
-        <p className={styles.lowConfidence}>Low confidence — please check</p>
+        <p>
+          <Badge tone="warning">Low confidence — please check</Badge>
+        </p>
       )}
-      <dl aria-label="Classification" className={styles.classificationFields}>
+      <dl aria-label="Classification" className={fieldsClass}>
         <dt>Category</dt>
         <dd>
           {found.category} ({found.category_code})
@@ -66,11 +67,9 @@ export function ClassificationDetails({ found }: { found: Classification }) {
 
 /** Feedback classified into the defect taxonomy, under the answer. A ticket, if any, waits in Approvals. */
 export function ClassificationCard({ found }: { found: Classification }) {
-  const heading = useId();
   return (
-    <section aria-labelledby={heading} className={styles.classification}>
-      <h3 id={heading}>Feedback classification</h3>
+    <Card heading="Feedback classification">
       <ClassificationDetails found={found} />
-    </section>
+    </Card>
   );
 }

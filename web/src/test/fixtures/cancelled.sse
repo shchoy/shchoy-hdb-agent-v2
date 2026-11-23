@@ -1,0 +1,108 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"screen_input","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"screen_input","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"load_memory","status":"started"}
+
+id: 4
+event: node
+data: {"type":"node","seq":4,"node":"load_memory","status":"finished"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"route","status":"started"}
+
+id: 6
+event: node
+data: {"type":"node","seq":6,"node":"route","status":"finished"}
+
+id: 7
+event: node
+data: {"type":"node","seq":7,"node":"merge","status":"started"}
+
+id: 8
+event: token
+data: {"type":"token","seq":8,"node":"merge","text":"Under"}
+
+id: 9
+event: token
+data: {"type":"token","seq":9,"node":"merge","text":" POL-003"}
+
+id: 10
+event: token
+data: {"type":"token","seq":10,"node":"merge","text":" v2.0,"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":" a"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" letter"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" of"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" demand"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" is"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" issued"}
+
+id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" once"}
+
+id: 18
+event: token
+data: {"type":"token","seq":18,"node":"merge","text":" arrears"}
+
+id: 19
+event: token
+data: {"type":"token","seq":19,"node":"merge","text":" arrears"}
+
+id: 20
+event: token
+data: {"type":"token","seq":20,"node":"merge","text":" arrears"}
+
+id: 21
+event: token
+data: {"type":"token","seq":21,"node":"merge","text":" arrears"}
+
+id: 22
+event: token
+data: {"type":"token","seq":22,"node":"merge","text":" arrears"}
+
+id: 23
+event: token
+data: {"type":"token","seq":23,"node":"merge","text":" arrears"}
+
+id: 24
+event: token
+data: {"type":"token","seq":24,"node":"merge","text":" arrears"}
+
+id: 25
+event: token
+data: {"type":"token","seq":25,"node":"merge","text":" arrears"}
+
+id: 26
+event: token
+data: {"type":"token","seq":26,"node":"merge","text":" arrears"}
+
+id: 27
+event: cancelled
+data: {"type":"cancelled","seq":27,"run_id":"347ed5c1-9ea2-407c-bcd1-27d86e0a5d7a"}
+

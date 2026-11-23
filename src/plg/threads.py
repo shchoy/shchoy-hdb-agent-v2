@@ -18,7 +18,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from plg.actions.model import ApprovalDecision
-from plg.events import DoneEvent, ErrorEvent, RunEvent
+from plg.events import CancelledEvent, DoneEvent, ErrorEvent, NodeEvent, RunEvent
 from plg.graph.state import PLGGraph
 from plg.identity import UserCtx
 from plg.runs import stream_run
@@ -96,12 +96,24 @@ class RunBuffer:
         self.question = question
         self.events: list[RunEvent] = []
         self.finished = False
+        self.answered = False
+        """merge has finished: the turn (and anything it proposed) is checkpointed, so the run can't be undone."""
+        self.task: asyncio.Task[None] | None = None
+        """The background task producing the events."""
         self._changed = asyncio.Condition()
+
+    @property
+    def stoppable(self) -> bool:
+        """A question still being answered: stopping it now leaves no trace. A decision (empty question) never is: its
+        side effect and audit entry must not be split."""
+        return bool(self.question) and not self.answered and not self.finished
 
     async def add(self, event: RunEvent) -> None:
         async with self._changed:
             self.events.append(event)
-            self.finished = isinstance(event, DoneEvent | ErrorEvent)
+            self.finished = isinstance(event, DoneEvent | ErrorEvent | CancelledEvent)
+            if isinstance(event, NodeEvent) and event.node == "merge" and event.status == "finished":
+                self.answered = True
             self._changed.notify_all()
 
     async def close(self) -> None:
@@ -129,6 +141,10 @@ class RunInProgress(Exception):
     """The thread is still answering its last question."""
 
 
+class NothingToStop(Exception):
+    """The thread has no run that can still be stopped: none running, already answered, or carrying out a decision."""
+
+
 class RunRegistry:
     """The latest run of each thread. A run goes on when its client goes away."""
 
@@ -149,15 +165,32 @@ class RunRegistry:
         if current is not None and not current.finished:
             raise RunInProgress
         buffer = self._runs[thread_id] = RunBuffer(message)
+        run_id = uuid.uuid4()
 
         async def pump() -> None:
             try:
-                async for event in stream_run(graph, thread_id, message, user, decision=decision, tracer=self._tracer):
+                async for event in stream_run(
+                    graph, thread_id, message, user, decision=decision, tracer=self._tracer, run_id=run_id
+                ):
                     await buffer.add(event)
+            except asyncio.CancelledError:
+                # Stopped by the officer before merge answered (`cancel` checks), so the checkpoint holds no turn and
+                # no proposal, as with a failed run. The stream ends saying so.
+                seq = buffer.events[-1].seq + 1 if buffer.events else 1
+                await buffer.add(CancelledEvent(seq=seq, run_id=str(run_id)))
             finally:
                 await buffer.close()  # followers never hang, and the thread can be asked again
 
-        task = asyncio.get_running_loop().create_task(pump())
+        task = buffer.task = asyncio.get_running_loop().create_task(pump())
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
         return buffer
+
+    async def cancel(self, thread_id: str) -> None:
+        """Stop the thread's question still being answered, and wait until it has stopped, so the thread can be asked
+        again at once. Raises NothingToStop otherwise (see RunBuffer.stoppable)."""
+        buffer = self._runs.get(thread_id)
+        if buffer is None or buffer.task is None or not buffer.stoppable:
+            raise NothingToStop
+        buffer.task.cancel()  # no await since the check: merge can't have finished in between
+        await asyncio.wait({buffer.task})

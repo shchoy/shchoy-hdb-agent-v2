@@ -364,6 +364,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/threads/{thread_id}/runs/latest/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Run
+         * @description Stop generating: the thread's question still being answered stops, its stream ends with a `cancelled` event
+         *     and the turn leaves no trace (no history, no proposed action). Returns once it has stopped, so the thread can be
+         *     asked again. Once merge has answered, or for a decision being carried out, there is nothing to stop (409).
+         */
+        post: operations["cancel_run_threads__thread_id__runs_latest_cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/audit/reports/latest": {
         parameters: {
             query?: never;
@@ -1594,6 +1616,22 @@ export interface components {
              */
             term_id: string | null;
         };
+        /**
+         * CancelledEvent
+         * @description The officer stopped the run (POST /threads/{id}/runs/latest/cancel). Like an error, the turn leaves no trace:
+         *     any answer streamed so far is discarded and nothing it proposed is pending.
+         */
+        CancelledEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "cancelled";
+            /** Seq */
+            seq: number;
+            /** Run Id */
+            run_id: string;
+        };
         /** ChecklistLine */
         ChecklistLine: {
             /** Doc Code */
@@ -2161,7 +2199,7 @@ export interface components {
             /** Text */
             text: string;
         };
-        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["DocCheckEvent"] | components["schemas"]["TasksEvent"] | components["schemas"]["InjectionEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        RunEvent: components["schemas"]["NodeEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["CitationEvent"] | components["schemas"]["SqlTraceEvent"] | components["schemas"]["DraftEvent"] | components["schemas"]["PolicyStanceEvent"] | components["schemas"]["ClassificationEvent"] | components["schemas"]["DocCheckEvent"] | components["schemas"]["TasksEvent"] | components["schemas"]["InjectionEvent"] | components["schemas"]["ProposedActionEvent"] | components["schemas"]["InterruptEvent"] | components["schemas"]["ActionResultEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"] | components["schemas"]["CancelledEvent"];
     };
     responses: never;
     parameters: never;
@@ -2939,6 +2977,52 @@ export interface operations {
                 content: {
                     "text/event-stream": components["schemas"]["RunEvent"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_run_threads__thread_id__runs_latest_cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Thread not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Nothing to stop: no question being answered (none running, already answered, or a decision being carried out) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

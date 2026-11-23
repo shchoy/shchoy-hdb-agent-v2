@@ -285,7 +285,7 @@ describe("Ask screen", () => {
     expect(await screen.findByRole("alert")).toBeInTheDocument();
   });
 
-  it("disables Ask while the answer is streaming", async () => {
+  it("offers Stop instead of Ask while the answer is streaming", async () => {
     server.use(
       threadsApi(),
       http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
@@ -293,7 +293,8 @@ describe("Ask screen", () => {
 
     await ask();
 
-    expect(screen.getByRole("button", { name: "Ask" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ask" })).not.toBeInTheDocument();
     await runFinished();
     expect(screen.getByText(/arrears reach 60 days/)).toBeInTheDocument();
   });
@@ -1099,6 +1100,67 @@ function answerStatus(): HTMLElement {
   return within(conversation).getAllByRole("status").find((el) => el.parentElement === conversation)!;
 }
 
+/** The recorded stopped run (#80), split before its `cancelled` frame: that comes once Stop has reached plg-api. */
+function stoppedRun(): { head: string; tail: string } {
+  const recorded = fixture("cancelled");
+  const at = recorded.lastIndexOf("id: ");
+  return { head: recorded.slice(0, at), tail: recorded.slice(at) };
+}
+
+describe("Stop generating", () => {
+  function stoppableRun() {
+    const { head, tail } = stoppedRun();
+    let stopped!: () => void;
+    const release = new Promise<void>((resolve) => (stopped = resolve));
+    const cancels: string[] = [];
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => openStream(head, { release, body: tail })),
+      http.post("/api/threads/:id/runs/latest/cancel", ({ params }) => {
+        cancels.push(String(params.id));
+        stopped();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    return cancels;
+  }
+
+  it("stops the run in plg-api, shows the turn as stopped and lets the officer ask again", async () => {
+    const cancels = stoppableRun();
+
+    const user = await ask();
+    await screen.findByText(/Under POL-003/);
+    await user.click(screen.getByRole("button", { name: "Stop" }));
+
+    expect(await screen.findByText("Stopped.")).toBeInTheDocument();
+    expect(cancels).toEqual(["t1"]);
+    // Nothing of the stopped answer is kept or shown, and the composer is ready again.
+    expect(screen.queryByText(/Under POL-003/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Answer" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ask" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Stop" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Your question")).toHaveFocus();
+    expect(answerStatus()).toHaveTextContent("Answer stopped.");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("leaves the stopped turn out of the conversation when the officer asks again", async () => {
+    stoppableRun();
+    const user = await ask();
+    await screen.findByText(/Under POL-003/);
+    await user.click(screen.getByRole("button", { name: "Stop" }));
+    await screen.findByText("Stopped.");
+
+    server.use(http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))));
+    await user.type(screen.getByLabelText("Your question"), "And after that?{Enter}");
+    await runFinished();
+
+    expect(screen.queryByRole("list", { name: "Earlier in this conversation" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Stopped.")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Answer" })).toHaveTextContent(/arrears reach 60 days/);
+  });
+});
+
 describe("Chat layout", () => {
   it("shows each question as a bubble above its full-width answer, earlier turns first", async () => {
     server.use(
@@ -1162,7 +1224,7 @@ describe("Chat layout", () => {
 
     const user = await ask(DATA_QUESTION);
     await screen.findByText("Querying PLG Records…");
-    expect(screen.getByRole("button", { name: "Ask" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Ask" })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText("Your question"), "Another{Enter}");
     expect(runs).toBe(1);
   });

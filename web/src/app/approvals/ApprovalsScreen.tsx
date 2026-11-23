@@ -135,6 +135,7 @@ async function decide(action: PendingApproval, body: DecisionBody): Promise<Acti
       if (typeof result !== "string") continue;
       if (event.type === "action_result" && event.action_id === action.action_id) result = event;
       else if (event.type === "error") result = `It failed: ${event.message}`;
+      else if (event.type === "cancelled") result = "It was stopped before the result arrived. Reload to check.";
     }
   } catch {
     if (typeof result === "string") return "The connection dropped before the result arrived. Reload to check.";

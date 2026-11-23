@@ -63,7 +63,7 @@ from plg.search.rerank import LazySearcher, Retriever
 from plg.search.store import SearchStore
 from plg.tasks import rules as task_rules
 from plg.tasks.rules import TaskDigest
-from plg.threads import RunBuffer, RunInProgress, RunRegistry, ThreadStore, ThreadSummary
+from plg.threads import NothingToStop, RunBuffer, RunInProgress, RunRegistry, ThreadStore, ThreadSummary
 from plg.tracing import Tracer, install_tracer, pii_masker
 
 
@@ -562,6 +562,22 @@ def create_app(
             raise HTTPException(status_code=404, detail="No run to resume")
         after = int(last_event_id) if last_event_id and last_event_id.isdigit() else 0
         return sse(buffer, after)
+
+    @app.post(
+        "/threads/{thread_id}/runs/latest/cancel", status_code=204,
+        responses={404: {"description": "Thread not found"},
+                   409: {"description": "Nothing to stop: no question being answered (none running, already answered, or a decision being carried out)"}},
+    )
+    async def cancel_run(thread_id: str, user: User) -> Response:
+        """Stop generating: the thread's question still being answered stops, its stream ends with a `cancelled` event
+        and the turn leaves no trace (no history, no proposed action). Returns once it has stopped, so the thread can be
+        asked again. Once merge has answered, or for a decision being carried out, there is nothing to stop (409)."""
+        owned(thread_id, user)
+        try:
+            await runs.cancel(thread_id)
+        except NothingToStop:
+            raise HTTPException(status_code=409, detail="Nothing to stop on this thread") from None
+        return Response(status_code=204)
 
     @app.get("/audit/reports/latest", dependencies=[Depends(current_user)])
     async def latest_audit_report() -> AuditReport:

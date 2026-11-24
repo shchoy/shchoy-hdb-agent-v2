@@ -97,6 +97,9 @@ test("an officer approves one arrears letter and rejects another with a reason",
   const hometown = pending.getByRole("article", { name: "Send Arrears Reminder Letter to Hometown Minimart Pte Ltd" }).first();
   await expect(golden).toBeVisible();
   await expect(hometown).toBeVisible();
+  // The inbox is a list: each item's title opens its detail (preview, slots, decision controls).
+  await golden.getByRole("button", { name: /Golden Leaf/ }).click();
+  await hometown.getByRole("button", { name: /Hometown/ }).click();
 
   await golden.getByRole("button", { name: "Approve and send" }).click();
   const results = page.getByRole("status", { name: "Results" });

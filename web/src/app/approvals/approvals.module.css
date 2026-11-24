@@ -1,14 +1,52 @@
-.list {
-  list-style: none;
+/* An inbox item's title: the button that opens its detail view, reading as the heading it is. */
+.toggle,
+.toggle[type="button"] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
   padding: 0;
-  display: grid;
-  gap: var(--space-4);
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-weight: inherit;
+  text-align: left;
 }
 
-.card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4);
+.toggle[type="button"]:hover:not(:disabled) {
+  background: none;
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.toggle::before {
+  content: "▸";
+  color: var(--color-primary);
+  transition: transform 0.15s;
+}
+
+.toggle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle::before {
+    transition: none;
+  }
+}
+
+/* Conversation, proposer and age on one wrapping line. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.opened:not([hidden]) {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
 }
 
 .muted {
@@ -27,6 +65,13 @@
   border-collapse: collapse;
   margin: var(--space-2) 0;
   width: 100%;
+  table-layout: fixed;
+}
+
+.slots caption {
+  text-align: left;
+  font-weight: var(--weight-semibold);
+  padding-bottom: var(--space-1);
 }
 
 .slots th,
@@ -35,6 +80,29 @@
   vertical-align: top;
   padding: var(--space-1) var(--space-2);
   border-bottom: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+}
+
+.slots thead th {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.slots tbody th {
+  font-weight: var(--weight-regular);
+  width: 35%;
+}
+
+/* Two-column comparisons (glossary: now vs proposed) keep the field column narrow. */
+.slots:has(thead th:nth-child(3)) tbody th {
+  width: 20%;
+}
+
+.slots input,
+.slots select,
+.slots textarea {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
 }
 
 .slots del {
@@ -54,22 +122,23 @@
   margin-top: var(--space-2);
 }
 
-.ticket {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: var(--space-1) var(--space-4);
-  margin: var(--space-2) 0;
+/* A pending action's detail, inside the card that names it (an inbox item or the chat's "Awaiting approval" card). */
+.detail > :first-child {
+  margin-top: 0;
 }
 
-.ticket dt {
+.detail h4 {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
 }
 
-.ticket dd {
-  margin: 0;
+.actions label {
+  display: grid;
+  gap: var(--space-1);
+  flex: 1 1 16rem;
 }
 
-/* An action card inside the chat's "Awaiting approval" card, which frames and names it. */
-.embedded > :first-child {
-  margin-top: 0;
+.actions textarea {
+  width: 100%;
 }

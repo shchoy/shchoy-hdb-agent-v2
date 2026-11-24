@@ -200,6 +200,19 @@
   color: var(--color-text-muted);
 }
 
+/* A screen's list of cards (approvals, decisions, memories): the list's gap spaces them. */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-6);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.list > li > .card {
+  margin: 0;
+}
+
 @media (max-width: 48rem) {
   .header,
   .body {

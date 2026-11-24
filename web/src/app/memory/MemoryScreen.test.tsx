@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
@@ -20,9 +20,16 @@ describe("Memory screen", () => {
     );
     render(<MemoryScreen />);
 
-    expect(await screen.findByText(/Prefers tables/)).toBeInTheDocument();
+    const list = await screen.findByRole("list", { name: "Memories" });
+    const [note, flagged] = within(list).getAllByRole("article");
+    expect(within(note).getByRole("heading", { level: 3 })).toHaveTextContent("Preference");
+    expect(note).toHaveTextContent("Prefers tables");
+    expect(note).toHaveTextContent("From: Your conversation ab12cd34, 2026-11-07");
+    expect(within(note).queryByText("Not in use")).not.toBeInTheDocument();
+    expect(within(note).getByRole("button", { name: "Forget" })).toHaveAttribute("data-variant", "danger");
+    expect(within(flagged).getByText("Not in use")).toHaveAttribute("data-tone", "warning");
     expect(screen.getAllByText(/Your conversation ab12cd34/)).toHaveLength(2);
-    expect(screen.getByRole("status")).toHaveTextContent("conflicts with current policy");
+    expect(within(flagged).getByRole("status")).toHaveTextContent("conflicts with current policy");
     expect(screen.getByRole("status")).toHaveTextContent("Edit it to make the exception clear, or forget it");
     expect(screen.queryByRole("button", { name: /keep using/i })).not.toBeInTheDocument();
   });

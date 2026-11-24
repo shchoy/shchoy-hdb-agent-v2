@@ -194,6 +194,20 @@ button[type="button"]:hover:not(:disabled) {
   color: var(--color-primary-hover);
 }
 
+/* Destructive actions (Reject, Withdraw, Forget): HDB red. "danger" outlined (opens or does it), "danger-solid" confirms. */
+button[data-variant="danger"] {
+  background: var(--color-bg);
+  border-color: var(--color-danger-strong);
+  color: var(--color-danger-strong);
+}
+
+button[data-variant="danger-solid"],
+button[data-variant^="danger"]:hover:not(:disabled) {
+  background: var(--color-danger-strong);
+  border-color: var(--color-danger-strong);
+  color: var(--color-on-danger);
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;

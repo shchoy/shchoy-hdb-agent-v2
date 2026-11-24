@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import type { components } from "@/lib/api/schema";
+import { Proposed } from "../approvals/ActionCard";
+import { Card, cardListClass } from "../Card";
+import styles from "./memory.module.css";
 
 type ProposedAction = components["schemas"]["ProposedAction"];
 type TeamFact = components["schemas"]["TeamFactPayload"];
@@ -77,7 +80,7 @@ export function CuratorQueue({ staffId }: { staffId: string }) {
       ) : queue.length === 0 ? (
         <p>Nothing from answer feedback is waiting for review.</p>
       ) : (
-        <ul aria-label="Curator queue">
+        <ul aria-label="Curator queue" className={cardListClass}>
           {queue.map((action) => (
             <li key={`${action.action_id}-v${action.version}`}>
               <ProposalCard action={action} staffId={staffId} onDecided={decided} />
@@ -98,7 +101,6 @@ function ProposalCard({
   staffId: string;
   onDecided: (action: Curated, result: string) => void;
 }) {
-  const heading = useId();
   const { payload } = action;
   const canApprove = action.approvers.includes(staffId);
   const [edits, setEdits] = useState<Record<string, string> | null>(null);
@@ -140,83 +142,97 @@ function ProposalCard({
 
   const rejectLabel = canApprove ? "Reject" : "Withdraw";
   return (
-    <article aria-labelledby={heading}>
-      <h3 id={heading}>{LABEL[payload.kind]}</h3>
+    <Card as="article" heading={LABEL[payload.kind]}>
       {edits ? (
-        EDITABLE[payload.kind].map(([field, label]) => (
-          <label key={field}>
-            {label}
-            <textarea
-              rows={field === "sql" ? 6 : 3}
-              value={edits[field] ?? ""}
-              onChange={(e) => setEdits({ ...edits, [field]: e.target.value })}
-            />
-          </label>
-        ))
+        <div className={styles.form}>
+          {EDITABLE[payload.kind].map(([field, label]) => (
+            <label key={field}>
+              {label}
+              <textarea
+                rows={field === "sql" ? 6 : 3}
+                value={edits[field] ?? ""}
+                onChange={(e) => setEdits({ ...edits, [field]: e.target.value })}
+              />
+            </label>
+          ))}
+        </div>
       ) : (
         <Proposal payload={payload} />
       )}
-      <p>Proposed by {action.proposed_by}</p>
-      {refusal && <p role="alert">{refusal}</p>}
+      <p className={styles.meta}>
+        <Proposed by={action.proposed_by} at={action.proposed_at} />
+      </p>
+      {refusal && (
+        <p role="alert" className={styles.alert}>
+          {refusal}
+        </p>
+      )}
       {rejecting ? (
-        <>
+        <div className={styles.form}>
           <label>
             Reason
             <textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />
           </label>
-          <button
-            type="button"
-            disabled={busy || !reason.trim()}
-            onClick={() => void decide("reject", { reason: reason.trim() })}
-          >
-            Confirm {rejectLabel.toLowerCase()}
-          </button>
-          <button type="button" disabled={busy} onClick={() => setRejecting(false)}>
-            Cancel
-          </button>
-        </>
-      ) : edits ? (
-        <>
-          <button
-            type="button"
-            disabled={busy || Object.values(edits).some((v) => !v.trim())}
-            onClick={approveEdited}
-          >
-            Approve edited
-          </button>
-          <button type="button" disabled={busy} onClick={() => setEdits(null)}>
-            Cancel
-          </button>
-        </>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              data-variant="danger-solid"
+              disabled={busy || !reason.trim()}
+              onClick={() => void decide("reject", { reason: reason.trim() })}
+            >
+              Confirm {rejectLabel.toLowerCase()}
+            </button>
+            <button type="button" disabled={busy} onClick={() => setRejecting(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
       ) : (
-        <>
-          {canApprove && (
+        <div className={styles.actions}>
+          {edits ? (
             <>
-              <button type="button" disabled={busy} onClick={() => void decide("approve")}>
-                Approve
-              </button>
               <button
                 type="button"
-                disabled={busy}
-                onClick={() => setEdits(Object.fromEntries(EDITABLE[payload.kind].map(([f]) => [f, original[f] ?? ""])))}
+                disabled={busy || Object.values(edits).some((v) => !v.trim())}
+                onClick={approveEdited}
               >
-                Edit
+                Approve edited
+              </button>
+              <button type="button" disabled={busy} onClick={() => setEdits(null)}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              {canApprove && (
+                <>
+                  <button type="button" disabled={busy} onClick={() => void decide("approve")}>
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setEdits(Object.fromEntries(EDITABLE[payload.kind].map(([f]) => [f, original[f] ?? ""])))}
+                  >
+                    Edit
+                  </button>
+                </>
+              )}
+              <button type="button" data-variant="danger" disabled={busy} onClick={() => setRejecting(true)}>
+                {rejectLabel}
               </button>
             </>
           )}
-          <button type="button" disabled={busy} onClick={() => setRejecting(true)}>
-            {rejectLabel}
-          </button>
-        </>
+        </div>
       )}
-    </article>
+    </Card>
   );
 }
 
 /** The proposal as plain text: never rendered as HTML. */
 function Proposal({ payload }: { payload: Curated["payload"] }) {
   return (
-    <>
+    <div className={styles.proposal}>
       <p>Question: {payload.question}</p>
       {payload.kind === "team_fact" && <p>Proposed fact: {payload.fact}</p>}
       {payload.kind === "example" && (
@@ -226,6 +242,6 @@ function Proposal({ payload }: { payload: Curated["payload"] }) {
         </>
       )}
       {payload.kind === "sql_example" && <pre>{payload.sql}</pre>}
-    </>
+    </div>
   );
 }

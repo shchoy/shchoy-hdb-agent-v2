@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from "react";
 import type { components } from "@/lib/api/schema";
+import { Badge, Card, cardListClass } from "../Card";
+import { dateOf } from "../dates";
+import styles from "./memory.module.css";
 
 type Memory = components["schemas"]["MemoryView"];
 
-/** The officer's own memories: where each came from, and controls to edit, keep or forget it. */
+const MEMORY_KIND: Record<string, string> = { profile: "Profile", preference: "Preference", episode: "Past work" };
+
+/** The officer's own memories: where each came from, and controls to edit or forget it. */
 export function MemoryScreen() {
   const [memories, setMemories] = useState<Memory[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,50 +48,62 @@ export function MemoryScreen() {
   if (memories.length === 0) return <p>Nothing remembered yet.</p>;
 
   return (
-    <ul aria-label="Memories">
-      {memories.map((m) => (
-        <li key={m.id}>
-          {editing?.id === m.id ? (
-            <>
-              <label>
-                Memory text
-                <input
-                  value={editing.text}
-                  onChange={(e) => setEditing({ id: m.id, text: e.target.value })}
-                />
-              </label>
-              <button type="button" onClick={() => patch(m.id, { text: editing.text })}>
-                Save
-              </button>
-              <button type="button" onClick={() => setEditing(null)}>
-                Cancel
-              </button>
-            </>
-          ) : (
-            <>
-              <p>
-                <strong>{m.kind}</strong>: {m.text}
-              </p>
-              <p>
-                From: {m.provenance}
-                {m.expires_at ? ` · expires ${new Date(m.expires_at).toLocaleDateString("en-SG")}` : ""}
-              </p>
-              {m.status === "pending_review" && (
-                <p role="status">
-                  Flagged: this conflicts with current policy, so it is not being used. Edit it to make the
-                  exception clear, or forget it.
-                </p>
+    <ul aria-label="Memories" className={cardListClass}>
+      {memories.map((m) => {
+        const flagged = m.status === "pending_review";
+        return (
+          <li key={m.id}>
+            <Card
+              as="article"
+              heading={MEMORY_KIND[m.kind] ?? m.kind}
+              badges={flagged && <Badge tone="warning">Not in use</Badge>}
+            >
+              {editing?.id === m.id ? (
+                <div className={styles.form}>
+                  <label>
+                    Memory text
+                    <textarea
+                      rows={3}
+                      value={editing.text}
+                      onChange={(e) => setEditing({ id: m.id, text: e.target.value })}
+                    />
+                  </label>
+                  <div className={styles.actions}>
+                    <button type="button" onClick={() => patch(m.id, { text: editing.text })}>
+                      Save
+                    </button>
+                    <button type="button" onClick={() => setEditing(null)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className={styles.text}>{m.text}</p>
+                  <p className={styles.meta}>
+                    From: {m.provenance}
+                    {m.expires_at ? ` · expires ${dateOf(m.expires_at)}` : ""}
+                  </p>
+                  {flagged && (
+                    <p role="status" className={styles.flag}>
+                      Flagged: this conflicts with current policy, so it is not being used. Edit it to make the
+                      exception clear, or forget it.
+                    </p>
+                  )}
+                  <div className={styles.actions}>
+                    <button type="button" onClick={() => setEditing({ id: m.id, text: m.text })}>
+                      Edit
+                    </button>
+                    <button type="button" data-variant="danger" onClick={() => change(m.id, { method: "DELETE" })}>
+                      Forget
+                    </button>
+                  </div>
+                </>
               )}
-              <button type="button" onClick={() => setEditing({ id: m.id, text: m.text })}>
-                Edit
-              </button>
-              <button type="button" onClick={() => change(m.id, { method: "DELETE" })}>
-                Forget
-              </button>
-            </>
-          )}
-        </li>
-      ))}
+            </Card>
+          </li>
+        );
+      })}
     </ul>
   );
 }

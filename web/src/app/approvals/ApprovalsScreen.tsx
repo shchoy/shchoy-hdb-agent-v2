@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { components } from "@/lib/api/schema";
 import { roleLabel, type UserCtx } from "@/lib/events";
+import { Badge, Card, cardListClass, fieldsClass } from "../Card";
 import { day, when } from "../dates";
 import { LetterFrame } from "../LetterFrame";
 import { useShell } from "../shell/ShellContext";
-import { ActionCard, describe, type Outcome } from "./ActionCard";
+import { ActionCard, describe, KIND_LABEL, Proposed, type Outcome } from "./ActionCard";
 import styles from "./approvals.module.css";
 
 type PendingApproval = components["schemas"]["PendingApproval"];
@@ -22,6 +23,8 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  // Which items show their detail view: kept by action ID across reloads after a decision.
+  const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
   const shell = useShell();
   const failed = version === 0 ? "Could not load your approvals." : "Could not reload your approvals.";
 
@@ -42,6 +45,14 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
       current = false;
     };
   }, [version, failed]);
+
+  function toggle(actionId: string) {
+    setOpened((o) => {
+      const next = new Set(o);
+      if (!next.delete(actionId)) next.add(actionId);
+      return next;
+    });
+  }
 
   function decided(outcome: Outcome) {
     setOutcomes((o) => [outcome, ...o]);
@@ -66,10 +77,17 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
         {pending.length === 0 ? (
           <p>Nothing is waiting for your approval.</p>
         ) : (
-          <ul aria-label="Pending approvals" className={styles.list}>
+          <ul aria-label="Pending approvals" className={cardListClass}>
             {pending.map((action) => (
               <li key={`${action.action_id}-v${action.version}`}>
-                <ActionCard action={action} role={role} staffId={staffId} onDecided={decided} />
+                <PendingItem
+                  action={action}
+                  open={opened.has(action.action_id)}
+                  onToggle={() => toggle(action.action_id)}
+                  role={role}
+                  staffId={staffId}
+                  onDecided={decided}
+                />
               </li>
             ))}
           </ul>
@@ -80,6 +98,50 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
         {audit.length === 0 ? <p>No decisions yet.</p> : <AuditTrail entries={audit} />}
       </section>
     </>
+  );
+}
+
+/**
+ * One pending action as a line of the inbox (type, title, conversation, who proposed it and when); its title opens
+ * the detail view below it: the preview, the diff of edits and the decision controls.
+ */
+function PendingItem({
+  action,
+  open,
+  onToggle,
+  role,
+  staffId,
+  onDecided,
+}: {
+  action: PendingApproval;
+  open: boolean;
+  onToggle: () => void;
+  role: UserCtx["role"];
+  staffId: string;
+  onDecided: (outcome: Outcome) => void;
+}) {
+  const detail = useId();
+  // A curator deciding on someone else's thread sees it titled "Proposed by <ID>": that is said once already.
+  const conversation = action.thread_title && action.thread_title !== `Proposed by ${action.proposed_by}` ? action.thread_title : null;
+  return (
+    <Card
+      as="article"
+      heading={
+        <button type="button" className={styles.toggle} aria-expanded={open} aria-controls={detail} onClick={onToggle}>
+          {action.title}
+        </button>
+      }
+      badges={<Badge>{KIND_LABEL[action.payload.kind]}</Badge>}
+    >
+      <p className={styles.meta}>
+        {conversation && <span>Conversation: {conversation}</span>}
+        <Proposed by={action.proposed_by} at={action.proposed_at} />
+      </p>
+      {/* Kept mounted while collapsed: half-typed edits, a reason or a refusal survive closing it. */}
+      <div id={detail} hidden={!open} className={styles.opened}>
+        <ActionCard action={action} role={role} staffId={staffId} onDecided={onDecided} />
+      </div>
+    </Card>
   );
 }
 
@@ -100,18 +162,34 @@ const NOTHING_DONE: Record<AuditRecord["action_type"], string> = {
   approve_sql_example: "Nothing was taught to the team.",
 };
 
+const KIND_OF: Record<AuditRecord["action_type"], string> = {
+  send_letter: KIND_LABEL.letter,
+  raise_ticket: KIND_LABEL.ticket,
+  approve_glossary_term: KIND_LABEL.glossary,
+  approve_team_fact: KIND_LABEL.team_fact,
+  approve_example: KIND_LABEL.example,
+  approve_sql_example: KIND_LABEL.sql_example,
+};
+
 const CURATED = new Set<AuditRecord["action_type"]>(["approve_team_fact", "approve_example", "approve_sql_example"]);
 
 /** Every decision the officer made: who, when, why, what changed, what went to the outbox and the run's trace. */
 function AuditTrail({ entries }: { entries: AuditRecord[] }) {
   return (
-    <ul aria-label="Audit trail" className={styles.list}>
+    <ul aria-label="Audit trail" className={cardListClass}>
       {entries.map((e) => {
-        const heading = `audit-${e.action_id}`;
         return (
           <li key={e.action_id}>
-            <article aria-labelledby={heading} className={styles.card}>
-              <h3 id={heading}>{e.title || e.action_id}</h3>
+            <Card
+              as="article"
+              heading={e.title || e.action_id}
+              badges={
+                <>
+                  <Badge>{KIND_OF[e.action_type]}</Badge>
+                  <Badge tone={e.decision === "reject" ? "neutral" : "success"}>{DECIDED[e.action_type][e.decision]}</Badge>
+                </>
+              }
+            >
               <p>
                 {DECIDED[e.action_type][e.decision]} by {e.approver} ({roleLabel(e.approver_role)}) on {when(e.at)}, deciding on
                 version {e.version}.
@@ -146,7 +224,7 @@ function AuditTrail({ entries }: { entries: AuditRecord[] }) {
                   <LetterFrame title={`Letter sent: ${e.title}`} html={e.sent.html} />
                 </details>
               )}
-            </article>
+            </Card>
           </li>
         );
       })}
@@ -161,7 +239,7 @@ function RaisedTicket({ ticket: t }: { ticket: Ticket }) {
       <p>
         i-EMS ticket {t.ticket_id} (version {t.version}) raised {when(t.raised_at)}, status {t.status}
       </p>
-      <dl aria-label="Raised ticket" className={styles.ticket}>
+      <dl aria-label="Raised ticket" className={fieldsClass}>
         <dt>Feedback case</dt>
         <dd>{t.feedback_id}</dd>
         <dt>Category</dt>

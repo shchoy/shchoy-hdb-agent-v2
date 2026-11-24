@@ -45,7 +45,6 @@ export function ApprovalCard({
         action={action}
         role={user.role}
         staffId={user.staff_id}
-        embedded
         onDecided={(decided) => {
           setOutcome(decided);
           onDecided();

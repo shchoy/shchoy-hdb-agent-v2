@@ -12,7 +12,10 @@ export default async function MemoryPage() {
   return (
     <>
       <h1>What I remember about you</h1>
-      <MemoryScreen />
+      <section aria-labelledby="memories-heading">
+        <h2 id="memories-heading">Your memories</h2>
+        <MemoryScreen />
+      </section>
       <CuratorQueue staffId={user.staff_id} />
     </>
   );

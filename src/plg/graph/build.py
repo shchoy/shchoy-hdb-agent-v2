@@ -59,7 +59,7 @@ from plg.categories.model import load_categorisation
 from plg.tasks import ask as task_ask
 from plg.tasks import rules as task_rules
 from plg.feedback.curation import Curation
-from plg.feedback.model import AnsweredTurn
+from plg.feedback.model import AnsweredTurn, NumberedCitation
 from plg.graph.state import RUN_ID, RUN_STARTED, Finding, Intent, PLGGraph, PLGState
 from plg.memory.service import MemoryService
 from plg.llm import AgentMessage, Block, LLMClient, Message
@@ -361,6 +361,7 @@ def build_graph(
             write({"citation": citation.model_dump(), "index": n})
         finding = Finding(
             specialist=KNOWLEDGE, text=result.text, citations=result.citations, top_score=result.top_score,
+            stances=list(stances.values()),
         )
         update: PLGState = {"findings": [finding]}
         if planted:  # never an empty list: that would start the turn's flags afresh
@@ -504,6 +505,12 @@ def build_graph(
             started_at=config.get("configurable", {}).get(RUN_STARTED),
             question=state["question"], intents=list(state.get("intents", [])), answer=answer, flagged=flagged,
             sql=next((f.sql for f in reversed(findings) if f.sql), None),
+            # Numbered as the specialist streamed them (`citation` events): only knowledge cites, once per turn.
+            citations=[
+                NumberedCitation(**c.model_dump(), index=n)
+                for f in findings for n, c in enumerate(f.citations, start=1)
+            ],
+            stances=[s for f in findings for s in f.stances],
         )
         update: PLGState = {
             "answer": answer, "messages": [question, {"role": "assistant", "content": answer}], "turns": [turn],

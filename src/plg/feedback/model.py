@@ -8,7 +8,16 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from plg.agents.runtime import Citation
+from plg.entities.policy import PolicyLineage
+
 Score = Literal["up", "down"]
+
+
+class NumberedCitation(Citation):
+    """A source an answer cites; `index` is the number of its `[n]` marker in the answer text (as its `citation` event)."""
+
+    index: int
 
 
 class AnsweredTurn(BaseModel):
@@ -27,6 +36,10 @@ class AnsweredTurn(BaseModel):
     """The last query that ran for it (the data specialist's), if any."""
     flagged: bool = False
     """The turn met a prompt injection: feedback on it is recorded but teaches the team nothing."""
+    citations: list[NumberedCitation] = []
+    """The sources the answer cites, as streamed: a reopened thread opens them from the answer's `[n]` markers."""
+    stances: list[PolicyLineage] = []
+    """The policy stances streamed with the answer (`policy_stance` events), for the sources panel."""
 
 
 class Feedback(BaseModel):

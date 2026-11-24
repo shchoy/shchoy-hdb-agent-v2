@@ -2,12 +2,13 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { components } from "@/lib/api/schema";
-import type { CitationEvent } from "@/lib/events";
 import styles from "./ask.module.css";
 
 type DocumentView = components["schemas"]["DocumentView"];
 type ChunkLocation = components["schemas"]["ChunkLocation"];
 type Highlight = components["schemas"]["Highlight"];
+/** What locates a cited span: a `citation` event, or a source kept with an earlier answer. */
+type Citation = Pick<components["schemas"]["NumberedCitation"], "doc_id" | "chunk_id" | "span">;
 
 type Source =
   | { status: "closed" }
@@ -25,7 +26,7 @@ async function getJson<T>(url: string): Promise<T> {
  * Opens the cited document in place with the cited span highlighted. Document text is only ever
  * rendered as React text nodes (and `<mark>`s around them), so markup in a source stays inert text.
  */
-export function SourceViewer({ citation }: { citation: CitationEvent }) {
+export function SourceViewer({ citation }: { citation: Citation }) {
   const [source, setSource] = useState<Source>({ status: "closed" });
   const doc = encodeURIComponent(citation.doc_id);
 

@@ -1,9 +1,10 @@
-import type { PolicyStanceEvent } from "@/lib/events";
+import type { components } from "@/lib/api/schema";
 import { day, period as span } from "./dates";
 import styles from "./ask.module.css";
 import { Card } from "./Card";
 
-type Stance = PolicyStanceEvent;
+/** A `policy_stance` event, or one kept with an earlier answer. */
+type Stance = components["schemas"]["PolicyLineage"];
 
 function period(from: string | null, to: string | null): string {
   return span(from, to, "dates not recorded");

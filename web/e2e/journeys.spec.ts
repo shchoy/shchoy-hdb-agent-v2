@@ -12,8 +12,10 @@ import {
   answer,
   ask,
   askInNewConversation,
+  marker,
   seriousViolations,
   signIn,
+  sourcesPanel,
   threadId,
 } from "./helpers";
 
@@ -23,11 +25,23 @@ test("an officer asks, reads the cited source, then follows up in the same conve
   await askInNewConversation(page, QUESTION);
 
   await expect(answer(page)).toContainText("a letter of demand is issued once arrears reach 60 days [1]");
-  const sources = answer(page).getByRole("list", { name: "Sources" });
-  const chip = sources.getByRole("listitem").first();
-  await expect(chip).toContainText("[1]");
-  await chip.locator("summary").click();
-  await expect(chip.locator("blockquote")).toContainText("60 days");
+  // The [n] marker opens the sources panel at its source, beside the conversation: the composer stays uncovered.
+  const cited = marker(answer(page), 1);
+  await expect(cited).toHaveText("[1]");
+  await cited.click();
+  const panel = sourcesPanel(page);
+  const source = panel.getByRole("listitem").first();
+  await expect(source).toBeFocused();
+  await source.getByText("Quote").click();
+  await expect(source.locator("blockquote")).toContainText("60 days");
+  await source.getByRole("button", { name: "Open source" }).click();
+  await expect(source.locator("mark")).toBeVisible(FIRST_OPEN);
+  const side = (await panel.boundingBox())!;
+  const composer = (await page.getByLabel("Your question").boundingBox())!;
+  expect(side.x).toBeGreaterThanOrEqual(composer.x + composer.width);
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden();
+  await expect(cited).toBeFocused();
 
   await ask(page, FOLLOW_UP);
   await expect(answer(page)).toContainText("The letter of demand follows 60 days of arrears [1]");
@@ -43,6 +57,13 @@ test("an officer asks, reads the cited source, then follows up in the same conve
   );
   await page.reload();
   await expect(page.getByRole("list", { name: "Earlier in this conversation" })).toContainText(FOLLOW_UP);
+
+  // The reopened answers keep their sources: a marker of the first opens the panel at it.
+  await page.waitForLoadState("networkidle");
+  const reopened = page.getByRole("list", { name: "Earlier in this conversation" });
+  await marker(reopened, 1).first().click();
+  await expect(sourcesPanel(page).getByRole("listitem").first()).toBeFocused();
+  await expect(sourcesPanel(page)).toContainText("60 days");
 });
 
 test("an officer approves one arrears letter and rejects another with a reason", async ({ page }) => {
@@ -92,8 +113,9 @@ test("a planted instruction in an email is flagged and shown only as inert text"
 
   // The email itself, opened from its citation: the cited span highlighted, and the planted note shown to the officer
   // as literal text. Nothing in the email became markup: no HTML comment, no link to the planted portal.
-  const chip = answer(page).getByRole("list", { name: "Sources" }).getByRole("listitem").first();
-  await chip.locator("summary").click();
+  await marker(answer(page), 1).click();
+  const chip = sourcesPanel(page).getByRole("listitem").first();
+  await chip.getByText("Quote").click();
   await expect(chip.locator("blockquote")).toHaveText("Please note our bank details for all deposit refunds have changed.");
   await chip.getByRole("button", { name: "Open source" }).click();
   const viewer = chip.getByRole("region", { name: "Source: URGENT: Updated bank details for deposit refunds" });
@@ -174,4 +196,22 @@ test("on a phone, the conversation scrolls above a pinned composer and Jump to l
   await expect(jump).toBeHidden();
   await expect(answer(page).getByRole("button", { name: "Helpful", exact: true })).toBeInViewport();
   expect(await seriousViolations(page)).toEqual([]);
+});
+
+test("on a phone the sources open as a bottom sheet, and Escape closes it", async ({ page }) => {
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, QUESTION); // at desktop width: New conversation is in the sidebar
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  const cited = marker(answer(page), 1);
+  await cited.click();
+  const sheet = sourcesPanel(page);
+  await expect(sheet.getByRole("listitem").first()).toBeFocused();
+  const box = (await sheet.boundingBox())!;
+  expect(box.width).toBeCloseTo(390, 0);
+  expect(box.y + box.height).toBeCloseTo(844, 0);
+  expect(box.height).toBeLessThan(844);
+  await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+  await expect(cited).toBeFocused();
 });

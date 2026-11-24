@@ -6,7 +6,9 @@ import {
   REMINDER_GOLDEN_LEAF,
   answer,
   askInNewConversation,
+  marker,
   OFFICER,
+  sourcesPanel,
   visit,
   seriousViolations,
   signIn,
@@ -32,8 +34,9 @@ for (const colorScheme of ["light", "dark"] as const) {
       expect(await seriousViolations(page)).toEqual([]);
 
       await askInNewConversation(page, QUESTION);
-      const chip = answer(page).getByRole("list", { name: "Sources" }).getByRole("listitem").first();
-      await chip.locator("summary").click();
+      await marker(answer(page), 1).click();
+      const chip = sourcesPanel(page).getByRole("listitem").first();
+      await chip.getByText("Quote").click();
       await chip.getByRole("button", { name: "Open source" }).click();
       await expect(chip.locator("mark")).toBeVisible(FIRST_OPEN);
       expect(await seriousViolations(page)).toEqual([]);

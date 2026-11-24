@@ -18,7 +18,7 @@ from plg.ingest.lineage import LineageReport
 from plg.llm import ScriptedLLMClient, text, tool_call, turn
 from plg.search.lance import LanceSearchStore
 from plg.search.rerank import Searcher
-from tests.conftest import Api, route
+from tests.conftest import USER, Api, route
 from tests.test_entity_knowledge_api import tool_results
 from tests.test_knowledge_api import POL_003_V1, POL_003_V2, answer_citing, search_results, shown_chunks
 from tests.test_policy_lineage import graph_dir, haiku, lineage  # noqa: F401  (fixtures)
@@ -162,3 +162,37 @@ def test_void_deck_shops_keep_the_original_clause(stance_api: Api, llm: Scripted
 
     [citation] = stream.of_type("citation")
     assert "Clause 7.3 of v3.0 still applies to everything outside NC units only" in str(citation["quote"])
+
+
+def test_a_reopened_thread_keeps_each_answers_sources_and_stance(stance_api: Api, llm: ScriptedLLMClient) -> None:
+    """The web app's sources panel opens from the `[n]` markers of earlier answers too: the thread keeps the citations
+    (numbered as the stream did) and the policy stance of each answered turn."""
+    route(llm, DISPLAY, "knowledge")
+    llm.script_turns(
+        "knowledge", DISPLAY,
+        turn(tool_call("policy_lineage", policy_id="PLG-POL-001")),
+        answer_citing("overrides clause 7.3", "Circular 07/2026 raises it to 1.0 m for NC units from 1 August 2026."),
+    )
+    llm.script("merge", DISPLAY, "NC units: 1.0 m from 1 Aug 2026 [1]. Void-deck shops: 0.6 m.")
+    thread = stance_api.create_thread()
+    stream = stance_api.run(thread, DISPLAY)
+
+    [answered] = stance_api.client.get(f"/threads/{thread}", headers=USER).json()["turns"]
+
+    [streamed] = stream.of_type("citation")
+    [kept] = answered["citations"]
+    assert kept == {k: v for k, v in streamed.items() if k not in ("type", "seq")}
+    assert kept["index"] == 1
+    [stance] = answered["stances"]
+    assert stance == {k: v for k, v in stream.of_type("policy_stance")[0].items() if k not in ("type", "seq")}
+
+
+def test_an_answer_without_sources_keeps_none(stance_api: Api, llm: ScriptedLLMClient) -> None:
+    route(llm, "hello")
+    llm.script("merge", "hello", "Hello! Ask me about PLG policies.")
+    thread = stance_api.create_thread()
+    stance_api.run(thread, "hello")
+
+    [answered] = stance_api.client.get(f"/threads/{thread}", headers=USER).json()["turns"]
+
+    assert (answered["citations"], answered["stances"]) == ([], [])

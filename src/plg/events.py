@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from plg.actions.model import Decision, ProposedAction
 from plg.defects.classify import Classification
 from plg.doccheck.model import DocCheck
-from plg.agents.runtime import Citation
+from plg.feedback.model import NumberedCitation
 from plg.identity import Role
 from plg.data.trace import SqlTrace
 from plg.drafting.model import Draft
@@ -34,12 +34,11 @@ class TokenEvent(BaseModel):
     text: str
 
 
-class CitationEvent(Citation):
+class CitationEvent(NumberedCitation):
     """A source the answer cites. `index` is the number of its `[n]` marker in the answer text."""
 
     type: Literal["citation"] = "citation"
     seq: int
-    index: int
 
 
 class SqlTraceEvent(SqlTrace):

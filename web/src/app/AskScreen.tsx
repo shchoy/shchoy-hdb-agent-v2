@@ -10,6 +10,7 @@ import {
   type DraftEvent,
   type InjectionEvent,
   type PolicyStanceEvent,
+  type ProposedActionEvent,
   type SqlTraceEvent,
   type TasksEvent,
   type ThreadView,
@@ -17,6 +18,8 @@ import {
 } from "@/lib/events";
 import { AnswerActions } from "./AnswerActions";
 import { AnswerText, type OnCite } from "./AnswerText";
+import { ApprovalCard } from "./ApprovalCard";
+import type { Approvable } from "./approvals/ActionCard";
 import { ClassificationCard } from "./ClassificationCard";
 import { DocCheckCard } from "./DocCheckCard";
 import { DraftPreview } from "./DraftPreview";
@@ -42,6 +45,8 @@ type Answer = {
   stances: PolicyStanceEvent[];
   tasks: TasksEvent[];
   traces: SqlTraceEvent[];
+  /** The actions waiting for approval when the run ended (the thread's, re-sent by every run that pauses on them). */
+  actions: ProposedActionEvent[];
   trajectory: Step[];
   /** The run that answered, from its `done` event: what feedback on the answer names. */
   runId?: string;
@@ -61,7 +66,7 @@ function sourcesOfRun(answer: Answer): AnswerSources {
 }
 
 function emptyAnswer(question: string): Answer {
-  return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], injections: [], stances: [], tasks: [], traces: [], trajectory: [] };
+  return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], injections: [], stances: [], tasks: [], traces: [], actions: [], trajectory: [] };
 }
 
 const RESUME_ATTEMPTS = 3;
@@ -109,6 +114,11 @@ function atBottom(): boolean {
 /** The sources panel: whose sources, the source it opened at, and the marker (or button) that opened it. */
 type Panel = { sources: AnswerSources; index: number; openCount: number; opener: HTMLButtonElement };
 
+/** A proposed action in its thread: from a `proposed_action` event (its type and seq ride along) or ThreadView.pending. */
+function approvable(threadId: string, action: Omit<Approvable, "thread_id" | "thread_title">): Approvable {
+  return { ...action, thread_id: threadId };
+}
+
 /** The run's stream stopped before `done`; it may be picked up again from the last event seen. */
 class Interrupted extends Error {}
 
@@ -121,7 +131,7 @@ export function AskScreen({
   user,
 }: {
   developer?: boolean;
-  user?: Pick<UserCtx, "name" | "role">;
+  user?: Pick<UserCtx, "name" | "role" | "staff_id">;
 }) {
   const [question, setQuestion] = useState("");
   const [run, setRun] = useState<Run>({ status: "idle" });
@@ -130,6 +140,8 @@ export function AskScreen({
   const [answeredBy, setAnsweredBy] = useState<Record<number, string>>({});
   /** The sources of each earlier answer, by its index in `history`: what its `[n]` markers open. */
   const [sourcesOf, setSourcesOf] = useState<Record<number, AnswerSources>>({});
+  /** The actions a reopened conversation is paused on: shown in its last answer. */
+  const [pending, setPending] = useState<Approvable[]>([]);
   const [panel, setPanel] = useState<Panel | null>(null);
   const shell = useShell();
   const threadId = useRef<string | null>(null);
@@ -264,6 +276,10 @@ export function AskScreen({
               case "sql_trace":
                 acc.traces = [...acc.traces, event];
                 break;
+              case "proposed_action":
+                // One card per action: a revised version replaces the one before it.
+                acc.actions = [...acc.actions.filter((a) => a.action_id !== event.action_id), event];
+                break;
               case "error":
                 throw new RunFailed(event.message);
               case "cancelled":
@@ -341,6 +357,7 @@ export function AskScreen({
       ]);
     }
     setRun({ status: "running", ...emptyAnswer(text) });
+    setPending([]); // the new run lists whatever is still pending when it ends
     setPanel(null);
     jumpToLatest();
     try {
@@ -376,6 +393,7 @@ export function AskScreen({
     setActive(id);
     sessionStorage.setItem(ACTIVE_THREAD, id);
     setHistory(thread.messages);
+    setPending((thread.pending ?? []).map((action) => approvable(id, action)));
     setAnsweredBy(Object.fromEntries((thread.turns ?? []).map((t) => [t.message_index, t.run_id])));
     setSourcesOf(
       Object.fromEntries(
@@ -400,6 +418,7 @@ export function AskScreen({
     setHistory([]);
     setAnsweredBy({});
     setSourcesOf({});
+    setPending([]);
     setPanel(null);
     setRun({ status: "idle" });
   }
@@ -446,6 +465,9 @@ export function AskScreen({
                     <span className={styles.visuallyHidden}>Answer:</span>
                     <AnswerText markdown={m.content} citations={sources.citations} onCite={cite(sources)} />
                     <SourcesButton sources={sources} onCite={cite(sources)} />
+                    {i === history.length - 1 && run.status === "idle" && (
+                      <PendingActions actions={pending} user={user} onDecided={shell.refresh} />
+                    )}
                     {answeredBy[i] && active && (
                       <AnswerActions
                         threadId={active}
@@ -502,6 +524,9 @@ export function AskScreen({
                 {run.drafts.map((draft) => (
                   <DraftPreview key={draft.draft_id} draft={draft} />
                 ))}
+                {run.status === "done" && active && (
+                  <PendingActions actions={run.actions.map((a) => approvable(active, a))} user={user} onDecided={shell.refresh} />
+                )}
                 {run.status === "done" && run.runId && active && (
                   <AnswerActions
                     key={run.runId}
@@ -575,6 +600,22 @@ export function AskScreen({
       )}
     </div>
   );
+}
+
+/** The actions an answer left waiting for approval, one card each; decided in place by the signed-in persona. */
+function PendingActions({
+  actions,
+  user,
+  onDecided,
+}: {
+  actions: Approvable[];
+  user?: Pick<UserCtx, "role" | "staff_id">;
+  onDecided: () => void;
+}) {
+  if (!user || actions.length === 0) return null;
+  return actions.map((action) => (
+    <ApprovalCard key={`${action.action_id}-v${action.version}`} action={action} user={user} onDecided={onDecided} />
+  ));
 }
 
 /** The officer's question: a right-aligned bubble. */

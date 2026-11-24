@@ -54,6 +54,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 
       await askInNewConversation(page, REMINDER_GOLDEN_LEAF);
       await expect(answer(page)).toContainText("It waits for your approval.");
+      // The in-chat approval card, with its letter preview and decision controls.
+      await expect(answer(page).getByRole("button", { name: "Approve and send" })).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
     });
 

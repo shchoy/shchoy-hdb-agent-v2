@@ -144,6 +144,8 @@
 
 /* Tables scroll sideways inside the card on a narrow screen instead of widening the page. */
 .tableScroll {
+  /* Positioned, so visually hidden (absolute) cell text stays inside the scroll box instead of widening the page. */
+  position: relative;
   max-width: 100%;
   overflow-x: auto;
   margin: var(--space-2) 0;

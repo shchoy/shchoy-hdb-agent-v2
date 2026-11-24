@@ -38,6 +38,17 @@ describe("Library screen", () => {
     expect(screen.queryByRole("region", { name: POLICIES })).not.toBeInTheDocument();
   });
 
+  it("shows each category as a card named by its heading", async () => {
+    const view = categoriesFixture();
+    serve(view);
+    render(<LibraryScreen />);
+
+    const list = await categoryList();
+    const cards = within(list).getAllByRole("article");
+    expect(cards).toHaveLength(view.categories.length + 1);
+    expect(cards[0]).toHaveAccessibleName(`${view.categories[0].name} (${view.categories[0].documents.length} documents)`);
+  });
+
   it("expands a category to its summary and documents, marking superseded versions", async () => {
     const user = userEvent.setup();
     const policies = categoriesFixture().categories.find((c) => c.name === POLICIES)!;

@@ -1,0 +1,97 @@
+/* The Document check screen: pick an application, then its result (cards from Card). Tokens only. */
+.step {
+  font-size: var(--text-lg);
+  margin: var(--space-4) 0 var(--space-1);
+}
+
+.intro {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+}
+
+/* The applications table in a card-like frame (a list to pick from, not a result, so no heading of its own). */
+.frame {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  padding: 0 var(--space-3);
+}
+
+.appId {
+  white-space: nowrap;
+  font-weight: var(--weight-semibold);
+}
+
+.pick {
+  white-space: nowrap;
+}
+
+.pick button {
+  padding: var(--space-1) var(--space-3);
+}
+
+/* The application being checked: teal tint and an accent at the start of the row, beside the words saying so. */
+.picked > * {
+  background: var(--color-primary-tint);
+}
+
+.picked > :first-child {
+  box-shadow: inset 4px 0 0 var(--color-primary);
+}
+
+.pickedLabel {
+  margin-left: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.result {
+  min-width: 0;
+  margin-top: var(--space-6);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  overflow-wrap: break-word;
+}
+
+/* What to do next: the notice in Approvals (primary) and the conversation. */
+.next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.next a {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+
+.next a:hover {
+  background: var(--color-primary-tint);
+}
+
+.next a.primaryLink {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.next a.primaryLink:hover {
+  background: var(--color-primary-hover);
+  color: var(--color-on-primary);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -116,6 +116,32 @@ for (const colorScheme of ["light", "dark"] as const) {
       expect(await seriousViolations(page)).toEqual([]);
     });
 
+    test("the Library, Tasks and Document check screens fit a phone", async ({ page }) => {
+      await signIn(page, OFFICER);
+      await page.setViewportSize({ width: 390, height: 844 });
+      const fits = () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+
+      await visit(page, "/library");
+      const categories = page.getByRole("list", { name: "Document categories" });
+      await categories.getByRole("button").first().click();
+      await expect(categories.getByRole("region").first()).toBeVisible();
+      expect(await fits()).toBe(true);
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.getByRole("tab", { name: "Audit findings" }).click();
+      await expect(page.getByRole("tabpanel")).not.toContainText("Loading");
+      expect(await fits()).toBe(true);
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await visit(page, "/tasks");
+      await expect(page.getByRole("table", { name: "Ranked tasks" })).toBeVisible();
+      expect(await fits()).toBe(true);
+
+      await visit(page, "/doc-check");
+      await expect(page.getByRole("table", { name: "Applications" })).toBeVisible();
+      expect(await fits()).toBe(true);
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
     test("the sidebar as a drawer on a phone", async ({ page }) => {
       await signIn(page, OFFICER); // at desktop width: signIn checks the persona shown in the sidebar
       await page.setViewportSize({ width: 390, height: 844 });

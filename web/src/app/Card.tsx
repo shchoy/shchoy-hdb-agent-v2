@@ -21,10 +21,13 @@ export function Badge({
   );
 }
 
+const HEADINGS = { 2: "h2", 3: "h3", 4: "h4" } as const;
+
 type CardProps = {
   /** Names the card (a region); without one the card needs a role, e.g. an alert. */
   heading?: ReactNode;
-  level?: 3 | 4;
+  /** 2 for an item that is a top-level section of its screen (a Library category). */
+  level?: 2 | 3 | 4;
   /** Status badges shown beside the heading. */
   badges?: ReactNode;
   /** "danger" for alerts only: a red frame. */
@@ -41,7 +44,7 @@ type CardProps = {
  */
 export function Card({ heading, level = 3, badges, tone = "neutral", role, as: Tag = "section", children }: CardProps) {
   const id = useId();
-  const Heading = level === 3 ? "h3" : "h4";
+  const Heading = HEADINGS[level];
   const header = (heading !== undefined || badges) && (
     <div className={styles.header}>
       {heading !== undefined && (

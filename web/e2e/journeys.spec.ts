@@ -119,6 +119,33 @@ test("an officer approves one arrears letter and rejects another with a reason",
   expect(rejected).toMatchObject({ reason: "The tenant paid yesterday.", sent: null });
 });
 
+test("an officer approves one arrears letter and rejects another from the chat, and the inbox keeps in step", async ({ page }) => {
+  await signIn(page, OFFICER);
+  const golden = "Send Arrears Reminder Letter to Golden Leaf Minimart Pte Ltd";
+  const hometown = "Send Arrears Reminder Letter to Hometown Minimart Pte Ltd";
+
+  await askInNewConversation(page, REMINDER_GOLDEN_LEAF);
+  const approve = answer(page).getByRole("region", { name: golden });
+  await expect(approve.getByText("Awaiting approval")).toBeVisible();
+  await approve.getByRole("button", { name: "Approve and send" }).click();
+  await expect(approve.getByRole("status")).toContainText(/Golden Leaf Minimart Pte Ltd: sent as \S+ \(version 1\)/, DECISION);
+
+  await askInNewConversation(page, REMINDER_HOMETOWN);
+  const reject = answer(page).getByRole("region", { name: hometown });
+  await reject.getByRole("button", { name: "Reject…" }).click();
+  await reject.getByLabel("Reason for rejecting").fill("Paid at the counter this morning.");
+  await reject.getByRole("button", { name: "Reject", exact: true }).click();
+  await expect(reject.getByRole("status")).toContainText("Hometown Minimart Pte Ltd: rejected; nothing was sent.", DECISION);
+
+  // Neither decided action is waiting in the Approvals inbox any more.
+  type Pending = { action_id: string; thread_id: string };
+  const threads = [await threadId(page, REMINDER_GOLDEN_LEAF), await threadId(page, REMINDER_HOMETOWN)];
+  const pending = (await (await page.request.get("/api/approvals?status=pending")).json()) as Pending[];
+  expect(pending.filter((p) => threads.includes(p.thread_id))).toEqual([]);
+  const audit = (await (await page.request.get("/api/audit")).json()) as { reason: string; sent: unknown }[];
+  expect(audit.find((e) => e.reason === "Paid at the counter this morning.")).toMatchObject({ sent: null });
+});
+
 test("a planted instruction in an email is flagged and shown only as inert text", async ({ page }) => {
   await signIn(page, OFFICER);
   const before = await (await page.request.get("/api/approvals?status=pending")).json();

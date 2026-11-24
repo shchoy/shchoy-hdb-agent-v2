@@ -68,3 +68,8 @@
 .ticket dd {
   margin: 0;
 }
+
+/* An action card inside the chat's "Awaiting approval" card, which frames and names it. */
+.embedded > :first-child {
+  margin-top: 0;
+}

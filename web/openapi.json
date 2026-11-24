@@ -1719,6 +1719,22 @@
             "type": "boolean",
             "title": "Flagged",
             "default": false
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/NumberedCitation"
+            },
+            "type": "array",
+            "title": "Citations",
+            "default": []
+          },
+          "stances": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyLineage"
+            },
+            "type": "array",
+            "title": "Stances",
+            "default": []
           }
         },
         "type": "object",
@@ -2942,6 +2958,61 @@
         ],
         "title": "Message"
       },
+      "NumberedCitation": {
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "title": "Doc Id"
+          },
+          "chunk_id": {
+            "type": "string",
+            "title": "Chunk Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "span": {
+            "$ref": "#/components/schemas/Span"
+          },
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_id",
+          "chunk_id",
+          "title",
+          "version",
+          "location",
+          "quote",
+          "span",
+          "index"
+        ],
+        "title": "NumberedCitation",
+        "description": "A source an answer cites; `index` is the number of its `[n]` marker in the answer text (as its `citation` event)."
+      },
       "OutboxItem": {
         "properties": {
           "item_id": {
@@ -3002,6 +3073,93 @@
           "sent_at"
         ],
         "title": "OutboxItem"
+      },
+      "Override": {
+        "description": "A circular that replaces a clause of one version, possibly only for some units.",
+        "properties": {
+          "circular_id": {
+            "title": "Circular Id",
+            "type": "string"
+          },
+          "circular_title": {
+            "title": "Circular Title",
+            "type": "string"
+          },
+          "circular_doc_id": {
+            "title": "Circular Doc Id",
+            "type": "string"
+          },
+          "clause_id": {
+            "title": "Clause Id",
+            "type": "string"
+          },
+          "clause_number": {
+            "title": "Clause Number",
+            "type": "string"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective To"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scope"
+          },
+          "evidence_chunk_id": {
+            "title": "Evidence Chunk Id",
+            "type": "string"
+          },
+          "evidence_quote": {
+            "title": "Evidence Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "circular_id",
+          "circular_title",
+          "circular_doc_id",
+          "clause_id",
+          "clause_number",
+          "policy_version",
+          "evidence_chunk_id",
+          "evidence_quote"
+        ],
+        "title": "Override",
+        "type": "object"
       },
       "PendingApproval": {
         "properties": {
@@ -3151,6 +3309,128 @@
           "message"
         ],
         "title": "PiiFinding",
+        "type": "object"
+      },
+      "PolicyLineage": {
+        "properties": {
+          "policy_id": {
+            "type": "string",
+            "title": "Policy Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyVersion"
+            },
+            "type": "array",
+            "title": "Versions"
+          },
+          "supersessions": {
+            "items": {
+              "$ref": "#/components/schemas/Supersession"
+            },
+            "type": "array",
+            "title": "Supersessions"
+          },
+          "overrides": {
+            "items": {
+              "$ref": "#/components/schemas/Override"
+            },
+            "type": "array",
+            "title": "Overrides"
+          }
+        },
+        "type": "object",
+        "required": [
+          "policy_id",
+          "title",
+          "current",
+          "versions",
+          "supersessions",
+          "overrides"
+        ],
+        "title": "PolicyLineage"
+      },
+      "PolicyVersion": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "doc_id": {
+            "title": "Doc Id",
+            "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effective To"
+          },
+          "status": {
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "title",
+          "version",
+          "doc_id",
+          "status"
+        ],
+        "title": "PolicyVersion",
         "type": "object"
       },
       "ProposedAction": {
@@ -3517,6 +3797,25 @@
         "title": "Side",
         "description": "One side of a conflict, cited: a span of a document chunk, or of a PLG Records row (`doc_id` None,\n`chunk_id` `record:<id>`)."
       },
+      "Span": {
+        "description": "Character offsets into the chunk's text: `text[start:end]` is the cited quote.",
+        "properties": {
+          "start": {
+            "title": "Start",
+            "type": "integer"
+          },
+          "end": {
+            "title": "End",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "Span",
+        "type": "object"
+      },
       "SqlExamplePayload": {
         "description": "A verified question \u2192 SQL pair from a \ud83d\udc4d on a data answer: once approved, a few-shot example for the data agent.",
         "properties": {
@@ -3718,6 +4017,34 @@
         ],
         "title": "SupersededDefinition",
         "description": "A figure in a report that counts by a business definition no longer in force."
+      },
+      "Supersession": {
+        "properties": {
+          "newer": {
+            "title": "Newer",
+            "type": "string"
+          },
+          "older": {
+            "title": "Older",
+            "type": "string"
+          },
+          "evidence_chunk_id": {
+            "title": "Evidence Chunk Id",
+            "type": "string"
+          },
+          "evidence_quote": {
+            "title": "Evidence Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newer",
+          "older",
+          "evidence_chunk_id",
+          "evidence_quote"
+        ],
+        "title": "Supersession",
+        "type": "object"
       },
       "TaskDigest": {
         "properties": {
@@ -4488,6 +4815,10 @@
           "span": {
             "$ref": "#/components/schemas/Span"
           },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
           "type": {
             "const": "citation",
             "default": "citation",
@@ -4496,10 +4827,6 @@
           },
           "seq": {
             "title": "Seq",
-            "type": "integer"
-          },
-          "index": {
-            "title": "Index",
             "type": "integer"
           }
         },
@@ -4511,8 +4838,8 @@
           "location",
           "quote",
           "span",
-          "seq",
-          "index"
+          "index",
+          "seq"
         ],
         "title": "CitationEvent",
         "type": "object"
@@ -5127,93 +5454,6 @@
         "title": "NodeEvent",
         "type": "object"
       },
-      "Override": {
-        "description": "A circular that replaces a clause of one version, possibly only for some units.",
-        "properties": {
-          "circular_id": {
-            "title": "Circular Id",
-            "type": "string"
-          },
-          "circular_title": {
-            "title": "Circular Title",
-            "type": "string"
-          },
-          "circular_doc_id": {
-            "title": "Circular Doc Id",
-            "type": "string"
-          },
-          "clause_id": {
-            "title": "Clause Id",
-            "type": "string"
-          },
-          "clause_number": {
-            "title": "Clause Number",
-            "type": "string"
-          },
-          "policy_version": {
-            "title": "Policy Version",
-            "type": "string"
-          },
-          "effective_from": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Effective From"
-          },
-          "effective_to": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Effective To"
-          },
-          "scope": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Scope"
-          },
-          "evidence_chunk_id": {
-            "title": "Evidence Chunk Id",
-            "type": "string"
-          },
-          "evidence_quote": {
-            "title": "Evidence Quote",
-            "type": "string"
-          }
-        },
-        "required": [
-          "circular_id",
-          "circular_title",
-          "circular_doc_id",
-          "clause_id",
-          "clause_number",
-          "policy_version",
-          "evidence_chunk_id",
-          "evidence_quote"
-        ],
-        "title": "Override",
-        "type": "object"
-      },
       "PolicyStanceEvent": {
         "description": "PLG's position on one policy: the version in force, the versions it superseded and the circulars overriding it.",
         "properties": {
@@ -5278,74 +5518,6 @@
           "seq"
         ],
         "title": "PolicyStanceEvent",
-        "type": "object"
-      },
-      "PolicyVersion": {
-        "properties": {
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "label": {
-            "title": "Label",
-            "type": "string"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          },
-          "version": {
-            "title": "Version",
-            "type": "string"
-          },
-          "doc_id": {
-            "title": "Doc Id",
-            "type": "string"
-          },
-          "effective_from": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Effective From"
-          },
-          "effective_to": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Effective To"
-          },
-          "status": {
-            "enum": [
-              "current",
-              "superseded"
-            ],
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "label",
-          "title",
-          "version",
-          "doc_id",
-          "status"
-        ],
-        "title": "PolicyVersion",
         "type": "object"
       },
       "ProposedActionEvent": {
@@ -5519,25 +5691,6 @@
         "title": "ResultSummary",
         "type": "object"
       },
-      "Span": {
-        "description": "Character offsets into the chunk's text: `text[start:end]` is the cited quote.",
-        "properties": {
-          "start": {
-            "title": "Start",
-            "type": "integer"
-          },
-          "end": {
-            "title": "End",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "start",
-          "end"
-        ],
-        "title": "Span",
-        "type": "object"
-      },
       "SqlTraceEvent": {
         "description": "One query the data agent sent: its plan, SQL, result summary and the glossary terms it relied on.",
         "properties": {
@@ -5625,34 +5778,6 @@
           "seq"
         ],
         "title": "SqlTraceEvent",
-        "type": "object"
-      },
-      "Supersession": {
-        "properties": {
-          "newer": {
-            "title": "Newer",
-            "type": "string"
-          },
-          "older": {
-            "title": "Older",
-            "type": "string"
-          },
-          "evidence_chunk_id": {
-            "title": "Evidence Chunk Id",
-            "type": "string"
-          },
-          "evidence_quote": {
-            "title": "Evidence Quote",
-            "type": "string"
-          }
-        },
-        "required": [
-          "newer",
-          "older",
-          "evidence_chunk_id",
-          "evidence_quote"
-        ],
-        "title": "Supersession",
         "type": "object"
       },
       "TasksEvent": {

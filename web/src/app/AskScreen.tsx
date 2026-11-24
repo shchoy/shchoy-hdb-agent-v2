@@ -16,15 +16,14 @@ import {
   type UserCtx,
 } from "@/lib/events";
 import { AnswerFeedback } from "./AnswerFeedback";
-import { AnswerText } from "./AnswerText";
+import { AnswerText, type OnCite } from "./AnswerText";
 import { TraceLink } from "./TraceLink";
 import { ClassificationCard } from "./ClassificationCard";
 import { DocCheckCard } from "./DocCheckCard";
 import { DraftPreview } from "./DraftPreview";
 import { InjectionAlert } from "./InjectionAlert";
-import { PolicyStanceCard } from "./PolicyStanceCard";
 import { ReasoningPanel } from "./ReasoningPanel";
-import { SourceViewer } from "./SourceViewer";
+import { NO_SOURCES, SourcesPanel, type AnswerSources } from "./SourcesPanel";
 import { TaskList } from "./TaskList";
 import { Welcome } from "./Welcome";
 import styles from "./ask.module.css";
@@ -56,6 +55,11 @@ type Run =
   | { status: "failed"; question: string; reason: string; trajectory: Step[] }
   /** The officer pressed Stop: plg-api cancelled the run, so nothing of the turn was kept. */
   | { status: "stopped"; question: string; trajectory: Step[] };
+
+/** What an answer's markers open. */
+function sourcesOfRun(answer: Answer): AnswerSources {
+  return { citations: answer.citations, stances: answer.stances };
+}
 
 function emptyAnswer(question: string): Answer {
   return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], injections: [], stances: [], tasks: [], traces: [], trajectory: [] };
@@ -103,6 +107,9 @@ function atBottom(): boolean {
   return window.innerHeight + window.scrollY >= page.scrollHeight - FOLLOW_SLACK;
 }
 
+/** The sources panel: whose sources, the source it opened at, and the marker (or button) that opened it. */
+type Panel = { sources: AnswerSources; index: number; openCount: number; opener: HTMLButtonElement };
+
 /** The run's stream stopped before `done`; it may be picked up again from the last event seen. */
 class Interrupted extends Error {}
 
@@ -122,6 +129,9 @@ export function AskScreen({
   const [history, setHistory] = useState<ThreadView["messages"]>([]);
   /** The run that answered each earlier answer, by its index in `history`. */
   const [answeredBy, setAnsweredBy] = useState<Record<number, string>>({});
+  /** The sources of each earlier answer, by its index in `history`: what its `[n]` markers open. */
+  const [sourcesOf, setSourcesOf] = useState<Record<number, AnswerSources>>({});
+  const [panel, setPanel] = useState<Panel | null>(null);
   const shell = useShell();
   const threadId = useRef<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -184,6 +194,20 @@ export function AskScreen({
     box.style.height = "auto";
     if (box.scrollHeight > 0) box.style.height = `${box.scrollHeight}px`;
   }, [question]);
+
+  /** Opens the sources panel on one answer's sources, at source `index`. */
+  const cite =
+    (sources: AnswerSources): OnCite =>
+    (index, opener) =>
+      setPanel((open) => ({ sources, index, opener, openCount: (open?.openCount ?? 0) + 1 }));
+
+  /** Closes the sources panel; focus goes back to the marker that opened it (else to the composer). */
+  function closePanel() {
+    const opener = panel?.opener;
+    setPanel(null);
+    if (opener?.isConnected) opener.focus();
+    else composer.current?.focus();
+  }
 
   /** Reads one run to its end, from whatever stream `open` gives. Resumes after a dropped connection. */
   async function follow(
@@ -310,6 +334,7 @@ export function AskScreen({
     if (run.status === "done") {
       const { runId } = run;
       if (runId) setAnsweredBy((by) => ({ ...by, [history.length + 1]: runId }));
+      setSourcesOf((of) => ({ ...of, [history.length + 1]: sourcesOfRun(run) }));
       setHistory((h) => [
         ...h,
         { role: "user", content: run.question },
@@ -317,6 +342,7 @@ export function AskScreen({
       ]);
     }
     setRun({ status: "running", ...emptyAnswer(text) });
+    setPanel(null);
     jumpToLatest();
     try {
       if (threadId.current === null) {
@@ -346,11 +372,17 @@ export function AskScreen({
       return;
     }
     const thread = (await response.json()) as ThreadView;
+    if (id !== threadId.current) setPanel(null); // re-reading the same conversation keeps its open panel
     threadId.current = id;
     setActive(id);
     sessionStorage.setItem(ACTIVE_THREAD, id);
     setHistory(thread.messages);
     setAnsweredBy(Object.fromEntries((thread.turns ?? []).map((t) => [t.message_index, t.run_id])));
+    setSourcesOf(
+      Object.fromEntries(
+        (thread.turns ?? []).map((t) => [t.message_index, { citations: t.citations ?? [], stances: t.stances ?? [] }]),
+      ),
+    );
     setRun({ status: "idle" });
     if (thread.running) {
       await follow(thread.running, () =>
@@ -368,6 +400,8 @@ export function AskScreen({
     sessionStorage.removeItem(ACTIVE_THREAD);
     setHistory([]);
     setAnsweredBy({});
+    setSourcesOf({});
+    setPanel(null);
     setRun({ status: "idle" });
   }
 
@@ -395,21 +429,24 @@ export function AskScreen({
   }
 
   return (
-    <div className={styles.ask}>
+    <div className={styles.ask} data-panel={panel ? "" : undefined}>
       <section aria-label="Conversation" className={styles.thread}>
         {showWelcome && user && (
           <Welcome user={user} onAsk={(text) => void ask(text)} />
         )}
         {history.length > 0 && (
           <ol aria-label="Earlier in this conversation" className={styles.history}>
-            {history.map((m, i) => (
+            {history.map((m, i) => {
+              const sources = sourcesOf[i] ?? NO_SOURCES;
+              return (
               <li key={i} data-role={m.role}>
                 {m.role === "user" ? (
                   <Bubble text={m.content} />
                 ) : (
                   <div className={styles.reply}>
                     <span className={styles.visuallyHidden}>Answer:</span>
-                    <AnswerText markdown={m.content} />
+                    <AnswerText markdown={m.content} citations={sources.citations} onCite={cite(sources)} />
+                    <SourcesButton sources={sources} onCite={cite(sources)} />
                     {answeredBy[i] && active && (
                       <>
                         <AnswerFeedback threadId={active} runId={answeredBy[i]} />
@@ -419,7 +456,8 @@ export function AskScreen({
                   </div>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ol>
         )}
 
@@ -447,11 +485,9 @@ export function AskScreen({
                 </h2>
                 <InjectionAlert flags={run.injections} />
                 <div aria-live="polite" aria-busy={running}>
-                  <AnswerText markdown={run.answer} />
+                  <AnswerText markdown={run.answer} citations={run.citations} onCite={cite(sourcesOfRun(run))} />
                 </div>
-                {(run.citations.length > 0 || run.stances.length > 0) && (
-                  <Sources citations={run.citations} stances={run.stances} />
-                )}
+                <SourcesButton sources={sourcesOfRun(run)} onCite={cite(sourcesOfRun(run))} />
                 {run.classifications.map((found) => (
                   <ClassificationCard key={found.seq} found={found} />
                 ))}
@@ -527,7 +563,10 @@ export function AskScreen({
           Press Enter to ask, Shift+Enter for a new line.
         </p>
       </form>
-      <div ref={end} />
+      <div ref={end} className={styles.end} />
+      {panel && (
+        <SourcesPanel sources={panel.sources} index={panel.index} openCount={panel.openCount} onClose={closePanel} />
+      )}
     </div>
   );
 }
@@ -556,36 +595,14 @@ function Trajectory({ steps }: { steps: Step[] }) {
   );
 }
 
-/** Citation chips: the number used in the answer, the document and section; open one to read the quoted span. */
-function Sources({
-  citations,
-  stances,
-}: {
-  citations: CitationEvent[];
-  stances: PolicyStanceEvent[];
-}) {
+/** Opens the sources panel at the answer's first source; none when the answer has no sources. */
+function SourcesButton({ sources, onCite }: { sources: AnswerSources; onCite: OnCite }) {
+  const count = sources.citations.length;
+  if (count === 0 && sources.stances.length === 0) return null;
+  const first = sources.citations[0]?.index ?? 0;
   return (
-    <>
-      <h3 id="sources-heading" className={styles.sourcesHeading}>
-        Sources
-      </h3>
-      {stances.map((stance) => (
-        <PolicyStanceCard key={stance.policy_id} stance={stance} />
-      ))}
-      <ol aria-labelledby="sources-heading" className={styles.sources}>
-        {citations.map((c) => (
-          <li key={c.index}>
-            <details className={styles.chip}>
-              <summary>
-                <span className={styles.marker}>[{c.index}]</span> {c.title}{" "}
-                <span className={styles.location}>{c.location}</span>
-              </summary>
-              <blockquote>{c.quote}</blockquote>
-              <SourceViewer citation={c} />
-            </details>
-          </li>
-        ))}
-      </ol>
-    </>
+    <button type="button" className={styles.sourcesButton} onClick={(event) => onCite(first, event.currentTarget)}>
+      Sources ({count})
+    </button>
   );
 }

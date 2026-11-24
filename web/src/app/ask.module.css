@@ -131,34 +131,141 @@
   margin: 0 0 var(--space-2);
 }
 
-.sourcesHeading {
-  font-size: var(--text-base);
-  margin: var(--space-4) 0 var(--space-2);
+/* An inline [n] marker: a small button in the line of text that opens the sources panel at its source. */
+.citation[type="button"] {
+  display: inline;
+  padding: 0 var(--space-1);
+  margin: 0 1px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.citation[type="button"]:hover:not(:disabled) {
+  background: var(--color-primary-tint);
+  border-color: var(--color-primary);
+}
+
+.sourcesButton {
+  justify-self: start;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+/*
+ * The sources panel. Wide screens: a column beside the conversation, sticky while it scrolls, so it never covers the
+ * composer. Narrow screens: a bottom sheet over the lower part of the window.
+ */
+.panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: var(--text-sm);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  position: sticky;
+  top: calc(-1 * var(--space-3));
+  z-index: 1;
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-4)) 0;
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panelHeader h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+@media (min-width: 64rem) {
+  .ask[data-panel] {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+    column-gap: var(--space-5);
+  }
+
+  .ask[data-panel] > :not(.panel) {
+    grid-column: 1;
+  }
+
+  .ask[data-panel] > .panel {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    position: sticky;
+    top: var(--space-4);
+    align-self: start;
+    max-height: calc(100dvh - 2 * var(--space-4));
+    border-radius: var(--radius-lg);
+  }
+}
+
+@media (max-width: 63.99rem) {
+  .panel {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 15;
+    max-height: 70dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: var(--shadow-lg);
+  }
 }
 
 .sources {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.chip {
-  border: 1px solid var(--color-border-strong);
+.source {
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-1) var(--space-3);
-  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  scroll-margin-top: var(--space-12);
 }
 
-.chip summary {
+.source[aria-current] {
+  border-color: var(--color-primary);
+  box-shadow: inset 4px 0 0 var(--color-primary);
+}
+
+.sourceTitle {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.source .location {
+  margin: var(--space-1) 0;
+}
+
+.quote summary {
   cursor: pointer;
 }
 
-.chip blockquote {
+.quote blockquote {
   margin: var(--space-2) 0 var(--space-1);
   padding-left: var(--space-3);
   border-left: 3px solid var(--color-border-strong);
+}
+
+.end {
+  height: 0;
 }
 
 .marker {

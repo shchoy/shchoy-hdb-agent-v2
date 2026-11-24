@@ -86,7 +86,7 @@ describe("Ask screen", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("shows a citation chip for each cited source, with the quoted span", async () => {
+  it("makes each [n] a button named by its source, which opens the sources panel at that source", async () => {
     server.use(
       threadsApi(),
       http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
@@ -95,22 +95,51 @@ describe("Ask screen", () => {
     const user = await ask();
     await runFinished();
 
-    const sources = screen.getByRole("list", { name: "Sources" });
-    const [chip] = within(sources).getAllByRole("listitem");
-    expect(chip).toHaveTextContent("[1]");
-    expect(chip).toHaveTextContent(
-      "PLG-POL-003 Rental Arrears Management Policy (v2.0)",
-    );
-    expect(chip).toHaveTextContent(
-      "4. Policy Statements > 4.5 Letter of Demand",
-    );
-    const quote = within(chip).getByText(/when any amount is 60 days overdue/);
+    expect(screen.queryByRole("complementary", { name: "Sources" })).not.toBeInTheDocument();
+    const marker = within(screen.getByRole("region", { name: "Answer" })).getByRole("button", {
+      name: "[1] PLG-POL-003 Rental Arrears Management Policy (v2.0)",
+    });
+    expect(marker).toHaveTextContent("[1]");
+    await user.click(marker);
+
+    const panel = screen.getByRole("complementary", { name: "Sources" });
+    const [source] = within(within(panel).getByRole("list", { name: "Sources" })).getAllByRole("listitem");
+    expect(source).toHaveFocus();
+    expect(source).toHaveAttribute("aria-current", "true");
+    expect(source).toHaveTextContent("[1] PLG-POL-003 Rental Arrears Management Policy (v2.0)");
+    expect(source).toHaveTextContent("Version 2.0 · 4. Policy Statements > 4.5 Letter of Demand");
+    const quote = within(source).getByText(/when any amount is 60 days overdue/);
     expect(quote).not.toBeVisible();
-    await user.click(within(chip).getByText("[1]"));
+    await user.click(within(source).getByText("Quote"));
     expect(quote).toBeVisible();
   });
 
-  it("opens a cited source with its span highlighted", async () => {
+  it("closes the panel on Escape and gives focus back to the marker that opened it", async () => {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
+    );
+
+    const user = await ask();
+    await runFinished();
+    const marker = screen.getByRole("button", { name: /^\[1\] / });
+    await user.click(marker);
+    expect(screen.getByRole("complementary", { name: "Sources" })).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("complementary", { name: "Sources" })).not.toBeInTheDocument();
+    expect(marker).toHaveFocus();
+
+    // Close works the same way, from the Sources button under the answer too.
+    const button = screen.getByRole("button", { name: "Sources (1)" });
+    await user.click(button);
+    await user.click(screen.getByRole("button", { name: "Close sources" }));
+    expect(screen.queryByRole("complementary", { name: "Sources" })).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
+  });
+
+  it("opens a cited source from the panel with its span highlighted", async () => {
     const recorded = documentFixture("docx");
     server.use(
       threadsApi(),
@@ -125,16 +154,17 @@ describe("Ask screen", () => {
 
     const user = await ask();
     await runFinished();
-    await user.click(screen.getByText("[1]"));
-    await user.click(screen.getByRole("button", { name: "Open source" }));
+    await user.click(screen.getByRole("button", { name: /^\[1\] / }));
+    const panel = screen.getByRole("complementary", { name: "Sources" });
+    await user.click(within(panel).getByRole("button", { name: "Open source" }));
 
-    const viewer = await screen.findByRole("region", {
+    const viewer = await within(panel).findByRole("region", {
       name: `Source: ${recorded.document.title}`,
     });
     expect(viewer.querySelector("mark")).toBeInTheDocument();
   });
 
-  it("says the sources don't cover the question, with no citation chips", async () => {
+  it("says the sources don't cover the question, with no sources to open", async () => {
     server.use(
       threadsApi(),
       http.post("/api/threads/:id/runs", () =>
@@ -148,9 +178,62 @@ describe("Ask screen", () => {
     expect(screen.getByRole("region", { name: "Answer" })).toHaveTextContent(
       "The indexed PLG sources don't cover this question",
     );
-    expect(
-      screen.queryByRole("list", { name: "Sources" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Sources/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^\[\d+\] / })).not.toBeInTheDocument();
+  });
+
+  it("opens an earlier answer's sources from its markers, and leaves [n] in code as text", async () => {
+    const cited = {
+      doc_id: "SP-888995",
+      chunk_id: "SP-888995#009",
+      title: "PLG-POL-003 Rental Arrears Management Policy (v2.0)",
+      version: "2.0",
+      location: "4. Policy Statements > 4.5 Letter of Demand",
+      quote: "A Letter of Demand shall be issued by HEB Legal when any amount is 60 days overdue.",
+      span: { start: 0, end: 80 },
+    };
+    server.use(
+      http.get("/api/threads", () =>
+        HttpResponse.json([{ thread_id: "t9", title: QUESTION, updated_at: "x" }]),
+      ),
+      http.get("/api/threads/t9", () =>
+        HttpResponse.json({
+          thread_id: "t9",
+          title: QUESTION,
+          messages: [
+            { role: "user", content: QUESTION },
+            { role: "assistant", content: "At 60 days [1], or later [2].\n\n`arr[1]`" },
+          ],
+          summary: "",
+          running: null,
+          turns: [
+            {
+              run_id: "r1", message_index: 1, question: QUESTION, intents: ["knowledge"], answer: "",
+              citations: [{ ...cited, index: 1 }, { ...cited, index: 2, title: "PLG-SOP-014 Arrears Follow-up" }],
+              stances: [],
+            },
+          ],
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    render(inShell(<AskScreen />));
+    await user.click(await screen.findByRole("button", { name: QUESTION }));
+    const history = await screen.findByRole("list", { name: "Earlier in this conversation" });
+
+    expect(within(history).getByText("arr[1]").tagName).toBe("CODE");
+    await user.click(within(history).getByRole("button", { name: "[2] PLG-SOP-014 Arrears Follow-up" }));
+
+    const panel = screen.getByRole("complementary", { name: "Sources" });
+    const items = within(panel).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[1]).toHaveFocus();
+    expect(items[1]).toHaveAttribute("aria-current", "true");
+    expect(items[0]).not.toHaveAttribute("aria-current");
+
+    // Another marker moves the open panel to its source.
+    await user.click(within(history).getByRole("button", { name: /^\[1\] / }));
+    expect(items[0]).toHaveFocus();
   });
 
   it("sends the question to the run on a new thread", async () => {
@@ -561,11 +644,11 @@ describe("Ask screen", () => {
       ),
     );
 
-    await ask("How far can a tenant display goods beyond the shopfront?");
+    const user = await ask("How far can a tenant display goods beyond the shopfront?");
     await runFinished();
+    await user.click(screen.getByRole("button", { name: /^\[1\] / }));
 
-    const sources = screen.getByRole("heading", { name: "Sources" })
-      .parentElement as HTMLElement;
+    const sources = screen.getByRole("complementary", { name: "Sources" });
     const pol001 = within(sources).getByRole("region", { name: /PLG-POL-001/ });
     const overrides = within(pol001).getByRole("list", {
       name: "Overriding circulars",
@@ -619,9 +702,7 @@ describe("Multi-part answer", () => {
     });
     expect(defined).toHaveTextContent("excluding units under tender. [1]");
     expect(defined).not.toHaveTextContent("Bayshore Vale");
-    expect(
-      within(answer).getByRole("list", { name: "Sources" }),
-    ).toHaveTextContent("[1]");
+    expect(within(defined).getByRole("button", { name: /^\[1\] / })).toHaveTextContent("[1]");
     expect(screen.getByText("Reasoning")).toBeInTheDocument();
   });
 

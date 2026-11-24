@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 /** The questions scripts/e2e_server.py scripts Claude's replies for. */
 export const QUESTION = "When do we issue a letter of demand?";
@@ -59,6 +59,16 @@ export const DECISION = { timeout: 60_000 };
 /** The answer being (or just) streamed. */
 export function answer(page: Page) {
   return page.getByRole("region", { name: "Answer" });
+}
+
+/** The sources panel an answer's `[n]` markers open. */
+export function sourcesPanel(page: Page) {
+  return page.getByRole("complementary", { name: "Sources" });
+}
+
+/** The `[n]` marker of an answer's source n (a button named by the source). */
+export function marker(scope: Page | Locator, n: number) {
+  return scope.getByRole("button", { name: new RegExp(`^\\[${n}\\] `) });
 }
 
 /** The signed-in user's thread with this title (its first question), via the BFF. */

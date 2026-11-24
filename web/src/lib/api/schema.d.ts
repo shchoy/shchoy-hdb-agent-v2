@@ -536,6 +536,16 @@ export interface components {
              * @default false
              */
             flagged: boolean;
+            /**
+             * Citations
+             * @default []
+             */
+            citations: components["schemas"]["NumberedCitation"][];
+            /**
+             * Stances
+             * @default []
+             */
+            stances: components["schemas"]["PolicyLineage"][];
         };
         /**
          * AuditRecord
@@ -1031,6 +1041,27 @@ export interface components {
             /** Content */
             content: string;
         };
+        /**
+         * NumberedCitation
+         * @description A source an answer cites; `index` is the number of its `[n]` marker in the answer text (as its `citation` event).
+         */
+        NumberedCitation: {
+            /** Doc Id */
+            doc_id: string;
+            /** Chunk Id */
+            chunk_id: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string | null;
+            /** Location */
+            location: string;
+            /** Quote */
+            quote: string;
+            span: components["schemas"]["Span"];
+            /** Index */
+            index: number;
+        };
         /** OutboxItem */
         OutboxItem: {
             /** Item Id */
@@ -1055,6 +1086,43 @@ export interface components {
             approver: string;
             /** Sent At */
             sent_at: string;
+        };
+        /**
+         * Override
+         * @description A circular that replaces a clause of one version, possibly only for some units.
+         */
+        Override: {
+            /** Circular Id */
+            circular_id: string;
+            /** Circular Title */
+            circular_title: string;
+            /** Circular Doc Id */
+            circular_doc_id: string;
+            /** Clause Id */
+            clause_id: string;
+            /** Clause Number */
+            clause_number: string;
+            /** Policy Version */
+            policy_version: string;
+            /**
+             * Effective From
+             * @default null
+             */
+            effective_from: string | null;
+            /**
+             * Effective To
+             * @default null
+             */
+            effective_to: string | null;
+            /**
+             * Scope
+             * @default null
+             */
+            scope: string | null;
+            /** Evidence Chunk Id */
+            evidence_chunk_id: string;
+            /** Evidence Quote */
+            evidence_quote: string;
         };
         /**
          * PendingApproval
@@ -1112,6 +1180,49 @@ export interface components {
             slot: string;
             /** Message */
             message: string;
+        };
+        /** PolicyLineage */
+        PolicyLineage: {
+            /** Policy Id */
+            policy_id: string;
+            /** Title */
+            title: string;
+            /** Current */
+            current: string | null;
+            /** Versions */
+            versions: components["schemas"]["PolicyVersion"][];
+            /** Supersessions */
+            supersessions: components["schemas"]["Supersession"][];
+            /** Overrides */
+            overrides: components["schemas"]["Override"][];
+        };
+        /** PolicyVersion */
+        PolicyVersion: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
+            /** Doc Id */
+            doc_id: string;
+            /**
+             * Effective From
+             * @default null
+             */
+            effective_from: string | null;
+            /**
+             * Effective To
+             * @default null
+             */
+            effective_to: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "current" | "superseded";
         };
         /** ProposedAction */
         ProposedAction: {
@@ -1256,6 +1367,16 @@ export interface components {
             quote: string;
         };
         /**
+         * Span
+         * @description Character offsets into the chunk's text: `text[start:end]` is the cited quote.
+         */
+        Span: {
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+        };
+        /**
          * SqlExamplePayload
          * @description A verified question → SQL pair from a 👍 on a data answer: once approved, a few-shot example for the data agent.
          */
@@ -1343,6 +1464,17 @@ export interface components {
             current_from: string | null;
             /** Explanation */
             explanation: string;
+        };
+        /** Supersession */
+        Supersession: {
+            /** Newer */
+            newer: string;
+            /** Older */
+            older: string;
+            /** Evidence Chunk Id */
+            evidence_chunk_id: string;
+            /** Evidence Quote */
+            evidence_quote: string;
         };
         /**
          * TaskDigest
@@ -1678,6 +1810,8 @@ export interface components {
             /** Quote */
             quote: string;
             span: components["schemas"]["Span"];
+            /** Index */
+            index: number;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
@@ -1685,8 +1819,6 @@ export interface components {
             type: "citation";
             /** Seq */
             seq: number;
-            /** Index */
-            index: number;
         };
         /**
          * ClassificationEvent
@@ -1952,43 +2084,6 @@ export interface components {
             status: "started" | "finished";
         };
         /**
-         * Override
-         * @description A circular that replaces a clause of one version, possibly only for some units.
-         */
-        Override: {
-            /** Circular Id */
-            circular_id: string;
-            /** Circular Title */
-            circular_title: string;
-            /** Circular Doc Id */
-            circular_doc_id: string;
-            /** Clause Id */
-            clause_id: string;
-            /** Clause Number */
-            clause_number: string;
-            /** Policy Version */
-            policy_version: string;
-            /**
-             * Effective From
-             * @default null
-             */
-            effective_from: string | null;
-            /**
-             * Effective To
-             * @default null
-             */
-            effective_to: string | null;
-            /**
-             * Scope
-             * @default null
-             */
-            scope: string | null;
-            /** Evidence Chunk Id */
-            evidence_chunk_id: string;
-            /** Evidence Quote */
-            evidence_quote: string;
-        };
-        /**
          * PolicyStanceEvent
          * @description PLG's position on one policy: the version in force, the versions it superseded and the circulars overriding it.
          */
@@ -2012,34 +2107,6 @@ export interface components {
             type: "policy_stance";
             /** Seq */
             seq: number;
-        };
-        /** PolicyVersion */
-        PolicyVersion: {
-            /** Id */
-            id: string;
-            /** Label */
-            label: string;
-            /** Title */
-            title: string;
-            /** Version */
-            version: string;
-            /** Doc Id */
-            doc_id: string;
-            /**
-             * Effective From
-             * @default null
-             */
-            effective_from: string | null;
-            /**
-             * Effective To
-             * @default null
-             */
-            effective_to: string | null;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "current" | "superseded";
         };
         /**
          * ProposedActionEvent
@@ -2098,16 +2165,6 @@ export interface components {
             rows: (string | number | null)[][];
         };
         /**
-         * Span
-         * @description Character offsets into the chunk's text: `text[start:end]` is the cited quote.
-         */
-        Span: {
-            /** Start */
-            start: number;
-            /** End */
-            end: number;
-        };
-        /**
          * SqlTraceEvent
          * @description One query the data agent sent: its plan, SQL, result summary and the glossary terms it relied on.
          */
@@ -2142,17 +2199,6 @@ export interface components {
             type: "sql_trace";
             /** Seq */
             seq: number;
-        };
-        /** Supersession */
-        Supersession: {
-            /** Newer */
-            newer: string;
-            /** Older */
-            older: string;
-            /** Evidence Chunk Id */
-            evidence_chunk_id: string;
-            /** Evidence Quote */
-            evidence_quote: string;
         };
         /**
          * TasksEvent

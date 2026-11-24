@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from plg.actions.model import ApprovalDecision, ProposedAction, upsert_actions
 from plg.agents.runtime import Citation
+from plg.entities.policy import PolicyLineage
 from plg.feedback.model import AnsweredTurn
 from plg.guardrails.injection import InjectionFlag
 from plg.identity import UserCtx
@@ -31,6 +32,8 @@ class Finding(BaseModel):
     """The last query that ran for it (data specialist), offered to curators as a question → SQL example on a 👍."""
     top_score: float | None = None
     """The best retrieval score of the passages the specialist was shown (knowledge), for the question log."""
+    stances: list[PolicyLineage] = []
+    """The policy stances the specialist read (knowledge), kept with the answered turn."""
 
 
 T = TypeVar("T")

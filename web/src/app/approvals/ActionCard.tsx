@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import type { components } from "@/lib/api/schema";
 import { parseRunEvents, type RunEvent, type UserCtx } from "@/lib/events";
 import { ClassificationDetails } from "../ClassificationCard";
-import { day, period } from "../dates";
+import { ago, day, period, when } from "../dates";
 import { LetterFrame } from "../LetterFrame";
 import styles from "./approvals.module.css";
 
@@ -44,6 +44,28 @@ export function canDecide(action: Approvable, role: UserCtx["role"], staffId: st
   // `approvers` defaults to none: recordings older than glossary changes leave it out.
   const approvers = action.approvers ?? [];
   return action.approver_roles.includes(role) && (approvers.length === 0 || approvers.includes(staffId));
+}
+
+/** What kind of action it is, in words (a badge in the inbox and the audit trail). */
+export const KIND_LABEL: Record<Kind, string> = {
+  letter: "Letter",
+  ticket: "i-EMS ticket",
+  glossary: "Glossary change",
+  team_fact: "Team fact",
+  example: "Corrected answer",
+  sql_example: "SQL example",
+};
+
+/** Who proposed an action and how long ago (the exact time on hover). */
+export function Proposed({ by, at }: { by: string; at: string }) {
+  return (
+    <span>
+      Proposed by {by}{" "}
+      <time dateTime={at} title={when(at)}>
+        {ago(at)}
+      </time>
+    </span>
+  );
 }
 
 const NOTHING: Record<Kind, string> = {
@@ -94,25 +116,11 @@ type CardProps<P> = {
   role: UserCtx["role"];
   staffId: string;
   onDecided: (outcome: Outcome) => void;
-  /** Inside another card (the chat's "Awaiting approval" card), which names it: no frame or heading of its own. */
-  embedded?: boolean;
 };
 
-/** The card's own frame and heading, unless it sits inside a card that already names it. */
-function Frame({ action, embedded, children }: { action: Approvable; embedded?: boolean; children: ReactNode }) {
-  const heading = `action-${action.action_id}`;
-  if (embedded) return <div className={styles.embedded}>{children}</div>;
-  return (
-    <article aria-labelledby={heading} className={styles.card}>
-      <h3 id={heading}>{action.title}</h3>
-      {children}
-    </article>
-  );
-}
-
-/** Which conversation proposed it: shown in the inbox, not in that conversation itself. */
-function FromThread({ action }: { action: Approvable }) {
-  return action.thread_title ? <p className={styles.muted}>From the conversation: {action.thread_title}</p> : null;
+/** The action's detail: it sits inside a card that names it (the inbox item or the chat's "Awaiting approval" card). */
+function Detail({ children }: { children: ReactNode }) {
+  return <div className={styles.detail}>{children}</div>;
 }
 
 /** A pending letter, i-EMS ticket or glossary change, with its decision controls. */
@@ -196,10 +204,11 @@ function Controls({
         <>
           <label>
             {reject === "Reject" ? "Reason for rejecting" : "Reason for withdrawing"}
-            <textarea value={d.reason} onChange={(e) => d.setReason(e.target.value)} />
+            <textarea rows={2} value={d.reason} onChange={(e) => d.setReason(e.target.value)} />
           </label>
           <button
             type="button"
+            data-variant="danger-solid"
             disabled={busy || !d.reason.trim()}
             onClick={() => submit({ decision: "reject", reason: d.reason.trim() })}
           >
@@ -221,7 +230,7 @@ function Controls({
               {labels.edit}
             </button>
           )}
-          <button type="button" disabled={busy} onClick={() => d.setRejecting(true)}>
+          <button type="button" data-variant="danger" disabled={busy} onClick={() => d.setRejecting(true)}>
             {reject}…
           </button>
         </>
@@ -240,7 +249,7 @@ function Refusal({ refusal }: { refusal: string | null }) {
   );
 }
 
-function LetterCard({ action, role, staffId, onDecided, embedded }: CardProps<LetterPayload>) {
+function LetterCard({ action, role, staffId, onDecided }: CardProps<LetterPayload>) {
   const { payload } = action;
   const canSend = canDecide(action, role, staffId);
   const original: Record<string, string> = {
@@ -252,12 +261,11 @@ function LetterCard({ action, role, staffId, onDecided, embedded }: CardProps<Le
   const stillOpen = edits ? payload.unfilled.map((u) => u.slot).filter((slot) => !edits[slot]?.trim()) : [];
 
   return (
-    <Frame action={action} embedded={embedded}>
+    <Detail>
       <p>
         {payload.template_title} ({payload.template_id} v{payload.template_version}) · version {action.version} ·
         To: {payload.recipient}
       </p>
-      <FromThread action={action} />
       {payload.unfilled.length > 0 && (
         <div>
           <h4>Still to fill</h4>
@@ -330,7 +338,7 @@ function LetterCard({ action, role, staffId, onDecided, embedded }: CardProps<Le
         blocked={stillOpen.length > 0}
         labels={{ approve: "Approve and send", edit: "Edit slots", sendEdited: "Send edited letter" }}
       />
-    </Frame>
+    </Detail>
   );
 }
 
@@ -399,7 +407,7 @@ function TicketField({
   return <input aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />;
 }
 
-function TicketCard({ action, role, staffId, onDecided, embedded }: CardProps<TicketPayload>) {
+function TicketCard({ action, role, staffId, onDecided }: CardProps<TicketPayload>) {
   const { payload } = action;
   const canSend = canDecide(action, role, staffId);
   const original: Record<string, string> = Object.fromEntries(
@@ -416,11 +424,10 @@ function TicketCard({ action, role, staffId, onDecided, embedded }: CardProps<Ti
     field === "category_code" && IEMS_CATEGORIES[value] ? `${IEMS_CATEGORIES[value]} (${value})` : value;
 
   return (
-    <Frame action={action} embedded={embedded}>
+    <Detail>
       <p>
         i-EMS ticket · version {action.version} · Feedback case {payload.feedback_id}
       </p>
-      <FromThread action={action} />
       <h4>Classification</h4>
       <ClassificationDetails found={{ ...payload, is_defect: true }} />
       <table className={styles.slots}>
@@ -476,7 +483,7 @@ function TicketCard({ action, role, staffId, onDecided, embedded }: CardProps<Ti
         blocked={blank.length > 0}
         labels={{ approve: "Approve and raise", edit: "Edit ticket", sendEdited: "Raise edited ticket" }}
       />
-    </Frame>
+    </Detail>
   );
 }
 
@@ -487,7 +494,7 @@ const GLOSSARY_FIELDS = [
 ] as const;
 
 /** A change to a business definition: the version in force against the proposed one. Only the term owner approves. */
-function GlossaryCard({ action, role, staffId, onDecided, embedded }: CardProps<GlossaryPayload>) {
+function GlossaryCard({ action, role, staffId, onDecided }: CardProps<GlossaryPayload>) {
   const { payload } = action;
   const { term, previous } = payload;
   // Only a named approver (the term owner): a change always names one.
@@ -504,11 +511,10 @@ function GlossaryCard({ action, role, staffId, onDecided, embedded }: CardProps<
   const proposed = (field: string, value: string) => (field === "effective_from" && value ? day(value) : value);
 
   return (
-    <Frame action={action} embedded={embedded}>
+    <Detail>
       <p>
         Glossary change · version {action.version} · {term.pref_label} ({term.concept})
       </p>
-      <FromThread action={action} />
       <table className={styles.slots}>
         <caption>{edits ? "Definition: your changes are shown against the proposal" : "Definition"}</caption>
         <thead>
@@ -587,6 +593,6 @@ function GlossaryCard({ action, role, staffId, onDecided, embedded }: CardProps<
           reject: canApprove ? "Reject" : "Withdraw",
         }}
       />
-    </Frame>
+    </Detail>
   );
 }

@@ -64,6 +64,9 @@ for (const colorScheme of ["light", "dark"] as const) {
       await askInNewConversation(page, REMINDER_GOLDEN_LEAF);
       await visit(page, "/approvals");
       await expect(page.getByRole("list", { name: "Pending approvals" })).toBeVisible();
+      // The detail view too: preview, slot table and decision controls.
+      await page.getByRole("list", { name: "Pending approvals" }).getByRole("button", { name: /Golden Leaf/ }).first().click();
+      await expect(page.getByRole("button", { name: "Approve and send" }).first()).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
     });
 
@@ -93,6 +96,23 @@ for (const colorScheme of ["light", "dark"] as const) {
       }));
       expect(scrolls).toBe(true);
       expect(pageOverflows).toBe(false);
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
+    test("the approvals inbox and an opened letter fit a phone", async ({ page }) => {
+      await signIn(page, OFFICER);
+      await askInNewConversation(page, REMINDER_GOLDEN_LEAF);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await visit(page, "/approvals");
+      await page.getByRole("list", { name: "Pending approvals" }).getByRole("button", { name: /Golden Leaf/ }).first().click();
+      await page.getByRole("button", { name: "Edit slots" }).first().click();
+      await expect(page.getByRole("button", { name: "Send edited letter" }).first()).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await visit(page, "/memory");
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("What I remember about you");
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
       expect(await seriousViolations(page)).toEqual([]);
     });
 

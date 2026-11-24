@@ -6,7 +6,9 @@ import { CuratorQueue } from "@/app/memory/CuratorQueue";
 import { server } from "@/test/msw";
 import { feedbackFixture } from "@/test/sse";
 
-type Action = { action_id: string; version: number; action_type: string; payload: Record<string, string> };
+type Action = {
+  action_id: string; version: number; action_type: string; proposed_at: string; payload: Record<string, string>;
+};
 const QUEUE = feedbackFixture("curation.json") as unknown as Action[];
 const byType = (t: string) => QUEUE.find((a) => a.action_type === t)!;
 const SQL = byType("approve_sql_example");
@@ -45,6 +47,7 @@ describe("Curator queue", () => {
     expect(sql).toHaveTextContent(`Question: ${SQL.payload.question}`);
     expect(within(sql).getByText(SQL.payload.sql).tagName).toBe("PRE");
     expect(sql).toHaveTextContent("Proposed by S05");
+    expect(within(sql).getByText(/ago$|^on /, { selector: "time" })).toHaveAttribute("datetime", SQL.proposed_at);
     const example = card("Corrected answer");
     expect(example).toHaveTextContent(`Corrected answer: ${EXAMPLE.payload.answer}`);
     // The answer given is shown as written, markdown and all, never rendered as HTML.
@@ -87,9 +90,12 @@ describe("Curator queue", () => {
     const { user } = await queue();
     const example = card("Corrected answer");
 
-    await user.click(within(example).getByRole("button", { name: "Reject" }));
+    const reject = within(example).getByRole("button", { name: "Reject" });
+    expect(reject).toHaveAttribute("data-variant", "danger");
+    await user.click(reject);
     const confirm = within(example).getByRole("button", { name: "Confirm reject" });
     expect(confirm).toBeDisabled();
+    expect(confirm).toHaveAttribute("data-variant", "danger-solid");
     await user.type(within(example).getByLabelText("Reason"), "The count was right.");
     await user.click(confirm);
 

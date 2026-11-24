@@ -973,20 +973,20 @@ describe("Conversations", () => {
   });
 });
 
+/** Records what the Ask screen posts to /api/feedback and answers with `receipt`. */
+function feedbackApi(receipt: Record<string, unknown>, status = 201) {
+  const sent: unknown[] = [];
+  server.use(
+    http.post("/api/feedback", async ({ request }) => {
+      sent.push(await request.json());
+      return HttpResponse.json(receipt, { status });
+    }),
+  );
+  return sent;
+}
+
 describe("Answer feedback", () => {
   const DATA_RUN = "6b54eecd-7625-405e-a0b8-4c30f29b9e3e";
-
-  /** Records what the Ask screen posts to /api/feedback and answers with `receipt`. */
-  function feedbackApi(receipt: Record<string, unknown>, status = 201) {
-    const sent: unknown[] = [];
-    server.use(
-      http.post("/api/feedback", async ({ request }) => {
-        sent.push(await request.json());
-        return HttpResponse.json(receipt, { status });
-      }),
-    );
-    return sent;
-  }
 
   async function dataAnswer() {
     server.use(
@@ -1119,6 +1119,121 @@ describe("Answer feedback", () => {
   });
 });
 
+describe("Answer action bar", () => {
+  const COPIED =
+    "Under POL-003 v2.0, a letter of demand is issued once arrears reach 60 days [1].\n\n" +
+    "Sources\n" +
+    "[1] PLG-POL-003 Rental Arrears Management Policy (v2.0), 4. Policy Statements > 4.5 Letter of Demand";
+
+  async function citedAnswer() {
+    server.use(
+      threadsApi(),
+      http.post("/api/threads/:id/runs", () => sseResponse(fixture("answer"))),
+    );
+    const user = await ask();
+    await runFinished();
+    const answer = screen.getByRole("region", { name: "Answer" });
+    return { user, answer, bar: within(answer).getByRole("toolbar", { name: "Answer actions" }) };
+  }
+
+  it("ends a finished answer with Copy and feedback, in that order", async () => {
+    const { bar } = await citedAnswer();
+
+    expect(within(bar).getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual([
+      "Copy",
+      "Helpful",
+      "Not helpful",
+    ]);
+  });
+
+  it("copies the answer as plain text with its sources and announces Copied", async () => {
+    const { user, answer, bar } = await citedAnswer();
+
+    await user.click(within(bar).getByRole("button", { name: "Copy" }));
+
+    expect(await navigator.clipboard.readText()).toBe(COPIED);
+    expect(within(answer).getByRole("status")).toHaveTextContent("Copied");
+    // Only the status speaks: the button keeps its name, so "Copied" is not announced twice.
+    expect(within(bar).getByRole("button", { name: "Copy" })).toHaveFocus();
+  });
+
+  it("moves focus to Copy once feedback is sent, as the feedback buttons leave the bar", async () => {
+    feedbackApi(feedbackFixture("receipt_up.json"));
+    const { user, answer, bar } = await citedAnswer();
+
+    within(bar).getByRole("button", { name: "Helpful" }).focus();
+    await user.keyboard("{Enter}");
+
+    await within(answer).findByRole("status", { name: "Feedback sent" });
+    await waitFor(() => expect(within(bar).getByRole("button", { name: "Copy" })).toHaveFocus());
+  });
+
+  it("says when the answer could not be copied", async () => {
+    const { user, answer, bar } = await citedAnswer();
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+
+    await user.click(within(bar).getByRole("button", { name: "Copy" }));
+
+    expect(within(answer).getByRole("status")).toHaveTextContent(
+      "Could not copy. Select the answer and copy it by hand.",
+    );
+  });
+
+  it("is reached by keyboard: Tab into the bar, arrow keys along it", async () => {
+    const { user, bar } = await citedAnswer();
+    const copy = within(bar).getByRole("button", { name: "Copy" });
+
+    copy.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(within(bar).getByRole("button", { name: "Helpful" })).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    expect(within(bar).getByRole("button", { name: "Not helpful" })).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(copy).toHaveFocus();
+    await user.keyboard("{End}");
+    expect(within(bar).getByRole("button", { name: "Not helpful" })).toHaveFocus();
+  });
+
+  it("copies an earlier answer of the conversation, with its own sources", async () => {
+    const { user } = await citedAnswer();
+    server.use(http.post("/api/threads/:id/runs", () => sseResponse(fixture("data"))));
+    await user.type(screen.getByLabelText("Your question"), DATA_QUESTION);
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+    await runFinished();
+
+    const history = screen.getByRole("list", { name: "Earlier in this conversation" });
+    const bar = within(history).getByRole("toolbar", { name: "Answer actions" });
+    await user.click(within(bar).getByRole("button", { name: "Copy" }));
+
+    expect(await navigator.clipboard.readText()).toBe(COPIED);
+  });
+
+  it("shows no bar on an answer without a run", async () => {
+    server.use(
+      http.get("/api/threads", () => HttpResponse.json([{ thread_id: "t9", title: "Old", updated_at: "x" }])),
+      http.get("/api/threads/t9", () =>
+        HttpResponse.json({
+          thread_id: "t9",
+          title: "Old",
+          messages: [
+            { role: "user", content: "What is a letter of demand?" },
+            { role: "assistant", content: "A formal demand." },
+          ],
+          summary: "",
+          running: null,
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    render(inShell(<AskScreen />));
+
+    await user.click(await screen.findByRole("button", { name: "Old" }));
+    await screen.findByRole("list", { name: "Earlier in this conversation" });
+
+    expect(screen.queryByRole("toolbar", { name: "Answer actions" })).not.toBeInTheDocument();
+  });
+});
+
 describe("View trace", () => {
   const DATA_RUN = "6b54eecd-7625-405e-a0b8-4c30f29b9e3e";
 
@@ -1138,7 +1253,8 @@ describe("View trace", () => {
   it("links a developer to the LangSmith trace of the answer's run, in a new tab", async () => {
     const answer = await dataAnswer(true);
 
-    const link = within(answer).getByRole("link", { name: "View trace" });
+    const bar = within(answer).getByRole("toolbar", { name: "Answer actions" });
+    const link = within(bar).getByRole("link", { name: "View trace" });
     expect(link).toHaveAttribute("href", `/api/threads/t1/runs/${DATA_RUN}/trace`);
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");

@@ -15,9 +15,8 @@ import {
   type ThreadView,
   type UserCtx,
 } from "@/lib/events";
-import { AnswerFeedback } from "./AnswerFeedback";
+import { AnswerActions } from "./AnswerActions";
 import { AnswerText, type OnCite } from "./AnswerText";
-import { TraceLink } from "./TraceLink";
 import { ClassificationCard } from "./ClassificationCard";
 import { DocCheckCard } from "./DocCheckCard";
 import { DraftPreview } from "./DraftPreview";
@@ -114,7 +113,7 @@ type Panel = { sources: AnswerSources; index: number; openCount: number; opener:
 class Interrupted extends Error {}
 
 /**
- * `developer`: the signed-in persona is a developer, who gets a "View trace" link on each answer.
+ * `developer`: the signed-in persona is a developer, who gets "View trace" in each answer's action bar.
  * `user`: the signed-in persona, greeted with starter prompts for their role in a new conversation.
  */
 export function AskScreen({
@@ -448,10 +447,13 @@ export function AskScreen({
                     <AnswerText markdown={m.content} citations={sources.citations} onCite={cite(sources)} />
                     <SourcesButton sources={sources} onCite={cite(sources)} />
                     {answeredBy[i] && active && (
-                      <>
-                        <AnswerFeedback threadId={active} runId={answeredBy[i]} />
-                        {developer && <TraceLink threadId={active} runId={answeredBy[i]} />}
-                      </>
+                      <AnswerActions
+                        threadId={active}
+                        runId={answeredBy[i]}
+                        markdown={m.content}
+                        citations={sources.citations}
+                        developer={developer}
+                      />
                     )}
                   </div>
                 )}
@@ -501,10 +503,14 @@ export function AskScreen({
                   <DraftPreview key={draft.draft_id} draft={draft} />
                 ))}
                 {run.status === "done" && run.runId && active && (
-                  <>
-                    <AnswerFeedback key={run.runId} threadId={active} runId={run.runId} />
-                    {developer && <TraceLink threadId={active} runId={run.runId} />}
-                  </>
+                  <AnswerActions
+                    key={run.runId}
+                    threadId={active}
+                    runId={run.runId}
+                    markdown={run.answer}
+                    citations={run.citations}
+                    developer={developer}
+                  />
                 )}
               </section>
             )}

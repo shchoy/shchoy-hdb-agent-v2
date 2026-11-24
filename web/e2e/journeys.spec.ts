@@ -66,6 +66,24 @@ test("an officer asks, reads the cited source, then follows up in the same conve
   await expect(sourcesPanel(page)).toContainText("60 days");
 });
 
+test("an officer copies an answer with its sources from the answer's action bar, by keyboard", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, QUESTION);
+
+  const bar = answer(page).getByRole("toolbar", { name: "Answer actions" });
+  await bar.getByRole("button", { name: "Helpful", exact: true }).focus();
+  await page.keyboard.press("Home");
+  const copy = bar.getByRole("button", { name: "Copy", exact: true });
+  await expect(copy).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(answer(page).getByRole("status")).toHaveText("Copied");
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain("a letter of demand is issued once arrears reach 60 days [1].\n\nSources\n[1] ");
+  await expect(bar.getByRole("link", { name: "View trace" })).toHaveCount(0);
+});
+
 test("an officer approves one arrears letter and rejects another with a reason", async ({ page }) => {
   await signIn(page, OFFICER);
   await askInNewConversation(page, REMINDER_GOLDEN_LEAF);

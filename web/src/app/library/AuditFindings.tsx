@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { components } from "@/lib/api/schema";
 import type { AuditDocRef, AuditReport, AuditSide } from "@/lib/events";
+import { Badge, Card, cardListClass } from "../Card";
 import { day, when } from "../dates";
 import { DocumentViewer, QuoteViewer } from "../SourceViewer";
 import styles from "./library.module.css";
@@ -46,8 +47,8 @@ function times(n: number): string {
 function Section({ id, title, count, children }: { id: string; title: string; count: number; children: ReactNode }) {
   const heading = `audit-${id}`;
   return (
-    <section aria-labelledby={heading} className={styles.auditSection}>
-      <h2 id={heading} className={styles.heading}>
+    <section aria-labelledby={heading} className={styles.section}>
+      <h2 id={heading} className={styles.sectionHeading}>
         {title} <span className={styles.count}>({count})</span>
       </h2>
       {count === 0 ? <p className={styles.meta}>None found</p> : children}
@@ -55,29 +56,53 @@ function Section({ id, title, count, children }: { id: string; title: string; co
   );
 }
 
-function Doc({ doc }: { doc: AuditDocRef }) {
+/** A Library document: an audit finding's or a category's. */
+type LibraryDoc = Pick<AuditDocRef, "doc_id" | "title" | "doc_type"> & {
+  version?: string | null;
+  status?: AuditDocRef["status"];
+};
+
+/** A document (place it in a `docLine` container): its title (unless the card's heading already names it), type, version, status and viewer. */
+export function Doc({ doc, titled = true }: { doc: LibraryDoc; titled?: boolean }) {
   return (
-    <span>
-      <span className={styles.title}>{doc.title}</span> <span className={styles.docType}>{doc.doc_type}</span>
+    <>
+      {titled && <span className={styles.title}>{doc.title}</span>} <Badge>{doc.doc_type}</Badge>
       {doc.version && <span className={styles.location}> v{doc.version}</span>}
-      {doc.status === "superseded" && <span className={styles.superseded}>Superseded</span>}{" "}
+      {doc.status === "superseded" && (
+        <>
+          {" "}
+          <Badge tone="warning">Superseded</Badge>
+        </>
+      )}{" "}
       <DocumentViewer docId={doc.doc_id} label={`Open ${doc.title}`} />
-    </span>
+    </>
   );
 }
 
 function Side({ name, side, prevails }: { name: "A" | "B"; side: AuditSide; prevails: boolean }) {
   return (
-    <div role="group" aria-label={`Side ${name}: ${side.title}`} className={styles.side}>
-      <p>
+    <div
+      role="group"
+      aria-label={`Side ${name}: ${side.title}`}
+      className={styles.side}
+      data-prevails={prevails || undefined}
+    >
+      <p className={styles.sideHead}>
+        <span className={styles.sideName}>{name}</span>
         <span className={styles.title}>{side.title}</span>
-        {side.version && <span className={styles.location}> v{side.version}</span>}
-        {prevails && <span className={styles.prevails}>Prevails</span>}
+        {side.version && <span className={styles.location}>v{side.version}</span>}
+        {prevails && (
+          <Badge tone="success" as="strong">
+            Prevails
+          </Badge>
+        )}
       </p>
       {side.location && <p className={styles.location}>{side.location}</p>}
       <blockquote className={styles.quote}>{side.quote}</blockquote>
       {side.doc_id === null ? (
-        <p className={styles.record}>PLG Records</p>
+        <p className={styles.record}>
+          <Badge>PLG Records</Badge>
+        </p>
       ) : (
         side.chunk_id && (
           <QuoteViewer docId={side.doc_id} chunkId={side.chunk_id} quote={side.quote} label={`Open ${side.title}`} />
@@ -141,108 +166,126 @@ export function AuditFindings() {
       </p>
 
       <Section id="conflicts" title="Conflicts" count={conflicts.length}>
-        <ul className={styles.groups}>
+        <ul className={cardListClass}>
           {conflicts.map((c) => (
-            <li key={c.id} className={styles.group}>
-              <article aria-label={c.topic}>
-                <h3 className={styles.findingTitle}>{c.topic}</h3>
+            <li key={c.id}>
+              <Card as="article" heading={c.topic} badges={<Badge tone="danger">Conflict</Badge>}>
                 <div className={styles.sides}>
                   <Side name="A" side={c.a} prevails={c.prevails === "a"} />
                   <Side name="B" side={c.b} prevails={c.prevails === "b"} />
                 </div>
-                <p>
+                <p className={styles.resolution}>
                   <strong>Expected resolution:</strong> {c.resolution}
                 </p>
-              </article>
+              </Card>
             </li>
           ))}
         </ul>
       </Section>
 
       <Section id="duplicates" title="Near-duplicates" count={duplicates.length}>
-        <ul className={styles.groups}>
+        <ul className={cardListClass}>
           {duplicates.map((d) => (
-            <li key={`${d.a.doc_id}-${d.b.doc_id}`} className={styles.group}>
-              <p>
-                <span className={styles.docType}>{DUPLICATE_KIND[d.kind]}</span>{" "}
-                <span className={styles.count}>{Math.round(d.similarity * 100)}% similar</span>
-              </p>
-              <p className={styles.document}>
-                <Doc doc={d.a} />
-              </p>
-              <p className={styles.document}>
-                <Doc doc={d.b} />
-              </p>
-              <p className={styles.description}>{d.note}</p>
+            <li key={`${d.a.doc_id}-${d.b.doc_id}`}>
+              <Card
+                as="article"
+                heading={
+                  <>
+                    {DUPLICATE_KIND[d.kind]}
+                    <span className={styles.visuallyHidden}>: {d.a.title}</span>
+                  </>
+                }
+                badges={<Badge>{Math.round(d.similarity * 100)}% similar</Badge>}
+              >
+                <p className={`${styles.document} ${styles.docLine}`}>
+                  <Doc doc={d.a} />
+                </p>
+                <p className={`${styles.document} ${styles.docLine}`}>
+                  <Doc doc={d.b} />
+                </p>
+                <p className={styles.description}>{d.note}</p>
+              </Card>
             </li>
           ))}
         </ul>
       </Section>
 
       <Section id="stale" title="Stale documents" count={stale.length}>
-        <ul className={styles.groups}>
+        <ul className={cardListClass}>
           {stale.map((s) => (
-            <li key={`${s.doc.doc_id}-${s.policy_id}`} className={styles.group}>
-              <Doc doc={s.doc} />
-              <blockquote className={styles.quote}>{s.quote}</blockquote>
-              <p>
-                Relies on {s.relies_on}. Current: {s.current_version}
-                {since(s.current_from)}.
-              </p>
-              <p className={styles.description}>{s.reason}</p>
+            <li key={`${s.doc.doc_id}-${s.policy_id}`}>
+              <Card as="article" heading={s.doc.title} badges={<Badge tone="warning">Stale</Badge>}>
+                <p className={styles.docLine}>
+                  <Doc doc={s.doc} titled={false} />
+                </p>
+                <blockquote className={styles.quote}>{s.quote}</blockquote>
+                <p>
+                  Relies on {s.relies_on}. Current: {s.current_version}
+                  {since(s.current_from)}.
+                </p>
+                <p className={styles.description}>{s.reason}</p>
+              </Card>
             </li>
           ))}
         </ul>
       </Section>
 
       <Section id="definitions" title="Reports using superseded definitions" count={definitions.length}>
-        <ul className={styles.groups}>
+        <ul className={cardListClass}>
           {definitions.map((d) => (
-            <li key={`${d.chunk_id}-${d.concept}`} className={styles.group}>
-              <p>
-                <span className={styles.title}>{d.doc.title}</span>{" "}
-                <span className={styles.docType}>{d.doc.doc_type}</span>{" "}
-                <QuoteViewer docId={d.doc.doc_id} chunkId={d.chunk_id} quote={d.quote} label={`Open ${d.doc.title}`} />
-              </p>
-              <p className={styles.location}>{d.location}</p>
-              <blockquote className={styles.quote}>{d.quote}</blockquote>
-              <p>
-                Uses {d.used_version}; current: {d.current_version}
-                {since(d.current_from)}.
-              </p>
-              <p className={styles.description}>{d.explanation}</p>
+            <li key={`${d.chunk_id}-${d.concept}`}>
+              <Card as="article" heading={d.doc.title} badges={<Badge tone="warning">Superseded definition</Badge>}>
+                <p className={styles.docLine}>
+                  <Badge>{d.doc.doc_type}</Badge>{" "}
+                  <QuoteViewer docId={d.doc.doc_id} chunkId={d.chunk_id} quote={d.quote} label={`Open ${d.doc.title}`} />
+                </p>
+                <p className={styles.location}>{d.location}</p>
+                <blockquote className={styles.quote}>{d.quote}</blockquote>
+                <p>
+                  Uses {d.used_version}; current: {d.current_version}
+                  {since(d.current_from)}.
+                </p>
+                <p className={styles.description}>{d.explanation}</p>
+              </Card>
             </li>
           ))}
         </ul>
       </Section>
 
       <Section id="rules" title="Data rule violations" count={violations.length}>
-        <ul className={styles.groups}>
+        <ul className={cardListClass}>
           {violations.map((v) => (
-            <li key={`${v.rule}-${v.entity_ids.join(",")}`} className={styles.group}>
-              <p>
-                <span className={styles.title}>{RULE[v.rule] ?? v.rule}</span>{" "}
-                {v.entity_ids.map((id) => (
-                  <code key={id} className={styles.entity}>
-                    {id}
-                  </code>
-                ))}
-              </p>
-              <p className={styles.description}>{v.detail}</p>
+            <li key={`${v.rule}-${v.entity_ids.join(",")}`}>
+              <Card as="article" heading={RULE[v.rule] ?? v.rule}>
+                <p className={styles.entities}>
+                  {v.entity_ids.map((id) => (
+                    <code key={id} className={styles.entity}>
+                      {id}
+                    </code>
+                  ))}
+                </p>
+                <p className={styles.description}>{v.detail}</p>
+              </Card>
             </li>
           ))}
         </ul>
       </Section>
 
       <Section id="gaps" title="Gaps" count={gaps.length}>
-        <ul className={styles.groups}>
+        <ul className={cardListClass}>
           {gaps.map((g) => (
-            <li key={g.question} className={styles.group}>
-              <p className={styles.title}>{g.question}</p>
-              <p className={styles.meta}>
-                Asked {times(g.asked)}, last {when(g.last_asked)} ·{" "}
-                {g.reasons.map((r) => gapReason(r, g.top_score ?? null)).join(", ")}
-              </p>
+            <li key={g.question}>
+              <Card
+                as="article"
+                heading={g.question}
+                badges={g.reasons.map((r) => (
+                  <Badge key={r}>{gapReason(r, g.top_score ?? null)}</Badge>
+                ))}
+              >
+                <p className={styles.meta}>
+                  Asked {times(g.asked)}, last {when(g.last_asked)}
+                </p>
+              </Card>
             </li>
           ))}
         </ul>

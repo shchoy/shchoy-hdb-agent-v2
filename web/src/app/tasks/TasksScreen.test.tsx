@@ -88,6 +88,10 @@ describe("Tasks screen", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Your role can't view this officer's tasks.");
     expect(screen.queryByRole("table", { name: "Ranked tasks" })).not.toBeInTheDocument();
+
+    await user.click(within(screen.getByRole("alert")).getByRole("button", { name: "Show my tasks" }));
+    expect(await screen.findByRole("region", { name: "Top tasks for Marcus Lim" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Officer")).toHaveValue("S04");
   });
 
   it("offers no officer choice to someone who can only see their own tasks", async () => {

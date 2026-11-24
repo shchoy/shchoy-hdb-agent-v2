@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import type { TaskDigest, UserCtx } from "@/lib/events";
+import { Card } from "../Card";
 import { TaskList } from "../TaskList";
+import styles from "./tasks.module.css";
 
 /** How many tasks the officer can choose to see. */
 export const SHOW_COUNTS = [5, 10, 20, 50] as const;
@@ -64,36 +66,45 @@ export function TasksScreen() {
 
   return (
     <>
-      <form aria-label="Tasks shown" onSubmit={(e) => e.preventDefault()}>
+      <form aria-label="Tasks shown" className={styles.filters} onSubmit={(e) => e.preventDefault()}>
         {team.length > 1 && (
-          <p>
-            <label htmlFor="officer">Officer</label>{" "}
-            <select
-              id="officer"
-              value={officer ?? self}
-              onChange={(e) => setOfficer(e.target.value === self ? null : e.target.value)}
-            >
+          <label className={styles.field}>
+            Officer
+            <select value={officer ?? self} onChange={(e) => setOfficer(e.target.value === self ? null : e.target.value)}>
               {team.map((member) => (
                 <option key={member.staff_id} value={member.staff_id}>
                   {member.staff_id === self ? `${member.name} (you)` : member.name}
                 </option>
               ))}
             </select>
-          </p>
+          </label>
         )}
-        <p>
-          <label htmlFor="show">Show</label>{" "}
-          <select id="show" value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
+        <label className={styles.field}>
+          Show
+          <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
             {SHOW_COUNTS.map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
             ))}
           </select>
-        </p>
+        </label>
       </form>
-      {!showing && <p role="status">Loading…</p>}
-      {showing && "error" in showing && <p role="alert">{showing.error}</p>}
+      {!showing && (
+        <p role="status" className={styles.status}>
+          Loading…
+        </p>
+      )}
+      {showing && "error" in showing && (
+        <Card role="alert" tone="danger">
+          <p>{showing.error}</p>
+          {officer && (
+            <button type="button" onClick={() => setOfficer(null)}>
+              Show my tasks
+            </button>
+          )}
+        </Card>
+      )}
       {showing && "digest" in showing && (
         <TaskList digest={showing.digest} heading={`Top tasks for ${showing.digest.name}`} />
       )}

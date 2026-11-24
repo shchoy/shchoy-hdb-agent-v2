@@ -1,0 +1,28 @@
+/* The Tasks screen: the officer and count pickers above the ranked task card. Tokens only. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-5);
+  margin: 0 0 var(--space-2);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.field select {
+  min-width: 6rem;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+}
+
+.status {
+  color: var(--color-text-muted);
+}

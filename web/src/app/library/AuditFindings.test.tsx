@@ -160,6 +160,7 @@ describe("Library audit findings", () => {
     expect(items[1]).toHaveTextContent("Earlier version");
     expect(items[1]).toHaveTextContent("Superseded");
     expect(items[2]).toHaveTextContent("Same content");
+    expect(within(items[0]).getByRole("article", { name: `Near-duplicate: ${faq.a.title}` })).toBeInTheDocument();
   });
 
   it("lists stale documents, superseded definitions, rule violations and gaps", async () => {
@@ -198,6 +199,12 @@ describe("Library audit findings", () => {
     expect(gaps[0]).toHaveTextContent(parking.question);
     expect(gaps[0]).toHaveTextContent(`Asked ${parking.asked} times, last ${when(parking.last_asked)}`);
     expect(gaps[0]).toHaveTextContent("Not covered");
+
+    // Every finding is a card named by what it is about.
+    expect(within(staleItem).getByRole("article", { name: stale.doc.title })).toBeInTheDocument();
+    expect(within(qbrItem).getByRole("article", { name: qbr.doc.title })).toBeInTheDocument();
+    expect(within(rules[0]).getByRole("article", { name: "Overlapping tenancies" })).toBeInTheDocument();
+    expect(within(gaps[0]).getByRole("article", { name: parking.question })).toBeInTheDocument();
     expect(gaps[1]).toHaveTextContent("Asked once");
     expect(gaps[1]).toHaveTextContent("Low search score (0.12)");
   });

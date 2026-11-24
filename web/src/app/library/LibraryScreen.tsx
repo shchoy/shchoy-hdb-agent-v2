@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import type { Categorisation, CategoryDocument } from "@/lib/events";
+import { Card, cardListClass } from "../Card";
 import { when } from "../dates";
-import { DocumentViewer } from "../SourceViewer";
-import { AuditFindings } from "./AuditFindings";
+import { AuditFindings, Doc } from "./AuditFindings";
 import styles from "./library.module.css";
 
 type Loaded = { status: "loading" } | { status: "failed"; error: string } | { status: "ok"; view: Categorisation };
@@ -123,40 +123,50 @@ function Categories() {
           them.
         </p>
       )}
-      <ul className={styles.groups} aria-label="Document categories">
+      <ul className={cardListClass} aria-label="Document categories">
         {groups.map((group) => {
           const expanded = open.has(group.id);
           const panel = `category-${group.id}`;
           return (
-            <li key={group.id} className={styles.group}>
-              <h2 className={styles.heading}>
-                <button type="button" aria-expanded={expanded} aria-controls={panel} onClick={() => toggle(group.id)}>
-                  {group.name}
-                </button>{" "}
-                <span className={styles.count}>({count(group.documents.length)})</span>
-              </h2>
-              {group.description && <p className={styles.description}>{group.description}</p>}
-              {expanded && (
-                <section id={panel} aria-label={group.name} className={styles.panel}>
-                  {group.summary && (
-                    <>
-                      <h3>Summary</h3>
-                      <p>{group.summary}</p>
-                    </>
-                  )}
-                  <h3>Documents</h3>
-                  <ul className={styles.documents} aria-label={`Documents in ${group.name}`}>
-                    {group.documents.map((doc) => (
-                      <li key={doc.doc_id} className={styles.document}>
-                        <span className={styles.title}>{doc.title}</span>{" "}
-                        <span className={styles.docType}>{doc.doc_type}</span>
-                        {doc.status === "superseded" && <span className={styles.superseded}>Superseded</span>}{" "}
-                        <DocumentViewer docId={doc.doc_id} label={`Open ${doc.title}`} />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
+            <li key={group.id}>
+              <Card
+                as="article"
+                level={2}
+                heading={
+                  <>
+                    <button
+                      type="button"
+                      className={styles.toggle}
+                      aria-expanded={expanded}
+                      aria-controls={panel}
+                      onClick={() => toggle(group.id)}
+                    >
+                      {group.name}
+                    </button>{" "}
+                    <span className={styles.count}>({count(group.documents.length)})</span>
+                  </>
+                }
+              >
+                {group.description && <p className={styles.description}>{group.description}</p>}
+                {expanded && (
+                  <section id={panel} aria-label={group.name} className={styles.panel}>
+                    {group.summary && (
+                      <>
+                        <h3>Summary</h3>
+                        <p>{group.summary}</p>
+                      </>
+                    )}
+                    <h3>Documents</h3>
+                    <ul className={styles.documents} aria-label={`Documents in ${group.name}`}>
+                      {group.documents.map((doc) => (
+                        <li key={doc.doc_id} className={`${styles.document} ${styles.docLine}`}>
+                          <Doc doc={doc} />
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+              </Card>
             </li>
           );
         })}

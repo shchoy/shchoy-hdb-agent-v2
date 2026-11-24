@@ -1,39 +1,11 @@
+/* The Library: category cards and audit finding cards (Card, cardListClass). Tokens only. */
 .meta {
   color: var(--color-text-muted);
 }
 
-.groups,
 .documents {
   list-style: none;
   padding: 0;
-}
-
-.group {
-  border-top: 1px solid var(--color-border);
-  padding: var(--space-2) 0;
-}
-
-.heading {
-  font-size: var(--text-lg);
-  margin: var(--space-1) 0;
-}
-
-.heading button {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  padding: 0;
-  text-align: left;
-}
-
-.heading button::before {
-  content: "▸ ";
-}
-
-.heading button[aria-expanded="true"]::before {
-  content: "▾ ";
 }
 
 .count {
@@ -63,22 +35,6 @@
   font-weight: var(--weight-medium);
 }
 
-.docType {
-  background: var(--color-primary-tint-strong);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  padding: 0 var(--space-1);
-}
-
-.superseded {
-  background: var(--color-warning-bg);
-  border-radius: var(--radius-sm);
-  color: var(--color-warning-text);
-  font-size: var(--text-xs);
-  margin-left: var(--space-1);
-  padding: 0 var(--space-1);
-}
-
 .tabs {
   border-bottom: 1px solid var(--color-border);
   display: flex;
@@ -86,27 +42,25 @@
   margin-bottom: var(--space-3);
 }
 
-.tabs button {
+.tabs button[type="button"] {
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
-  cursor: pointer;
+  border-radius: 0;
+  color: var(--color-text-muted);
   font: inherit;
   padding: var(--space-2) var(--space-3);
 }
 
+.tabs button[type="button"]:hover:not(:disabled) {
+  background: var(--color-primary-tint);
+  color: var(--color-text);
+}
+
 .tabs button[aria-selected="true"] {
   border-bottom-color: var(--color-primary);
+  color: var(--color-text);
   font-weight: var(--weight-semibold);
-}
-
-.auditSection {
-  margin: var(--space-4) 0;
-}
-
-.findingTitle {
-  font-size: var(--text-base);
-  margin: var(--space-1) 0;
 }
 
 .sides {
@@ -137,15 +91,6 @@
   white-space: pre-wrap;
 }
 
-.prevails {
-  background: var(--color-success-bg);
-  border-radius: var(--radius-sm);
-  color: var(--color-success);
-  font-size: var(--text-xs);
-  margin-left: var(--space-1);
-  padding: 0 var(--space-1);
-}
-
 .record {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
@@ -159,4 +104,106 @@
 .dropped {
   color: var(--color-text-muted);
   margin: var(--space-4) 0;
+}
+
+/* A category's name: the button that opens its summary and documents, reading as the heading it is. */
+.toggle,
+.toggle[type="button"] {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+}
+
+.toggle[type="button"]:hover:not(:disabled) {
+  background: none;
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.toggle::before {
+  content: "▸";
+  color: var(--color-primary);
+  transition: transform 0.15s;
+}
+
+.toggle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle::before {
+    transition: none;
+  }
+}
+
+.section + .section {
+  margin-top: var(--space-4);
+}
+
+.sectionHeading {
+  font-size: var(--text-lg);
+  margin: var(--space-6) 0 var(--space-3);
+}
+
+.docLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+}
+
+/* An opened document (or its error) takes the whole row below the title. */
+.docLine > :not(span, strong, button, code) {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+/* A conflict's side: A or B, its title and version; the prevailing one framed in green beside the "Prevails" badge. */
+.side[data-prevails] {
+  border: 2px solid var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.sideHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+}
+
+.sideName {
+  font-weight: var(--weight-bold);
+  color: var(--color-text-muted);
+}
+
+.sideName::after {
+  content: ":";
+}
+
+.resolution {
+  margin-top: var(--space-3);
+}
+
+.entities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

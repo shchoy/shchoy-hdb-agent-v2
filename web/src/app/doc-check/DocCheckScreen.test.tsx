@@ -45,6 +45,9 @@ describe("Document check screen", () => {
     await checkFinished();
 
     expect(runs).toEqual([{ thread: "t9", body: { message: QUESTION } }]);
+    const picked = screen.getByRole("rowheader", { name: /APP-2026-0294/ }).closest("tr")!;
+    expect(picked).toHaveTextContent("Checked");
+    expect(picked).toHaveAttribute("aria-current", "true");
     const result = screen.getByRole("region", { name: "Check of APP-2026-0294" });
     expect(result).toHaveTextContent("APP-2026-0294 is incomplete");
     const card = within(result).getByRole("region", { name: "Document check" });

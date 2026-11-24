@@ -11,12 +11,13 @@ import {
   type Submission,
 } from "@/lib/events";
 import { AnswerText } from "../AnswerText";
+import { Badge, Card, TableScroll, tableClass } from "../Card";
 import { day } from "../dates";
 import { DocCheckCard } from "../DocCheckCard";
 import { DraftPreview } from "../DraftPreview";
 import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "../runClient";
 import { useShell } from "../shell/ShellContext";
-import styles from "../ask.module.css";
+import styles from "./doc-check.module.css";
 
 /** The question the Document check screen asks for an application. */
 export function checkQuestion(applicationId: string): string {
@@ -33,6 +34,9 @@ type Check = {
   proposed: ProposedActionEvent[];
   reason: string;
 };
+
+/** What the picked application's row says while and after it is checked. */
+const CHECK_STATUS_LABEL: Record<Check["status"], string> = { running: "Checking…", done: "Checked", failed: "Check failed" };
 
 /** Applications with a submission bundle; pick one to check its documents in a new conversation. */
 export function DocCheckScreen() {
@@ -110,66 +114,99 @@ export function DocCheckScreen() {
   return (
     <>
       <section aria-labelledby="applications-heading">
-        <h2 id="applications-heading">Applications</h2>
-        {error && <p role="alert">{error}</p>}
-        {!submissions && !error && <p>Loading…</p>}
+        <h2 id="applications-heading" className={styles.step}>
+          Applications
+        </h2>
+        <p className={styles.intro}>Pick an application to check its submitted documents against its checklist.</p>
+        {error && (
+          <Card role="alert" tone="danger">
+            <p>{error}</p>
+          </Card>
+        )}
+        {!submissions && !error && (
+          <p role="status" className={styles.intro}>
+            Loading…
+          </p>
+        )}
         {submissions && submissions.length === 0 && <p>No application has submitted documents.</p>}
         {submissions && submissions.length > 0 && (
-          <table aria-labelledby="applications-heading" className={styles.checklist}>
-            <thead>
-              <tr>
-                <th scope="col">Application</th>
-                <th scope="col">Type</th>
-                <th scope="col">Tenant</th>
-                <th scope="col">Unit</th>
-                <th scope="col">Submitted</th>
-                <th scope="col">Status</th>
-                <th scope="col">Files</th>
-                <th scope="col">
-                  <span className={styles.visuallyHidden}>Check</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {submissions.map((s) => (
-                <tr key={s.application_id}>
-                  <th scope="row">{s.application_id}</th>
-                  <td>{s.app_type_label}</td>
-                  <td>{s.tenant_name}</td>
-                  <td>{s.unit_id}</td>
-                  <td>{day(s.submitted_date)}</td>
-                  <td>{s.status}</td>
-                  <td>{s.files}</td>
-                  <td>
-                    <button
-                      type="button"
-                      disabled={running}
-                      aria-label={`Check ${s.application_id}`}
-                      onClick={() => void run(s.application_id)}
-                    >
-                      Check
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className={styles.frame}>
+            <TableScroll label="Applications">
+              <table aria-labelledby="applications-heading" className={tableClass}>
+                <thead>
+                  <tr>
+                    <th scope="col">Application</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Tenant</th>
+                    <th scope="col">Unit</th>
+                    <th scope="col">Submitted</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Files</th>
+                    <th scope="col">
+                      <span className={styles.visuallyHidden}>Check</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submissions.map((s) => {
+                    const picked = check?.applicationId === s.application_id;
+                    return (
+                      <tr
+                        key={s.application_id}
+                        className={picked ? styles.picked : undefined}
+                        aria-current={picked || undefined}
+                      >
+                        <th scope="row" className={styles.appId}>
+                          {s.application_id}
+                        </th>
+                        <td>{s.app_type_label}</td>
+                        <td>{s.tenant_name}</td>
+                        <td>{s.unit_id}</td>
+                        <td>{day(s.submitted_date)}</td>
+                        <td>
+                          <Badge>{s.status}</Badge>
+                        </td>
+                        <td>{s.files}</td>
+                        <td className={styles.pick}>
+                          <button
+                            type="button"
+                            disabled={running}
+                            aria-label={`Check ${s.application_id}`}
+                            onClick={() => void run(s.application_id)}
+                          >
+                            Check
+                          </button>
+                          {picked && check && <span className={styles.pickedLabel}>{CHECK_STATUS_LABEL[check.status]}</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </TableScroll>
+          </div>
         )}
       </section>
 
       {check && (
-        <section aria-labelledby="result-heading" className={styles.answer} aria-busy={running}>
-          <h2 id="result-heading">Check of {check.applicationId}</h2>
-          {check.status === "running" && <p role="status">Checking the submitted documents…</p>}
+        <section aria-labelledby="result-heading" className={styles.result} aria-busy={running}>
+          <h2 id="result-heading" className={styles.step}>
+            Check of {check.applicationId}
+          </h2>
+          {check.status === "running" && (
+            <p role="status" className={styles.intro}>
+              Checking the submitted documents…
+            </p>
+          )}
           {check.status === "failed" ? (
-            <div role="alert" className={styles.alert}>
+            <Card role="alert" tone="danger">
               <p>
                 <strong>The check is incomplete and must not be trusted.</strong> {check.reason}
               </p>
               <button type="button" onClick={() => void run(check.applicationId)}>
                 Retry
               </button>
-            </div>
+            </Card>
           ) : (
             <>
               <AnswerText markdown={check.answer} />
@@ -179,15 +216,15 @@ export function DocCheckScreen() {
               {check.drafts.map((draft) => (
                 <DraftPreview key={draft.draft_id} draft={draft} />
               ))}
-              {check.status === "done" && check.proposed.length > 0 && (
-                <p>
-                  <Link href="/approvals">Review the notice in Approvals</Link>
-                </p>
-              )}
             </>
           )}
           {check.status !== "running" && check.threadId && (
-            <p>
+            <p className={styles.next}>
+              {check.status === "done" && check.proposed.length > 0 && (
+                <Link href="/approvals" className={styles.primaryLink}>
+                  Review the notice in Approvals
+                </Link>
+              )}
               <Link
                 href="/"
                 onClick={() => {

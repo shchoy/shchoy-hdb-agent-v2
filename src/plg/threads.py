@@ -1,7 +1,7 @@
 """Conversations: who owns which thread, and runs that outlive their HTTP connection.
 
 The conversation itself lives in the LangGraph checkpoint (same SQLite file); this module holds only what the
-checkpoint doesn't: thread ownership, title and group (the officer's own groups too), and the events of the latest run per thread, so a browser that
+checkpoint doesn't: thread ownership, title, group and pin (the officer's own groups too), and the events of the latest run per thread, so a browser that
 dropped or refreshed can pick the answer up again from the last event sequence number it saw.
 """
 
@@ -31,6 +31,9 @@ class ThreadSummary(BaseModel):
     updated_at: str
     group_id: str | None = None
     """The officer's group it is in (#100); None: under Recent."""
+    pinned: int | None = None
+    """Its place in the officer's Pinned section (#102: lower first, in the order pinned, shared with groups); None:
+    not pinned. A pinned conversation keeps its group_id, so unpinning puts it back there."""
 
 
 class Group(BaseModel):
@@ -38,10 +41,16 @@ class Group(BaseModel):
 
     group_id: str
     name: str
+    pinned: int | None = None
+    """Its place in the officer's Pinned section (#102, shared with conversations); None: not pinned."""
 
 
 class GroupNotFound(Exception):
     """No such group, or someone else's."""
+
+
+class ThreadNotFound(Exception):
+    """No such thread, or someone else's (e.g. deleted meanwhile)."""
 
 
 class StaleGroupOrder(Exception):
@@ -62,12 +71,16 @@ class ThreadStore:
             columns = {row[1] for row in db.execute("PRAGMA table_info(plg_threads)")}
             if "group_id" not in columns:  # a threads.sqlite from before #100
                 db.execute("ALTER TABLE plg_threads ADD COLUMN group_id TEXT")
+            if "pinned" not in columns:  # before #102
+                db.execute("ALTER TABLE plg_threads ADD COLUMN pinned INTEGER")
             db.execute(
                 "CREATE TABLE IF NOT EXISTS plg_groups (group_id TEXT PRIMARY KEY, staff_id TEXT NOT NULL, "
                 "name TEXT NOT NULL, created_at TEXT NOT NULL, position INTEGER)"
             )
             if "position" not in {row[1] for row in db.execute("PRAGMA table_info(plg_groups)")}:  # before #101
                 db.execute("ALTER TABLE plg_groups ADD COLUMN position INTEGER")
+            if "pinned" not in {row[1] for row in db.execute("PRAGMA table_info(plg_groups)")}:  # before #102
+                db.execute("ALTER TABLE plg_groups ADD COLUMN pinned INTEGER")
             # Groups from before #101 take their creation order.
             db.execute(
                 "UPDATE plg_groups SET position = (SELECT COUNT(*) FROM plg_groups o WHERE o.staff_id = plg_groups.staff_id "
@@ -120,13 +133,20 @@ class ThreadStore:
             raise GroupNotFound
         return self._summary(thread_id)
 
+    def pin(self, thread_id: str, staff_id: str, pinned: bool) -> ThreadSummary:
+        """Pin the officer's thread last in Pinned (pinned already: it keeps its place), or unpin it. Raises ThreadNotFound."""
+        with self._db() as db:
+            if not _set_pin(db, "plg_threads", "thread_id", thread_id, staff_id, pinned):
+                raise ThreadNotFound
+        return self._summary(thread_id)
+
     def _summary(self, thread_id: str) -> ThreadSummary:
         with self._db() as db:
             row = db.execute(
-                "SELECT thread_id, COALESCE(title, ''), updated_at, group_id FROM plg_threads WHERE thread_id = ?",
+                "SELECT thread_id, COALESCE(title, ''), updated_at, group_id, pinned FROM plg_threads WHERE thread_id = ?",
                 (thread_id,),
             ).fetchone()
-        return ThreadSummary(thread_id=row[0], title=row[1], updated_at=row[2], group_id=row[3])
+        return ThreadSummary(thread_id=row[0], title=row[1], updated_at=row[2], group_id=row[3], pinned=row[4])
 
     def groups(self, staff_id: str) -> list[Group]:
         """The officer's groups, in their order (#101; a new group goes last)."""
@@ -161,7 +181,14 @@ class ThreadStore:
             if not _owns_group(db, group_id, staff_id):
                 raise GroupNotFound
             db.execute("UPDATE plg_groups SET name = ? WHERE group_id = ?", (name, group_id))
-        return Group(group_id=group_id, name=name)
+            return _group(db, group_id)
+
+    def pin_group(self, group_id: str, staff_id: str, pinned: bool) -> Group:
+        """Pin the officer's group last in Pinned (pinned already: it keeps its place), or unpin it. Raises GroupNotFound."""
+        with self._db() as db:
+            if not _set_pin(db, "plg_groups", "group_id", group_id, staff_id, pinned):
+                raise GroupNotFound
+            return _group(db, group_id)
 
     def delete_group(self, group_id: str, staff_id: str) -> None:
         """Its conversations go back to Recent; none is deleted. Raises GroupNotFound."""
@@ -187,18 +214,41 @@ class ThreadStore:
     def list(self, staff_id: str) -> list[ThreadSummary]:
         with self._db() as db:
             rows = db.execute(
-                "SELECT thread_id, title, updated_at, group_id FROM plg_threads WHERE staff_id = ? AND title IS NOT NULL "
+                "SELECT thread_id, title, updated_at, group_id, pinned FROM plg_threads WHERE staff_id = ? AND title IS NOT NULL "
                 "ORDER BY updated_at DESC, rowid DESC",
                 (staff_id,),
             ).fetchall()
-        return [ThreadSummary(thread_id=r[0], title=r[1], updated_at=r[2], group_id=r[3]) for r in rows]
+        return [ThreadSummary(thread_id=r[0], title=r[1], updated_at=r[2], group_id=r[3], pinned=r[4]) for r in rows]
 
 
 def _groups(db: sqlite3.Connection, staff_id: str) -> list[Group]:
     rows = db.execute(
-        "SELECT group_id, name FROM plg_groups WHERE staff_id = ? ORDER BY position, created_at, rowid", (staff_id,)
+        "SELECT group_id, name, pinned FROM plg_groups WHERE staff_id = ? ORDER BY position, created_at, rowid", (staff_id,)
     ).fetchall()
-    return [Group(group_id=r[0], name=r[1]) for r in rows]
+    return [Group(group_id=r[0], name=r[1], pinned=r[2]) for r in rows]
+
+
+def _group(db: sqlite3.Connection, group_id: str) -> Group:
+    row = db.execute("SELECT group_id, name, pinned FROM plg_groups WHERE group_id = ?", (group_id,)).fetchone()
+    return Group(group_id=row[0], name=row[1], pinned=row[2])
+
+
+def _set_pin(db: sqlite3.Connection, table: str, key: str, item_id: str, staff_id: str, pinned: bool) -> bool:
+    """Pin (after every pinned conversation and group of the officer's; one already pinned keeps its place) or unpin
+    an item of `table` ("plg_threads" | "plg_groups", keyed by `key`). False when the officer has no such item."""
+    if not pinned:
+        return db.execute(
+            f"UPDATE {table} SET pinned = NULL WHERE {key} = ? AND staff_id = ?", (item_id, staff_id)
+        ).rowcount > 0
+    # Two pins at once never share a place. Must be the connection's first statement (sqlite3 opens no implicit
+    # transaction before it), so callers check nothing in the same `with` beforehand: the UPDATE checks ownership.
+    db.execute("BEGIN IMMEDIATE")
+    return db.execute(
+        f"UPDATE {table} SET pinned = COALESCE(pinned, (SELECT COALESCE(MAX(p), -1) + 1 FROM ("
+        "SELECT pinned AS p FROM plg_threads WHERE staff_id = ? UNION ALL SELECT pinned FROM plg_groups WHERE staff_id = ?"
+        f"))) WHERE {key} = ? AND staff_id = ?",
+        (staff_id, staff_id, item_id, staff_id),
+    ).rowcount > 0
 
 
 def _owns_group(db: sqlite3.Connection, group_id: str, staff_id: str) -> bool:

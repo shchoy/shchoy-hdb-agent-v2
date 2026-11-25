@@ -46,7 +46,7 @@ def test_groups_are_created_listed_in_creation_order_renamed_and_deleted(api: Ap
 
     renamed = api.client.patch(f"/groups/{arrears['group_id']}", json={"name": "Arrears"}, headers=USER)
     assert renamed.status_code == 200
-    assert renamed.json() == {"group_id": arrears["group_id"], "name": "Arrears"}
+    assert renamed.json() == {"group_id": arrears["group_id"], "name": "Arrears", "pinned": None}
     assert groups(api) == ["Arrears", "Renewals"]
 
     assert api.client.delete(f"/groups/{arrears['group_id']}", headers=USER).status_code == 204

@@ -72,6 +72,7 @@ from plg.threads import (
     RunInProgress,
     RunRegistry,
     StaleGroupOrder,
+    ThreadNotFound,
     ThreadStore,
     ThreadSummary,
 )
@@ -159,6 +160,12 @@ class MoveRequest(BaseModel):
     """Which of the officer's groups a conversation goes in; null: none (back to Recent)."""
 
     group_id: str | None
+
+
+class PinRequest(BaseModel):
+    """Pin (true) or unpin (false) a conversation or group (#102)."""
+
+    pinned: bool
 
 
 class GroupOrderRequest(BaseModel):
@@ -380,6 +387,22 @@ def create_app(
         owned(thread_id, user)
         with group_found():
             return threads.move(thread_id, user.staff_id, body.group_id)
+
+    @app.put("/threads/{thread_id}/pin", responses={404: {"description": "Thread not found"}})
+    async def pin_thread(thread_id: str, body: PinRequest, user: User) -> ThreadSummary:
+        """Pin one of your conversations (last in Pinned; already pinned: it keeps its place) or unpin it. It keeps
+        its group, so unpinning puts it back there."""
+        owned(thread_id, user)
+        try:
+            return threads.pin(thread_id, user.staff_id, body.pinned)
+        except ThreadNotFound:  # deleted since `owned`
+            raise HTTPException(status_code=404, detail="Thread not found") from None
+
+    @app.put("/groups/{group_id}/pin", responses=group_missing)
+    async def pin_group(group_id: str, body: PinRequest, user: User) -> Group:
+        """Pin one of your groups (last in Pinned; already pinned: it keeps its place) or unpin it."""
+        with group_found():
+            return threads.pin_group(group_id, user.staff_id, body.pinned)
 
     @app.get("/groups")
     async def list_groups(user: User) -> list[Group]:

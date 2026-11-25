@@ -3,14 +3,15 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { Group, ThreadSummary } from "@/lib/events";
 import { MoreIcon } from "./icons";
-import { MENU_ITEMS, moveThread, onMenuKey, refusalDetail, tidy, type DragHandle } from "./menu";
+import { MENU_ITEMS, moveThread, onMenuKey, refusalDetail, setPinned, tidy, type DragHandle } from "./menu";
 import { useShell } from "./ShellContext";
 import styles from "./shell.module.css";
 
 type Mode = "idle" | "menu" | "move" | "rename" | "confirm";
 
 /**
- * One conversation in the sidebar: the button that opens it, and its Options menu (Rename, Move to group…, Delete).
+ * One conversation in the sidebar: the button that opens it, and its Options menu (Rename, Pin / Unpin (#102), Move to
+ * group…, Delete).
  * Rename edits the title in place; Move to group… lists the officer's groups and No group (the keyboard path for
  * moving it, #100); Delete asks first, and shows plg-api's reason when it is refused (answering, awaiting approval).
  * Its row can also be dragged onto a group or Recent (#101; a drag never opens it).
@@ -25,6 +26,7 @@ export function ConversationItem({
   onPick,
   onRenamed,
   onMoved,
+  onPinned,
   onDeleted,
   drag,
 }: {
@@ -39,6 +41,8 @@ export function ConversationItem({
   onPick(): void;
   onRenamed(title: string): void;
   onMoved(groupId: string | null): void;
+  /** Pinned (its new place in Pinned) or unpinned (null) (#102). */
+  onPinned(pinned: number | null): void;
   onDeleted(): void;
   /** Makes its row draggable (#101). */
   drag?: DragHandle;
@@ -130,7 +134,22 @@ export function ConversationItem({
       return close();
     }
     setError(null);
+    setMode("idle"); // a pinned one stays where it is (#102), so its menu must close
     onMoved(groupId);
+  }
+
+  async function pin() {
+    setWorking(true);
+    const result = await setPinned("threads", thread.thread_id, thread.pinned == null);
+    setWorking(false);
+    if ("refused" in result) {
+      if (result.stale) shell.refresh();
+      setError(result.refused);
+      return close();
+    }
+    setError(null);
+    setMode("idle");
+    onPinned(result.pinned); // it moves (into or out of Pinned): the shell puts the focus on its Options there
   }
 
   async function remove() {
@@ -229,6 +248,11 @@ export function ConversationItem({
           <li role="none">
             <button type="button" role="menuitem" tabIndex={-1} onClick={() => (setTitle(thread.title), setMode("rename"))}>
               Rename
+            </button>
+          </li>
+          <li role="none">
+            <button type="button" role="menuitem" tabIndex={-1} disabled={working} onClick={() => void pin()}>
+              {thread.pinned == null ? "Pin" : "Unpin"}
             </button>
           </li>
           <li role="none">

@@ -225,6 +225,52 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(drawer.getByRole("list", { name, exact: true })).toHaveCount(0);
     });
 
+    test("the Pinned section with a pinned conversation and group, also in the drawer (#102)", async ({ page }) => {
+      await signIn(page, OFFICER);
+      await askInNewConversation(page, QUESTION);
+      const conversations = page.getByRole("navigation", { name: "Conversations" });
+      const pinned = conversations.getByRole("list", { name: "Pinned" });
+      const name = `Axe pinned ${colorScheme} ${Date.now()}`;
+      await conversations.getByRole("button", { name: "New group" }).click();
+      await page.keyboard.type(name);
+      await page.keyboard.press("Enter");
+
+      await conversations.getByRole("button", { name: `Options for group ${name}` }).click();
+      await page.getByRole("menuitem", { name: "Pin group" }).click();
+      // Pinning moves the focus to the group's Options in Pinned: wait for it, or it would close the next menu.
+      await expect(pinned.getByRole("button", { name: `Options for group ${name}` })).toBeFocused();
+      await openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` }).click();
+      await page.getByRole("menuitem", { name: "Pin", exact: true }).click();
+      await expect(pinned.getByRole("button", { name: `Options for ${QUESTION}` }).first()).toBeFocused();
+      expect(await seriousViolations(page)).toEqual([]);
+      await pinned.getByRole("button", { name: `Options for group ${name}` }).click();
+      await expect(page.getByRole("menuitem", { name: "Unpin group" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.getByRole("button", { name: "Menu", exact: true }).click();
+      const drawer = page.getByRole("dialog", { name: "Menu" });
+      await expect(drawer.getByRole("list", { name: "Pinned" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
+      // Leave the shared server as found. Each (un)pin moves the focus to the item in its new place: wait for it, or
+      // it would close the next menu.
+      const updates = page.getByRole("status", { name: "Conversation updates" });
+      await drawer.getByRole("list", { name: "Pinned" }).getByRole("button", { name: `Options for ${QUESTION}` }).first().click();
+      await drawer.getByRole("menuitem", { name: "Unpin" }).click();
+      await expect(updates).toHaveText(`Unpinned ${QUESTION}`);
+      await expect(drawer.getByRole("button", { name: `Options for ${QUESTION}` }).first()).toBeFocused();
+      await drawer.getByRole("button", { name: `Options for group ${name}` }).click();
+      await drawer.getByRole("menuitem", { name: "Unpin group" }).click();
+      await expect(updates).toHaveText(`Unpinned group ${name}`);
+      await expect(drawer.getByRole("button", { name: `Options for group ${name}` })).toBeFocused();
+      await drawer.getByRole("button", { name: `Options for group ${name}` }).click();
+      await drawer.getByRole("menuitem", { name: "Delete group" }).click();
+      await drawer.getByRole("group", { name: `Delete group ${name}?` }).getByRole("button", { name: "Delete group" }).click();
+      await expect(drawer.getByRole("list", { name, exact: true })).toHaveCount(0);
+    });
+
     test("the sidebar as a drawer on a phone", async ({ page }) => {
       await signIn(page, OFFICER); // at desktop width: signIn checks the persona shown in the sidebar
       await page.setViewportSize({ width: 390, height: 844 });

@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import type { Group } from "@/lib/events";
 import { ChevronIcon, MoreIcon, PlusIcon } from "./icons";
-import { MENU_ITEMS, onMenuKey, refusalDetail, tidy, type DragHandle, type DropZone } from "./menu";
+import { MENU_ITEMS, onMenuKey, refusalDetail, setPinned, tidy, type DragHandle, type DropZone } from "./menu";
 import { useShell } from "./ShellContext";
 import styles from "./shell.module.css";
 
@@ -11,9 +11,10 @@ type Mode = "idle" | "menu" | "rename" | "confirm";
 
 /**
  * One of the officer's conversation groups (#100) in the sidebar: a disclosure button (name and count) that collapses
- * or expands its conversations, and its Options menu (Rename group, Delete group). Deleting asks first; the group's
- * conversations go back to Recent, none is deleted. Move up / Move down (#101) reorder the groups: the keyboard way to
- * do what dragging the group's row onto another group does. The whole group is a drop zone for conversations and groups.
+ * or expands its conversations, and its Options menu (Rename group, Pin / Unpin group (#102), Delete group). Deleting
+ * asks first; the group's conversations go back to Recent, none is deleted. Move up / Move down (#101) reorder the
+ * groups: the keyboard way to do what dragging the group's row onto another group does (not offered for a pinned group,
+ * which keeps its place in Pinned). The whole group is a drop zone for conversations (and, unpinned, for groups).
  */
 export function GroupSection({
   group,
@@ -22,6 +23,9 @@ export function GroupSection({
   onToggle,
   onRenamed,
   onDeleted,
+  onPinned,
+  focusOptions = false,
+  onFocused,
   position,
   onMove,
   drag,
@@ -34,10 +38,16 @@ export function GroupSection({
   onToggle(): void;
   onRenamed(name: string): void;
   onDeleted(): void;
-  /** Where it is among the officer's groups (0-based) and how many there are. */
-  position: { index: number; total: number };
-  /** Move it to this index (#101); resolves to the refusal shown, or null once moved. */
-  onMove(index: number): Promise<string | null>;
+  /** Pinned (its new place in Pinned) or unpinned (null) (#102). */
+  onPinned(pinned: number | null): void;
+  /** Focus its Options button once shown (it has just been pinned or unpinned, so the old one went). */
+  focusOptions?: boolean;
+  /** Its Options button has taken the focus `focusOptions` asked for. */
+  onFocused?(): void;
+  /** Where it is among the officer's unpinned groups (0-based) and how many there are; none: no Move up / down. */
+  position?: { index: number; total: number };
+  /** Move it to this index among the unpinned groups (#101); resolves to the refusal shown, or null once moved. */
+  onMove?(index: number): Promise<string | null>;
   /** Makes its row (name and Options) draggable (#101). */
   drag?: DragHandle;
   /** It takes dropped conversations and groups (#101). */
@@ -56,6 +66,12 @@ export function GroupSection({
   const cancel = useRef<HTMLButtonElement>(null);
   const refocus = useRef(false);
   const id = useId();
+
+  useEffect(() => {
+    if (!focusOptions) return;
+    options.current?.focus();
+    onFocused?.();
+  }, [focusOptions, onFocused]);
 
   useEffect(() => {
     if (mode === "menu") menu.current?.querySelector<HTMLElement>(MENU_ITEMS)?.focus();
@@ -128,7 +144,22 @@ export function GroupSection({
     }
   }
 
+  async function pin() {
+    setWorking(true);
+    const result = await setPinned("groups", group.group_id, group.pinned == null);
+    setWorking(false);
+    if ("refused" in result) {
+      if (result.stale) shell.refresh();
+      setError(result.refused);
+      return close();
+    }
+    setError(null);
+    setMode("idle");
+    onPinned(result.pinned); // it moves (into or out of Pinned): the shell puts the focus on its Options there
+  }
+
   async function move(index: number) {
+    if (!onMove) return;
     setWorking(true);
     refocus.current = true; // back on Options once moved, even if the menu lost focus as the group moved
     const refused = await onMove(index);
@@ -224,14 +255,19 @@ export function GroupSection({
               Rename group
             </button>
           </li>
-          {position.index > 0 && (
+          <li role="none">
+            <button type="button" role="menuitem" tabIndex={-1} disabled={working} onClick={() => void pin()}>
+              {group.pinned == null ? "Pin group" : "Unpin group"}
+            </button>
+          </li>
+          {position && position.index > 0 && (
             <li role="none">
               <button type="button" role="menuitem" tabIndex={-1} disabled={working} onClick={() => void move(position.index - 1)}>
                 Move up
               </button>
             </li>
           )}
-          {position.index < position.total - 1 && (
+          {position && position.index < position.total - 1 && (
             <li role="none">
               <button type="button" role="menuitem" tabIndex={-1} disabled={working} onClick={() => void move(position.index + 1)}>
                 Move down

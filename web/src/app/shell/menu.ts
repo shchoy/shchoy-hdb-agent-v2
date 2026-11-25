@@ -65,3 +65,29 @@ export type DropZone = {
   onDragLeave(event: DragEvent<HTMLElement>): void;
   onDrop(event: DragEvent<HTMLElement>): void;
 };
+
+/** Pins (true) or unpins a conversation or group through the BFF (#102). Resolves to its new place in Pinned (null:
+ * unpinned), else the refusal to show; `stale` when the sidebar should reload (404: deleted elsewhere). */
+export async function setPinned(
+  kind: "threads" | "groups",
+  id: string,
+  pinned: boolean,
+): Promise<{ pinned: number | null } | { refused: string; stale: boolean }> {
+  const what = kind === "threads" ? "conversation" : "group";
+  try {
+    const response = await fetch(`/api/${kind}/${encodeURIComponent(id)}/pin`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ pinned }),
+    });
+    if (!response.ok)
+      return {
+        refused: await refusalDetail(response, `The ${what} couldn't be ${pinned ? "pinned" : "unpinned"}.`),
+        stale: response.status === 404,
+      };
+    const body = (await response.json()) as { pinned?: number | null };
+    return { pinned: body.pinned ?? null };
+  } catch {
+    return { refused: `The ${what} couldn't be ${pinned ? "pinned" : "unpinned"}. Try again.`, stale: false };
+  }
+}

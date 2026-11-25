@@ -30,6 +30,7 @@ export type AuditSide = Schemas["Side"];
 export type AuditDocRef = Schemas["DocRef"];
 export type UserCtx = Schemas["UserCtx"];
 export type ThreadSummary = Schemas["ThreadSummary"];
+export type Group = Schemas["Group"];
 export type ThreadView = Schemas["ThreadView"];
 
 /** A role for display, e.g. "estate_manager" → "estate manager". */

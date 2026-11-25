@@ -93,3 +93,10 @@ export const MoreIcon = () => (
     <circle cx="19" cy="12" r="1" />
   </Icon>
 );
+
+/** A group's disclosure: points right when collapsed, rotated down (CSS) when expanded. */
+export const ChevronIcon = () => (
+  <Icon>
+    <polyline points="9 6 15 12 9 18" />
+  </Icon>
+);

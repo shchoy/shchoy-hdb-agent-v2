@@ -5,8 +5,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.openapi.utils import get_openapi
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-from pydantic import BaseModel, Field, TypeAdapter, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, TypeAdapter, model_validator
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.actions.audit import AuditEntry, AuditLog
@@ -64,7 +64,16 @@ from plg.search.rerank import LazySearcher, Retriever
 from plg.search.store import SearchStore
 from plg.tasks import rules as task_rules
 from plg.tasks.rules import TaskDigest
-from plg.threads import NothingToStop, RunBuffer, RunInProgress, RunRegistry, ThreadStore, ThreadSummary
+from plg.threads import (
+    Group,
+    GroupNotFound,
+    NothingToStop,
+    RunBuffer,
+    RunInProgress,
+    RunRegistry,
+    ThreadStore,
+    ThreadSummary,
+)
 from plg.tracing import Tracer, install_tracer, pii_masker
 
 
@@ -125,15 +134,30 @@ class RunRequest(BaseModel):
     message: str
 
 
+def _tidy(value: object) -> object:
+    return " ".join(value.split()) if isinstance(value, str) else value
+
+
+Name = Annotated[str, BeforeValidator(_tidy), Field(min_length=1, max_length=80)]
+"""A title or name the officer typed: runs of whitespace become one space; 1 to 80 characters."""
+
+
 class RenameRequest(BaseModel):
-    """A conversation's new title: runs of whitespace become one space; 1 to 80 characters."""
+    """A conversation's new title."""
 
-    title: str = Field(min_length=1, max_length=80)
+    title: Name
 
-    @field_validator("title", mode="before")
-    @classmethod
-    def _tidy(cls, value: object) -> object:
-        return " ".join(value.split()) if isinstance(value, str) else value
+
+class GroupRequest(BaseModel):
+    """A conversation group's name (#100)."""
+
+    name: Name
+
+
+class MoveRequest(BaseModel):
+    """Which of the officer's groups a conversation goes in; null: none (back to Recent)."""
+
+    group_id: str | None
 
 
 class ResumeRequest(BaseModel):
@@ -331,6 +355,44 @@ def create_app(
         runs.forget(thread_id)
         if isinstance(graph.checkpointer, BaseCheckpointSaver):
             await graph.checkpointer.adelete_thread(thread_id)
+        return Response(status_code=204)
+
+    group_missing: dict[int | str, dict[str, Any]] = {404: {"description": "Group not found"}}
+
+    @contextmanager
+    def group_found() -> Iterator[None]:
+        """GroupNotFound (no such group, or someone else's) → 404."""
+        try:
+            yield
+        except GroupNotFound:
+            raise HTTPException(status_code=404, detail="Group not found") from None
+
+    @app.put("/threads/{thread_id}/group", responses={404: {"description": "Thread or group not found"}})
+    async def move_thread(thread_id: str, body: MoveRequest, user: User) -> ThreadSummary:
+        """Move one of your conversations into one of your groups, or (group_id null) back to Recent."""
+        owned(thread_id, user)
+        with group_found():
+            return threads.move(thread_id, user.staff_id, body.group_id)
+
+    @app.get("/groups")
+    async def list_groups(user: User) -> list[Group]:
+        """Your own conversation groups, in the order you created them."""
+        return threads.groups(user.staff_id)
+
+    @app.post("/groups", status_code=201)
+    async def create_group(body: GroupRequest, user: User) -> Group:
+        return threads.create_group(user.staff_id, body.name)
+
+    @app.patch("/groups/{group_id}", responses=group_missing)
+    async def rename_group(group_id: str, body: GroupRequest, user: User) -> Group:
+        with group_found():
+            return threads.rename_group(group_id, user.staff_id, body.name)
+
+    @app.delete("/groups/{group_id}", status_code=204, responses=group_missing)
+    async def delete_group(group_id: str, user: User) -> Response:
+        """Delete one of your groups: its conversations go back to Recent; none is deleted."""
+        with group_found():
+            threads.delete_group(group_id, user.staff_id)
         return Response(status_code=204)
 
     async def waiting(thread_id: str) -> list[ProposedAction]:
@@ -715,6 +777,13 @@ def run_event_schemas() -> dict[str, Any]:
     return {**defs, "RunEvent": schema}
 
 
+KEEP_ALIVE_SECONDS = 75
+"""How long plg-api keeps an idle connection open (uvicorn's default is 5 s). The BFF's fetch (undici) pools
+connections and drops idle ones after about 4 s; with the server closing at nearly the same moment, a request sent
+on a pooled connection was sometimes met by ECONNRESET (a 502 from the BFF). Keeping the server's side open longer
+means the client always closes first."""
+
+
 def serve() -> None:
     """Entry point for `plg-api` and `plg serve`."""
     import uvicorn
@@ -722,4 +791,7 @@ def serve() -> None:
 
     load_dotenv(find_dotenv(usecwd=True))
     settings = Settings.from_env()
-    uvicorn.run(create_app(settings, tracer=install_tracer(settings)), host=settings.api_host, port=settings.api_port)
+    uvicorn.run(
+        create_app(settings, tracer=install_tracer(settings)), host=settings.api_host, port=settings.api_port,
+        timeout_keep_alive=KEEP_ALIVE_SECONDS,
+    )

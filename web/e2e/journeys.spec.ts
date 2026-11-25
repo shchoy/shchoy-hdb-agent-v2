@@ -300,3 +300,65 @@ test("an officer renames a conversation, sees it in another browser, then delete
   await page.waitForLoadState("networkidle");
   await expect(conversations.getByRole("button", { name: title, exact: true })).toHaveCount(0);
 });
+
+test("an officer groups a conversation by keyboard, sees the group in another browser, then deletes the group", async ({
+  page,
+  browser,
+}) => {
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, QUESTION);
+  const id = await threadId(page, QUESTION);
+  const name = `Arrears ${Date.now()}`;
+  const conversations = page.getByRole("navigation", { name: "Conversations" });
+  const updates = page.getByRole("status", { name: "Conversation updates" });
+
+  // New group, by keyboard.
+  await conversations.getByRole("button", { name: "New group" }).focus();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type(name);
+  await page.keyboard.press("Enter");
+  await expect(updates).toHaveText(`Created group ${name}`);
+  const toggle = conversations.getByRole("button", { name: new RegExp(`^${name}, \\d+ conversations?$`) });
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+  // Options → Move to group… → the group.
+  await openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` }).focus();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("menuitem", { name: "Move to group…" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  const choices = page.getByRole("menu", { name: `Move ${QUESTION} to` });
+  await expect(choices.getByRole("menuitemradio", { name: "No group" })).toBeFocused();
+  await choices.getByRole("menuitemradio", { name, exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(updates).toHaveText(`Moved ${QUESTION} to ${name}`);
+  const inGroup = conversations.getByRole("list", { name, exact: true });
+  await expect(inGroup.getByRole("button", { name: `Options for ${QUESTION}` })).toBeFocused();
+
+  // Collapsed state is remembered in this browser.
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
+
+  // Another browser: the same group and membership (server-side), expanded (its own browser state).
+  const elsewhere = await browser.newPage();
+  await signIn(elsewhere, OFFICER);
+  await expect(
+    elsewhere.getByRole("list", { name, exact: true }).getByRole("button", { name: QUESTION, exact: true }),
+  ).toBeVisible();
+  await elsewhere.close();
+
+  // Deleting the group puts the conversation back in Recent; the conversation itself stays.
+  await conversations.getByRole("button", { name: `Options for group ${name}` }).click();
+  await page.getByRole("menuitem", { name: "Delete group" }).click();
+  await conversations.getByRole("group", { name: `Delete group ${name}?` }).getByRole("button", { name: "Delete group" }).click();
+  await expect(updates).toHaveText(`Deleted group ${name}. Its conversations are back in Recent.`);
+  await expect(conversations.getByRole("list", { name, exact: true })).toHaveCount(0);
+  await expect(
+    conversations.getByRole("list", { name: "Recent conversations" }).getByRole("button", { name: QUESTION, exact: true }).first(),
+  ).toBeVisible();
+  expect((await page.request.get(`/api/threads/${id}`)).status()).toBe(200);
+});

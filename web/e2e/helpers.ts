@@ -96,10 +96,12 @@ export async function seriousViolations(page: Page) {
     .map((v) => ({ id: v.id, impact: v.impact, help: v.help, targets: v.nodes.map((n) => n.target.join(" ")) }));
 }
 
-/** The sidebar's entry for the conversation open on the Ask screen. */
+/** The sidebar's entry for the conversation open on the Ask screen (the innermost item: in a group, the group's
+ * own item holds it too). */
 export function openConversation(page: Page): Locator {
   return page
     .getByRole("navigation", { name: "Conversations" })
     .getByRole("listitem")
-    .filter({ has: page.locator('[aria-current="true"]') });
+    .filter({ has: page.locator('[aria-current="true"]') })
+    .last();
 }

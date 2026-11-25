@@ -1,43 +1,52 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import type { ThreadSummary } from "@/lib/events";
+import type { Group, ThreadSummary } from "@/lib/events";
 import { MoreIcon } from "./icons";
+import { MENU_ITEMS, onMenuKey, refusalDetail, tidy } from "./menu";
+import { useShell } from "./ShellContext";
 import styles from "./shell.module.css";
 
-type Mode = "idle" | "menu" | "rename" | "confirm";
-
-/** plg-api's refusal reason, else a plain fallback. */
-async function refusalDetail(response: Response, fallback: string): Promise<string> {
-  const body = (await response.json().catch(() => null)) as { detail?: unknown } | null;
-  return typeof body?.detail === "string" ? body.detail : fallback;
-}
+type Mode = "idle" | "menu" | "move" | "rename" | "confirm";
 
 /**
- * One conversation in the sidebar: the button that opens it, and its Options menu (Rename, Delete). Rename edits the
- * title in place; Delete asks first, and shows plg-api's reason when it is refused (answering, awaiting approval).
+ * One conversation in the sidebar: the button that opens it, and its Options menu (Rename, Move to group…, Delete).
+ * Rename edits the title in place; Move to group… lists the officer's groups and No group (the keyboard path for
+ * moving it, #100); Delete asks first, and shows plg-api's reason when it is refused (answering, awaiting approval).
  */
 export function ConversationItem({
   thread,
+  groups,
   current,
   disabled,
+  focusOptions = false,
+  onFocused,
   onPick,
   onRenamed,
+  onMoved,
   onDeleted,
 }: {
   thread: ThreadSummary;
+  groups: Group[];
   current: boolean;
   disabled: boolean;
+  /** Focus its Options button once shown (it has just been moved here, so the old one went). */
+  focusOptions?: boolean;
+  /** Its Options button has taken the focus `focusOptions` asked for. */
+  onFocused?(): void;
   onPick(): void;
   onRenamed(title: string): void;
+  onMoved(groupId: string | null): void;
   onDeleted(): void;
 }) {
+  const shell = useShell();
   const [mode, setMode] = useState<Mode>("idle");
   const [title, setTitle] = useState(thread.title);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const options = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLUListElement>(null);
+  const moveMenu = useRef<HTMLUListElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const cancel = useRef<HTMLButtonElement>(null);
   const refocus = useRef(false);
@@ -45,7 +54,15 @@ export function ConversationItem({
   const confirmId = useId();
 
   useEffect(() => {
-    if (mode === "menu") menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    if (!focusOptions) return;
+    options.current?.focus();
+    onFocused?.();
+  }, [focusOptions, onFocused]);
+
+  useEffect(() => {
+    if (mode === "menu") menu.current?.querySelector<HTMLElement>(MENU_ITEMS)?.focus();
+    else if (mode === "move")
+      (moveMenu.current?.querySelector<HTMLElement>('[aria-checked="true"]') ?? moveMenu.current?.querySelector<HTMLElement>(MENU_ITEMS))?.focus();
     else if (mode === "rename") {
       field.current?.focus();
       field.current?.select();
@@ -71,23 +88,13 @@ export function ConversationItem({
     close();
   }
 
-  function onMenuKey(event: KeyboardEvent<HTMLUListElement>) {
-    const items = [...(menu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
-    const at = items.indexOf(document.activeElement as HTMLElement);
-    const go = (i: number) => items[(i + items.length) % items.length]?.focus();
-    if (event.key === "ArrowDown") go(at + 1);
-    else if (event.key === "ArrowUp") go(at - 1);
-    else if (event.key === "Home") go(0);
-    else if (event.key === "End") go(items.length - 1);
-    else if (event.key === "Escape") close();
-    else if (event.key === "Tab") return setMode("idle");
-    else return;
-    event.preventDefault(); // also tells the drawer the key is handled (Escape closes the menu, not the drawer)
+  function menuKey(event: KeyboardEvent<HTMLUListElement>) {
+    onMenuKey(event, close, () => setMode("idle"));
   }
 
   async function rename(event: FormEvent) {
     event.preventDefault();
-    const next = title.split(/\s+/).filter(Boolean).join(" ");
+    const next = tidy(title);
     if (!next) return setError("Give the conversation a title.");
     if (next === thread.title) return close();
     setWorking(true);
@@ -103,6 +110,30 @@ export function ConversationItem({
       close();
     } catch {
       setError("The conversation couldn't be renamed. Try again.");
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  async function move(groupId: string | null) {
+    if (groupId === (thread.group_id ?? null)) return close();
+    setWorking(true);
+    try {
+      const response = await fetch(`${url}/group`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ group_id: groupId }),
+      });
+      if (!response.ok) {
+        if (response.status === 404) shell.refresh(); // e.g. the group was deleted elsewhere: the sidebar catches up
+        setError(await refusalDetail(response, "The conversation couldn't be moved."));
+        return close();
+      }
+      setError(null);
+      onMoved(groupId);
+    } catch {
+      setError("The conversation couldn't be moved. Try again.");
+      close();
     } finally {
       setWorking(false);
     }
@@ -177,11 +208,11 @@ export function ConversationItem({
           type="button"
           className={styles.options}
           aria-haspopup="menu"
-          aria-expanded={mode === "menu"}
-          aria-controls={mode === "menu" ? menuId : undefined}
+          aria-expanded={mode === "menu" || mode === "move"}
+          aria-controls={mode === "menu" || mode === "move" ? menuId : undefined}
           onClick={() => {
             setError(null);
-            setMode(mode === "menu" ? "idle" : "menu");
+            setMode(mode === "menu" || mode === "move" ? "idle" : "menu");
           }}
         >
           <MoreIcon />
@@ -195,7 +226,7 @@ export function ConversationItem({
           role="menu"
           aria-label={thread.title}
           className={styles.menu}
-          onKeyDown={onMenuKey}
+          onKeyDown={menuKey}
           onBlur={(e) => {
             if (!e.currentTarget.contains(e.relatedTarget) && e.relatedTarget !== options.current) setMode("idle");
           }}
@@ -206,11 +237,52 @@ export function ConversationItem({
             </button>
           </li>
           <li role="none">
+            <button type="button" role="menuitem" tabIndex={-1} aria-haspopup="menu" onClick={() => setMode("move")}>
+              Move to group…
+            </button>
+          </li>
+          <li role="none">
             <button type="button" role="menuitem" tabIndex={-1} onClick={() => setMode("confirm")}>
               Delete
             </button>
           </li>
         </ul>
+      )}
+      {mode === "move" && (
+        <ul
+          ref={moveMenu}
+          id={menuId}
+          role="menu"
+          aria-label={`Move ${thread.title} to`}
+          aria-busy={working || undefined}
+          className={styles.menu}
+          onKeyDown={menuKey}
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget) && e.relatedTarget !== options.current) setMode("idle");
+          }}
+        >
+          {[...groups.map((g) => ({ id: g.group_id as string | null, name: g.name })), { id: null, name: "No group" }].map(
+            (choice) => (
+              <li role="none" key={choice.id ?? ""}>
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  tabIndex={-1}
+                  aria-checked={choice.id === (thread.group_id ?? null)}
+                  disabled={working}
+                  onClick={() => void move(choice.id)}
+                >
+                  {choice.name}
+                </button>
+              </li>
+            ),
+          )}
+        </ul>
+      )}
+      {mode === "idle" && error && (
+        <p role="alert" className={styles.rowError}>
+          {error}
+        </p>
       )}
       {mode === "confirm" && (
         <div role="group" aria-labelledby={confirmId} className={styles.confirm} onKeyDown={onEscape}>

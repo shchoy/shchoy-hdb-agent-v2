@@ -29,7 +29,7 @@ from record_sse_fixtures import (
     searcher,
 )
 
-from plg.api.app import create_app
+from plg.api.app import KEEP_ALIVE_SECONDS, create_app
 from plg.memory.service import NODE as EXTRACT_MEMORY
 from plg.memory.service import RECORD as RECORD_MEMORY
 from plg.llm import AgentMessage, AgentTurn, Block, ScriptedLLMClient, Tier, _latest_question, text, tool_call, turn
@@ -141,7 +141,7 @@ def main() -> None:
             scratch_settings(root), llm=e2e_llm(), searcher=search, store=store,
             memory=scratch_memory(root / "memory"), langsmith=RecordingLangSmith(),
         )
-        uvicorn.run(app, host=args.host, port=args.port)
+        uvicorn.run(app, host=args.host, port=args.port, timeout_keep_alive=KEEP_ALIVE_SECONDS)
 
 
 if __name__ == "__main__":

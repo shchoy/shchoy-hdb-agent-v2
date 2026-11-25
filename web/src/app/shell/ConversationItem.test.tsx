@@ -56,7 +56,7 @@ beforeEach(() => {
 });
 
 describe("Conversation menu", () => {
-  it("offers Rename and Delete, operable by keyboard; Escape closes it back to its button", async () => {
+  it("offers Rename, Move to group… and Delete, operable by keyboard; Escape closes it back to its button", async () => {
     api();
     const user = userEvent.setup();
     render(inShell(<p>screen</p>));
@@ -69,14 +69,16 @@ describe("Conversation menu", () => {
     const menu = screen.getByRole("menu", { name: "Arrears for Cendana" });
     expect(button).toHaveAttribute("aria-expanded", "true");
     const items = within(menu).getAllByRole("menuitem");
-    expect(items.map((i) => i.textContent)).toEqual(["Rename", "Delete"]);
+    expect(items.map((i) => i.textContent)).toEqual(["Rename", "Move to group…", "Delete"]);
     expect(items[0]).toHaveFocus();
     await user.keyboard("{ArrowDown}");
     expect(items[1]).toHaveFocus();
+    await user.keyboard("{ArrowUp}{ArrowUp}");
+    expect(items[2]).toHaveFocus();
     await user.keyboard("{ArrowDown}");
     expect(items[0]).toHaveFocus();
     await user.keyboard("{End}");
-    expect(items[1]).toHaveFocus();
+    expect(items[2]).toHaveFocus();
 
     await user.keyboard("{Escape}");
 

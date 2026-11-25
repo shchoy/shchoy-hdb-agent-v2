@@ -13,8 +13,9 @@ from typing import Annotated, Any, Literal
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.openapi.utils import get_openapi
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-from pydantic import BaseModel, TypeAdapter, model_validator
+from pydantic import BaseModel, Field, TypeAdapter, field_validator, model_validator
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
 from plg.actions.audit import AuditEntry, AuditLog
@@ -122,6 +123,17 @@ class FeedbackReceipt(BaseModel):
 
 class RunRequest(BaseModel):
     message: str
+
+
+class RenameRequest(BaseModel):
+    """A conversation's new title: runs of whitespace become one space; 1 to 80 characters."""
+
+    title: str = Field(min_length=1, max_length=80)
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def _tidy(cls, value: object) -> object:
+        return " ".join(value.split()) if isinstance(value, str) else value
 
 
 class ResumeRequest(BaseModel):
@@ -289,6 +301,37 @@ def create_app(
             running=latest.question if latest and not latest.finished and latest.question else None,
             pending=await waiting(thread_id), turns=values.get("turns", []),
         )
+
+    @app.patch("/threads/{thread_id}", responses={404: {"description": "Thread not found"}})
+    async def rename_thread(thread_id: str, body: RenameRequest, user: User) -> ThreadSummary:
+        """Rename one of your conversations. Its new title is kept by later questions."""
+        owned(thread_id, user)
+        return threads.rename(thread_id, body.title)
+
+    @app.delete(
+        "/threads/{thread_id}", status_code=204,
+        responses={404: {"description": "Thread not found"},
+                   409: {"description": "The conversation is still answering, or has an action awaiting approval"}},
+    )
+    async def delete_thread(thread_id: str, user: User) -> Response:
+        """Delete one of your conversations: its history (checkpoint) goes and it is not found anywhere after; the
+        audit entries of decisions taken in it are kept. Refused while it is answering or has a pending action."""
+        owned(thread_id, user)
+        busy = HTTPException(status_code=409, detail="This conversation is still answering: stop it or wait, then delete it")
+        if runs.running(thread_id):
+            raise busy
+        if await waiting(thread_id):
+            raise HTTPException(
+                status_code=409,
+                detail="This conversation has an action awaiting approval: approve or reject it first, then delete it",
+            )
+        if runs.running(thread_id):  # started while the checkpoint was read
+            raise busy
+        threads.delete(thread_id)  # from here on the thread is 404, so nothing new can start in it
+        runs.forget(thread_id)
+        if isinstance(graph.checkpointer, BaseCheckpointSaver):
+            await graph.checkpointer.adelete_thread(thread_id)
+        return Response(status_code=204)
 
     async def waiting(thread_id: str) -> list[ProposedAction]:
         """The actions the thread's checkpoint is paused on, so they survive a restart."""

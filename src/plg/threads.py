@@ -67,6 +67,18 @@ class ThreadStore:
                 (title, _now(), thread_id),
             )
 
+    def rename(self, thread_id: str, title: str) -> ThreadSummary:
+        """The officer's own title: later questions keep it (`asked` only fills a missing title)."""
+        with self._db() as db:
+            db.execute("UPDATE plg_threads SET title = ? WHERE thread_id = ?", (title, thread_id))
+            row = db.execute("SELECT updated_at FROM plg_threads WHERE thread_id = ?", (thread_id,)).fetchone()
+        return ThreadSummary(thread_id=thread_id, title=title, updated_at=row[0])
+
+    def delete(self, thread_id: str) -> None:
+        """Forget the thread's owner and title: from now on it is not found, for everyone."""
+        with self._db() as db:
+            db.execute("DELETE FROM plg_threads WHERE thread_id = ?", (thread_id,))
+
     def all_asked(self) -> list[ThreadSummary]:
         """Every asked thread, whoever owns it: only for finding actions others decide on (glossary curators)."""
         with self._db() as db:
@@ -157,12 +169,19 @@ class RunRegistry:
     def latest(self, thread_id: str) -> RunBuffer | None:
         return self._runs.get(thread_id)
 
+    def running(self, thread_id: str) -> bool:
+        current = self._runs.get(thread_id)
+        return current is not None and not current.finished
+
+    def forget(self, thread_id: str) -> None:
+        """Drop a deleted thread's finished run, so its events can't be replayed."""
+        self._runs.pop(thread_id, None)
+
     def start(
         self, graph: PLGGraph, thread_id: str, message: str, user: UserCtx, decision: ApprovalDecision | None = None
     ) -> RunBuffer:
         """Answer `message` (or carry out `decision`, with an empty `message`) in the background."""
-        current = self._runs.get(thread_id)
-        if current is not None and not current.finished:
+        if self.running(thread_id):
             raise RunInProgress
         buffer = self._runs[thread_id] = RunBuffer(message)
         run_id = uuid.uuid4()

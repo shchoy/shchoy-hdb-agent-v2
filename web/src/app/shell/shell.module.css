@@ -152,9 +152,25 @@
   color: var(--color-text-muted);
 }
 
-.conversations button[type="button"] {
+.conversation {
+  position: relative;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-0);
+  border-radius: var(--radius-md);
+}
+
+.row:hover {
+  background: var(--color-surface-raised);
+}
+
+.pick {
+  flex: 1;
+  min-width: 0;
   display: block;
-  width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -165,17 +181,116 @@
   background: transparent;
   color: var(--color-text);
   font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
 }
 
-.conversations button[type="button"]:hover:not(:disabled) {
-  background: var(--color-surface-raised);
+.pick:hover:not(:disabled) {
+  background: transparent;
   color: var(--color-text);
 }
 
-.conversations button[aria-current="true"] {
+.pick[aria-current="true"] {
   background: var(--color-primary-tint-strong);
   color: var(--color-primary-hover);
   font-weight: var(--weight-semibold);
+}
+
+.options {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.options[aria-expanded="true"] {
+  background: var(--color-primary-tint);
+  color: var(--color-primary-hover);
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 2;
+  min-width: 9rem;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  display: grid;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.menu button {
+  width: 100%;
+  text-align: left;
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.menu button:focus-visible {
+  outline-offset: -3px;
+}
+
+.renameForm,
+.confirm {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.confirm {
+  margin-top: var(--space-1);
+  border: 1px solid var(--color-danger-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-bg);
+}
+
+.renameForm input {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+}
+
+.confirmText,
+.confirmNote,
+.rowError {
+  margin: 0;
+}
+
+.confirmText {
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.confirmNote {
+  color: var(--color-text);
+}
+
+.rowError {
+  color: var(--color-danger-strong);
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.rowActions button {
+  font-size: var(--text-sm);
 }
 
 .persona {

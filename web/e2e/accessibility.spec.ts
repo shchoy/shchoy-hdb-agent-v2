@@ -7,6 +7,7 @@ import {
   answer,
   askInNewConversation,
   marker,
+  openConversation,
   OFFICER,
   sourcesPanel,
   visit,
@@ -140,6 +141,37 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(page.getByRole("table", { name: "Applications" })).toBeVisible();
       expect(await fits()).toBe(true);
       expect(await seriousViolations(page)).toEqual([]);
+    });
+
+    test("a conversation's menu, its rename field and delete confirmation, also in the phone drawer", async ({ page }) => {
+      await signIn(page, OFFICER);
+      await askInNewConversation(page, QUESTION);
+      const options = openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` });
+
+      await options.click();
+      await expect(page.getByRole("menu", { name: QUESTION })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.getByRole("menuitem", { name: "Rename" }).click();
+      await expect(page.getByRole("textbox", { name: "Conversation title" })).toBeFocused();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+
+      await options.click();
+      await page.getByRole("menuitem", { name: "Delete" }).click();
+      const confirm = page.getByRole("group", { name: `Delete ${QUESTION}?` });
+      await expect(confirm.getByRole("button", { name: "Cancel" })).toBeFocused();
+      expect(await seriousViolations(page)).toEqual([]);
+      await confirm.getByRole("button", { name: "Cancel" }).click();
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.getByRole("button", { name: "Menu", exact: true }).click();
+      const drawer = page.getByRole("dialog", { name: "Menu" });
+      await openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` }).click();
+      await expect(drawer.getByRole("menu", { name: QUESTION })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+      await expect(drawer.getByRole("menu")).toHaveCount(0);
+      await expect(drawer).toBeVisible();
     });
 
     test("the sidebar as a drawer on a phone", async ({ page }) => {

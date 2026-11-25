@@ -73,10 +73,19 @@ export interface paths {
         get: operations["get_thread_threads__thread_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Thread
+         * @description Delete one of your conversations: its history (checkpoint) goes and it is not found anywhere after; the
+         *     audit entries of decisions taken in it are kept. Refused while it is answering or has a pending action.
+         */
+        delete: operations["delete_thread_threads__thread_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Rename Thread
+         * @description Rename one of your conversations. Its new title is kept by later questions.
+         */
+        patch: operations["rename_thread_threads__thread_id__patch"];
         trace?: never;
     };
     "/approvals": {
@@ -1304,6 +1313,14 @@ export interface components {
             reasons: string[];
         };
         /**
+         * RenameRequest
+         * @description A conversation's new title: runs of whitespace become one space; 1 to 80 characters.
+         */
+        RenameRequest: {
+            /** Title */
+            title: string;
+        };
+        /**
          * ResumeRequest
          * @description The officer's decision on the exact pending version of an action.
          */
@@ -2393,6 +2410,97 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ThreadView"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_thread_threads__thread_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Thread not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The conversation is still answering, or has an action awaiting approval */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rename_thread_threads__thread_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadSummary"];
+                };
+            };
+            /** @description Thread not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

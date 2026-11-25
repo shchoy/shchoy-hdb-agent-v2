@@ -1,0 +1,108 @@
+id: 1
+event: node
+data: {"type":"node","seq":1,"node":"screen_input","status":"started"}
+
+id: 2
+event: node
+data: {"type":"node","seq":2,"node":"screen_input","status":"finished"}
+
+id: 3
+event: node
+data: {"type":"node","seq":3,"node":"load_memory","status":"started"}
+
+id: 4
+event: node
+data: {"type":"node","seq":4,"node":"load_memory","status":"finished"}
+
+id: 5
+event: node
+data: {"type":"node","seq":5,"node":"route","status":"started"}
+
+id: 6
+event: node
+data: {"type":"node","seq":6,"node":"route","status":"finished"}
+
+id: 7
+event: node
+data: {"type":"node","seq":7,"node":"knowledge","status":"started"}
+
+id: 8
+event: citation
+data: {"doc_id":"upload-423cb2db3aa34c2a","chunk_id":"upload-423cb2db3aa34c2a#000","title":"site-visit.txt","version":null,"location":"(body)","quote":"The estate officer agreed a follow-up visit with the tenant on 14 October 2026.","span":{"start":140,"end":219},"upload":true,"index":1,"type":"citation","seq":8}
+
+id: 9
+event: node
+data: {"type":"node","seq":9,"node":"knowledge","status":"finished"}
+
+id: 10
+event: node
+data: {"type":"node","seq":10,"node":"merge","status":"started"}
+
+id: 11
+event: token
+data: {"type":"token","seq":11,"node":"merge","text":"You"}
+
+id: 12
+event: token
+data: {"type":"token","seq":12,"node":"merge","text":" agreed"}
+
+id: 13
+event: token
+data: {"type":"token","seq":13,"node":"merge","text":" a"}
+
+id: 14
+event: token
+data: {"type":"token","seq":14,"node":"merge","text":" follow-up"}
+
+id: 15
+event: token
+data: {"type":"token","seq":15,"node":"merge","text":" visit"}
+
+id: 16
+event: token
+data: {"type":"token","seq":16,"node":"merge","text":" with"}
+
+id: 17
+event: token
+data: {"type":"token","seq":17,"node":"merge","text":" the"}
+
+id: 18
+event: token
+data: {"type":"token","seq":18,"node":"merge","text":" tenant"}
+
+id: 19
+event: token
+data: {"type":"token","seq":19,"node":"merge","text":" on"}
+
+id: 20
+event: token
+data: {"type":"token","seq":20,"node":"merge","text":" 14"}
+
+id: 21
+event: token
+data: {"type":"token","seq":21,"node":"merge","text":" October"}
+
+id: 22
+event: token
+data: {"type":"token","seq":22,"node":"merge","text":" 2026"}
+
+id: 23
+event: token
+data: {"type":"token","seq":23,"node":"merge","text":" [1]."}
+
+id: 24
+event: node
+data: {"type":"node","seq":24,"node":"merge","status":"finished"}
+
+id: 25
+event: node
+data: {"type":"node","seq":25,"node":"write_memory","status":"started"}
+
+id: 26
+event: node
+data: {"type":"node","seq":26,"node":"write_memory","status":"finished"}
+
+id: 27
+event: done
+data: {"type":"done","seq":27,"run_id":"32cabe2a-977c-4713-bf51-033007341225"}
+

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { components } from "@/lib/api/schema";
+import { Badge } from "./Card";
 import { PolicyStanceCard } from "./PolicyStanceCard";
 import { SourceViewer } from "./SourceViewer";
 import styles from "./ask.module.css";
@@ -15,9 +16,12 @@ export type AnswerSources = { citations: Cited[]; stances: Stance[] };
 
 export const NO_SOURCES: AnswerSources = { citations: [], stances: [] };
 
-/** The accessible name of an `[n]` marker: its visible text, then the source it opens. */
+/** Marks a source from the asker's own uploads (#103), not the shared Library. */
+export const YOUR_UPLOAD = "Your upload";
+
+/** The accessible name of an `[n]` marker: its visible text, then the source it opens (and whether it is your upload). */
 export function markerLabel(citation: Cited): string {
-  return `[${citation.index}] ${citation.title}`;
+  return `[${citation.index}] ${citation.title}${citation.upload ? ", your upload" : ""}`;
 }
 
 /**
@@ -89,6 +93,12 @@ export function SourcesPanel({
           >
             <h3 className={styles.sourceTitle}>
               <span className={styles.marker}>[{c.index}]</span> {c.title}
+              {c.upload && (
+                <>
+                  {" "}
+                  <Badge>{YOUR_UPLOAD}</Badge>
+                </>
+              )}
             </h3>
             <p className={styles.location}>
               {c.version && <>Version {c.version} · </>}

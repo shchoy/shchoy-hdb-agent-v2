@@ -177,11 +177,12 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         settings.setdefault("feedback_log", tmp_path / "feedback.jsonl")
         settings.setdefault("question_log", tmp_path / "questions.jsonl")  # answered questions (the audit's gaps)
         settings.setdefault("audit_reports_dir", tmp_path / "audit-reports")
+        settings.setdefault("uploads_dir", tmp_path / "uploads")  # officers' private libraries
         embedder = HashingEmbedder(dim=128)
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]
             Settings(**settings), llm=llm, searcher=searcher, store=store, entities=entities, memory=memory,
-            langsmith=langsmith, tracer=tracer,
+            langsmith=langsmith, tracer=tracer, embedder=embedder,
         )
         client = TestClient(app)
         clients.append(client.__enter__())

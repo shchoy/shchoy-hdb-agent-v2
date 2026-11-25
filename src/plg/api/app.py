@@ -58,6 +58,8 @@ from plg.identity import UserCtx, load_personas
 from plg.ingest.scans import SavedScans, TranscriptStore
 from plg.llm import AnthropicLLMClient, LLMClient, Message
 from plg.memory.service import MemoryService
+from plg.search.embed import Embedder
+from plg.uploads.library import Upload, UploadLibrary, UploadRefused
 from plg.memory.store import FlaggedByPolicy, MemoryStore, MemoryView, view
 from plg.search.embed import LazyEmbedder
 from plg.search.rerank import LazySearcher, Retriever
@@ -134,6 +136,8 @@ class FeedbackReceipt(BaseModel):
 
 class RunRequest(BaseModel):
     message: str
+    attachments: list[str] = Field(default_factory=list)
+    """IDs of the officer's own uploads (`POST /uploads`) sent with the question (#103); at most `upload_max_files`."""
 
 
 def _tidy(value: object) -> object:
@@ -245,13 +249,19 @@ def create_app(
     memory: MemoryStore | None = None,
     langsmith: Any | None = None,
     tracer: Tracer | None = None,
+    embedder: Embedder | None = None,
 ) -> FastAPI:
     """`langsmith`: the LangSmith Client feedback goes to (default: the tracer's, else one opened on first use if
     LANGSMITH_API_KEY is set). `tracer`: runs are traced to LangSmith through it (None: not traced)."""
     settings = settings or Settings.from_env()
     llm = llm or AnthropicLLMClient(settings)
     entities = entities or LazyGraph(settings)
-    memory = memory or MemoryStore(lambda: _open_store(settings), LazyEmbedder(settings))
+    embedder = embedder or LazyEmbedder(settings)
+    memory = memory or MemoryStore(lambda: _open_store(settings), embedder)
+    uploads = UploadLibrary(
+        settings.uploads_dir, embedder, max_bytes=settings.upload_max_bytes, quota_bytes=settings.upload_quota_bytes,
+        vector_weight=settings.vector_weight,
+    )
     link_work = None
     if isinstance(entities, LazyGraph):
         link_work = work_linker(entities.writer)
@@ -281,6 +291,7 @@ def create_app(
         settings=settings, memory=learner, outbox=outbox, audit=audit,
         ticket_system=ticket_system, taxonomy=taxonomy, checklists=checklists, glossary_changes=glossary_changes,
         curation=curation, question_log=QuestionLog(settings.question_log, mask=pii_masker(settings.records_db)),
+        uploads=uploads,
     )
 
     @asynccontextmanager
@@ -639,8 +650,13 @@ def create_app(
     @app.post("/threads/{thread_id}/runs", response_class=EventSourceResponse, responses=run_stream_docs)
     async def create_run(thread_id: str, body: RunRequest, user: User) -> EventSourceResponse:
         owned(thread_id, user)
+        attached = list(dict.fromkeys(body.attachments))
+        if len(attached) > settings.upload_max_files:
+            raise HTTPException(status_code=422, detail=f"At most {settings.upload_max_files} files can go with one message.")
+        if any(uploads.get(user.staff_id, a) is None for a in attached):
+            raise HTTPException(status_code=404, detail="Upload not found")
         try:
-            buffer = runs.start(graph, thread_id, body.message, user)
+            buffer = runs.start(graph, thread_id, body.message, user, attachments=attached)
         except RunInProgress:
             raise HTTPException(status_code=409, detail="This conversation is still answering") from None
         threads.asked(thread_id, body.message)
@@ -738,23 +754,29 @@ def create_app(
         saved = load_categorisation(settings.categories_file)
         return saved.overlay(await asyncio.to_thread(lambda: index().documents()))
 
-    @app.get("/documents/{doc_id}", dependencies=[Depends(current_user)])
-    async def get_document(doc_id: str) -> DocumentView:
-        """A source document as plain text blocks; markup in the file is never interpreted."""
-        view = library.view(doc_id)
+    def is_upload(doc_id: str) -> bool:
+        return doc_id.startswith("upload-")
+
+    @app.get("/documents/{doc_id}")
+    async def get_document(doc_id: str, user: User) -> DocumentView:
+        """A source document as plain text blocks; markup in the file is never interpreted. An upload is shown only to
+        the officer who uploaded it (anyone else: 404)."""
+        if is_upload(doc_id):
+            view = await asyncio.to_thread(uploads.view, user.staff_id, doc_id)
+        else:
+            view = library.view(doc_id)
         if view is None:
             raise HTTPException(status_code=404, detail="Document not found")
         return view
 
     @app.get(
         "/documents/{doc_id}/file",
-        dependencies=[Depends(current_user)],
         response_class=FileResponse,
         responses={200: {"description": "The source file.", "content": {"application/octet-stream": {}}}},
     )
-    async def get_document_file(doc_id: str) -> Response:
+    async def get_document_file(doc_id: str, user: User) -> Response:
         """The source file. Only PDFs are shown inline; anything else downloads, sandboxed."""
-        source = library.file(doc_id)
+        source = uploads.file(user.staff_id, doc_id) if is_upload(doc_id) else library.file(doc_id)
         if source is None:
             raise HTTPException(status_code=404, detail="Document not found")
         return FileResponse(
@@ -763,15 +785,47 @@ def create_app(
             headers={"X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox"},
         )
 
-    @app.get("/documents/{doc_id}/chunks/{chunk_id}", dependencies=[Depends(current_user)])
+    @app.get("/documents/{doc_id}/chunks/{chunk_id}")
     async def get_chunk_location(
-        doc_id: str, chunk_id: str, start: int | None = None, end: int | None = None
+        doc_id: str, chunk_id: str, user: User, start: int | None = None, end: int | None = None
     ) -> ChunkLocation:
         """Where the span `start:end` of a chunk's text (default: the whole chunk) sits in its document."""
-        located = library.locate(doc_id, chunk_id, start, end)
+        if is_upload(doc_id):
+            located = await asyncio.to_thread(uploads.locate, user.staff_id, doc_id, chunk_id, start, end)
+        else:
+            located = library.locate(doc_id, chunk_id, start, end)
         if located is None:
             raise HTTPException(status_code=404, detail="Chunk not found")
         return located
+
+    @app.post(
+        "/uploads", status_code=201,
+        openapi_extra={"requestBody": {"required": True, "content": {"application/octet-stream": {
+            "schema": {"type": "string", "format": "binary"}}}}},
+        responses={413: {"description": "The file is too large, or your uploads would exceed your space"},
+                   415: {"description": "Not a type that can be uploaded"},
+                   422: {"description": "The file can't be read (or is a scan without a text layer)"}},
+    )
+    async def create_upload(
+        request: Request, user: User,
+        filename: Annotated[str, Query(min_length=1, max_length=255, description="The file's name, with its extension")],
+    ) -> Upload:
+        """Upload a document (the request body is the file's bytes) into your private library (#103). It is screened
+        for prompt injection and indexed for your own searches only; attach it to a question by its `upload_id`."""
+        received = bytearray()
+        async for part in request.stream():  # refused as soon as it is too large, never read whole
+            received += part
+            if len(received) > uploads.max_bytes:
+                raise HTTPException(status_code=413, detail=uploads.too_large(filename))
+        try:
+            return await asyncio.to_thread(uploads.add, user.staff_id, filename, bytes(received))
+        except UploadRefused as refused:
+            raise HTTPException(status_code=refused.status, detail=refused.detail) from None
+
+    @app.get("/uploads")
+    async def list_uploads(user: User) -> list[Upload]:
+        """Your uploads, newest first. Nobody else's are ever listed."""
+        return await asyncio.to_thread(uploads.of, user.staff_id)
 
     @app.get(
         "/drafts/{draft_id}/file",

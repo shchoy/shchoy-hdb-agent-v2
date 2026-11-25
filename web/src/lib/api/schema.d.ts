@@ -569,7 +569,8 @@ export interface paths {
         };
         /**
          * Get Document
-         * @description A source document as plain text blocks; markup in the file is never interpreted.
+         * @description A source document as plain text blocks; markup in the file is never interpreted. An upload is shown only to
+         *     the officer who uploaded it (anyone else: 404).
          */
         get: operations["get_document_documents__doc_id__get"];
         put?: never;
@@ -614,6 +615,31 @@ export interface paths {
         get: operations["get_chunk_location_documents__doc_id__chunks__chunk_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Uploads
+         * @description Your uploads, newest first. Nobody else's are ever listed.
+         */
+        get: operations["list_uploads_uploads_get"];
+        put?: never;
+        /**
+         * Create Upload
+         * @description Upload a document (the request body is the file's bytes) into your private library (#103). It is screened
+         *     for prompt injection and indexed for your own searches only; attach it to a question by its `upload_id`.
+         */
+        post: operations["create_upload_uploads_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -899,6 +925,11 @@ export interface components {
             content_type: string;
             /** Blocks */
             blocks: components["schemas"]["DocumentBlock"][];
+            /**
+             * Upload
+             * @default false
+             */
+            upload: boolean;
         };
         /** Duplicate */
         Duplicate: {
@@ -1119,6 +1150,25 @@ export interface components {
             end: number;
         };
         /**
+         * InjectionFlag
+         * @description A prompt-injection attempt the assistant detected and ignored, as reported to the officer.
+         */
+        InjectionFlag: {
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "message" | "document";
+            /** Rules */
+            rules: ("override" | "ai_address" | "approval_bypass" | "authority_claim" | "concealment" | "prompt_leak" | "role_change")[];
+            /** Doc Id */
+            doc_id?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Excerpt */
+            excerpt?: string | null;
+        };
+        /**
          * LetterPayload
          * @description A letter filled from an approved template, as it would be sent.
          */
@@ -1227,6 +1277,11 @@ export interface components {
             /** Quote */
             quote: string;
             span: components["schemas"]["Span"];
+            /**
+             * Upload
+             * @default false
+             */
+            upload: boolean;
             /** Index */
             index: number;
         };
@@ -1530,6 +1585,8 @@ export interface components {
         RunRequest: {
             /** Message */
             message: string;
+            /** Attachments */
+            attachments?: string[];
         };
         /**
          * Side
@@ -1868,6 +1925,32 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** Upload */
+        Upload: {
+            /** Upload Id */
+            upload_id: string;
+            /** Filename */
+            filename: string;
+            /** Title */
+            title: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text";
+            /** Content Type */
+            content_type: string;
+            /** Size */
+            size: number;
+            /**
+             * Uploaded At
+             * Format: date-time
+             */
+            uploaded_at: string;
+            /** Chunks */
+            chunks: number;
+            injection?: components["schemas"]["InjectionFlag"] | null;
+        };
         /**
          * UserCtx
          * @description The signed-in staff member. Approver roles and memory isolation key off this.
@@ -1998,6 +2081,11 @@ export interface components {
             /** Quote */
             quote: string;
             span: components["schemas"]["Span"];
+            /**
+             * Upload
+             * @default false
+             */
+            upload: boolean;
             /** Index */
             index: number;
             /**
@@ -3857,6 +3945,89 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    list_uploads_uploads_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Upload"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_upload_uploads_post: {
+        parameters: {
+            query: {
+                /** @description The file's name, with its extension */
+                filename: string;
+            };
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Upload"];
+                };
+            };
+            /** @description The file is too large, or your uploads would exceed your space */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a type that can be uploaded */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The file can't be read (or is a scan without a text layer) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

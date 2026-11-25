@@ -41,6 +41,15 @@ class Settings(BaseModel):
     audit_log: Path = REPO_ROOT / ".plg" / "audit.jsonl"
     iems_dir: Path = REPO_ROOT / ".plg" / "iems"
     """The i-EMS mock: raised tickets, one JSON file each."""
+    uploads_dir: Path = REPO_ROOT / ".plg" / "uploads"
+    """Officers' private libraries (#103): each upload's file and metadata per staff ID, and their own search index
+    (`index/`), apart from the shared Library index."""
+    upload_max_bytes: int = 20 * 1024 * 1024
+    """The largest file an officer may upload."""
+    upload_max_files: int = 5
+    """The most files attached to one message."""
+    upload_quota_bytes: int = 200 * 1024 * 1024
+    """The space each officer's uploads may take in all."""
     glossary_changes: Path = REPO_ROOT / ".plg" / "glossary_changes.jsonl"
     """Approved glossary changes (append-only), layered over the generated glossary and semantic layer."""
     feedback_log: Path = REPO_ROOT / ".plg" / "feedback.jsonl"

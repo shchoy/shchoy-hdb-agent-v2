@@ -40,6 +40,32 @@ describe("POST /api/threads/[id]/runs", () => {
     expect(seen).toEqual([{ user: "S04", body: { message: "Hi?" } }]);
   });
 
+  it("passes the question's attachments (#103) through to plg-api", async () => {
+    const bodies: unknown[] = [];
+    server.use(
+      http.post(`${PLG_API}/threads/t1/runs`, async ({ request }) => {
+        bodies.push(await request.json());
+        return sseResponse(fixture("answer"));
+      }),
+    );
+
+    const response = await startRun("t1", "plg_user=S04", { message: "Hi?", attachments: ["upload-1", "upload-2"] });
+    await response.text();
+
+    expect(bodies).toEqual([{ message: "Hi?", attachments: ["upload-1", "upload-2"] }]);
+  });
+
+  it("relays plg-api's refusal of an attachment", async () => {
+    server.use(
+      http.post(`${PLG_API}/threads/t1/runs`, () => HttpResponse.json({ detail: "Upload not found" }, { status: 404 })),
+    );
+
+    const response = await startRun("t1", "plg_user=S04", { message: "Hi?", attachments: ["upload-x"] });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ detail: "Upload not found" });
+  });
+
   it("is 401 when not signed in, without calling plg-api", async () => {
     let called = false;
     server.use(

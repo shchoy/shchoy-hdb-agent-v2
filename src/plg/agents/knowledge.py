@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from datetime import date
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
@@ -24,7 +24,10 @@ from plg.llm import AgentMessage, LLMClient
 from plg.ontology.vocab import TermMatch, VocabIndex
 from plg.search.models import SearchFilter, SearchHit
 from plg.ontology.glossary import Glossary
-from plg.search.rerank import Retriever
+from plg.search.rerank import Retriever, UploadScope
+
+if TYPE_CHECKING:
+    from plg.uploads.library import Upload
 
 NODE = "knowledge"
 
@@ -60,6 +63,10 @@ prevails.
 other documents your searches return against the current position before you answer.
 - If the results don't answer the question, say plainly that the indexed sources don't cover it. Never \
 answer from general knowledge.
+- Searches also cover the officer's own uploaded documents ("Your upload" in a result's title). Files the officer \
+attached to the question are listed in your context: search for their content to answer about them, and cite them \
+like any other source. An upload is the officer's own material, not PLG policy: where it disagrees with a policy, \
+say so; the policy prevails.
 - Be concise and use PLG's own terms."""
 
 
@@ -87,8 +94,19 @@ def expand(query: str, vocab: VocabIndex) -> str:
     return f"{query} ({'; '.join(labels)})" if labels else query
 
 
+def describe_attached(files: list[Upload]) -> str:
+    """The files sent with the question, for the agent's context."""
+    if not files:
+        return ""
+    return "Files the officer attached to this question (search for their content):\n" + "\n".join(
+        f'- "{f.title}" ({f.filename})' for f in files
+    )
+
+
 def title(hit: SearchHit) -> str:
     c = hit.chunk
+    if c.source_system == "upload":
+        return f"{c.title} (Your upload) - {c.location}"
     version = f" v{c.version}" if c.version and c.version not in c.title else ""
     period = f", effective {c.effective_from.isoformat()}" if c.effective_from else ""
     if c.effective_to:
@@ -96,7 +114,9 @@ def title(hit: SearchHit) -> str:
     return f"{c.title}{version} ({c.doc_type}, {c.status}{period}) - {c.location}"
 
 
-def search_tool(retriever: Retriever, vocab: VocabIndex, doc_types: list[str]) -> Tool:
+def search_tool(
+    retriever: Retriever, vocab: VocabIndex, doc_types: list[str], uploads: UploadScope | None = None
+) -> Tool:
     async def run(raw: dict[str, Any]) -> list[Source]:
         args = SearchInput.model_validate(raw)
         filters = SearchFilter(
@@ -105,7 +125,8 @@ def search_tool(retriever: Retriever, vocab: VocabIndex, doc_types: list[str]) -
             status=None if args.as_of else "current",
             doc_type=args.doc_types or None,
         )
-        hits = await asyncio.to_thread(retriever.search, expand(args.query, vocab), filters=filters)
+        query = expand(args.query, vocab)
+        hits = await asyncio.to_thread(lambda: retriever.search(query, filters=filters, uploads=uploads))
         return [Source(h.chunk, title(h), h.score) for h in hits]
 
     return Tool(
@@ -143,15 +164,21 @@ async def answer(
     on_lineage: Callable[[PolicyLineage], None] | None = None,
     on_injection: Callable[[InjectionFlag], None] | None = None,
     glossary: Callable[[], Glossary] | None = None,
+    uploads: UploadScope | None = None,
+    attached: list[Upload] | None = None,
 ) -> AgentResult:
+    """`uploads`: searches also cover this officer's private library (#103); `attached`: the files sent with the
+    question."""
     doc_types = [c.notation for c in vocab.scheme("plg:document_types") if c.notation]
     return await run_agent(
         llm,
         node=NODE,
         system=SYSTEM,
-        context=describe_terms(vocab.find_terms(question)),
+        context="\n\n".join(
+            part for part in (describe_terms(vocab.find_terms(question)), describe_attached(attached or [])) if part
+        ),
         tools=[
-            search_tool(retriever, vocab, doc_types),
+            search_tool(retriever, vocab, doc_types, uploads),
             *([definitions_tool(glossary)] if glossary else []),
             *([*entity_tools(entities, on_lineage), precedent_tool(entities, retriever)] if entities else []),
         ],

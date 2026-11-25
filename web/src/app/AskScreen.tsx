@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
 import {
   InvalidFrameError,
   parseRunEvents,
@@ -19,6 +19,7 @@ import {
 import { AnswerActions } from "./AnswerActions";
 import { AnswerText, type OnCite } from "./AnswerText";
 import { ApprovalCard } from "./ApprovalCard";
+import { AttachmentChips, PaperclipIcon, useAttachments, type Attached } from "./Attachments";
 import type { Approvable } from "./approvals/ActionCard";
 import { ClassificationCard } from "./ClassificationCard";
 import { DocCheckCard } from "./DocCheckCard";
@@ -30,12 +31,15 @@ import { TaskList } from "./TaskList";
 import { Welcome } from "./Welcome";
 import styles from "./ask.module.css";
 import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "./runClient";
+import { ACCEPT, MAX_ATTACHMENTS } from "./uploads";
 import { useConversationControl, useShell } from "./shell/ShellContext";
 
 type Step = { node: string; finished: boolean };
 
 type Answer = {
   question: string;
+  /** The files sent with the question (#103), shown with its bubble. */
+  attached: Attached[];
   answer: string;
   citations: CitationEvent[];
   classifications: ClassificationEvent[];
@@ -56,17 +60,17 @@ type Run =
   | { status: "idle" }
   | ({ status: "running" } & Answer)
   | ({ status: "done" } & Answer)
-  | { status: "failed"; question: string; reason: string; trajectory: Step[] }
+  | { status: "failed"; question: string; attached: Attached[]; reason: string; trajectory: Step[] }
   /** The officer pressed Stop: plg-api cancelled the run, so nothing of the turn was kept. */
-  | { status: "stopped"; question: string; trajectory: Step[] };
+  | { status: "stopped"; question: string; attached: Attached[]; trajectory: Step[] };
 
 /** What an answer's markers open. */
 function sourcesOfRun(answer: Answer): AnswerSources {
   return { citations: answer.citations, stances: answer.stances };
 }
 
-function emptyAnswer(question: string): Answer {
-  return { question, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], injections: [], stances: [], tasks: [], traces: [], actions: [], trajectory: [] };
+function emptyAnswer(question: string, attached: Attached[] = []): Answer {
+  return { question, attached, answer: "", citations: [], classifications: [], docChecks: [], drafts: [], injections: [], stances: [], tasks: [], traces: [], actions: [], trajectory: [] };
 }
 
 const RESUME_ATTEMPTS = 3;
@@ -154,6 +158,8 @@ export function AskScreen({
   const [scrolledUp, setScrolledUp] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
+  const picker = useRef<HTMLInputElement>(null);
+  const attachments = useAttachments();
 
   /** Keeps the ref (read while rendering tokens) and the Jump to latest control in step. */
   const setFollowing = useCallback((follow: boolean) => {
@@ -283,7 +289,7 @@ export function AskScreen({
               case "error":
                 throw new RunFailed(event.message);
               case "cancelled":
-                setRun({ status: "stopped", question: acc.question, trajectory: acc.trajectory });
+                setRun({ status: "stopped", question: acc.question, attached: acc.attached, trajectory: acc.trajectory });
                 composer.current?.focus(); // the Stop button is gone: the officer can ask again at once
                 shell.refresh(); // a new conversation is listed, titled by the stopped question
                 return;
@@ -328,6 +334,7 @@ export function AskScreen({
       setRun({
         status: "failed",
         question: acc.question,
+        attached: acc.attached,
         reason,
         trajectory: acc.trajectory,
       });
@@ -345,7 +352,8 @@ export function AskScreen({
     }
   }
 
-  async function ask(text: string) {
+  /** Asks `text` with the officer's uploads in `attached` (#103). */
+  async function ask(text: string, attached: Attached[] = []) {
     if (run.status === "done") {
       const { runId } = run;
       if (runId) setAnsweredBy((by) => ({ ...by, [history.length + 1]: runId }));
@@ -356,7 +364,7 @@ export function AskScreen({
         { role: "assistant", content: run.answer },
       ]);
     }
-    setRun({ status: "running", ...emptyAnswer(text) });
+    setRun({ status: "running", ...emptyAnswer(text, attached) });
     setPending([]); // the new run lists whatever is still pending when it ends
     setPanel(null);
     jumpToLatest();
@@ -371,11 +379,12 @@ export function AskScreen({
         error instanceof RunFailed
           ? error.message
           : "The answer could not be received. Check your connection.";
-      setRun({ status: "failed", question: text, reason, trajectory: [] });
+      setRun({ status: "failed", question: text, attached, reason, trajectory: [] });
       return;
     }
     const id = threadId.current;
-    await follow(text, () => startRun(id, text));
+    const uploads = attached.map((a) => a.upload_id);
+    await follow(text, () => startRun(id, text, uploads), emptyAnswer(text, attached));
   }
 
   /** Opens a past conversation; if its last question is still being answered, picks that answer up. */
@@ -441,13 +450,52 @@ export function AskScreen({
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = question.trim();
-    if (!text || running) return;
+    if (!text || running || attachments.uploading) return;
     setQuestion("");
-    void ask(text);
+    const attached = attachments.ready;
+    attachments.clear();
+    void ask(text, attached);
   }
 
+  /** Files dragged over the conversation (never the sidebar's conversations and groups: they carry no Files). */
+  const carriesFiles = (event: DragEvent) => Array.from(event.dataTransfer?.types ?? []).includes("Files");
+  const dragDepth = useRef(0);
+  const [dropping, setDropping] = useState(false);
+  const onDragEnter = (event: DragEvent) => {
+    if (!carriesFiles(event)) return;
+    event.preventDefault();
+    dragDepth.current += 1;
+    setDropping(true);
+  };
+  const onDragOver = (event: DragEvent) => {
+    if (!carriesFiles(event)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  };
+  const onDragLeave = (event: DragEvent) => {
+    if (!carriesFiles(event)) return;
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDropping(false);
+  };
+  const onDrop = (event: DragEvent) => {
+    if (!carriesFiles(event)) return;
+    event.preventDefault();
+    dragDepth.current = 0;
+    setDropping(false);
+    attachments.add(Array.from(event.dataTransfer.files));
+    composer.current?.focus();
+  };
+
   return (
-    <div className={styles.ask} data-panel={panel ? "" : undefined}>
+    <div
+      className={styles.ask}
+      data-panel={panel ? "" : undefined}
+      data-dropping={dropping ? "" : undefined}
+      onDragEnter={onDragEnter}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <section aria-label="Conversation" className={styles.thread}>
         {showWelcome && user && (
           <Welcome user={user} onAsk={(text) => void ask(text)} />
@@ -487,14 +535,14 @@ export function AskScreen({
 
         {run.status !== "idle" && (
           <div className={styles.turn}>
-            <Bubble text={run.question} />
+            <Bubble text={run.question} attached={run.attached} />
 
             {run.status === "failed" ? (
               <div role="alert" className={styles.alert}>
                 <p>
                   <strong>The answer is incomplete and must not be trusted.</strong> {run.reason}
                 </p>
-                <button type="button" onClick={() => void ask(run.question)}>
+                <button type="button" onClick={() => void ask(run.question, run.attached)}>
                   Retry
                 </button>
               </div>
@@ -562,10 +610,45 @@ export function AskScreen({
             Jump to latest
           </button>
         )}
+        {dropping && (
+          <p className={styles.dropHint} aria-hidden="true">
+            Drop files to attach them to your question
+          </p>
+        )}
+        <AttachmentChips
+          chips={attachments.chips}
+          notice={attachments.notice}
+          announcement={attachments.announcement}
+          onRemove={(key) => {
+            attachments.remove(key);
+            composer.current?.focus();
+          }}
+        />
         <label htmlFor="question" className={styles.visuallyHidden}>
           Your question
         </label>
         <div className={styles.composerRow}>
+          <button
+            type="button"
+            className={styles.attach}
+            aria-label="Attach files"
+            title="Attach files (PDF, Word, text, Markdown or email)"
+            onClick={() => picker.current?.click()}
+          >
+            <PaperclipIcon />
+          </button>
+          <input
+            ref={picker}
+            type="file"
+            multiple
+            accept={ACCEPT}
+            hidden
+            tabIndex={-1}
+            onChange={(event) => {
+              attachments.add(Array.from(event.currentTarget.files ?? []));
+              event.currentTarget.value = ""; // the same file can be picked again
+            }}
+          />
           <textarea
             ref={composer}
             id="question"
@@ -587,11 +670,15 @@ export function AskScreen({
               Stop
             </button>
           ) : (
-            <button type="submit">Ask</button>
+            <button type="submit" disabled={attachments.uploading}>
+              Ask
+            </button>
           )}
         </div>
         <p id="question-hint" className={styles.hint}>
-          Press Enter to ask, Shift+Enter for a new line.
+          {attachments.uploading
+            ? "Wait for your files to finish uploading, then ask."
+            : `Press Enter to ask, Shift+Enter for a new line. Attach up to ${MAX_ATTACHMENTS} files, or drop them here.`}
         </p>
       </form>
       <div ref={end} className={styles.end} />
@@ -618,13 +705,25 @@ function PendingActions({
   ));
 }
 
-/** The officer's question: a right-aligned bubble. */
-function Bubble({ text }: { text: string }) {
+/** The officer's question: a right-aligned bubble, with the files sent with it (#103) listed below the text. */
+function Bubble({ text, attached = [] }: { text: string; attached?: Attached[] }) {
   return (
-    <p data-bubble className={styles.bubble}>
-      <span className={styles.visuallyHidden}>You asked: </span>
-      {text}
-    </p>
+    <div className={styles.bubble}>
+      <p data-bubble className={styles.bubbleText}>
+        <span className={styles.visuallyHidden}>You asked: </span>
+        {text}
+      </p>
+      {attached.length > 0 && (
+        <ul aria-label="Files sent with your question" className={styles.bubbleFiles}>
+          {attached.map((file) => (
+            <li key={file.upload_id}>
+              <PaperclipIcon />
+              {file.filename}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

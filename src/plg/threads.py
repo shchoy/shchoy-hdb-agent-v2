@@ -338,7 +338,8 @@ class RunRegistry:
         self._runs.pop(thread_id, None)
 
     def start(
-        self, graph: PLGGraph, thread_id: str, message: str, user: UserCtx, decision: ApprovalDecision | None = None
+        self, graph: PLGGraph, thread_id: str, message: str, user: UserCtx, decision: ApprovalDecision | None = None,
+        attachments: list[str] | None = None,
     ) -> RunBuffer:
         """Answer `message` (or carry out `decision`, with an empty `message`) in the background."""
         if self.running(thread_id):
@@ -349,7 +350,8 @@ class RunRegistry:
         async def pump() -> None:
             try:
                 async for event in stream_run(
-                    graph, thread_id, message, user, decision=decision, tracer=self._tracer, run_id=run_id
+                    graph, thread_id, message, user, decision=decision, tracer=self._tracer, run_id=run_id,
+                    attachments=attachments,
                 ):
                     await buffer.add(event)
             except asyncio.CancelledError:

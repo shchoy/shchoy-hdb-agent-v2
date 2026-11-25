@@ -1,0 +1,44 @@
+{
+  "document": {
+    "doc_id": "upload-423cb2db3aa34c2a",
+    "title": "site-visit.txt",
+    "version": null,
+    "kind": "text",
+    "filename": "site-visit.txt",
+    "content_type": "text/plain",
+    "blocks": [
+      {
+        "text": "Site visit notes, Blk 123 Ang Mo Kio",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "The shutter of the kiosk at unit 01-17 is jammed and the tenant keeps the walkway blocked with crates.",
+        "level": 0,
+        "page": null
+      },
+      {
+        "text": "The estate officer agreed a follow-up visit with the tenant on 14 October 2026.",
+        "level": 0,
+        "page": null
+      }
+    ],
+    "upload": true
+  },
+  "location": {
+    "doc_id": "upload-423cb2db3aa34c2a",
+    "chunk_id": "upload-423cb2db3aa34c2a#000",
+    "location": "(body)",
+    "quote": "The estate officer agreed a follow-up visit with the tenant on 14 October 2026.",
+    "page": null,
+    "highlights": [
+      {
+        "block": 2,
+        "start": 0,
+        "end": 79
+      }
+    ]
+  },
+  "start": 140,
+  "end": 219
+}

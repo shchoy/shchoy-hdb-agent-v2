@@ -7,6 +7,30 @@ export const FOLLOW_UP = "And how long does the tenant have to pay after that?";
 export const REMINDER_GOLDEN_LEAF = "Draft a first reminder letter for Golden Leaf Minimart Pte Ltd's overdue rent";
 export const REMINDER_HOMETOWN = "Draft a first reminder letter for Hometown Minimart Pte Ltd's overdue rent";
 export const INBOX_QUESTION = "Process the latest email in the feedback inbox.";
+/** Asked with the site-visit note attached (#103); the scripted knowledge agent cites the note. */
+export const UPLOAD_QUESTION = "What did we agree with the kiosk tenant at unit 01-17?";
+export const UPLOAD_NOTE = {
+  name: "site-visit.txt",
+  mimeType: "text/plain",
+  buffer: Buffer.from(
+    "Site visit notes, Blk 123 Ang Mo Kio\n" +
+      "The shutter of the kiosk at unit 01-17 is jammed and the tenant keeps the walkway blocked with crates.\n" +
+      "The estate officer agreed a follow-up visit with the tenant on 14 October 2026.\n",
+  ),
+};
+
+/** Attaches files with the composer's paperclip (through the browser's file chooser) and waits until each is ready. */
+export async function attach(page: Page, ...files: { name: string; mimeType: string; buffer: Buffer }[]): Promise<void> {
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Attach files" }).click();
+  await (await chooser).setFiles(files);
+  const attached = page.getByRole("list", { name: "Attached files" });
+  for (const file of files) {
+    await expect(attached.getByRole("listitem").filter({ hasText: file.name }).getByText("Ready")).toBeVisible({
+      timeout: 60_000,
+    });
+  }
+}
 
 /** The personas the tests sign in as, by name, and their staff IDs. */
 export const OFFICER = "Siti Aishah Yusof";

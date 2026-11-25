@@ -4,7 +4,9 @@ import {
   INBOX_QUESTION,
   QUESTION,
   REMINDER_GOLDEN_LEAF,
+  UPLOAD_NOTE,
   answer,
+  attach,
   askInNewConversation,
   marker,
   openConversation,
@@ -44,6 +46,22 @@ for (const colorScheme of ["light", "dark"] as const) {
 
       await visit(page, "/"); // the same tab: it reopens the conversation
       await expect(page.getByRole("list", { name: "Earlier in this conversation" })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
+    test("ask screen: the composer with attached files, one refused (#103)", async ({ page }) => {
+      await signIn(page, OFFICER);
+      await page.getByRole("button", { name: "New conversation" }).click();
+      await attach(page, UPLOAD_NOTE);
+      const chooser = page.waitForEvent("filechooser");
+      await page.getByRole("button", { name: "Attach files" }).click();
+      await (await chooser).setFiles({ name: "budget.xlsx", mimeType: "application/octet-stream", buffer: Buffer.from("PK") });
+      const refused = page.getByRole("list", { name: "Attached files" }).getByRole("listitem").filter({ hasText: "budget.xlsx" });
+      await expect(refused.getByRole("alert")).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
       expect(await seriousViolations(page)).toEqual([]);
     });
 

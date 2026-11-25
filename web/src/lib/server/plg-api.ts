@@ -423,3 +423,37 @@ export async function decideCuration(staffId: string, body: ResumeRequest): Prom
   });
   return { status: response.status, body: data ?? error };
 }
+
+/**
+ * Uploads a file into the officer's private library (#103): `body` (the browser's request body) is streamed straight
+ * through to plg-api, never buffered here. plg-api's reply (the Upload, or a refusal: 413 / 415 / 422) is returned unread.
+ */
+export function uploadFile(
+  staffId: string,
+  filename: string,
+  body: ReadableStream<Uint8Array> | null,
+  { contentType, contentLength, signal }: { contentType?: string | null; contentLength?: string | null; signal?: AbortSignal } = {},
+): Promise<Response> {
+  const url = `${plgApiUrl()}/uploads?${new URLSearchParams({ filename })}`;
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": contentType || "application/octet-stream",
+      ...(contentLength ? { "Content-Length": contentLength } : {}),
+      [USER_HEADER]: staffId,
+    },
+    body,
+    // A streamed request body (Node's fetch needs it said).
+    duplex: "half",
+    cache: "no-store",
+    signal,
+  } as RequestInit & { duplex: "half" });
+}
+
+/** The officer's own uploads, newest first. */
+export async function listUploads(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/uploads", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}

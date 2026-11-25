@@ -42,6 +42,16 @@ describe("parseRunEvents", () => {
       type: "citation", seq: 1, index: 1,
     };
     const events = await collect(streamOf(`event: citation\ndata: ${JSON.stringify(citation)}\n\n`));
+    // A stream from before #103 has no `upload`: the source is the shared Library.
+    expect(events).toEqual([{ ...citation, upload: false }]);
+  });
+
+  it("reads a citation of the asker's own upload (#103)", async () => {
+    const citation = {
+      doc_id: "upload-1", chunk_id: "upload-1#000", title: "site-visit.txt", version: null, location: "(body)",
+      quote: "A follow-up visit.", span: { start: 0, end: 18 }, upload: true, type: "citation", seq: 1, index: 1,
+    };
+    const events = await collect(streamOf(`event: citation\ndata: ${JSON.stringify(citation)}\n\n`));
     expect(events).toEqual([citation]);
   });
 

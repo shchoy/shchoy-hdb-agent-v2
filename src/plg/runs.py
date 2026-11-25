@@ -26,19 +26,20 @@ logger = logging.getLogger(__name__)
 async def stream_run(
     graph: PLGGraph, thread_id: str, message: str, user: UserCtx | None = None,
     *, decision: ApprovalDecision | None = None, tracer: Tracer | None = None, channel: Channel = "api",
-    run_id: uuid.UUID | None = None,
+    run_id: uuid.UUID | None = None, attachments: list[str] | None = None,
 ) -> AsyncIterator[RunEvent]:
     """Answer `message`, or, given a `decision`, resume the thread's pending approval with it.
 
     With a `tracer`, the run is one LangSmith trace whose root carries the run ID reported in `done`/`error`.
-    `run_id`: use this ID (a caller reporting the run's cancellation itself names it)."""
+    `run_id`: use this ID (a caller reporting the run's cancellation itself names it). `attachments`: IDs of the
+    officer's uploads sent with the question (#103)."""
     run_id = run_id or uuid.uuid4()
     if tracer is None:
-        async for event in _stream(graph, run_id, thread_id, message, user, decision):
+        async for event in _stream(graph, run_id, thread_id, message, user, decision, attachments=attachments):
             yield event
         return
     if decision is None:
-        inputs: dict[str, Any] = {"question": message}
+        inputs: dict[str, Any] = {"question": message, **({"attachments": attachments} if attachments else {})}
         extra: dict[str, Any] = {"kind": "question"}
     else:
         inputs = {"decision": decision.model_dump(mode="json")}
@@ -49,7 +50,9 @@ async def stream_run(
         failed: str | None = None
         started = root.start_time.isoformat()
         try:
-            async for event in _stream(graph, run_id, thread_id, message, user, decision, root.add_metadata, started):
+            async for event in _stream(
+                graph, run_id, thread_id, message, user, decision, root.add_metadata, started, attachments=attachments
+            ):
                 if isinstance(event, TokenEvent):
                     answer.append(event.text)
                 elif isinstance(event, InterruptEvent):
@@ -69,7 +72,7 @@ async def stream_run(
 async def _stream(
     graph: PLGGraph, run_id: uuid.UUID, thread_id: str, message: str, user: UserCtx | None,
     decision: ApprovalDecision | None, annotate: Callable[[dict[str, Any]], None] | None = None,
-    started: str | None = None,
+    started: str | None = None, *, attachments: list[str] | None = None,
 ) -> AsyncIterator[RunEvent]:
     """`annotate` adds trace metadata as the run learns what it is about (its intents, once routed); `started` is the
     traced root run's start time."""
@@ -80,7 +83,7 @@ async def _stream(
     if decision is not None:
         inputs = Command(resume=decision.model_dump(mode="json"))
     else:
-        inputs = {"question": message}
+        inputs = {"question": message, "attachments": list(attachments or [])}
         if user is not None:
             inputs["user"] = user
 

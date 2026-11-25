@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 from typing import Protocol
 
 import httpx2
@@ -78,10 +79,48 @@ def make_reranker(settings: Settings) -> Reranker:
     return VoyageReranker(settings, api_key)
 
 
+class PrivateIndex(Protocol):
+    """Officers' private libraries (#103): hybrid search over one officer's own uploads only."""
+
+    def search(
+        self, owner: str, text: str, vector: Sequence[float], *, filters: SearchFilter | None = None, limit: int = 50
+    ) -> list[SearchHit]: ...
+
+
+@dataclass(frozen=True)
+class UploadScope:
+    """Whose uploads a search also covers, and which of them (attached to the current message) are boosted."""
+
+    index: PrivateIndex
+    owner: str
+    boost: frozenset[str] = field(default_factory=frozenset)
+    """Doc IDs whose best passages are always among the results."""
+
+
 class Retriever(Protocol):
     """What agents search through: `Searcher`, or a stand-in."""
 
-    def search(self, query: str, *, filters: SearchFilter | None = None, k: int = 8) -> list[SearchHit]: ...
+    def search(
+        self, query: str, *, filters: SearchFilter | None = None, k: int = 8, uploads: UploadScope | None = None
+    ) -> list[SearchHit]: ...
+
+
+def boosted(ranked: list[SearchHit], boost: frozenset[str], k: int) -> list[SearchHit]:
+    """The top `k` of `ranked`, keeping (in up to half the places) the best passages of the boosted documents however
+    they ranked, in rank order."""
+    if not boost:
+        return ranked[:k]
+    kept = {h.chunk.chunk_id for h in [h for h in ranked if h.chunk.doc_id in boost][: max(1, k // 2)]}
+    rest = {h.chunk.chunk_id for h in [h for h in ranked if h.chunk.chunk_id not in kept][: k - len(kept)]}
+    return [h for h in ranked if h.chunk.chunk_id in kept | rest]
+
+
+def _inputs(inputs: dict[str, object]) -> dict[str, object]:
+    """A search as its trace shows it: the query, filters and k, and whose uploads it also covered."""
+    shown = {k: v for k, v in inputs.items() if k not in ("self", "uploads")}
+    if isinstance(scope := inputs.get("uploads"), UploadScope):
+        shown["uploads_of"] = scope.owner
+    return shown
 
 
 class Searcher:
@@ -93,13 +132,19 @@ class Searcher:
         self._reranker = reranker
         self._candidates = candidates
 
-    @traceable(run_type="retriever", name="search", process_inputs=lambda i: {k: v for k, v in i.items() if k != "self"},  # the query, filters and k
+    @traceable(run_type="retriever", name="search", process_inputs=_inputs,
                process_outputs=lambda hits: {"output": [_document(h) for h in hits]})
-    def search(self, query: str, *, filters: SearchFilter | None = None, k: int = 8) -> list[SearchHit]:
-        candidates = self._store.search(
-            query, self._embedder.embed_query(query), filters=filters, limit=self._candidates
-        )
-        return self._reranker.rerank(query, candidates)[:k]
+    def search(
+        self, query: str, *, filters: SearchFilter | None = None, k: int = 8, uploads: UploadScope | None = None
+    ) -> list[SearchHit]:
+        """The best `k` passages of the shared Library and, given `uploads`, of the officer's own uploads, ranked
+        together by the reranker."""
+        vector = self._embedder.embed_query(query)
+        candidates = self._store.search(query, vector, filters=filters, limit=self._candidates)
+        if uploads is not None:
+            candidates += uploads.index.search(uploads.owner, query, vector, filters=filters, limit=self._candidates)
+        ranked = self._reranker.rerank(query, candidates)
+        return boosted(ranked, uploads.boost if uploads else frozenset(), k)
 
 
 def _document(hit: SearchHit) -> dict[str, object]:
@@ -131,6 +176,8 @@ class LazySearcher:
         self._settings = settings
         self._searcher: Searcher | None = None
 
-    def search(self, query: str, *, filters: SearchFilter | None = None, k: int = 8) -> list[SearchHit]:
+    def search(
+        self, query: str, *, filters: SearchFilter | None = None, k: int = 8, uploads: UploadScope | None = None
+    ) -> list[SearchHit]:
         self._searcher = self._searcher or open_searcher(self._settings)
-        return self._searcher.search(query, filters=filters, k=k)
+        return self._searcher.search(query, filters=filters, k=k, uploads=uploads)

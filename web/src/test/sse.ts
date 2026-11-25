@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { HttpResponse } from "msw";
-import type { AuditReport, Categorisation } from "@/lib/events";
+import type { AuditReport, Categorisation, Upload } from "@/lib/events";
 
 /** A recorded plg-api SSE stream (see scripts/record_sse_fixtures.py at the repo root). */
 export function fixture(
@@ -19,7 +19,8 @@ export function fixture(
     | "tasks"
     | "injection"
     | "injection_email"
-    | "cancelled",
+    | "cancelled"
+    | "upload",
 ): string {
   // Vitest runs from web/; import.meta.url is not a file URL under jsdom.
   return readFileSync(join(process.cwd(), "src/test/fixtures", `${name}.sse`), "utf8");
@@ -94,4 +95,17 @@ export function feedbackFixture(name: string): unknown {
 /** The recorded GET /audit/reports/latest response: the corpus audit report over the synced corpus. */
 export function auditReportFixture(): AuditReport {
   return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/audit_report.json"), "utf8")) as AuditReport;
+}
+
+/** The recorded POST /uploads response (#103): the officer's site-visit note in their private library. */
+export function uploadFixture(): Upload {
+  return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/uploads/upload.json"), "utf8")) as Upload;
+}
+
+/** A recorded refused upload (415, an unsupported type): plg-api's status and body. */
+export function uploadRefusedFixture(): { status: number; body: { detail: string } } {
+  return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/uploads/refused.json"), "utf8")) as {
+    status: number;
+    body: { detail: string };
+  };
 }

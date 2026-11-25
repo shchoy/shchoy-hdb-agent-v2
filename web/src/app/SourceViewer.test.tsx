@@ -11,7 +11,7 @@ function citationFor({ document, location, start, end }: DocumentFixture): Citat
   return {
     type: "citation", seq: 1, index: 1, doc_id: document.doc_id, chunk_id: location.chunk_id,
     title: document.title, version: document.version, location: location.location,
-    quote: location.quote, span: { start, end },
+    quote: location.quote, span: { start, end }, upload: Boolean(document.upload),
   };
 }
 
@@ -54,6 +54,28 @@ describe.each(["pdf", "docx", "email", "markdown"] as const)("Source viewer for 
 });
 
 describe("Source viewer", () => {
+  it("marks the officer's own upload (#103) and highlights the cited span in it", async () => {
+    const fixture = documentFixture("upload");
+    serve(fixture);
+
+    const { viewer } = await open(fixture);
+
+    expect(within(viewer).getByText("Your upload")).toBeInTheDocument();
+    expect(flat(viewer.querySelector("mark")!.textContent)).toBe(flat(fixture.location.quote));
+    expect(within(viewer).getByRole("link", { name: /Download original/ })).toHaveAttribute(
+      "href", `/api/documents/${fixture.document.doc_id}/file`,
+    );
+  });
+
+  it("doesn't mark a Library document", async () => {
+    const fixture = documentFixture("docx");
+    serve(fixture);
+
+    const { viewer } = await open(fixture);
+
+    expect(within(viewer).queryByText("Your upload")).not.toBeInTheDocument();
+  });
+
   it("asks for the cited span of the chunk", async () => {
     const fixture = documentFixture("docx");
     const spans = serve(fixture);

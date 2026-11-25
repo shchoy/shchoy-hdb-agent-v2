@@ -18,7 +18,7 @@ from plg.search.store import SearchStore
 
 DocumentKind = Literal["pdf", "docx", "pptx", "email", "markdown", "text"]
 
-_KINDS: dict[str, tuple[DocumentKind, str]] = {
+KINDS: dict[str, tuple[DocumentKind, str]] = {
     ".pdf": ("pdf", "application/pdf"),
     ".docx": ("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
     ".pptx": ("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
@@ -44,6 +44,8 @@ class DocumentView(BaseModel):
     filename: str
     content_type: str
     blocks: list[DocumentBlock]
+    upload: bool = False
+    """The officer's own upload (#103), not a shared Library document."""
 
 
 class Highlight(BaseModel):
@@ -97,9 +99,9 @@ class DocumentLibrary:
 
     def _file(self, first: Chunk) -> SourceFile | None:
         path = (self._corpus / first.source_path).resolve()
-        if not path.is_relative_to(self._corpus) or not path.is_file() or path.suffix.lower() not in _KINDS:
+        if not path.is_relative_to(self._corpus) or not path.is_file() or path.suffix.lower() not in KINDS:
             return None
-        kind, content_type = _KINDS[path.suffix.lower()]
+        kind, content_type = KINDS[path.suffix.lower()]
         return SourceFile(path, path.name, content_type, kind)
 
     def view(self, doc_id: str) -> DocumentView | None:
@@ -123,7 +125,7 @@ class DocumentLibrary:
         finish = min(max(len(chunk.text) if end is None else end, begin), len(chunk.text))
         quote = chunk.text[begin:finish]
         blocks = _blocks(source.path, self._scans)
-        highlights = _highlights(blocks, chunk, begin, finish)
+        highlights = highlights_of(blocks, chunk, begin, finish)
         page = next((blocks[h.block].page for h in highlights if blocks[h.block].page is not None), None)
         return ChunkLocation(
             doc_id=doc_id, chunk_id=chunk_id, location=chunk.location, quote=quote, page=page,
@@ -135,7 +137,7 @@ def _blocks(path: Path, scans: ScanSource | None) -> list[DocumentBlock]:
     return [DocumentBlock(text=b.text, level=b.level, page=b.page) for b in extract(path, scans).blocks]
 
 
-def _highlights(blocks: list[DocumentBlock], chunk: Chunk, begin: int, finish: int) -> list[Highlight]:
+def highlights_of(blocks: list[DocumentBlock], chunk: Chunk, begin: int, finish: int) -> list[Highlight]:
     """Block ranges of chunk.text[begin:finish]. A chunk's text is its body blocks joined by newlines."""
     if begin == finish:
         return []

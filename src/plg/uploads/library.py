@@ -22,7 +22,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from plg.documents import KINDS, ChunkLocation, DocumentBlock, DocumentKind, DocumentView, SourceFile, highlights_of
-from plg.guardrails.injection import InjectionFlag, flags_in
+from plg.guardrails.injection import RULES, InjectionFlag, flags_in
 from plg.ingest.chunking import location, sections, split
 from plg.ingest.extract import ParsedDoc, extract
 from plg.ingest.sync import screened
@@ -81,15 +81,18 @@ class UploadLibrary:
         self._vector_weight = vector_weight
         self._index: LanceUploadIndex | None = None
         self._lock = threading.Lock()
+        self._reserved: dict[str, int] = {}
+        """Bytes of each officer's uploads still being read: counted against the space until they are recorded."""
 
     @property
     def index(self) -> LanceUploadIndex:
         """Opened on first use, so plg-api starts without touching it."""
-        if self._index is None:
-            self._index = LanceUploadIndex(
-                self._root / "index", dim=self._embedder.dim, vector_weight=self._vector_weight
-            )
-        return self._index
+        with self._lock:  # one index (and so one write lock) however many uploads arrive at once
+            if self._index is None:
+                self._index = LanceUploadIndex(
+                    self._root / "index", dim=self._embedder.dim, vector_weight=self._vector_weight
+                )
+            return self._index
 
     # ------------------------------------------------------------------ reading
     def _dir(self, owner: str, upload_id: str | None = None) -> Path:
@@ -147,6 +150,9 @@ class UploadLibrary:
         )
 
     # ------------------------------------------------------------------ adding
+    def too_large(self, filename: str) -> str:
+        return f"{filename} is larger than {size_label(self.max_bytes)}, the most one file may be."
+
     def add(self, owner: str, filename: str, data: bytes) -> Upload:
         """Store, screen, chunk and index the file; `UploadRefused` says why it can't be taken."""
         name = _clean(filename)
@@ -154,11 +160,11 @@ class UploadLibrary:
         if not name or suffix not in ACCEPTED:
             raise UploadRefused(415, UNSUPPORTED)
         if len(data) > self.max_bytes:
-            raise UploadRefused(413, f"{name} is larger than {size_label(self.max_bytes)}, the most one file may be.")
+            raise UploadRefused(413, self.too_large(name))
         upload_id = f"upload-{uuid.uuid4().hex[:16]}"
         folder = self._dir(owner, upload_id)
-        with self._lock:  # the quota check and the write are one step
-            used = sum(u.size for u in self.of(owner))
+        with self._lock:  # the space check and the reservation are one step, so uploads sent at once can't overrun it
+            used = sum(u.size for u in self.of(owner)) + self._reserved.get(owner, 0)
             if used + len(data) > self._quota:
                 left = max(self._quota - used, 0)
                 raise UploadRefused(
@@ -169,11 +175,15 @@ class UploadLibrary:
             folder.mkdir(parents=True)
             path = folder / name
             path.write_bytes(data)
+            self._reserved[owner] = self._reserved.get(owner, 0) + len(data)
         try:
             item = self._ingest(owner, upload_id, path, len(data))
         except BaseException:
             shutil.rmtree(folder, ignore_errors=True)
             raise
+        finally:  # recorded (its upload.json now counts) or removed
+            with self._lock:
+                self._reserved[owner] -= len(data)
         return item
 
     def _ingest(self, owner: str, upload_id: str, path: Path, size: int) -> Upload:
@@ -191,7 +201,8 @@ class UploadLibrary:
         chunks = self._chunks(upload_id, title, path.name, parsed)
         flag = None
         if flagged:
-            rules = next((r for c in chunks if (r := flags_in(c.text))), [])
+            found = {r for c in chunks for r in flags_in(c.text) or []}
+            rules = [r for r in RULES if r in found]
             flag = InjectionFlag(source="document", rules=rules, doc_id=upload_id, title=title)
         item = Upload(
             upload_id=upload_id, filename=path.name, title=title, kind=kind, content_type=content_type, size=size,

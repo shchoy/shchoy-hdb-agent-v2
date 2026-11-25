@@ -3,6 +3,7 @@ index, each row carrying its owner. Every read is filtered on the owner, so one 
 
 from __future__ import annotations
 
+import threading
 from collections.abc import Sequence
 from datetime import timedelta
 from pathlib import Path
@@ -25,14 +26,18 @@ class LanceUploadIndex:
         db = lancedb.connect(path, read_consistency_interval=timedelta(0))
         schema = _chunk_schema(dim).append(pa.field("owner", pa.string()))
         self._table = db.create_table("uploads", schema=schema, exist_ok=True)
+        self._writing = threading.Lock()  # one write at a time: concurrent index builds conflict in LanceDB
 
     def add(self, owner: str, chunks: Sequence[Chunk]) -> None:
-        if chunks:
+        if not chunks:
+            return
+        with self._writing:
             self._table.add([{**c.model_dump(), "fts_text": c.fts_text, "owner": owner} for c in chunks])
             self._table.create_index("fts_text", config=FTS(), replace=True)
 
     def remove(self, doc_id: str) -> None:
-        self._table.delete(f"doc_id = {_q(doc_id)}")
+        with self._writing:
+            self._table.delete(f"doc_id = {_q(doc_id)}")
 
     def _rows(self, where: str) -> list[Chunk]:
         rows = self._table.search().where(where).limit(None).to_arrow().to_pylist()

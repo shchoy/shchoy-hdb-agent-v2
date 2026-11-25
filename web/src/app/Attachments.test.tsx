@@ -167,6 +167,8 @@ describe("Attaching files to a question (#103)", () => {
     const item = chip("memo.txt");
     expect(await within(item).findByText("Instructions removed")).toBeInTheDocument();
     expect(item).toHaveTextContent("Ready");
+    const alert = screen.getAllByRole("alert").find((a) => /planted instructions were removed/.test(a.textContent ?? ""));
+    expect(alert).toBeDefined(); // the injection alert, as soon as the file is attached
   });
 
   it("attaches at most 5 files to one question and says which were left out", async () => {

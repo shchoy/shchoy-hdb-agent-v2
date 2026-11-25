@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Upload } from "@/lib/events";
 import { Badge } from "./Card";
+import { InjectionAlert } from "./InjectionAlert";
 import styles from "./ask.module.css";
 import { formatSize, MAX_ATTACHMENTS, uploadFile } from "./uploads";
 
@@ -37,7 +38,9 @@ export function useAttachments() {
   const aborts = useRef(new Map<string, () => void>());
 
   const patch = useCallback((key: string, change: Partial<Chip>) => {
-    setChips((all) => all.map((chip) => (chip.key === key ? { ...chip, ...change } : chip)));
+    setChips((all) =>
+      all.map((chip) => (chip.key === key ? { ...chip, ...change } : chip)),
+    );
   }, []);
 
   const add = useCallback(
@@ -63,12 +66,18 @@ export function useAttachments() {
       setChips((all) => [...all, ...added]);
       taken.forEach((file, i) => {
         const { key, name } = added[i];
-        const { done, abort } = uploadFile(file, (loaded) => patch(key, { loaded }));
+        const { done, abort } = uploadFile(file, (loaded) =>
+          patch(key, { loaded }),
+        );
         aborts.current.set(key, abort);
         void done.then((outcome) => {
           aborts.current.delete(key);
           if (outcome.ok) {
-            patch(key, { status: "ready", upload: outcome.upload, loaded: file.size });
+            patch(key, {
+              status: "ready",
+              upload: outcome.upload,
+              loaded: file.size,
+            });
             setAnnouncement(`${name} is ready.`);
           } else if ("detail" in outcome) {
             patch(key, { status: "failed", detail: outcome.detail });
@@ -109,7 +118,9 @@ export function useAttachments() {
   }, []);
 
   const ready: Attached[] = chips.flatMap((chip) =>
-    chip.status === "ready" && chip.upload ? [{ upload_id: chip.upload.upload_id, filename: chip.upload.filename }] : [],
+    chip.status === "ready" && chip.upload
+      ? [{ upload_id: chip.upload.upload_id, filename: chip.upload.filename }]
+      : [],
   );
   const uploading = chips.some((chip) => chip.status === "uploading");
   return { chips, ready, uploading, notice, announcement, add, remove, clear };
@@ -137,7 +148,11 @@ export function AttachmentChips({
       {chips.length > 0 && (
         <ul aria-label="Attached files" className={styles.chips}>
           {chips.map((chip) => (
-            <li key={chip.key} className={styles.chip} data-status={chip.status}>
+            <li
+              key={chip.key}
+              className={styles.chip}
+              data-status={chip.status}
+            >
               <div className={styles.chipHead}>
                 <span className={styles.chipName}>{chip.name}</span>
                 <span className={styles.chipSize}>{formatSize(chip.size)}</span>
@@ -161,7 +176,9 @@ export function AttachmentChips({
               {chip.status === "ready" && (
                 <div className={styles.chipBadges}>
                   <Badge tone="success">Ready</Badge>
-                  {chip.upload?.injection && <Badge tone="warning">Instructions removed</Badge>}
+                  {chip.upload?.injection && (
+                    <Badge tone="warning">Instructions removed</Badge>
+                  )}
                 </div>
               )}
               {chip.status === "failed" && (
@@ -176,6 +193,20 @@ export function AttachmentChips({
           ))}
         </ul>
       )}
+      <InjectionAlert
+        flags={chips.flatMap(({ status, upload }) =>
+          status === "ready" && upload?.injection
+            ? [
+                {
+                  ...upload.injection,
+                  doc_id: upload.injection.doc_id ?? null,
+                  title: upload.injection.title ?? null,
+                  excerpt: upload.injection.excerpt ?? null,
+                },
+              ]
+            : [],
+        )}
+      />
       <p aria-live="polite" className={styles.visuallyHidden}>
         {announcement}
       </p>

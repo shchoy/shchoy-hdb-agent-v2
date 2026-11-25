@@ -304,3 +304,15 @@ def test_uploads_are_kept_in_their_own_folder(make_api: Callable[..., Api], sear
     uploaded(api, "site-visit.txt", NOTE.encode())
 
     assert any(p.name == "site-visit.txt" for p in (tmp_path / "mine").rglob("*"))
+
+
+def test_uploads_sent_at_once_cannot_overrun_the_space(make_api: Callable[..., Api], searcher: Searcher) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    api = make_api(searcher=searcher, upload_quota_bytes=len(NOTE.encode()) * 2)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        statuses = list(pool.map(lambda n: upload(api, f"note-{n}.txt", NOTE.encode()).status_code, range(4)))
+
+    assert sorted(statuses) == [201, 201, 413, 413]
+    assert len(api.client.get("/uploads", headers=USER).json()) == 2

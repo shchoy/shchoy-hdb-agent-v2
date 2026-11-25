@@ -31,7 +31,7 @@ import { TaskList } from "./TaskList";
 import { Welcome } from "./Welcome";
 import styles from "./ask.module.css";
 import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "./runClient";
-import { ACCEPT } from "./uploads";
+import { ACCEPT, MAX_ATTACHMENTS } from "./uploads";
 import { useConversationControl, useShell } from "./shell/ShellContext";
 
 type Step = { node: string; finished: boolean };
@@ -678,7 +678,7 @@ export function AskScreen({
         <p id="question-hint" className={styles.hint}>
           {attachments.uploading
             ? "Wait for your files to finish uploading, then ask."
-            : "Press Enter to ask, Shift+Enter for a new line. Attach up to 5 files, or drop them here."}
+            : `Press Enter to ask, Shift+Enter for a new line. Attach up to ${MAX_ATTACHMENTS} files, or drop them here.`}
         </p>
       </form>
       <div ref={end} className={styles.end} />

@@ -59,7 +59,7 @@ from plg.ingest.scans import SavedScans, TranscriptStore
 from plg.llm import AnthropicLLMClient, LLMClient, Message
 from plg.memory.service import MemoryService
 from plg.search.embed import Embedder
-from plg.uploads.library import Upload, UploadLibrary, UploadRefused, size_label
+from plg.uploads.library import Upload, UploadLibrary, UploadRefused
 from plg.memory.store import FlaggedByPolicy, MemoryStore, MemoryView, view
 from plg.search.embed import LazyEmbedder
 from plg.search.rerank import LazySearcher, Retriever
@@ -812,14 +812,11 @@ def create_app(
     ) -> Upload:
         """Upload a document (the request body is the file's bytes) into your private library (#103). It is screened
         for prompt injection and indexed for your own searches only; attach it to a question by its `upload_id`."""
-        limit = uploads.max_bytes
         received = bytearray()
-        async for part in request.stream():
+        async for part in request.stream():  # refused as soon as it is too large, never read whole
             received += part
-            if len(received) > limit:
-                raise HTTPException(
-                    status_code=413, detail=f"{filename} is larger than {size_label(limit)}, the most one file may be."
-                )
+            if len(received) > uploads.max_bytes:
+                raise HTTPException(status_code=413, detail=uploads.too_large(filename))
         try:
             return await asyncio.to_thread(uploads.add, user.staff_id, filename, bytes(received))
         except UploadRefused as refused:

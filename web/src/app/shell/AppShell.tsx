@@ -50,9 +50,10 @@ function current(pathname: string, href: string): boolean {
 }
 
 /**
- * The signed-in app's frame: a left sidebar (product, New conversation, sections, pending-approvals count, recent
- * conversations in the officer's groups and under Recent, theme toggle, persona) beside the screen. Conversations are
- * dragged onto a group or Recent, groups onto another group to reorder them (#101); each has a menu way too. Below a tablet width the sidebar is a drawer behind a Menu button.
+ * The signed-in app's frame: a left sidebar (product, New conversation, sections, pending-approvals count, the officer's
+ * pinned conversations and groups (#102, in pin order; a pinned conversation shows only there), then their other groups
+ * and the rest under Recent, theme toggle, persona) beside the screen. Conversations are dragged onto a group or Recent,
+ * unpinned groups onto another to reorder them (#101); each has a menu way too. Below a tablet width the sidebar is a drawer behind a Menu button.
  */
 export function AppShell({ user, theme, children }: { user: UserCtx; theme?: Theme; children: ReactNode }) {
   const pathname = usePathname() ?? "/";
@@ -63,6 +64,8 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   const collapsed = useMemo(() => parseCollapsed(savedCollapsed), [savedCollapsed]);
   /** A conversation just moved: its Options button in the new place takes focus once, then this clears. */
   const [moving, setMoving] = useState<string | null>(null);
+  /** Likewise for a group just pinned or unpinned (#102). */
+  const [movingGroup, setMovingGroup] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
   const [active, setActive] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -199,10 +202,25 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   function moved(thread: ThreadSummary, groupId: string | null, { focus = true } = {}) {
     setThreads((all) => all.map((t) => (t.thread_id === thread.thread_id ? { ...t, group_id: groupId } : t)));
     const destination = groups.find((g) => g.group_id === groupId);
-    setAnnouncement(`Moved ${thread.title} to ${destination?.name ?? "Recent"}`);
+    // A pinned one stays in Pinned: the move is where unpinning will put it back.
+    const stays = thread.pinned != null ? ". It stays pinned." : "";
+    setAnnouncement(`Moved ${thread.title} to ${destination?.name ?? "Recent"}${stays}`);
     if (groupId) expand(groupId); // so the moved conversation is shown (and keeps focus, when moved by its menu)
     if (focus) setMoving(thread.thread_id);
     setDropError(null); // an earlier refused drop is no longer news
+  }
+
+  function pinned(thread: ThreadSummary, place: number | null) {
+    setThreads((all) => all.map((t) => (t.thread_id === thread.thread_id ? { ...t, pinned: place } : t)));
+    if (place == null && thread.group_id) expand(thread.group_id); // back in its group: shown, so it keeps focus
+    setAnnouncement(`${place == null ? "Unpinned" : "Pinned"} ${thread.title}`);
+    setMoving(thread.thread_id);
+  }
+
+  function pinnedGroup(group: Group, place: number | null) {
+    setGroups((all) => all.map((g) => (g.group_id === group.group_id ? { ...g, pinned: place } : g)));
+    setAnnouncement(`${place == null ? "Unpinned" : "Pinned"} group ${group.name}`);
+    setMovingGroup(group.group_id);
   }
 
   /** A conversation dropped on a group (or Recent: null). */
@@ -213,10 +231,13 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
     setDropError(refusal.refused);
   }
 
-  /** Puts a group at `index` among the groups; resolves to the refusal, or null once reordered (and announced). */
+  /** Puts an unpinned group at `index` among the unpinned groups (pinned ones keep their place in the officer's order,
+   * which is theirs again once unpinned); resolves to the refusal, or null once reordered (and announced). */
   async function reorder(group: Group, index: number): Promise<string | null> {
-    const order = groups.map((g) => g.group_id).filter((id) => id !== group.group_id);
-    order.splice(index, 0, group.group_id);
+    const shown = unpinnedGroups.map((g) => g.group_id).filter((id) => id !== group.group_id);
+    shown.splice(index, 0, group.group_id);
+    const next = shown[Symbol.iterator]();
+    const order = groups.map((g) => (g.pinned == null ? (next.next().value as string) : g.group_id));
     try {
       const response = await fetch("/api/groups/order", {
         method: "PUT",
@@ -229,7 +250,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
       }
       setGroups((await response.json()) as Group[]);
       setDropError(null);
-      setAnnouncement(`Moved group ${group.name} to position ${index + 1} of ${order.length}`);
+      setAnnouncement(`Moved group ${group.name} to position ${index + 1} of ${shown.length}`);
       return null;
     } catch {
       return "The groups couldn't be reordered. Try again.";
@@ -239,7 +260,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   /** Where the dragged row could be dropped: a group's ID, or RECENT. Dropping it where it already is does nothing. */
   function accepts(zone: string): boolean {
     if (dragged?.kind === "thread") return zone !== (groupOf(dragged.thread) ?? RECENT);
-    if (dragged?.kind === "group") return zone !== RECENT && zone !== dragged.group.group_id;
+    if (dragged?.kind === "group") return unpinnedGroups.some((g) => g.group_id === zone && g.group_id !== dragged.group.group_id);
     return false;
   }
 
@@ -282,7 +303,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
         setDragged(null);
         if (dragged.kind === "thread") void dropThread(dragged.thread, zone === RECENT ? null : zone);
         else {
-          const target = groups.findIndex((g) => g.group_id === zone);
+          const target = unpinnedGroups.findIndex((g) => g.group_id === zone);
           void reorder(dragged.group, target).then((refused) => refused && setDropError(refused));
         }
       },
@@ -312,7 +333,14 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   const known = new Set(groups.map((g) => g.group_id));
   /** A conversation whose group is unknown here (e.g. deleted in another browser) is shown under Recent. */
   const groupOf = (t: ThreadSummary) => (t.group_id && known.has(t.group_id) ? t.group_id : null);
-  const ungrouped = threads.filter((t) => groupOf(t) === null);
+  const unpinned = threads.filter((t) => t.pinned == null);
+  const ungrouped = unpinned.filter((t) => groupOf(t) === null);
+  const unpinnedGroups = groups.filter((g) => g.pinned == null);
+  /** Pinned conversations and groups together, in pin order. */
+  const pins = [
+    ...threads.filter((t) => t.pinned != null).map((t) => ({ place: t.pinned!, thread: t })),
+    ...groups.filter((g) => g.pinned != null).map((g) => ({ place: g.pinned!, group: g })),
+  ].sort((a, b) => a.place - b.place);
 
   const conversationItem = (t: ThreadSummary) => (
     <ConversationItem
@@ -326,10 +354,37 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
       onPick={() => pick(t.thread_id)}
       onRenamed={(title) => renamed(t.thread_id, title)}
       onMoved={(groupId) => moved(t, groupId)}
+      onPinned={(place) => pinned(t, place)}
       onDeleted={() => deleted(t)}
-      drag={dragHandle({ kind: "thread", thread: t }, t.title)}
+      drag={t.pinned == null ? dragHandle({ kind: "thread", thread: t }, t.title) : undefined}
     />
   );
+
+  /** A group and its unpinned conversations; `index` among the unpinned groups (none for a pinned one: no Move up/down). */
+  const groupSection = (g: Group, index?: number) => {
+    const members = unpinned.filter((t) => groupOf(t) === g.group_id);
+    const reorderable = index !== undefined;
+    return (
+      <GroupSection
+        key={g.group_id}
+        group={g}
+        count={members.length}
+        expanded={!collapsed.has(g.group_id)}
+        onToggle={() => toggle(g.group_id)}
+        onRenamed={(name) => renamedGroup(g.group_id, name)}
+        onDeleted={() => deletedGroup(g)}
+        onPinned={(place) => pinnedGroup(g, place)}
+        focusOptions={movingGroup === g.group_id}
+        onFocused={() => setMovingGroup(null)}
+        position={reorderable ? { index, total: unpinnedGroups.length } : undefined}
+        onMove={reorderable ? (to) => reorder(g, to) : undefined}
+        drag={reorderable ? dragHandle({ kind: "group", group: g }, g.name) : undefined}
+        drop={dropZone(g.group_id)}
+      >
+        {members.map(conversationItem)}
+      </GroupSection>
+    );
+  };
 
   return (
     <ShellProvider value={shell}>
@@ -406,31 +461,22 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
             <p role="status" aria-label="Conversation updates" className={styles.visuallyHidden}>
               {announcement}
             </p>
-            <h2 ref={groupsHeading} tabIndex={-1} className={styles.groupHeading}>
+            {pins.length > 0 && (
+              <div className={styles.pinned}>
+                <h2 id="pinned-conversations" className={styles.groupHeading}>
+                  Pinned
+                </h2>
+                <ul aria-labelledby="pinned-conversations" className={styles.groups}>
+                  {pins.map((pin) => ("thread" in pin ? conversationItem(pin.thread) : groupSection(pin.group)))}
+                </ul>
+              </div>
+            )}
+            <h2 ref={groupsHeading} id="conversation-groups" tabIndex={-1} className={styles.groupHeading}>
               Groups
             </h2>
-            {groups.length > 0 && (
-              <ul className={styles.groups}>
-                {groups.map((g, index) => {
-                  const members = threads.filter((t) => groupOf(t) === g.group_id);
-                  return (
-                    <GroupSection
-                      key={g.group_id}
-                      group={g}
-                      count={members.length}
-                      expanded={!collapsed.has(g.group_id)}
-                      onToggle={() => toggle(g.group_id)}
-                      onRenamed={(name) => renamedGroup(g.group_id, name)}
-                      onDeleted={() => deletedGroup(g)}
-                      position={{ index, total: groups.length }}
-                      onMove={(to) => reorder(g, to)}
-                      drag={dragHandle({ kind: "group", group: g }, g.name)}
-                      drop={dropZone(g.group_id)}
-                    >
-                      {members.map(conversationItem)}
-                    </GroupSection>
-                  );
-                })}
+            {unpinnedGroups.length > 0 && (
+              <ul aria-labelledby="conversation-groups" className={styles.groups}>
+                {unpinnedGroups.map((g, index) => groupSection(g, index))}
               </ul>
             )}
             <NewGroup onCreated={created} />
@@ -446,7 +492,9 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
               {threads.length === 0 ? (
                 <p className={styles.empty}>No conversations yet.</p>
               ) : ungrouped.length === 0 ? (
-                <p className={styles.empty}>Every conversation is in a group.</p>
+                <p className={styles.empty}>
+                  {pins.some((p) => "thread" in p) ? "Every conversation is pinned or in a group." : "Every conversation is in a group."}
+                </p>
               ) : (
                 <ul aria-labelledby="recent-conversations">{ungrouped.map(conversationItem)}</ul>
               )}

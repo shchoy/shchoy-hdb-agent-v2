@@ -325,6 +325,7 @@ test("an officer groups a conversation by keyboard, sees the group in another br
   await openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` }).focus();
   await page.keyboard.press("Enter");
   await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown"); // past Pin
   await expect(page.getByRole("menuitem", { name: "Move to group…" })).toBeFocused();
   await page.keyboard.press("Enter");
   const choices = page.getByRole("menu", { name: `Move ${QUESTION} to` });
@@ -415,7 +416,9 @@ test("an officer drags a conversation into a group and reorders groups by drag a
   await expect(groupItem(second)).toHaveAttribute("data-drop", "none");
   await expect(page.getByRole("heading", { name: /^Good to see you/ })).toBeVisible();
 
-  // Drag the second group onto the first: it takes the first's place, stored server-side.
+  // Drag the second group onto the first: it takes the first's place, stored server-side. Scrolled to the top first:
+  // a long sidebar can leave the first group under the sticky Groups heading, which would take the drop.
+  await conversations.evaluate((nav) => nav.scrollTo({ top: 0 }));
   await toggle(second).dragTo(toggle(first));
   await expect(updates).toHaveText(new RegExp(`^Moved group ${second} to position \\d+ of \\d+$`));
   await expect.poll(order).toEqual([second, first]);
@@ -435,4 +438,62 @@ test("an officer drags a conversation into a group and reorders groups by drag a
   const groups = (await (await page.request.get("/api/groups")).json()) as { group_id: string; name: string }[];
   for (const g of groups.filter((g) => g.name === first || g.name === second))
     expect((await page.request.delete(`/api/groups/${g.group_id}`)).status()).toBe(204);
+});
+
+test("an officer pins a conversation and a group by keyboard, sees them pinned in another browser, then unpins (#102)", async ({
+  page,
+  browser,
+}) => {
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, QUESTION);
+  const name = `Pinned ${Date.now()}`;
+  const conversations = page.getByRole("navigation", { name: "Conversations" });
+  const updates = page.getByRole("status", { name: "Conversation updates" });
+  const pinned = conversations.getByRole("list", { name: "Pinned" });
+
+  await conversations.getByRole("button", { name: "New group" }).click();
+  await page.keyboard.type(name);
+  await page.keyboard.press("Enter");
+  await expect(updates).toHaveText(`Created group ${name}`);
+
+  // Options → Pin: the conversation shows only in Pinned, its Options button keeps the focus.
+  await openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` }).focus();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("menuitem", { name: "Pin", exact: true })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(updates).toHaveText(`Pinned ${QUESTION}`);
+  await expect(pinned.getByRole("button", { name: `Options for ${QUESTION}` }).first()).toBeFocused();
+  await expect(pinned.getByRole("button", { name: QUESTION, exact: true }).first()).toHaveAttribute("aria-current", "true");
+
+  // Pin the group: it joins Pinned after the conversation (pin order).
+  await conversations.getByRole("button", { name: `Options for group ${name}` }).focus();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("menuitem", { name: "Pin group" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(updates).toHaveText(`Pinned group ${name}`);
+  await expect(pinned.getByRole("button", { name: `Options for group ${name}` })).toBeFocused();
+  expect(await seriousViolations(page)).toEqual([]);
+
+  // Another browser: the same pins (server-side), after a reload too.
+  const elsewhere = await browser.newPage();
+  await signIn(elsewhere, OFFICER);
+  const pinnedElsewhere = elsewhere.getByRole("list", { name: "Pinned" });
+  await expect(pinnedElsewhere.getByRole("button", { name: new RegExp(`^${name}, \\d+ conversations?$`) })).toBeVisible();
+  await elsewhere.reload();
+  await expect(pinnedElsewhere.getByRole("button", { name: new RegExp(`^${name}, \\d+ conversations?$`) })).toBeVisible();
+  await elsewhere.close();
+
+  // Unpin both (leave the shared server as found): the group goes back under Groups, then delete it.
+  await pinned.getByRole("button", { name: `Options for group ${name}` }).click();
+  await page.getByRole("menuitem", { name: "Unpin group" }).click();
+  await expect(updates).toHaveText(`Unpinned group ${name}`);
+  await pinned.getByRole("button", { name: `Options for ${QUESTION}` }).first().click();
+  await page.getByRole("menuitem", { name: "Unpin" }).click();
+  await expect(updates).toHaveText(`Unpinned ${QUESTION}`);
+  await conversations.getByRole("button", { name: `Options for group ${name}` }).click();
+  await page.getByRole("menuitem", { name: "Delete group" }).click();
+  await conversations.getByRole("group", { name: `Delete group ${name}?` }).getByRole("button", { name: "Delete group" }).click();
+  await expect(updates).toHaveText(`Deleted group ${name}. Its conversations are back in Recent.`);
 });

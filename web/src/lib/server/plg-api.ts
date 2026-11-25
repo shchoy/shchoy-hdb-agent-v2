@@ -121,6 +121,24 @@ export async function moveThread(
   return { status: response.status, body: data ?? error };
 }
 
+/** Pins (true) or unpins one of the officer's conversations (#102); the ThreadSummary or a refusal (404). */
+export async function pinThread(staffId: string, threadId: string, pinned: boolean): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PUT("/threads/{thread_id}/pin", {
+    params: { path: { thread_id: threadId }, header: { "x-plg-user": staffId } },
+    body: { pinned },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** Pins (true) or unpins one of the officer's groups (#102); the Group or a refusal (404). */
+export async function pinGroup(staffId: string, groupId: string, pinned: boolean): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PUT("/groups/{group_id}/pin", {
+    params: { path: { group_id: groupId }, header: { "x-plg-user": staffId } },
+    body: { pinned },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
 /** The officer's own conversation groups. */
 export async function listGroups(staffId: string): Promise<{ status: number; body: unknown }> {
   const { data, error, response } = await client().GET("/groups", {

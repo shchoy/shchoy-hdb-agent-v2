@@ -108,6 +108,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/threads/{thread_id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pin Thread
+         * @description Pin one of your conversations (last in Pinned; already pinned: it keeps its place) or unpin it. It keeps
+         *     its group, so unpinning puts it back there.
+         */
+        put: operations["pin_thread_threads__thread_id__pin_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{group_id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pin Group
+         * @description Pin one of your groups (last in Pinned; already pinned: it keeps its place) or unpin it.
+         */
+        put: operations["pin_group_groups__group_id__pin_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/groups": {
         parameters: {
             query?: never;
@@ -1041,6 +1082,8 @@ export interface components {
             group_id: string;
             /** Name */
             name: string;
+            /** Pinned */
+            pinned?: number | null;
         };
         /**
          * GroupOrderRequest
@@ -1305,6 +1348,14 @@ export interface components {
             slot: string;
             /** Message */
             message: string;
+        };
+        /**
+         * PinRequest
+         * @description Pin (true) or unpin (false) a conversation or group (#102).
+         */
+        PinRequest: {
+            /** Pinned */
+            pinned: boolean;
         };
         /** PolicyLineage */
         PolicyLineage: {
@@ -1690,6 +1741,8 @@ export interface components {
             updated_at: string;
             /** Group Id */
             group_id?: string | null;
+            /** Pinned */
+            pinned?: number | null;
         };
         /**
          * ThreadView
@@ -2659,6 +2712,96 @@ export interface operations {
                 };
             };
             /** @description Thread or group not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pin_thread_threads__thread_id__pin_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PinRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadSummary"];
+                };
+            };
+            /** @description Thread not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pin_group_groups__group_id__pin_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PinRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Group"];
+                };
+            };
+            /** @description Group not found */
             404: {
                 headers: {
                     [name: string]: unknown;

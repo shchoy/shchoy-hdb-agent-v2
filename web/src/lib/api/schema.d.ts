@@ -117,12 +117,32 @@ export interface paths {
         };
         /**
          * List Groups
-         * @description Your own conversation groups, in the order you created them.
+         * @description Your own conversation groups, in your order.
          */
         get: operations["list_groups_groups_get"];
         put?: never;
         /** Create Group */
         post: operations["create_group_groups_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Reorder Groups
+         * @description Reorder your groups: name each of them once, in the new order.
+         */
+        put: operations["reorder_groups_groups_order_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1021,6 +1041,14 @@ export interface components {
             group_id: string;
             /** Name */
             name: string;
+        };
+        /**
+         * GroupOrderRequest
+         * @description Every one of the officer's groups, once each, in the new order (#101).
+         */
+        GroupOrderRequest: {
+            /** Group Ids */
+            group_ids: string[];
         };
         /**
          * GroupRequest
@@ -2704,6 +2732,49 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Group"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reorder_groups_groups_order_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GroupOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Group"][];
+                };
+            };
+            /** @description The order doesn't name each of your groups once */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

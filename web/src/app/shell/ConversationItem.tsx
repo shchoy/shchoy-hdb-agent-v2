@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { Group, ThreadSummary } from "@/lib/events";
 import { MoreIcon } from "./icons";
-import { MENU_ITEMS, onMenuKey, refusalDetail, tidy } from "./menu";
+import { MENU_ITEMS, moveThread, onMenuKey, refusalDetail, tidy, type DragHandle } from "./menu";
 import { useShell } from "./ShellContext";
 import styles from "./shell.module.css";
 
@@ -13,6 +13,7 @@ type Mode = "idle" | "menu" | "move" | "rename" | "confirm";
  * One conversation in the sidebar: the button that opens it, and its Options menu (Rename, Move to group…, Delete).
  * Rename edits the title in place; Move to group… lists the officer's groups and No group (the keyboard path for
  * moving it, #100); Delete asks first, and shows plg-api's reason when it is refused (answering, awaiting approval).
+ * Its row can also be dragged onto a group or Recent (#101; a drag never opens it).
  */
 export function ConversationItem({
   thread,
@@ -25,6 +26,7 @@ export function ConversationItem({
   onRenamed,
   onMoved,
   onDeleted,
+  drag,
 }: {
   thread: ThreadSummary;
   groups: Group[];
@@ -38,6 +40,8 @@ export function ConversationItem({
   onRenamed(title: string): void;
   onMoved(groupId: string | null): void;
   onDeleted(): void;
+  /** Makes its row draggable (#101). */
+  drag?: DragHandle;
 }) {
   const shell = useShell();
   const [mode, setMode] = useState<Mode>("idle");
@@ -118,25 +122,15 @@ export function ConversationItem({
   async function move(groupId: string | null) {
     if (groupId === (thread.group_id ?? null)) return close();
     setWorking(true);
-    try {
-      const response = await fetch(`${url}/group`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ group_id: groupId }),
-      });
-      if (!response.ok) {
-        if (response.status === 404) shell.refresh(); // e.g. the group was deleted elsewhere: the sidebar catches up
-        setError(await refusalDetail(response, "The conversation couldn't be moved."));
-        return close();
-      }
-      setError(null);
-      onMoved(groupId);
-    } catch {
-      setError("The conversation couldn't be moved. Try again.");
-      close();
-    } finally {
-      setWorking(false);
+    const refusal = await moveThread(thread.thread_id, groupId);
+    setWorking(false);
+    if (refusal) {
+      if (refusal.stale) shell.refresh(); // e.g. the group was deleted elsewhere: the sidebar catches up
+      setError(refusal.refused);
+      return close();
     }
+    setError(null);
+    onMoved(groupId);
   }
 
   async function remove() {
@@ -193,7 +187,8 @@ export function ConversationItem({
 
   return (
     <li className={styles.conversation}>
-      <div className={styles.row}>
+      {/* The row, not its button, is dragged: browsers don't reliably start a drag from a button. */}
+      <div className={styles.row} draggable={drag && !disabled ? true : undefined} {...(drag && !disabled ? drag : {})}>
         <button
           type="button"
           className={styles.pick}

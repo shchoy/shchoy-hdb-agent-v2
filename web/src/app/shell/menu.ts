@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from "react";
+import type { DragEvent, KeyboardEvent } from "react";
 
 /** The menu items of an open menu (role menuitem or menuitemradio). */
 export const MENU_ITEMS = '[role="menuitem"], [role="menuitemradio"]';
@@ -31,3 +31,37 @@ export function onMenuKey(event: KeyboardEvent<HTMLElement>, close: () => void, 
 export function tidy(text: string): string {
   return text.split(/\s+/).filter(Boolean).join(" ");
 }
+
+/** Moves a conversation into a group (null: back to Recent) through the BFF. Resolves to null once moved, else the
+ * refusal to show; `stale` when the sidebar should reload (404: the group or conversation went elsewhere). */
+export async function moveThread(threadId: string, groupId: string | null): Promise<{ refused: string; stale: boolean } | null> {
+  try {
+    const response = await fetch(`/api/threads/${encodeURIComponent(threadId)}/group`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ group_id: groupId }),
+    });
+    if (response.ok) return null;
+    return { refused: await refusalDetail(response, "The conversation couldn't be moved."), stale: response.status === 404 };
+  } catch {
+    return { refused: "The conversation couldn't be moved. Try again.", stale: false };
+  }
+}
+
+/** The drag data type of a sidebar row (#101): not text, so a row dropped on a text field types nothing there. */
+export const DRAG_TYPE = "application/x-plg-sidebar-row";
+
+/** What a sidebar row needs to be dragged (#101): set on its button; the shell tracks what is being dragged. */
+export type DragHandle = {
+  onDragStart(event: DragEvent<HTMLElement>): void;
+  onDragEnd(): void;
+};
+
+/** What a drop zone gets (#101): data-drop = none | available (somewhere the dragged row can go) | over (it would go here). */
+export type DropZone = {
+  "data-drop": "none" | "available" | "over";
+  onDragEnter(event: DragEvent<HTMLElement>): void;
+  onDragOver(event: DragEvent<HTMLElement>): void;
+  onDragLeave(event: DragEvent<HTMLElement>): void;
+  onDrop(event: DragEvent<HTMLElement>): void;
+};

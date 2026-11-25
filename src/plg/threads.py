@@ -44,6 +44,10 @@ class GroupNotFound(Exception):
     """No such group, or someone else's."""
 
 
+class StaleGroupOrder(Exception):
+    """An order that doesn't name each of the officer's groups exactly once (e.g. one created in another browser)."""
+
+
 class ThreadStore:
     """Thread ownership in SQLite. A thread is listed once it has been asked something."""
 
@@ -60,7 +64,14 @@ class ThreadStore:
                 db.execute("ALTER TABLE plg_threads ADD COLUMN group_id TEXT")
             db.execute(
                 "CREATE TABLE IF NOT EXISTS plg_groups (group_id TEXT PRIMARY KEY, staff_id TEXT NOT NULL, "
-                "name TEXT NOT NULL, created_at TEXT NOT NULL)"
+                "name TEXT NOT NULL, created_at TEXT NOT NULL, position INTEGER)"
+            )
+            if "position" not in {row[1] for row in db.execute("PRAGMA table_info(plg_groups)")}:  # before #101
+                db.execute("ALTER TABLE plg_groups ADD COLUMN position INTEGER")
+            # Groups from before #101 take their creation order.
+            db.execute(
+                "UPDATE plg_groups SET position = (SELECT COUNT(*) FROM plg_groups o WHERE o.staff_id = plg_groups.staff_id "
+                "AND (o.created_at, o.rowid) < (plg_groups.created_at, plg_groups.rowid)) WHERE position IS NULL"
             )
 
     @contextmanager
@@ -118,18 +129,31 @@ class ThreadStore:
         return ThreadSummary(thread_id=row[0], title=row[1], updated_at=row[2], group_id=row[3])
 
     def groups(self, staff_id: str) -> list[Group]:
-        """The officer's groups, in the order they were created."""
+        """The officer's groups, in their order (#101; a new group goes last)."""
         with self._db() as db:
-            rows = db.execute(
-                "SELECT group_id, name FROM plg_groups WHERE staff_id = ? ORDER BY created_at, rowid", (staff_id,)
-            ).fetchall()
-        return [Group(group_id=r[0], name=r[1]) for r in rows]
+            return _groups(db, staff_id)
 
     def create_group(self, staff_id: str, name: str) -> Group:
         group = Group(group_id=str(uuid.uuid4()), name=name)
         with self._db() as db:
-            db.execute("INSERT INTO plg_groups VALUES (?, ?, ?, ?)", (group.group_id, staff_id, name, _now()))
+            db.execute(
+                "INSERT INTO plg_groups (group_id, staff_id, name, created_at, position) VALUES (?, ?, ?, ?, "
+                "(SELECT COALESCE(MAX(position), -1) + 1 FROM plg_groups WHERE staff_id = ?))",
+                (group.group_id, staff_id, name, _now(), staff_id),
+            )
         return group
+
+    def reorder_groups(self, staff_id: str, group_ids: list[str]) -> list[Group]:
+        """Put the officer's groups in this order, which must name each of them once. Raises StaleGroupOrder."""
+        with self._db() as db:
+            db.execute("BEGIN IMMEDIATE")  # no group created or deleted between the check and the update
+            if sorted(group_ids) != sorted(g.group_id for g in _groups(db, staff_id)):
+                raise StaleGroupOrder
+            db.executemany(
+                "UPDATE plg_groups SET position = ? WHERE group_id = ? AND staff_id = ?",
+                [(i, g, staff_id) for i, g in enumerate(group_ids)],
+            )
+            return _groups(db, staff_id)
 
     def rename_group(self, group_id: str, staff_id: str, name: str) -> Group:
         """Raises GroupNotFound."""
@@ -168,6 +192,13 @@ class ThreadStore:
                 (staff_id,),
             ).fetchall()
         return [ThreadSummary(thread_id=r[0], title=r[1], updated_at=r[2], group_id=r[3]) for r in rows]
+
+
+def _groups(db: sqlite3.Connection, staff_id: str) -> list[Group]:
+    rows = db.execute(
+        "SELECT group_id, name FROM plg_groups WHERE staff_id = ? ORDER BY position, created_at, rowid", (staff_id,)
+    ).fetchall()
+    return [Group(group_id=r[0], name=r[1]) for r in rows]
 
 
 def _owns_group(db: sqlite3.Connection, group_id: str, staff_id: str) -> bool:

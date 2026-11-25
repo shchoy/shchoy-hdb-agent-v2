@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -15,7 +15,7 @@ type Thread = { thread_id: string; title: string; updated_at: string; group_id: 
 type Group = { group_id: string; name: string };
 
 /** plg-api's conversations and groups, changed as the BFF is asked to; every changing request is recorded. */
-function api(start: { groups?: Group[]; threads?: Thread[]; refuseMove?: string } = {}) {
+function api(start: { groups?: Group[]; threads?: Thread[]; refuseMove?: string; refuseOrder?: boolean } = {}) {
   let groups: Group[] = start.groups ?? [];
   let threads: Thread[] = start.threads ?? [
     { thread_id: "t9", title: "What is a letter of demand?", updated_at: "2026-11-02T10:00:00Z", group_id: null },
@@ -52,6 +52,13 @@ function api(start: { groups?: Group[]; threads?: Thread[]; refuseMove?: string 
       threads = threads.map((t) => (t.thread_id === params.id ? { ...t, group_id } : t));
       return HttpResponse.json(threads.find((t) => t.thread_id === params.id));
     }),
+    http.put("/api/groups/order", async ({ request }) => {
+      const { group_ids } = (await request.json()) as { group_ids: string[] };
+      requests.push(`ORDER ${group_ids.join(",")}`);
+      if (start.refuseOrder) return HttpResponse.json({ detail: "Your groups have changed: reload and try again" }, { status: 409 });
+      groups = group_ids.map((id) => groups.find((g) => g.group_id === id)!);
+      return HttpResponse.json(groups);
+    }),
     http.delete("/api/threads/:id", ({ params }) => {
       requests.push(`DELETE ${String(params.id)}`);
       return new HttpResponse(null, { status: 204 });
@@ -74,6 +81,38 @@ async function moveTo(user: ReturnType<typeof userEvent.setup>, title: string, d
   await user.click(screen.getByRole("menuitem", { name: "Move to group…" }));
   await user.click(screen.getByRole("menuitemradio", { name: destination }));
 }
+
+const groupNames = () =>
+  within(conversations())
+    .queryAllByRole("button", { name: /, \d+ conversations?$/ })
+    .map((b) => b.textContent?.replace(/\d+.*$/, ""));
+
+/** A browser drag of `source` dropped on `target` (jsdom has no DataTransfer: a stand-in records what is set). */
+function drag(source: HTMLElement, target: HTMLElement, { drop = true } = {}) {
+  const data = new Map<string, string>();
+  const dataTransfer = {
+    setData: (type: string, value: string) => void data.set(type, value),
+    getData: (type: string) => data.get(type) ?? "",
+    get types() {
+      return [...data.keys()];
+    },
+    effectAllowed: "all",
+    dropEffect: "none",
+  };
+  fireEvent.dragStart(source, { dataTransfer });
+  fireEvent.dragEnter(target, { dataTransfer });
+  fireEvent.dragOver(target, { dataTransfer });
+  if (!drop) return () => fireEvent.dragEnd(source, { dataTransfer });
+  fireEvent.drop(target, { dataTransfer });
+  fireEvent.dragEnd(source, { dataTransfer });
+  return () => {};
+}
+
+const THREE = [
+  { group_id: "g1", name: "Arrears" },
+  { group_id: "g2", name: "Renewals" },
+  { group_id: "g3", name: "Works" },
+];
 
 beforeEach(() => {
   sessionStorage.clear();
@@ -251,3 +290,110 @@ describe("Conversation groups", () => {
     expect(screen.getByRole("button", { name: /^Arrears,/ })).toHaveAttribute("aria-expanded", "true");
   });
 });
+
+describe("Ordering groups and dragging (#101)", () => {
+  it("Move up / Move down in a group's menu reorders the groups, announced, focus kept on the group", async () => {
+    const requests = api({ groups: THREE });
+    const user = userEvent.setup();
+    render(inShell(<p>screen</p>));
+
+    await user.click(await within(conversations()).findByRole("button", { name: "Options for group Arrears" }));
+    expect(screen.queryByRole("menuitem", { name: "Move up" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: "Move down" }));
+
+    await waitFor(() => expect(groupNames()).toEqual(["Renewals", "Arrears", "Works"]));
+    expect(announced()).toHaveTextContent("Moved group Arrears to position 2 of 3");
+    expect(screen.getByRole("button", { name: "Options for group Arrears" })).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Options for group Works" }));
+    expect(screen.queryByRole("menuitem", { name: "Move down" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: "Move up" }));
+
+    await waitFor(() => expect(groupNames()).toEqual(["Renewals", "Works", "Arrears"]));
+    expect(requests).toEqual(["ORDER g2,g1,g3", "ORDER g2,g3,g1"]);
+  });
+
+  it("a refused reorder is shown and the sidebar reloads the groups", async () => {
+    api({ groups: THREE, refuseOrder: true });
+    const user = userEvent.setup();
+    render(inShell(<p>screen</p>));
+
+    await user.click(await within(conversations()).findByRole("button", { name: "Options for group Arrears" }));
+    await user.click(screen.getByRole("menuitem", { name: "Move down" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your groups have changed");
+    expect(groupNames()).toEqual(["Arrears", "Renewals", "Works"]);
+  });
+
+  it("dragging a conversation onto a group moves it there, without opening it; onto Recent takes it out", async () => {
+    const requests = api({ groups: [{ group_id: "g1", name: "Arrears" }] });
+    render(inShell(<p>screen</p>));
+    const conversation = await within(conversations()).findByRole("button", { name: "Arrears for Cendana" });
+
+    drag(conversation, screen.getByRole("button", { name: /^Arrears, / }));
+
+    await waitFor(() => expect(titles(group("Arrears"))).toEqual(["Arrears for Cendana"]));
+    expect(announced()).toHaveTextContent("Moved Arrears for Cendana to Arrears");
+    expect(navigation.push).not.toHaveBeenCalled();
+
+    drag(within(group("Arrears")).getByRole("button", { name: "Arrears for Cendana" }), screen.getByRole("heading", { name: "Recent conversations" }));
+
+    await waitFor(() => expect(titles(recent())).toContain("Arrears for Cendana"));
+    expect(announced()).toHaveTextContent("Moved Arrears for Cendana to Recent");
+    expect(requests).toEqual(["MOVE t8 g1", "MOVE t8 null"]);
+  });
+
+  it("highlights where a dragged conversation can go while it is dragged", async () => {
+    api({ groups: [{ group_id: "g1", name: "Arrears" }, { group_id: "g2", name: "Renewals" }] });
+    render(inShell(<p>screen</p>));
+    const conversation = await within(conversations()).findByRole("button", { name: "Arrears for Cendana" });
+    const arrears = screen.getByRole("button", { name: /^Arrears, / }).closest("[data-drop]")!;
+    const renewals = screen.getByRole("button", { name: /^Renewals, / }).closest("[data-drop]")!;
+
+    const end = drag(conversation, screen.getByRole("button", { name: /^Arrears, / }), { drop: false });
+
+    expect(arrears).toHaveAttribute("data-drop", "over");
+    expect(renewals).toHaveAttribute("data-drop", "available");
+    end();
+    expect(arrears).toHaveAttribute("data-drop", "none");
+  });
+
+  it("dragging a group onto another puts it in that group's place", async () => {
+    const requests = api({ groups: THREE });
+    render(inShell(<p>screen</p>));
+    const works = await within(conversations()).findByRole("button", { name: /^Works, / });
+
+    drag(works, screen.getByRole("button", { name: /^Arrears, / }));
+
+    await waitFor(() => expect(groupNames()).toEqual(["Works", "Arrears", "Renewals"]));
+    expect(announced()).toHaveTextContent("Moved group Works to position 1 of 3");
+    expect(requests).toEqual(["ORDER g3,g1,g2"]);
+  });
+
+  it("dragging a group down onto another puts it in that group's place, below the ones it passed", async () => {
+    const requests = api({ groups: THREE });
+    render(inShell(<p>screen</p>));
+    const arrears = await within(conversations()).findByRole("button", { name: /^Arrears, / });
+
+    drag(arrears, screen.getByRole("button", { name: /^Works, / }));
+
+    await waitFor(() => expect(groupNames()).toEqual(["Renewals", "Works", "Arrears"]));
+    expect(announced()).toHaveTextContent("Moved group Arrears to position 3 of 3");
+    expect(requests).toEqual(["ORDER g2,g3,g1"]);
+  });
+
+  it("a dragged row carries no text, so dropping it on a text field types nothing there", async () => {
+    api();
+    render(inShell(<p>screen</p>));
+    const conversation = await within(conversations()).findByRole("button", { name: "Arrears for Cendana" });
+    const types: string[][] = [];
+    const data = new Map<string, string>();
+    fireEvent.dragStart(conversation, {
+      dataTransfer: { setData: (t: string, v: string) => void data.set(t, v), effectAllowed: "all", dropEffect: "none" },
+    });
+    types.push([...data.keys()]);
+
+    expect(types).toEqual([["application/x-plg-sidebar-row"]]);
+  });
+});
+

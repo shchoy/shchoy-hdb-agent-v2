@@ -1,6 +1,7 @@
 """Conversation groups (#100): flat, private groups an officer creates (POST /groups), renames and deletes, and moves
 their conversations into (PUT /threads/{id}/group). A conversation is in at most one group; deleting a group returns
-its conversations to Recent (group_id null) and never deletes them. Another officer's groups are 404."""
+its conversations to Recent (group_id null) and never deletes them. Another officer's groups are 404. Groups keep the
+order the officer gives them (PUT /groups/order, #101)."""
 
 from __future__ import annotations
 
@@ -155,3 +156,57 @@ def test_a_threads_db_from_before_groups_is_upgraded(make_api: Callable[..., Api
     api = make_api(threads_db=db)
 
     assert membership(api) == {"t1": None}
+
+
+# ---------------------------------------------------------------- group order (#101)
+
+
+def reorder(api: Api, group_ids: list[str], headers: dict[str, str] = USER) -> Any:
+    return api.client.put("/groups/order", json={"group_ids": group_ids}, headers=headers)
+
+
+def test_groups_are_reordered_and_a_new_group_goes_last(
+    make_api: Callable[..., Api], tmp_path: Path
+) -> None:
+    db = tmp_path / "order.sqlite"
+    first = make_api(threads_db=db)
+    arrears, renewals, works = create(first, "Arrears"), create(first, "Renewals"), create(first, "Works")
+
+    response = reorder(first, [works["group_id"], arrears["group_id"], renewals["group_id"]])
+
+    assert response.status_code == 200
+    assert [g["name"] for g in response.json()] == ["Works", "Arrears", "Renewals"]
+    create(first, "Licences")
+    assert groups(first) == ["Works", "Arrears", "Renewals", "Licences"]
+    first.client.__exit__(None, None, None)
+
+    assert groups(make_api(threads_db=db)) == ["Works", "Arrears", "Renewals", "Licences"]
+
+
+def test_an_order_must_name_exactly_your_groups(api: Api) -> None:
+    """A stale order (a group created or deleted in another browser), a duplicate or someone else's group: 409, unchanged."""
+    arrears, renewals = create(api, "Arrears"), create(api, "Renewals")
+    theirs = create(api, "Theirs", OTHER)
+
+    assert reorder(api, [renewals["group_id"]]).status_code == 409
+    assert reorder(api, [renewals["group_id"], renewals["group_id"]]).status_code == 409
+    assert reorder(api, [renewals["group_id"], theirs["group_id"]]).status_code == 409
+    assert reorder(api, [renewals["group_id"], arrears["group_id"], "no-such-group"]).status_code == 409
+    assert groups(api) == ["Arrears", "Renewals"]
+    assert groups(api, OTHER) == ["Theirs"]
+
+
+def test_a_threads_db_from_before_group_order_keeps_creation_order(make_api: Callable[..., Api], tmp_path: Path) -> None:
+    db = tmp_path / "pre101.sqlite"
+    with closing(sqlite3.connect(db)) as conn, conn:
+        conn.execute(
+            "CREATE TABLE plg_groups (group_id TEXT PRIMARY KEY, staff_id TEXT NOT NULL, name TEXT NOT NULL, created_at TEXT NOT NULL)"
+        )
+        conn.execute("INSERT INTO plg_groups VALUES ('g2', 'S05', 'Second', '2026-11-02T00:00:00+00:00')")
+        conn.execute("INSERT INTO plg_groups VALUES ('g1', 'S05', 'First', '2026-11-01T00:00:00+00:00')")
+
+    api = make_api(threads_db=db)
+
+    assert groups(api) == ["First", "Second"]
+    create(api, "Third")
+    assert groups(api) == ["First", "Second", "Third"]

@@ -416,7 +416,9 @@ test("an officer drags a conversation into a group and reorders groups by drag a
   await expect(groupItem(second)).toHaveAttribute("data-drop", "none");
   await expect(page.getByRole("heading", { name: /^Good to see you/ })).toBeVisible();
 
-  // Drag the second group onto the first: it takes the first's place, stored server-side.
+  // Drag the second group onto the first: it takes the first's place, stored server-side. Scrolled to the top first:
+  // a long sidebar can leave the first group under the sticky Groups heading, which would take the drop.
+  await conversations.evaluate((nav) => nav.scrollTo({ top: 0 }));
   await toggle(second).dragTo(toggle(first));
   await expect(updates).toHaveText(new RegExp(`^Moved group ${second} to position \\d+ of \\d+$`));
   await expect.poll(order).toEqual([second, first]);

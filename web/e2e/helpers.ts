@@ -95,3 +95,11 @@ export async function seriousViolations(page: Page) {
     .filter((v) => v.impact === "serious" || v.impact === "critical")
     .map((v) => ({ id: v.id, impact: v.impact, help: v.help, targets: v.nodes.map((n) => n.target.join(" ")) }));
 }
+
+/** The sidebar's entry for the conversation open on the Ask screen. */
+export function openConversation(page: Page): Locator {
+  return page
+    .getByRole("navigation", { name: "Conversations" })
+    .getByRole("listitem")
+    .filter({ has: page.locator('[aria-current="true"]') });
+}

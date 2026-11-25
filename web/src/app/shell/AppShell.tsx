@@ -18,6 +18,7 @@ import {
   PlusIcon,
   TasksIcon,
 } from "./icons";
+import { ConversationItem } from "./ConversationItem";
 import { ShellProvider, type ConversationControl, type Shell } from "./ShellContext";
 import styles from "./shell.module.css";
 import { ThemeToggle } from "./ThemeToggle";
@@ -52,6 +53,8 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   const [active, setActive] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const conversationsHeading = useRef<HTMLHeadingElement>(null);
   const control = useRef<ConversationControl | null>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLDivElement>(null);
@@ -107,7 +110,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   }, [drawerOpen]);
 
   function onDrawerKey(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (!drawerOpen) return;
+    if (!drawerOpen || event.defaultPrevented) return; // e.g. Escape already closed a conversation's menu
     if (event.key === "Escape") {
       event.preventDefault();
       closeDrawer(true);
@@ -139,6 +142,21 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
     if (control.current) return control.current.startNew();
     sessionStorage.removeItem(ACTIVE_THREAD);
     router.push("/");
+  }
+
+  function renamed(threadId: string, title: string) {
+    setThreads((all) => all.map((t) => (t.thread_id === threadId ? { ...t, title } : t)));
+    setAnnouncement(`Renamed to ${title}`);
+  }
+
+  function deleted(thread: ThreadSummary) {
+    setThreads((all) => all.filter((t) => t.thread_id !== thread.thread_id));
+    setAnnouncement(`Deleted ${thread.title}`);
+    conversationsHeading.current?.focus();
+    // The deleted conversation can't stay open (or be reopened on the way back to Ask).
+    if (sessionStorage.getItem(ACTIVE_THREAD) === thread.thread_id) sessionStorage.removeItem(ACTIVE_THREAD);
+    if (thread.thread_id === active) control.current?.startNew();
+    refresh();
   }
 
   const onAsk = pathname === "/";
@@ -215,22 +233,26 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
           </nav>
 
           <nav aria-label="Conversations" className={styles.conversations}>
-            <h2 className={styles.groupHeading}>Recent conversations</h2>
+            <h2 ref={conversationsHeading} tabIndex={-1} className={styles.groupHeading}>
+              Recent conversations
+            </h2>
+            <p role="status" aria-label="Conversation updates" className={styles.visuallyHidden}>
+              {announcement}
+            </p>
             {threads.length === 0 ? (
               <p className={styles.empty}>No conversations yet.</p>
             ) : (
               <ul>
                 {threads.map((t) => (
-                  <li key={t.thread_id}>
-                    <button
-                      type="button"
-                      disabled={busy && onAsk}
-                      aria-current={onAsk && t.thread_id === active ? "true" : undefined}
-                      onClick={() => pick(t.thread_id)}
-                    >
-                      {t.title}
-                    </button>
-                  </li>
+                  <ConversationItem
+                    key={t.thread_id}
+                    thread={t}
+                    disabled={busy && onAsk}
+                    current={onAsk && t.thread_id === active}
+                    onPick={() => pick(t.thread_id)}
+                    onRenamed={(title) => renamed(t.thread_id, title)}
+                    onDeleted={() => deleted(t)}
+                  />
                 ))}
               </ul>
             )}

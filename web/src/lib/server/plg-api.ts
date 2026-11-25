@@ -87,6 +87,27 @@ export async function getThread(staffId: string, threadId: string): Promise<{ st
   return { status: response.status, body: data ?? error };
 }
 
+/** Renames one of the officer's conversations; plg-api's status and JSON body (the ThreadSummary or a refusal). */
+export async function renameThread(
+  staffId: string,
+  threadId: string,
+  title: string,
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PATCH("/threads/{thread_id}", {
+    params: { path: { thread_id: threadId }, header: { "x-plg-user": staffId } },
+    body: { title },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** Deletes one of the officer's conversations; plg-api's status (204) or its refusal (404, 409 with a detail). */
+export async function deleteThread(staffId: string, threadId: string): Promise<{ status: number; body: unknown }> {
+  const { error, response } = await client().DELETE("/threads/{thread_id}", {
+    params: { path: { thread_id: threadId }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: error ?? null };
+}
+
 /** Re-attaches to a thread's latest run, from after `lastEventId`. The SSE body is returned unread. */
 export function resumeRun(
   staffId: string,

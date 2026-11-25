@@ -13,6 +13,7 @@ import {
   ask,
   askInNewConversation,
   marker,
+  openConversation,
   seriousViolations,
   signIn,
   sourcesPanel,
@@ -262,4 +263,40 @@ test("on a phone the sources open as a bottom sheet, and Escape closes it", asyn
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
   await expect(cited).toBeFocused();
+});
+
+test("an officer renames a conversation, sees it in another browser, then deletes it", async ({ page, browser }) => {
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, QUESTION);
+  const id = await threadId(page, QUESTION);
+  const title = `Letter of demand timing ${Date.now()}`;
+  const conversations = page.getByRole("navigation", { name: "Conversations" });
+
+  // By keyboard: Options → Rename → type → Enter.
+  await openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("menuitem", { name: "Rename" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  const field = conversations.getByRole("textbox", { name: "Conversation title" });
+  await field.fill(title);
+  await field.press("Enter");
+  await expect(conversations.getByRole("button", { name: title, exact: true })).toBeVisible();
+
+  const elsewhere = await browser.newPage(); // another browser: its own session, nothing in sessionStorage
+  await signIn(elsewhere, OFFICER);
+  await expect(elsewhere.getByRole("navigation", { name: "Conversations" }).getByRole("button", { name: title, exact: true })).toBeVisible();
+  await elsewhere.close();
+
+  await conversations.getByRole("button", { name: `Options for ${title}` }).click();
+  await page.getByRole("menuitem", { name: "Delete" }).click();
+  const confirm = conversations.getByRole("group", { name: `Delete ${title}?` });
+  await confirm.getByRole("button", { name: "Delete" }).click();
+
+  await expect(conversations.getByRole("button", { name: title, exact: true })).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Starter prompts" })).toBeVisible(); // the open conversation was it
+  expect((await page.request.get(`/api/threads/${id}`)).status()).toBe(404);
+  expect((await page.request.get(`/api/threads/${id}/runs/latest`)).status()).toBe(404);
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  await expect(conversations.getByRole("button", { name: title, exact: true })).toHaveCount(0);
 });

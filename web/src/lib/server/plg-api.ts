@@ -108,6 +108,55 @@ export async function deleteThread(staffId: string, threadId: string): Promise<{
   return { status: response.status, body: error ?? null };
 }
 
+/** Moves one of the officer's conversations into one of their groups (null: back to Recent); the ThreadSummary or a refusal. */
+export async function moveThread(
+  staffId: string,
+  threadId: string,
+  groupId: string | null,
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PUT("/threads/{thread_id}/group", {
+    params: { path: { thread_id: threadId }, header: { "x-plg-user": staffId } },
+    body: { group_id: groupId },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** The officer's own conversation groups. */
+export async function listGroups(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/groups", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+export async function createGroup(staffId: string, name: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().POST("/groups", {
+    params: { header: { "x-plg-user": staffId } },
+    body: { name },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+export async function renameGroup(
+  staffId: string,
+  groupId: string,
+  name: string,
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PATCH("/groups/{group_id}", {
+    params: { path: { group_id: groupId }, header: { "x-plg-user": staffId } },
+    body: { name },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** Deletes one of the officer's groups (its conversations go back to Recent): 204 or a refusal (404). */
+export async function deleteGroup(staffId: string, groupId: string): Promise<{ status: number; body: unknown }> {
+  const { error, response } = await client().DELETE("/groups/{group_id}", {
+    params: { path: { group_id: groupId }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: error ?? null };
+}
+
 /** Re-attaches to a thread's latest run, from after `lastEventId`. The SSE body is returned unread. */
 export function resumeRun(
   staffId: string,

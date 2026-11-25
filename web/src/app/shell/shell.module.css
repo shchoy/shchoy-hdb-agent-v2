@@ -293,6 +293,100 @@
   font-size: var(--text-sm);
 }
 
+/* Conversation groups (#100): a disclosure row per group, its conversations indented below it. */
+.conversations .groups {
+  margin-bottom: var(--space-2);
+}
+
+.group {
+  position: relative;
+}
+
+.groupName {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-align: left;
+}
+
+.toggle:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.toggle svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.15s ease;
+}
+
+.toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle svg {
+    transition: none;
+  }
+}
+
+.groupTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-weight: var(--weight-regular);
+}
+
+.conversations .groupList {
+  padding-left: var(--space-4);
+}
+
+.group > .empty {
+  padding-left: calc(var(--space-4) + var(--space-3));
+  margin-bottom: var(--space-1);
+}
+
+.newGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.newGroup svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.conversation > .rowError {
+  padding: 0 var(--space-3);
+}
+
 .persona {
   display: grid;
   gap: var(--space-1);

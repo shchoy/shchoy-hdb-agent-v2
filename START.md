@@ -372,6 +372,19 @@ curl -s -X DELETE http://127.0.0.1:8000/threads/<id> -H 'X-PLG-User: S05'   # 20
 
 Delete is refused (409, with the reason) while the conversation is answering or has an action awaiting approval. It removes the checkpoint; audit entries of decisions taken in it are kept. Another officer's conversation is 404.
 
+Group conversations (issue #100; in the web app: **New group** in the sidebar, and **Move to group…** in a conversation's Options menu). Groups are flat and private to the officer; a conversation is in at most one, otherwise under Recent:
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/groups -H 'X-PLG-User: S05' -H 'content-type: application/json' -d '{"name":"Arrears"}'   # 201 {group_id, name}
+curl -s http://127.0.0.1:8000/groups -H 'X-PLG-User: S05'                                   # your groups, oldest first
+curl -s -X PUT http://127.0.0.1:8000/threads/<id>/group -H 'X-PLG-User: S05' -H 'content-type: application/json' \
+  -d '{"group_id":"<group_id>"}'                 # null = back to Recent; GET /threads shows each group_id
+curl -s -X PATCH http://127.0.0.1:8000/groups/<group_id> -H 'X-PLG-User: S05' -H 'content-type: application/json' -d '{"name":"Arrears 2026"}'
+curl -s -X DELETE http://127.0.0.1:8000/groups/<group_id> -H 'X-PLG-User: S05'                # 204; its conversations go back to Recent
+```
+
+Another officer's group is 404. Which groups are collapsed is remembered per browser (localStorage `plg_collapsed_groups`), not on the server.
+
 ### Personal memory (issue #24)
 
 Through `plg-api` and the web app, the assistant remembers each officer across sessions: the profile from the `staff` table, the towns and preferences they mention, and what they're working on (episodes, kept 180 days). After each answer, Haiku reads only the officer's own question and the verified findings, in the background. It masks NRIC/FIN, phone numbers and emails, and merges near-duplicates. Notes are private to the officer, are never cited, and lose to policy: a note that a verified answer contradicts is flagged (`pending_review`) and left out of the prompt. Asking about an entity ID (e.g. `T-19807`) also records a `WORKED_ON` edge in the entity graph (`.plg/graph/delta`). Memory lives in the LanceDB `memory` table beside the search index, so embedding a note needs `VOYAGE_API_KEY`. If the key is missing, memory is skipped and the answer still works. `plg ask` neither reads nor writes memory.

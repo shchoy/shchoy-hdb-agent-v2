@@ -174,6 +174,57 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(drawer).toBeVisible();
     });
 
+    test("conversation groups: new group, group menu, rename, delete confirmation, Move to group…, also in the drawer", async ({
+      page,
+    }) => {
+      await signIn(page, OFFICER);
+      await askInNewConversation(page, QUESTION);
+      const conversations = page.getByRole("navigation", { name: "Conversations" });
+      const name = `Axe group ${colorScheme} ${Date.now()}`;
+
+      await conversations.getByRole("button", { name: "New group" }).click();
+      await expect(conversations.getByRole("textbox", { name: "Group name" })).toBeFocused();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.type(name);
+      await page.keyboard.press("Enter");
+
+      const options = conversations.getByRole("button", { name: `Options for group ${name}` });
+      await options.click();
+      await expect(page.getByRole("menu", { name: `Group ${name}` })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.getByRole("menuitem", { name: "Rename group" }).click();
+      await expect(conversations.getByRole("textbox", { name: "Group name" })).toBeFocused();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+
+      await openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` }).click();
+      await page.getByRole("menuitem", { name: "Move to group…" }).click();
+      await expect(page.getByRole("menu", { name: `Move ${QUESTION} to` })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.getByRole("menuitemradio", { name, exact: true }).click();
+      await expect(conversations.getByRole("list", { name, exact: true })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.getByRole("button", { name: "Menu", exact: true }).click();
+      const drawer = page.getByRole("dialog", { name: "Menu" });
+      await openConversation(page).getByRole("button", { name: `Options for ${QUESTION}` }).click();
+      await drawer.getByRole("menuitem", { name: "Move to group…" }).click();
+      await expect(drawer.getByRole("menu", { name: `Move ${QUESTION} to` })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+      await expect(drawer.getByRole("menu")).toHaveCount(0);
+      await expect(drawer).toBeVisible();
+
+      await drawer.getByRole("button", { name: `Options for group ${name}` }).click();
+      await drawer.getByRole("menuitem", { name: "Delete group" }).click();
+      const confirm = drawer.getByRole("group", { name: `Delete group ${name}?` });
+      await expect(confirm.getByRole("button", { name: "Cancel" })).toBeFocused();
+      expect(await seriousViolations(page)).toEqual([]);
+      await confirm.getByRole("button", { name: "Delete group" }).click(); // leave the shared server as found
+      await expect(drawer.getByRole("list", { name, exact: true })).toHaveCount(0);
+    });
+
     test("the sidebar as a drawer on a phone", async ({ page }) => {
       await signIn(page, OFFICER); // at desktop width: signIn checks the persona shown in the sidebar
       await page.setViewportSize({ width: 390, height: 844 });

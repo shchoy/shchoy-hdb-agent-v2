@@ -1,7 +1,7 @@
 """Conversations: who owns which thread, and runs that outlive their HTTP connection.
 
 The conversation itself lives in the LangGraph checkpoint (same SQLite file); this module holds only what the
-checkpoint doesn't: thread ownership and title, and the events of the latest run per thread, so a browser that
+checkpoint doesn't: thread ownership, title and group (the officer's own groups too), and the events of the latest run per thread, so a browser that
 dropped or refreshed can pick the answer up again from the last event sequence number it saw.
 """
 
@@ -29,6 +29,19 @@ class ThreadSummary(BaseModel):
     thread_id: str
     title: str
     updated_at: str
+    group_id: str | None = None
+    """The officer's group it is in (#100); None: under Recent."""
+
+
+class Group(BaseModel):
+    """One of an officer's own, flat conversation groups (#100)."""
+
+    group_id: str
+    name: str
+
+
+class GroupNotFound(Exception):
+    """No such group, or someone else's."""
 
 
 class ThreadStore:
@@ -42,6 +55,13 @@ class ThreadStore:
                 "CREATE TABLE IF NOT EXISTS plg_threads (thread_id TEXT PRIMARY KEY, staff_id TEXT NOT NULL, "
                 "title TEXT, updated_at TEXT NOT NULL)"
             )
+            columns = {row[1] for row in db.execute("PRAGMA table_info(plg_threads)")}
+            if "group_id" not in columns:  # a threads.sqlite from before #100
+                db.execute("ALTER TABLE plg_threads ADD COLUMN group_id TEXT")
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS plg_groups (group_id TEXT PRIMARY KEY, staff_id TEXT NOT NULL, "
+                "name TEXT NOT NULL, created_at TEXT NOT NULL)"
+            )
 
     @contextmanager
     def _db(self) -> Iterator[sqlite3.Connection]:
@@ -51,7 +71,10 @@ class ThreadStore:
     def create(self, staff_id: str) -> str:
         thread_id = str(uuid.uuid4())
         with self._db() as db:
-            db.execute("INSERT INTO plg_threads VALUES (?, ?, NULL, ?)", (thread_id, staff_id, _now()))
+            db.execute(
+                "INSERT INTO plg_threads (thread_id, staff_id, title, updated_at) VALUES (?, ?, NULL, ?)",
+                (thread_id, staff_id, _now()),
+            )
         return thread_id
 
     def owns(self, thread_id: str, staff_id: str) -> bool:
@@ -71,8 +94,58 @@ class ThreadStore:
         """The officer's own title: later questions keep it (`asked` only fills a missing title)."""
         with self._db() as db:
             db.execute("UPDATE plg_threads SET title = ? WHERE thread_id = ?", (title, thread_id))
-            row = db.execute("SELECT updated_at FROM plg_threads WHERE thread_id = ?", (thread_id,)).fetchone()
-        return ThreadSummary(thread_id=thread_id, title=title, updated_at=row[0])
+        return self._summary(thread_id)
+
+    def move(self, thread_id: str, staff_id: str, group_id: str | None) -> ThreadSummary:
+        """Put the officer's thread in one of their groups (None: back to Recent). Raises GroupNotFound."""
+        with self._db() as db:
+            # One statement, so a group deleted meanwhile can't be left as a dangling group_id.
+            moved = db.execute(
+                "UPDATE plg_threads SET group_id = ? WHERE thread_id = ? AND (? IS NULL OR EXISTS "
+                "(SELECT 1 FROM plg_groups WHERE group_id = ? AND staff_id = ?))",
+                (group_id, thread_id, group_id, group_id, staff_id),
+            ).rowcount
+        if not moved:
+            raise GroupNotFound
+        return self._summary(thread_id)
+
+    def _summary(self, thread_id: str) -> ThreadSummary:
+        with self._db() as db:
+            row = db.execute(
+                "SELECT thread_id, COALESCE(title, ''), updated_at, group_id FROM plg_threads WHERE thread_id = ?",
+                (thread_id,),
+            ).fetchone()
+        return ThreadSummary(thread_id=row[0], title=row[1], updated_at=row[2], group_id=row[3])
+
+    def groups(self, staff_id: str) -> list[Group]:
+        """The officer's groups, in the order they were created."""
+        with self._db() as db:
+            rows = db.execute(
+                "SELECT group_id, name FROM plg_groups WHERE staff_id = ? ORDER BY created_at, rowid", (staff_id,)
+            ).fetchall()
+        return [Group(group_id=r[0], name=r[1]) for r in rows]
+
+    def create_group(self, staff_id: str, name: str) -> Group:
+        group = Group(group_id=str(uuid.uuid4()), name=name)
+        with self._db() as db:
+            db.execute("INSERT INTO plg_groups VALUES (?, ?, ?, ?)", (group.group_id, staff_id, name, _now()))
+        return group
+
+    def rename_group(self, group_id: str, staff_id: str, name: str) -> Group:
+        """Raises GroupNotFound."""
+        with self._db() as db:
+            if not _owns_group(db, group_id, staff_id):
+                raise GroupNotFound
+            db.execute("UPDATE plg_groups SET name = ? WHERE group_id = ?", (name, group_id))
+        return Group(group_id=group_id, name=name)
+
+    def delete_group(self, group_id: str, staff_id: str) -> None:
+        """Its conversations go back to Recent; none is deleted. Raises GroupNotFound."""
+        with self._db() as db:
+            if not _owns_group(db, group_id, staff_id):
+                raise GroupNotFound
+            db.execute("UPDATE plg_threads SET group_id = NULL WHERE group_id = ?", (group_id,))
+            db.execute("DELETE FROM plg_groups WHERE group_id = ?", (group_id,))
 
     def delete(self, thread_id: str) -> None:
         """Forget the thread's owner and title: from now on it is not found, for everyone."""
@@ -90,11 +163,17 @@ class ThreadStore:
     def list(self, staff_id: str) -> list[ThreadSummary]:
         with self._db() as db:
             rows = db.execute(
-                "SELECT thread_id, title, updated_at FROM plg_threads WHERE staff_id = ? AND title IS NOT NULL "
+                "SELECT thread_id, title, updated_at, group_id FROM plg_threads WHERE staff_id = ? AND title IS NOT NULL "
                 "ORDER BY updated_at DESC, rowid DESC",
                 (staff_id,),
             ).fetchall()
-        return [ThreadSummary(thread_id=r[0], title=r[1], updated_at=r[2]) for r in rows]
+        return [ThreadSummary(thread_id=r[0], title=r[1], updated_at=r[2], group_id=r[3]) for r in rows]
+
+
+def _owns_group(db: sqlite3.Connection, group_id: str, staff_id: str) -> bool:
+    return db.execute(
+        "SELECT 1 FROM plg_groups WHERE group_id = ? AND staff_id = ?", (group_id, staff_id)
+    ).fetchone() is not None
 
 
 def _now() -> str:

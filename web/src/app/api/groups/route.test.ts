@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DELETE, PATCH } from "@/app/api/groups/[id]/route";
+import { PUT as REORDER } from "@/app/api/groups/order/route";
 import { GET, POST } from "@/app/api/groups/route";
 import { PUT } from "@/app/api/threads/[id]/group/route";
 import { server } from "@/test/msw";
@@ -90,6 +91,27 @@ describe("/api/groups/{id}", () => {
   it("is 401 when not signed in", async () => {
     expect((await PATCH(request("/api/groups/g1", "PATCH", undefined, { name: "x" }), group)).status).toBe(401);
     expect((await DELETE(request("/api/groups/g1", "DELETE"), group)).status).toBe(401);
+  });
+});
+
+describe("PUT /api/groups/order", () => {
+  it("passes the new order on and relays the reordered groups", async () => {
+    const reordered = [{ group_id: "g2", name: "Renewals" }, { group_id: "g1", name: "Arrears" }];
+    const seen = recording("put", "/groups/order", () => HttpResponse.json(reordered));
+
+    const response = await REORDER(request("/api/groups/order", "PUT", signedIn, { group_ids: ["g2", "g1"] }));
+
+    expect(await response.json()).toEqual(reordered);
+    expect(seen).toEqual([{ user: "S05", body: { group_ids: ["g2", "g1"] } }]);
+  });
+
+  it("is 401 when not signed in, 422 without a list of IDs, and passes on plg-api's 409", async () => {
+    server.use(http.put(`${PLG_API}/groups/order`, () => HttpResponse.json({ detail: "changed" }, { status: 409 })));
+
+    expect((await REORDER(request("/api/groups/order", "PUT", undefined, { group_ids: [] }))).status).toBe(401);
+    expect((await REORDER(request("/api/groups/order", "PUT", signedIn, { group_ids: "g1" }))).status).toBe(422);
+    expect((await REORDER(request("/api/groups/order", "PUT", signedIn, { group_ids: [1] }))).status).toBe(422);
+    expect((await REORDER(request("/api/groups/order", "PUT", signedIn, { group_ids: ["g1"] }))).status).toBe(409);
   });
 });
 

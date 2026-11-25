@@ -362,3 +362,77 @@ test("an officer groups a conversation by keyboard, sees the group in another br
   ).toBeVisible();
   expect((await page.request.get(`/api/threads/${id}`)).status()).toBe(200);
 });
+
+test("an officer drags a conversation into a group and reorders groups by drag and by keyboard (#101)", async ({ page }) => {
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, QUESTION);
+  const stamp = Date.now();
+  const [first, second] = [`Drag A ${stamp}`, `Drag B ${stamp}`];
+  const conversations = page.getByRole("navigation", { name: "Conversations" });
+  const updates = page.getByRole("status", { name: "Conversation updates" });
+  const toggleName = (name: string) => new RegExp(`^${name}, \\d+ conversations?$`);
+  const toggle = (name: string) => conversations.getByRole("button", { name: toggleName(name) });
+  // `has` is relative to each list item: not rooted at the nav.
+  const groupItem = (name: string) =>
+    conversations.getByRole("listitem").filter({ has: page.getByRole("button", { name: toggleName(name) }) }).first();
+  const order = async () => {
+    const groups = (await (await page.request.get("/api/groups")).json()) as { group_id: string; name: string }[];
+    return groups.filter((g) => g.name === first || g.name === second).map((g) => g.name);
+  };
+
+  for (const name of [first, second]) {
+    await conversations.getByRole("button", { name: "New group" }).click();
+    await page.keyboard.type(name);
+    await page.keyboard.press("Enter");
+    await expect(updates).toHaveText(`Created group ${name}`);
+  }
+  // A fresh conversation is open: dragging the asked one must not open it.
+  await page.getByRole("button", { name: "New conversation" }).click();
+  await expect(page.getByRole("heading", { name: /^Good to see you/ })).toBeVisible();
+
+  // Drag the conversation onto the second group: every place it can go is outlined, the one under it tinted.
+  const conversation = conversations
+    .getByRole("list", { name: "Recent conversations" })
+    .getByRole("button", { name: QUESTION, exact: true })
+    .first();
+  await conversation.hover();
+  const from = (await conversation.boundingBox())!;
+  await page.mouse.down();
+  // Start the drag where it is: hovering the target first may scroll the sidebar before the drag has begun.
+  await page.mouse.move(from.x + 20, from.y + from.height / 2, { steps: 5 });
+  await toggle(first).hover();
+  await toggle(second).hover();
+  await expect(groupItem(second)).toHaveAttribute("data-drop", "over");
+  await expect(groupItem(first)).toHaveAttribute("data-drop", "available");
+  expect(await seriousViolations(page)).toEqual([]);
+  await toggle(second).hover(); // a fresh dragover after axe's run, so the drop lands here
+  await page.mouse.up();
+
+  await expect(updates).toHaveText(`Moved ${QUESTION} to ${second}`);
+  await expect(
+    conversations.getByRole("list", { name: second, exact: true }).getByRole("button", { name: QUESTION, exact: true }),
+  ).toBeVisible();
+  await expect(groupItem(second)).toHaveAttribute("data-drop", "none");
+  await expect(page.getByRole("heading", { name: /^Good to see you/ })).toBeVisible();
+
+  // Drag the second group onto the first: it takes the first's place, stored server-side.
+  await toggle(second).dragTo(toggle(first));
+  await expect(updates).toHaveText(new RegExp(`^Moved group ${second} to position \\d+ of \\d+$`));
+  await expect.poll(order).toEqual([second, first]);
+
+  // The keyboard way: Move down in the group's menu, announced, focus back on its Options button.
+  const options = conversations.getByRole("button", { name: `Options for group ${second}` });
+  await options.focus();
+  await page.keyboard.press("Enter");
+  await page.getByRole("menuitem", { name: "Move down" }).focus();
+  expect(await seriousViolations(page)).toEqual([]);
+  await page.keyboard.press("Enter");
+  await expect(updates).toHaveText(new RegExp(`^Moved group ${second} to position \\d+ of \\d+$`));
+  await expect(options).toBeFocused();
+  await expect.poll(order).toEqual([first, second]);
+
+  // Leave the shared server as found (the conversation goes back to Recent).
+  const groups = (await (await page.request.get("/api/groups")).json()) as { group_id: string; name: string }[];
+  for (const g of groups.filter((g) => g.name === first || g.name === second))
+    expect((await page.request.delete(`/api/groups/${g.group_id}`)).status()).toBe(204);
+});

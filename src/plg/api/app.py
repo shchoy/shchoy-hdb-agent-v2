@@ -71,6 +71,7 @@ from plg.threads import (
     RunBuffer,
     RunInProgress,
     RunRegistry,
+    StaleGroupOrder,
     ThreadStore,
     ThreadSummary,
 )
@@ -158,6 +159,12 @@ class MoveRequest(BaseModel):
     """Which of the officer's groups a conversation goes in; null: none (back to Recent)."""
 
     group_id: str | None
+
+
+class GroupOrderRequest(BaseModel):
+    """Every one of the officer's groups, once each, in the new order (#101)."""
+
+    group_ids: list[str]
 
 
 class ResumeRequest(BaseModel):
@@ -376,8 +383,16 @@ def create_app(
 
     @app.get("/groups")
     async def list_groups(user: User) -> list[Group]:
-        """Your own conversation groups, in the order you created them."""
+        """Your own conversation groups, in your order."""
         return threads.groups(user.staff_id)
+
+    @app.put("/groups/order", responses={409: {"description": "The order doesn't name each of your groups once"}})
+    async def reorder_groups(body: GroupOrderRequest, user: User) -> list[Group]:
+        """Reorder your groups: name each of them once, in the new order."""
+        try:
+            return threads.reorder_groups(user.staff_id, body.group_ids)
+        except StaleGroupOrder:
+            raise HTTPException(status_code=409, detail="Your groups have changed: reload and try again") from None
 
     @app.post("/groups", status_code=201)
     async def create_group(body: GroupRequest, user: User) -> Group:

@@ -430,7 +430,7 @@
     "/groups": {
       "get": {
         "summary": "List Groups",
-        "description": "Your own conversation groups, in the order you created them.",
+        "description": "Your own conversation groups, in your order.",
         "operationId": "list_groups_groups_get",
         "parameters": [
           {
@@ -522,6 +522,72 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/order": {
+      "put": {
+        "summary": "Reorder Groups",
+        "description": "Reorder your groups: name each of them once, in the new order.",
+        "operationId": "reorder_groups_groups_order_put",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Group"
+                  },
+                  "title": "Response Reorder Groups Groups Order Put"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The order doesn't name each of your groups once"
           },
           "422": {
             "description": "Validation Error",
@@ -3174,6 +3240,23 @@
         ],
         "title": "Group",
         "description": "One of an officer's own, flat conversation groups (#100)."
+      },
+      "GroupOrderRequest": {
+        "properties": {
+          "group_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Group Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "group_ids"
+        ],
+        "title": "GroupOrderRequest",
+        "description": "Every one of the officer's groups, once each, in the new order (#101)."
       },
       "GroupRequest": {
         "properties": {

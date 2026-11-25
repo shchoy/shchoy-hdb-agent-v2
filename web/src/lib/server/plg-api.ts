@@ -149,6 +149,15 @@ export async function renameGroup(
   return { status: response.status, body: data ?? error };
 }
 
+/** Puts the officer's groups in this order (every one of them, once): the reordered groups or a refusal (409 stale). */
+export async function reorderGroups(staffId: string, groupIds: string[]): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PUT("/groups/order", {
+    params: { header: { "x-plg-user": staffId } },
+    body: { group_ids: groupIds },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
 /** Deletes one of the officer's groups (its conversations go back to Recent): 204 or a refusal (404). */
 export async function deleteGroup(staffId: string, groupId: string): Promise<{ status: number; body: unknown }> {
   const { error, response } = await client().DELETE("/groups/{group_id}", {

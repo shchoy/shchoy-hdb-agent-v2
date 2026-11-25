@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import type { Group } from "@/lib/events";
 import { ChevronIcon, MoreIcon, PlusIcon } from "./icons";
-import { MENU_ITEMS, onMenuKey, refusalDetail, tidy } from "./menu";
+import { MENU_ITEMS, onMenuKey, refusalDetail, tidy, type DragHandle, type DropZone } from "./menu";
 import { useShell } from "./ShellContext";
 import styles from "./shell.module.css";
 
@@ -12,7 +12,8 @@ type Mode = "idle" | "menu" | "rename" | "confirm";
 /**
  * One of the officer's conversation groups (#100) in the sidebar: a disclosure button (name and count) that collapses
  * or expands its conversations, and its Options menu (Rename group, Delete group). Deleting asks first; the group's
- * conversations go back to Recent, none is deleted.
+ * conversations go back to Recent, none is deleted. Move up / Move down (#101) reorder the groups: the keyboard way to
+ * do what dragging the group's row onto another group does. The whole group is a drop zone for conversations and groups.
  */
 export function GroupSection({
   group,
@@ -21,6 +22,10 @@ export function GroupSection({
   onToggle,
   onRenamed,
   onDeleted,
+  position,
+  onMove,
+  drag,
+  drop,
   children,
 }: {
   group: Group;
@@ -29,6 +34,14 @@ export function GroupSection({
   onToggle(): void;
   onRenamed(name: string): void;
   onDeleted(): void;
+  /** Where it is among the officer's groups (0-based) and how many there are. */
+  position: { index: number; total: number };
+  /** Move it to this index (#101); resolves to the refusal shown, or null once moved. */
+  onMove(index: number): Promise<string | null>;
+  /** Makes its row (name and Options) draggable (#101). */
+  drag?: DragHandle;
+  /** It takes dropped conversations and groups (#101). */
+  drop?: DropZone;
   /** Its conversations (ConversationItems), newest first. */
   children: ReactNode;
 }) {
@@ -115,10 +128,19 @@ export function GroupSection({
     }
   }
 
+  async function move(index: number) {
+    setWorking(true);
+    refocus.current = true; // back on Options once moved, even if the menu lost focus as the group moved
+    const refused = await onMove(index);
+    setWorking(false);
+    setError(refused);
+    setMode("idle");
+  }
+
   const listId = `${id}-list`;
 
   return (
-    <li className={styles.group}>
+    <li className={styles.group} {...drop}>
       {mode === "rename" ? (
         <form className={styles.renameForm} onSubmit={rename} onKeyDown={onEscape}>
           <label className={styles.visuallyHidden} htmlFor={`${id}-name`}>
@@ -148,7 +170,7 @@ export function GroupSection({
           )}
         </form>
       ) : (
-        <div className={styles.row}>
+        <div className={styles.row} draggable={drag ? true : undefined} {...drag}>
           <h3 className={styles.groupName}>
             <button
               type="button"
@@ -202,12 +224,31 @@ export function GroupSection({
               Rename group
             </button>
           </li>
+          {position.index > 0 && (
+            <li role="none">
+              <button type="button" role="menuitem" tabIndex={-1} disabled={working} onClick={() => void move(position.index - 1)}>
+                Move up
+              </button>
+            </li>
+          )}
+          {position.index < position.total - 1 && (
+            <li role="none">
+              <button type="button" role="menuitem" tabIndex={-1} disabled={working} onClick={() => void move(position.index + 1)}>
+                Move down
+              </button>
+            </li>
+          )}
           <li role="none">
             <button type="button" role="menuitem" tabIndex={-1} onClick={() => setMode("confirm")}>
               Delete group
             </button>
           </li>
         </ul>
+      )}
+      {mode === "idle" && error && (
+        <p role="alert" className={styles.rowError}>
+          {error}
+        </p>
       )}
       {mode === "confirm" && (
         <div role="group" aria-labelledby={`${id}-confirm`} className={styles.confirm} onKeyDown={onEscape}>

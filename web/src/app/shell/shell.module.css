@@ -536,3 +536,26 @@
   outline: 3px solid var(--color-focus);
   outline-offset: -3px;
 }
+
+/* Drag and drop (#101): while a row is dragged, where it can go is outlined; the one it is over is tinted. */
+.group[data-drop="available"],
+.recent[data-drop="available"] {
+  /* A text colour: well over 3:1 against the sidebar in both themes. */
+  outline: 2px dashed var(--color-text-muted);
+  outline-offset: -2px;
+  border-radius: var(--radius-md);
+}
+
+.group[data-drop="over"],
+.recent[data-drop="over"] {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-tint);
+}
+
+.recent {
+  /* A drop target even when it holds nothing but its heading. */
+  min-height: var(--space-8);
+  padding-bottom: var(--space-1);
+}

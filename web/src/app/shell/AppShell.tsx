@@ -21,6 +21,7 @@ import {
 } from "./icons";
 import { ConversationItem } from "./ConversationItem";
 import { GroupSection, NewGroup } from "./GroupSection";
+import { DRAG_TYPE, moveThread, refusalDetail, type DragHandle, type DropZone } from "./menu";
 import { ShellProvider, type ConversationControl, type Shell } from "./ShellContext";
 import styles from "./shell.module.css";
 import { ThemeToggle } from "./ThemeToggle";
@@ -39,13 +40,19 @@ const DRAWER_QUERY = "(max-width: 47.99rem)";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
+/** The drop zone key of Recent (group IDs are UUIDs). */
+const RECENT = "recent";
+
+type Dragged = { kind: "thread"; thread: ThreadSummary } | { kind: "group"; group: Group };
+
 function current(pathname: string, href: string): boolean {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
 /**
  * The signed-in app's frame: a left sidebar (product, New conversation, sections, pending-approvals count, recent
- * conversations in the officer's groups and under Recent, theme toggle, persona) beside the screen. Below a tablet width the sidebar is a drawer behind a Menu button.
+ * conversations in the officer's groups and under Recent, theme toggle, persona) beside the screen. Conversations are
+ * dragged onto a group or Recent, groups onto another group to reorder them (#101); each has a menu way too. Below a tablet width the sidebar is a drawer behind a Menu button.
  */
 export function AppShell({ user, theme, children }: { user: UserCtx; theme?: Theme; children: ReactNode }) {
   const pathname = usePathname() ?? "/";
@@ -61,6 +68,11 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   const [busy, setBusy] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [announcement, setAnnouncement] = useState("");
+  /** What is being dragged (#101; a browser's drag data can't be read until the drop) and the drop zone it is over. */
+  const [dragged, setDragged] = useState<Dragged | null>(null);
+  const [over, setOver] = useState<string | null>(null);
+  /** A refused drop, shown until the next drag. */
+  const [dropError, setDropError] = useState<string | null>(null);
   const conversationsHeading = useRef<HTMLHeadingElement>(null);
   const groupsHeading = useRef<HTMLHeadingElement>(null);
   const control = useRef<ConversationControl | null>(null);
@@ -184,12 +196,97 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
     refresh();
   }
 
-  function moved(thread: ThreadSummary, groupId: string | null) {
+  function moved(thread: ThreadSummary, groupId: string | null, { focus = true } = {}) {
     setThreads((all) => all.map((t) => (t.thread_id === thread.thread_id ? { ...t, group_id: groupId } : t)));
     const destination = groups.find((g) => g.group_id === groupId);
     setAnnouncement(`Moved ${thread.title} to ${destination?.name ?? "Recent"}`);
-    if (groupId) expand(groupId); // so the moved conversation is shown, and keeps focus
-    setMoving(thread.thread_id);
+    if (groupId) expand(groupId); // so the moved conversation is shown (and keeps focus, when moved by its menu)
+    if (focus) setMoving(thread.thread_id);
+    setDropError(null); // an earlier refused drop is no longer news
+  }
+
+  /** A conversation dropped on a group (or Recent: null). */
+  async function dropThread(thread: ThreadSummary, groupId: string | null) {
+    const refusal = await moveThread(thread.thread_id, groupId);
+    if (!refusal) return moved(thread, groupId, { focus: false });
+    if (refusal.stale) refresh();
+    setDropError(refusal.refused);
+  }
+
+  /** Puts a group at `index` among the groups; resolves to the refusal, or null once reordered (and announced). */
+  async function reorder(group: Group, index: number): Promise<string | null> {
+    const order = groups.map((g) => g.group_id).filter((id) => id !== group.group_id);
+    order.splice(index, 0, group.group_id);
+    try {
+      const response = await fetch("/api/groups/order", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ group_ids: order }),
+      });
+      if (!response.ok) {
+        refresh(); // 409: groups were created or deleted elsewhere
+        return await refusalDetail(response, "The groups couldn't be reordered.");
+      }
+      setGroups((await response.json()) as Group[]);
+      setDropError(null);
+      setAnnouncement(`Moved group ${group.name} to position ${index + 1} of ${order.length}`);
+      return null;
+    } catch {
+      return "The groups couldn't be reordered. Try again.";
+    }
+  }
+
+  /** Where the dragged row could be dropped: a group's ID, or RECENT. Dropping it where it already is does nothing. */
+  function accepts(zone: string): boolean {
+    if (dragged?.kind === "thread") return zone !== (groupOf(dragged.thread) ?? RECENT);
+    if (dragged?.kind === "group") return zone !== RECENT && zone !== dragged.group.group_id;
+    return false;
+  }
+
+  function dragHandle(next: Dragged, label: string): DragHandle {
+    return {
+      onDragStart(event) {
+        // Some browsers start a drag only with data set; the shell reads `dragged`, not this.
+        event.dataTransfer?.setData(DRAG_TYPE, label);
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+        setDropError(null);
+        setDragged(next);
+      },
+      onDragEnd() {
+        setDragged(null);
+        setOver(null);
+      },
+    };
+  }
+
+  function dropZone(zone: string): DropZone {
+    const allowed = accepts(zone);
+    const take = (event: React.DragEvent<HTMLElement>) => {
+      if (!allowed) return;
+      event.preventDefault(); // allows the drop
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      if (over !== zone) setOver(zone);
+    };
+    return {
+      "data-drop": !allowed ? "none" : over === zone ? "over" : "available",
+      onDragEnter: take,
+      onDragOver: take,
+      onDragLeave(event) {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOver((o) => (o === zone ? null : o));
+      },
+      onDrop(event) {
+        if (!allowed || !dragged) return;
+        event.preventDefault();
+        event.stopPropagation(); // a group inside the sidebar: handled once
+        setOver(null);
+        setDragged(null);
+        if (dragged.kind === "thread") void dropThread(dragged.thread, zone === RECENT ? null : zone);
+        else {
+          const target = groups.findIndex((g) => g.group_id === zone);
+          void reorder(dragged.group, target).then((refused) => refused && setDropError(refused));
+        }
+      },
+    };
   }
 
   function created(group: Group) {
@@ -230,6 +327,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
       onRenamed={(title) => renamed(t.thread_id, title)}
       onMoved={(groupId) => moved(t, groupId)}
       onDeleted={() => deleted(t)}
+      drag={dragHandle({ kind: "thread", thread: t }, t.title)}
     />
   );
 
@@ -313,7 +411,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
             </h2>
             {groups.length > 0 && (
               <ul className={styles.groups}>
-                {groups.map((g) => {
+                {groups.map((g, index) => {
                   const members = threads.filter((t) => groupOf(t) === g.group_id);
                   return (
                     <GroupSection
@@ -324,6 +422,10 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
                       onToggle={() => toggle(g.group_id)}
                       onRenamed={(name) => renamedGroup(g.group_id, name)}
                       onDeleted={() => deletedGroup(g)}
+                      position={{ index, total: groups.length }}
+                      onMove={(to) => reorder(g, to)}
+                      drag={dragHandle({ kind: "group", group: g }, g.name)}
+                      drop={dropZone(g.group_id)}
                     >
                       {members.map(conversationItem)}
                     </GroupSection>
@@ -332,16 +434,23 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
               </ul>
             )}
             <NewGroup onCreated={created} />
-            <h2 ref={conversationsHeading} id="recent-conversations" tabIndex={-1} className={styles.groupHeading}>
-              Recent conversations
-            </h2>
-            {threads.length === 0 ? (
-              <p className={styles.empty}>No conversations yet.</p>
-            ) : ungrouped.length === 0 ? (
-              <p className={styles.empty}>Every conversation is in a group.</p>
-            ) : (
-              <ul aria-labelledby="recent-conversations">{ungrouped.map(conversationItem)}</ul>
+            {dropError && (
+              <p role="alert" className={styles.rowError}>
+                {dropError}
+              </p>
             )}
+            <div className={styles.recent} {...dropZone(RECENT)}>
+              <h2 ref={conversationsHeading} id="recent-conversations" tabIndex={-1} className={styles.groupHeading}>
+                Recent conversations
+              </h2>
+              {threads.length === 0 ? (
+                <p className={styles.empty}>No conversations yet.</p>
+              ) : ungrouped.length === 0 ? (
+                <p className={styles.empty}>Every conversation is in a group.</p>
+              ) : (
+                <ul aria-labelledby="recent-conversations">{ungrouped.map(conversationItem)}</ul>
+              )}
+            </div>
           </nav>
 
           <ThemeToggle theme={theme} />

@@ -9,7 +9,8 @@ edits, a letter edit and a rejection, the audit trail), `submissions.json` (the 
 `approvals/glossary_*` (a glossary change proposed by a policy owner: the term owner's inbox, approval, audit trail) and
 `feedback/*.json` (answer feedback on a data answer and the curator queue it fills) and `categories.json` (the Library's
 document categories after `plg categorise` over the synced corpus) and `audit_report.json` (`GET /audit/reports/latest`
-after `plg audit` over the synced corpus: planted conflicts and duplicates confirmed by a scripted Opus). Streams come from the real API and graph with a scripted
+after `plg audit` over the synced corpus: planted conflicts and duplicates confirmed by a scripted Opus) and `upload.sse`,
+`uploads/*.json`, `documents/upload.json` (#103: a note uploaded, a refused upload, a question with it attached citing it). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -720,6 +721,70 @@ SCRIPTS: dict[str, tuple[str, Callable[[ScriptedLLMClient], None]]] = {
 }
 
 
+UPLOAD_NOTE = (
+    "Site visit notes, Blk 123 Ang Mo Kio\n"
+    "The shutter of the kiosk at unit 01-17 is jammed and the tenant keeps the walkway blocked with crates.\n"
+    "The estate officer agreed a follow-up visit with the tenant on 14 October 2026.\n"
+)
+UPLOAD_FILENAME = "site-visit.txt"
+UPLOAD_QUESTION = "What did we agree with the kiosk tenant at unit 01-17?"
+
+
+def upload_turns(llm: ScriptedLLMClient) -> None:
+    """The knowledge agent searches and cites the officer's attached site-visit note (#103)."""
+    llm.script_turns("route", UPLOAD_QUESTION, routed("knowledge"))
+    llm.script_turns(
+        "knowledge", UPLOAD_QUESTION,
+        turn(tool_call("search_corpus", query="kiosk unit 01-17 follow-up visit")),
+        cite("follow-up visit", "A follow-up visit with the tenant on 14 October 2026."),
+    )
+    llm.script("merge", UPLOAD_QUESTION, "You agreed a follow-up visit with the tenant on 14 October 2026 [1].")
+
+
+def record_upload(search: Searcher, graph: LocalGraphStore | None) -> dict[str, str]:
+    """Uploading a document into the conversation (#103): the upload, a refused one (415), a question with it attached
+    whose answer cites it, and the source viewer's document + span location for the cited upload."""
+    llm = ScriptedLLMClient()
+    upload_turns(llm)
+    recorded: dict[str, str] = {}
+    with tempfile.TemporaryDirectory() as scratch:
+        app = create_app(
+            scratch_settings(Path(scratch)), llm=llm, searcher=search, entities=graph,
+            memory=scratch_memory(Path(scratch) / "memory"), embedder=HashingEmbedder(dim=128),
+        )
+        with TestClient(app) as client:
+            response = client.post("/uploads", params={"filename": UPLOAD_FILENAME}, content=UPLOAD_NOTE.encode(), headers=USER)
+            assert response.status_code == 201, response.text
+            item = response.json()
+            recorded["uploads/upload.json"] = json.dumps(item, indent=2) + "\n"
+            refused = client.post("/uploads", params={"filename": "budget.xlsx"}, content=b"PK\x03\x04", headers=USER)
+            assert refused.status_code == 415, refused.text
+            recorded["uploads/refused.json"] = json.dumps(
+                {"status": refused.status_code, "body": refused.json()}, indent=2
+            ) + "\n"
+            thread_id = client.post("/threads", headers=USER).json()["thread_id"]
+            body = {"message": UPLOAD_QUESTION, "attachments": [item["upload_id"]]}
+            with client.stream("POST", f"/threads/{thread_id}/runs", json=body, headers=USER) as run:
+                assert run.status_code == 200, run.read()
+                stream = run.read().decode()
+            recorded["upload.sse"] = stream
+            (citation,) = [
+                json.loads(line[len("data: "):]) for line in stream.splitlines()
+                if line.startswith("data: ") and '"type":"citation"' in line.replace(" ", "")
+            ]
+            assert citation["upload"] is True and citation["doc_id"] == item["upload_id"], citation
+            document = client.get(f"/documents/{item['upload_id']}", headers=USER).json()
+            span = citation["span"]
+            located = client.get(
+                f"/documents/{item['upload_id']}/chunks/{citation['chunk_id'].replace('#', '%23')}",
+                params={"start": span["start"], "end": span["end"]}, headers=USER,
+            ).json()
+            recorded["documents/upload.json"] = json.dumps(
+                {"document": document, "location": located, "start": span["start"], "end": span["end"]}, indent=2
+            ) + "\n"
+    return recorded
+
+
 DOCUMENTS = {
     "pdf": "pdfs/Guidelines_AA_Works_Commercial_Tenants_2025.pdf",
     "docx": "docs/PLG-POL-003_Rental_Arrears_Management_Policy_v2.0.docx",
@@ -770,7 +835,7 @@ def scratch_settings(scratch: Path) -> Settings:
         graph_dir=scratch / "graph", threads_db=scratch / "threads.sqlite", outbox_dir=scratch / "outbox",
         iems_dir=scratch / "iems", audit_log=scratch / "audit.jsonl", glossary_changes=scratch / "glossary_changes.jsonl",
         feedback_log=scratch / "feedback.jsonl", question_log=scratch / "questions.jsonl",
-        audit_reports_dir=scratch / "audit-reports",
+        audit_reports_dir=scratch / "audit-reports", uploads_dir=scratch / "uploads",
     )
 
 
@@ -781,7 +846,10 @@ def record(
     script(llm)
     with tempfile.TemporaryDirectory() as scratch:
         settings = scratch_settings(Path(scratch))
-        app = create_app(settings, llm=llm, searcher=search, entities=graph, memory=scratch_memory(Path(scratch) / "memory"))
+        app = create_app(
+            settings, llm=llm, searcher=search, entities=graph, memory=scratch_memory(Path(scratch) / "memory"),
+            embedder=HashingEmbedder(dim=128),
+        )
         return _stream(app, question)
 
 
@@ -796,7 +864,7 @@ def _stream(app: Any, question: str) -> str:
 
 def main(only: list[str]) -> None:
     """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`, `feedback`,
-    `cancelled`, `categories`, `audit`)."""
+    `cancelled`, `categories`, `audit`, `upload`)."""
     OUT.mkdir(parents=True, exist_ok=True)
     if not only or "submissions" in only:
         path = OUT / "submissions.json"
@@ -839,6 +907,13 @@ def main(only: list[str]) -> None:
         if only and set(only) <= {"submissions", "tasks_api", "glossary", "feedback", "cancelled", "categories", "audit"}:
             return
         graph = lineage_graph(store, Path(graph_dir))
+        if not only or "upload" in only:
+            (OUT / "uploads").mkdir(exist_ok=True)
+            (OUT / "documents").mkdir(exist_ok=True)
+            for name, content in record_upload(search, graph).items():
+                path = OUT / name
+                path.write_text(content)
+                print(f"wrote {path.relative_to(REPO_ROOT)}")
         for name, (question, script) in SCRIPTS.items():
             if only and name not in only:
                 continue

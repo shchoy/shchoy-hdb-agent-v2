@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { components } from "@/lib/api/schema";
+import { Badge } from "./Card";
 import styles from "./ask.module.css";
 
 type DocumentView = components["schemas"]["DocumentView"];
@@ -190,6 +191,7 @@ function Document({
       <header className={styles.viewerHeader}>
         <strong>{document.title}</strong>
         {document.version && <span className={styles.location}> v{document.version}</span>}
+        {document.upload && <Badge>Your upload</Badge>}
         {document.kind === "pdf" ? (
           <a href={`${file}#page=${location?.page ?? 1}`} target="_blank" rel="noopener noreferrer">
             Open original PDF{location?.page ? ` (page ${location.page})` : ""}

@@ -67,6 +67,7 @@ from plg.ontology.changes import GlossaryChange, GlossaryChanges, superseded
 from plg.ontology.glossary import Glossary, load_glossary
 from plg.ontology.vocab import VocabIndex, load_vocab
 from plg.search.rerank import Retriever
+from plg.uploads.library import UploadLibrary
 
 SCREEN = "screen_input"
 ROUTE = "route"
@@ -240,6 +241,7 @@ def build_graph(
     glossary_changes: GlossaryChanges | None = None,
     curation: Curation | None = None,
     question_log: QuestionLog | None = None,
+    uploads: UploadLibrary | None = None,
 ) -> PLGGraph:
     vocab = vocab or load_vocab()
     glossary = glossary or load_glossary()
@@ -324,6 +326,10 @@ def build_graph(
         call = next(b for b in reply.content if b["type"] == "tool_use")
         decision = RouteDecision.model_validate(call["input"])
         threshold = settings.route_min_confidence
+        if state.get("attachments"):  # files sent with the question: the knowledge agent reads them, whatever else
+            intents = decision.confident(threshold)
+            routed: list[Intent] = intents if "knowledge" in intents else [*intents, "knowledge"]
+            return {"intents": routed, "clarification": "", "findings": []}
         if decision.needs_clarification(threshold):
             return {"intents": [], "clarification": decision.clarifying_question.strip() or CLARIFY, "findings": []}
         return {"intents": decision.confident(threshold), "clarification": "", "findings": []}
@@ -351,9 +357,15 @@ def build_graph(
                 planted[found.doc_id or ""] = found
                 write({"injection": found.model_dump(mode="json")})
 
+        user = state.get("user")
+        attached = state.get("attachments") or []
+        scope, files = None, []
+        if uploads is not None and user is not None:  # the asker's private library, attached files boosted
+            scope = uploads.scope(user.staff_id, attached)
+            files = [u for u in (uploads.get(user.staff_id, i) for i in attached) if u is not None]
         result = await knowledge.answer(
             llm, retriever, vocab, agent_conversation(state), state["question"], entities,
-            on_lineage=remember, on_injection=flag, glossary=live_glossary,
+            on_lineage=remember, on_injection=flag, glossary=live_glossary, uploads=scope, attached=files,
         )
         for stance in stances.values():
             write({"policy_stance": stance.model_dump(mode="json")})

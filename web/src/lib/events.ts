@@ -32,6 +32,7 @@ export type UserCtx = Schemas["UserCtx"];
 export type ThreadSummary = Schemas["ThreadSummary"];
 export type Group = Schemas["Group"];
 export type ThreadView = Schemas["ThreadView"];
+export type Upload = Schemas["Upload"];
 
 /** A role for display, e.g. "estate_manager" → "estate manager". */
 export function roleLabel(role: UserCtx["role"]): string {
@@ -88,6 +89,8 @@ export const runEventSchema = z.discriminatedUnion("type", [
     location: z.string(),
     quote: z.string(),
     span: z.object({ start: z.number().int(), end: z.number().int() }),
+    /** From the asker's private library (#103); older streams lack it. */
+    upload: z.boolean().default(false),
   }),
   z.object({
     type: z.literal("sql_trace"),

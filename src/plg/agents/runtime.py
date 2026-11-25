@@ -45,6 +45,8 @@ class Citation(BaseModel):
     location: str
     quote: str
     span: Span
+    upload: bool = False
+    """From the asker's own private library (#103), not the shared Library: shown with a 'Your upload' badge."""
 
 
 class AgentResult(BaseModel):
@@ -251,4 +253,5 @@ def _citation(raw: Block, retrieved: dict[str, Source]) -> Citation | None:
     return Citation(
         doc_id=chunk.doc_id, chunk_id=chunk.chunk_id, title=chunk.title, version=chunk.version,
         location=chunk.location, quote=chunk.text[span.start:span.end], span=span,
+        upload=chunk.source_system == "upload",
     )

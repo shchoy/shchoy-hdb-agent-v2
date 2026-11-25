@@ -2037,7 +2037,7 @@
     "/documents/{doc_id}": {
       "get": {
         "summary": "Get Document",
-        "description": "A source document as plain text blocks; markup in the file is never interpreted.",
+        "description": "A source document as plain text blocks; markup in the file is never interpreted. An upload is shown only to\nthe officer who uploaded it (anyone else: 404).",
         "operationId": "get_document_documents__doc_id__get",
         "parameters": [
           {
@@ -2228,6 +2228,129 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChunkLocation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads": {
+      "post": {
+        "summary": "Create Upload",
+        "description": "Upload a document (the request body is the file's bytes) into your private library (#103). It is screened\nfor prompt injection and indexed for your own searches only; attach it to a question by its `upload_id`.",
+        "operationId": "create_upload_uploads_post",
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "The file's name, with its extension",
+              "title": "Filename"
+            },
+            "description": "The file's name, with its extension"
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Upload"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The file is too large, or your uploads would exceed your space"
+          },
+          "415": {
+            "description": "Not a type that can be uploaded"
+          },
+          "422": {
+            "description": "The file can't be read (or is a scan without a text layer)"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Uploads",
+        "description": "Your uploads, newest first. Nobody else's are ever listed.",
+        "operationId": "list_uploads_uploads_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Upload"
+                  },
+                  "title": "Response List Uploads Uploads Get"
                 }
               }
             }
@@ -2965,6 +3088,11 @@
             },
             "type": "array",
             "title": "Blocks"
+          },
+          "upload": {
+            "type": "boolean",
+            "title": "Upload",
+            "default": false
           }
         },
         "type": "object",
@@ -3464,6 +3592,74 @@
         "title": "Highlight",
         "description": "`blocks[block].text[start:end]` is part of the cited span."
       },
+      "InjectionFlag": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "message",
+              "document"
+            ],
+            "title": "Source"
+          },
+          "rules": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "override",
+                "ai_address",
+                "approval_bypass",
+                "authority_claim",
+                "concealment",
+                "prompt_leak",
+                "role_change"
+              ]
+            },
+            "type": "array",
+            "title": "Rules"
+          },
+          "doc_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "rules"
+        ],
+        "title": "InjectionFlag",
+        "description": "A prompt-injection attempt the assistant detected and ignored, as reported to the officer."
+      },
       "LetterPayload": {
         "description": "A letter filled from an approved template, as it would be sent.",
         "properties": {
@@ -3711,6 +3907,11 @@
           },
           "span": {
             "$ref": "#/components/schemas/Span"
+          },
+          "upload": {
+            "type": "boolean",
+            "title": "Upload",
+            "default": false
           },
           "index": {
             "type": "integer",
@@ -4472,6 +4673,13 @@
           "message": {
             "type": "string",
             "title": "Message"
+          },
+          "attachments": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attachments"
           }
         },
         "type": "object",
@@ -5291,6 +5499,73 @@
         "title": "UnfilledSlot",
         "type": "object"
       },
+      "Upload": {
+        "properties": {
+          "upload_id": {
+            "type": "string",
+            "title": "Upload Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pdf",
+              "docx",
+              "pptx",
+              "email",
+              "markdown",
+              "text"
+            ],
+            "title": "Kind"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          },
+          "chunks": {
+            "type": "integer",
+            "title": "Chunks"
+          },
+          "injection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InjectionFlag"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "upload_id",
+          "filename",
+          "title",
+          "kind",
+          "content_type",
+          "size",
+          "uploaded_at",
+          "chunks"
+        ],
+        "title": "Upload"
+      },
       "UserCtx": {
         "properties": {
           "staff_id": {
@@ -5584,6 +5859,11 @@
           },
           "span": {
             "$ref": "#/components/schemas/Span"
+          },
+          "upload": {
+            "default": false,
+            "title": "Upload",
+            "type": "boolean"
           },
           "index": {
             "title": "Index",

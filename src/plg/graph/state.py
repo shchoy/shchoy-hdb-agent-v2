@@ -53,6 +53,8 @@ class PLGState(TypedDict, total=False):
     summarised: int
     question: str
     user: UserCtx
+    # IDs of the officer's uploads sent with this question (#103): set by every question, so never carried over.
+    attachments: list[str]
     intents: list[Intent]
     # The question `route` asks back when it can't tell what the officer needs; empty when it routed the question.
     clarification: str

@@ -88,9 +88,15 @@ function CitationMarker({ children, ...props }: ComponentProps<"button">) {
       type="button"
       className={styles.citation}
       aria-label={markerLabel(citation)}
+      data-upload={citation.upload ? "" : undefined}
       onClick={(event) => onCite(n, event.currentTarget)}
     >
       {children}
+      {citation.upload && (
+        <span className={styles.uploadMark} aria-hidden="true">
+          upload
+        </span>
+      )}
     </button>
   );
 }

@@ -27,9 +27,11 @@ from record_sse_fixtures import (
     scratch_memory,
     scratch_settings,
     searcher,
+    upload_turns,
 )
 
 from plg.api.app import KEEP_ALIVE_SECONDS, create_app
+from plg.search.embed import HashingEmbedder
 from plg.memory.service import NODE as EXTRACT_MEMORY
 from plg.memory.service import RECORD as RECORD_MEMORY
 from plg.llm import AgentMessage, AgentTurn, Block, ScriptedLLMClient, Tier, _latest_question, text, tool_call, turn
@@ -125,6 +127,8 @@ def e2e_llm() -> ReplayingLLMClient:
     })
     # The planted refund email, read by the knowledge agent and flagged.
     injection_email(llm)
+    # A question with the officer's site-visit note attached (#103): the knowledge agent cites the upload.
+    upload_turns(llm)
     return llm
 
 
@@ -140,6 +144,7 @@ def main() -> None:
         app = create_app(
             scratch_settings(root), llm=e2e_llm(), searcher=search, store=store,
             memory=scratch_memory(root / "memory"), langsmith=RecordingLangSmith(),
+            embedder=HashingEmbedder(dim=128),  # uploads embed offline, like the temporary index
         )
         uvicorn.run(app, host=args.host, port=args.port, timeout_keep_alive=KEEP_ALIVE_SECONDS)
 

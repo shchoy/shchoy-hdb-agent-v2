@@ -6,7 +6,11 @@ import { sessionStaffId } from "@/lib/server/session";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const runRequestSchema = z.object({ message: z.string().trim().min(1) });
+/** `attachments`: the officer's uploads sent with the question (#103); plg-api checks they are theirs and how many. */
+const runRequestSchema = z.object({
+  message: z.string().trim().min(1),
+  attachments: z.array(z.string().min(1)).optional(),
+});
 
 /** Proxies a run to plg-api and streams its SSE body straight through, unbuffered. */
 export async function POST(
@@ -24,7 +28,8 @@ export async function POST(
   let upstream: Response;
   try {
     // The browser disconnecting aborts the upstream run too.
-    upstream = await startRun(staffId, id, { message: parsed.data.message }, request.signal);
+    const { message, attachments } = parsed.data;
+    upstream = await startRun(staffId, id, { message, ...(attachments?.length ? { attachments } : {}) }, request.signal);
   } catch {
     return plgApiUnavailable();
   }

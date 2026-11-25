@@ -9,8 +9,11 @@ import {
   QUESTION,
   REMINDER_GOLDEN_LEAF,
   REMINDER_HOMETOWN,
+  UPLOAD_NOTE,
+  UPLOAD_QUESTION,
   answer,
   ask,
+  attach,
   askInNewConversation,
   marker,
   openConversation,
@@ -65,6 +68,42 @@ test("an officer asks, reads the cited source, then follows up in the same conve
   await marker(reopened, 1).first().click();
   await expect(sourcesPanel(page).getByRole("listitem").first()).toBeFocused();
   await expect(sourcesPanel(page)).toContainText("60 days");
+});
+
+test("an officer attaches a site-visit note with the paperclip and the answer cites it as their upload (#103)", async ({
+  page,
+  browser,
+}) => {
+  await signIn(page, OFFICER);
+  await page.getByRole("button", { name: "New conversation" }).click();
+
+  await attach(page, UPLOAD_NOTE);
+  const item = page.getByRole("list", { name: "Attached files" }).getByRole("listitem");
+  await expect(item).toContainText(`site-visit.txt${UPLOAD_NOTE.buffer.length} B`);
+  await ask(page, UPLOAD_QUESTION);
+
+  // Sent with the question: listed under its bubble, gone from the composer.
+  await expect(page.getByRole("list", { name: "Files sent with your question" })).toContainText("site-visit.txt");
+  await expect(page.getByRole("list", { name: "Attached files" })).toHaveCount(0);
+  await expect(answer(page)).toContainText("You agreed a follow-up visit with the tenant on 14 October 2026 [1]");
+  const cited = answer(page).getByRole("button", { name: "[1] site-visit.txt, your upload" });
+  await cited.click();
+  const source = sourcesPanel(page).getByRole("listitem").first();
+  await expect(source).toBeFocused();
+  await expect(source.getByRole("heading")).toContainText("Your upload");
+  await source.getByRole("button", { name: "Open source" }).click();
+  const viewer = source.getByRole("region", { name: "Source: site-visit.txt" });
+  await expect(viewer.locator("mark")).toContainText("follow-up visit", FIRST_OPEN);
+  await expect(viewer.getByText("Your upload")).toBeVisible();
+
+  // The upload is the officer's own: another officer can't open it.
+  const id = (await (await page.request.get("/api/uploads")).json())[0].upload_id as string;
+  expect(id).toMatch(/^upload-/);
+  expect((await page.request.get(`/api/documents/${id}`)).status()).toBe(200);
+  const other = await browser.newPage(); // a separate browser context: its own session cookie
+  await signIn(other, OTHER_OFFICER);
+  expect((await other.request.get(`/api/documents/${id}`)).status()).toBe(404);
+  expect(await (await other.request.get("/api/uploads")).json()).toEqual([]);
 });
 
 test("an officer copies an answer with its sources from the answer's action bar, by keyboard", async ({ page, context }) => {

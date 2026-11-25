@@ -18,12 +18,15 @@ export async function createThread(): Promise<string> {
   return thread_id;
 }
 
-/** Starts a run of `message` on the thread; the response is the SSE stream (or the BFF's refusal). */
-export function startRun(threadId: string, message: string): Promise<Response> {
+/**
+ * Starts a run of `message` on the thread, with the officer's uploads in `attachments` (#103); the response is the SSE
+ * stream (or the BFF's refusal).
+ */
+export function startRun(threadId: string, message: string, attachments: string[] = []): Promise<Response> {
   return fetch(`/api/threads/${encodeURIComponent(threadId)}/runs`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify(attachments.length ? { message, attachments } : { message }),
   });
 }
 

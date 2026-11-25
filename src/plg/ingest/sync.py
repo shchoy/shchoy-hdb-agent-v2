@@ -82,7 +82,7 @@ def sync(
                 report.failed.append(Skipped(item.rel_path, f"could not be read: {exc!r}"))
                 continue
             if doc_type_for(item.rel_path) == injection.SCREENED_DOC_TYPE:
-                parsed, flagged = _screened(parsed)
+                parsed, flagged = screened(parsed)
                 if flagged:
                     report.flagged.append(item.rel_path)
             chunks = _chunks(item, parsed, content_hash, embedder, tagger)
@@ -134,7 +134,7 @@ def sync_lock(search_db: Path) -> Iterator[None]:
             fcntl.flock(lock, fcntl.LOCK_UN)
 
 
-def _screened(parsed: ParsedDoc) -> tuple[ParsedDoc, bool]:
+def screened(parsed: ParsedDoc) -> tuple[ParsedDoc, bool]:
     """The email with every planted instruction replaced by the removal marker, and whether it had any."""
     blocks, flagged = [], False
     for block in parsed.blocks:

@@ -2368,6 +2368,60 @@
         }
       }
     },
+    "/uploads/{upload_id}": {
+      "delete": {
+        "summary": "Delete Upload",
+        "description": "Delete one of your uploads: its file, its passages in your searches and, for a workbook, its tables.",
+        "operationId": "delete_upload_uploads__upload_id__delete",
+        "parameters": [
+          {
+            "name": "upload_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Upload Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Not one of your uploads"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/drafts/{draft_id}/file": {
       "get": {
         "summary": "Get Draft File",
@@ -3071,7 +3125,8 @@
               "email",
               "markdown",
               "text",
-              "image"
+              "image",
+              "xlsx"
             ],
             "title": "Kind"
           },
@@ -5523,7 +5578,8 @@
               "email",
               "markdown",
               "text",
-              "image"
+              "image",
+              "xlsx"
             ],
             "title": "Kind"
           },
@@ -5553,6 +5609,14 @@
                 "type": "null"
               }
             ]
+          },
+          "tables": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tables",
+            "default": []
           }
         },
         "type": "object",

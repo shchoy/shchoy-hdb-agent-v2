@@ -827,6 +827,13 @@ def create_app(
         """Your uploads, newest first. Nobody else's are ever listed."""
         return await asyncio.to_thread(uploads.of, user.staff_id)
 
+    @app.delete("/uploads/{upload_id}", status_code=204, responses={404: {"description": "Not one of your uploads"}})
+    async def delete_upload(upload_id: str, user: User) -> Response:
+        """Delete one of your uploads: its file, its passages in your searches and, for a workbook, its tables."""
+        if not await asyncio.to_thread(uploads.delete, user.staff_id, upload_id):
+            raise HTTPException(status_code=404, detail="Upload not found")
+        return Response(status_code=204)
+
     @app.get(
         "/drafts/{draft_id}/file",
         response_class=Response,

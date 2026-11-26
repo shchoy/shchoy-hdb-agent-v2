@@ -646,6 +646,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/uploads/{upload_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Upload
+         * @description Delete one of your uploads: its file, its passages in your searches and, for a workbook, its tables.
+         */
+        delete: operations["delete_upload_uploads__upload_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drafts/{draft_id}/file": {
         parameters: {
             query?: never;
@@ -918,7 +938,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image";
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image" | "xlsx";
             /** Filename */
             filename: string;
             /** Content Type */
@@ -1937,7 +1957,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image";
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image" | "xlsx";
             /** Content Type */
             content_type: string;
             /** Size */
@@ -1950,6 +1970,11 @@ export interface components {
             /** Chunks */
             chunks: number;
             injection?: components["schemas"]["InjectionFlag"] | null;
+            /**
+             * Tables
+             * @default []
+             */
+            tables: string[];
         };
         /**
          * UserCtx
@@ -4028,6 +4053,45 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    delete_upload_uploads__upload_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                upload_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not one of your uploads */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

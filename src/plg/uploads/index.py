@@ -35,9 +35,28 @@ class LanceUploadIndex:
             self._table.add([{**c.model_dump(), "fts_text": c.fts_text, "owner": owner} for c in chunks])
             self._table.create_index("fts_text", config=FTS(), replace=True)
 
-    def remove(self, doc_id: str) -> None:
+    def remove(self, owner: str, doc_id: str) -> None:
         with self._writing:
-            self._table.delete(f"doc_id = {_q(doc_id)}")
+            self._table.delete(f"owner = {_q(owner)} AND doc_id = {_q(doc_id)}")
+            if self._table.count_rows() > 0:
+                self._table.create_index("fts_text", config=FTS(), replace=True)
+
+    def retitle(self, owner: str, doc_id: str, title: str) -> None:
+        """The title its passages (and so new citations) carry, in their contextual header (full-text search) too.
+        Vectors are kept: re-embedding for a new name isn't worth a Voyage call."""
+        where = f"owner = {_q(owner)} AND doc_id = {_q(doc_id)}"
+        with self._writing:
+            old = self._rows(where)
+            if not old:
+                return
+            renamed = [
+                c.model_copy(update={"title": title, "header": f"{title}{c.header[len(c.title):]}"})
+                if c.header.startswith(c.title) else c.model_copy(update={"title": title})
+                for c in old
+            ]
+            self._table.delete(where)
+            self._table.add([{**c.model_dump(), "fts_text": c.fts_text, "owner": owner} for c in renamed])
+            self._table.create_index("fts_text", config=FTS(), replace=True)
 
     def _rows(self, where: str) -> list[Chunk]:
         rows = self._table.search().where(where).limit(None).to_arrow().to_pylist()

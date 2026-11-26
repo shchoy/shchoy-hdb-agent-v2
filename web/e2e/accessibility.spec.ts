@@ -135,7 +135,7 @@ for (const colorScheme of ["light", "dark"] as const) {
       expect(await seriousViolations(page)).toEqual([]);
     });
 
-    test("the Library, Tasks and Document check screens fit a phone", async ({ page }) => {
+    test("the Library (also My documents), Tasks and Document check screens fit a phone", async ({ page }) => {
       await signIn(page, OFFICER);
       await page.setViewportSize({ width: 390, height: 844 });
       const fits = () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
@@ -150,6 +150,31 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(page.getByRole("tabpanel")).not.toContainText("Loading");
       expect(await fits()).toBe(true);
       expect(await seriousViolations(page)).toEqual([]);
+
+      // My documents (#106), with an upload in it: the card, its rename field and its delete confirmation.
+      const name = `axe-${colorScheme}-${Date.now()}.txt`;
+      const added = await page.request.post(`/api/uploads?${new URLSearchParams({ filename: name })}`, {
+        headers: { "Content-Type": "application/octet-stream" },
+        data: Buffer.from(`Notes for the ${colorScheme} accessibility check.\n`),
+      });
+      expect(added.status()).toBe(201);
+      await page.getByRole("tab", { name: "My documents" }).click();
+      const upload = page.getByRole("article", { name });
+      await expect(upload).toBeVisible();
+      await expect(page.getByRole("meter")).toBeVisible();
+      expect(await fits()).toBe(true);
+      expect(await seriousViolations(page)).toEqual([]);
+      await upload.getByRole("button", { name: `Rename ${name}` }).click();
+      await expect(upload.getByRole("textbox", { name: "Name" })).toBeFocused();
+      expect(await fits()).toBe(true);
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+      await upload.getByRole("button", { name: `Delete ${name}` }).click();
+      await expect(upload.getByRole("group", { name: `Delete ${name}?` })).toBeVisible();
+      expect(await fits()).toBe(true);
+      expect(await seriousViolations(page)).toEqual([]);
+      await upload.getByRole("button", { name: "Delete", exact: true }).click();
+      await expect(upload).toHaveCount(0, FIRST_OPEN); // the dev server may compile the route on first use
 
       await visit(page, "/tasks");
       await expect(page.getByRole("table", { name: "Ranked tasks" })).toBeVisible();

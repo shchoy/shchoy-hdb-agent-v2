@@ -207,3 +207,126 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* My documents (#106): the space meter, the upload bar, files being sent and each upload's actions. */
+.space {
+  margin-bottom: var(--space-3);
+}
+
+.spaceText {
+  margin: 0 0 var(--space-1);
+  font-weight: var(--weight-medium);
+}
+
+.meter {
+  width: 100%;
+  max-width: 24rem;
+  height: 0.75rem;
+}
+
+.uploadBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.sending {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sending li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.progress {
+  width: 100%;
+  max-width: 16rem;
+  height: 0.5rem;
+  accent-color: var(--color-primary);
+}
+
+.refused {
+  margin: 0;
+  color: var(--color-danger-strong);
+  overflow-wrap: anywhere;
+}
+
+.filename {
+  overflow-wrap: anywhere;
+}
+
+.conversations {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.conversations a {
+  overflow-wrap: anywhere;
+}
+
+.warning {
+  border-left: 3px solid var(--color-warning-text);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  padding: var(--space-1) var(--space-2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* An opened document takes the whole row, below the buttons. */
+.actions > :not(button) {
+  flex-basis: 100%;
+  min-width: 0;
+  order: 1;
+}
+
+.renameForm,
+.confirm {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.renameForm input {
+  width: 100%;
+  max-width: 32rem;
+  padding: var(--space-1) var(--space-2);
+}
+
+.confirm {
+  border: 1px solid var(--color-danger-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-bg);
+  padding: var(--space-2) var(--space-3);
+}
+
+.confirm p {
+  margin: 0;
+}
+
+.confirmText {
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.renameForm .actions,
+.confirm .actions {
+  margin-top: 0;
+}

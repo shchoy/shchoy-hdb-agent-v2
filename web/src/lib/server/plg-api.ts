@@ -457,3 +457,32 @@ export async function listUploads(staffId: string): Promise<{ status: number; bo
   });
   return { status: response.status, body: data ?? error };
 }
+
+/** Library → My documents (#106): the officer's uploads with the conversations that used them, and their space. */
+export async function getMyDocuments(staffId: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/my-documents", {
+    params: { header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** Renames one of the officer's uploads; the Upload or a refusal (404 not theirs, 422 blank or too long). */
+export async function renameUpload(
+  staffId: string,
+  uploadId: string,
+  title: string,
+): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().PATCH("/uploads/{upload_id}", {
+    params: { path: { upload_id: uploadId }, header: { "x-plg-user": staffId } },
+    body: { title },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
+/** Deletes one of the officer's uploads (it leaves their searches): 204 or a refusal (404). */
+export async function deleteUpload(staffId: string, uploadId: string): Promise<{ status: number; body: unknown }> {
+  const { error, response } = await client().DELETE("/uploads/{upload_id}", {
+    params: { path: { upload_id: uploadId }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: error ?? null };
+}

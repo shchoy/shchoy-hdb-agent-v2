@@ -18,6 +18,8 @@ class NumberedCitation(Citation):
     """A source an answer cites; `index` is the number of its `[n]` marker in the answer text (as its `citation` event)."""
 
     index: int
+    removed: bool = False
+    """The cited upload has since been deleted by its owner (#106): the answer keeps the citation, the source is gone."""
 
 
 class AnsweredTurn(BaseModel):

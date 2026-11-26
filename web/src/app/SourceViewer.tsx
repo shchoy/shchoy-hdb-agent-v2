@@ -14,13 +14,33 @@ type Citation = Pick<components["schemas"]["NumberedCitation"], "doc_id" | "chun
 type Source =
   | { status: "closed" }
   | { status: "loading" }
-  | { status: "failed" }
+  | { status: "failed"; gone: boolean }
   | { status: "open"; document: DocumentView; location: ChunkLocation | null };
+
+class HttpError extends Error {
+  constructor(readonly status: number) {
+    super(`HTTP ${status}`);
+  }
+}
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (!response.ok) throw new HttpError(response.status);
   return (await response.json()) as T;
+}
+
+/** An officer's upload (#103) that is no longer there: they deleted it (#106). */
+function deletedUpload(docId: string, error: unknown): boolean {
+  return docId.startsWith("upload-") && error instanceof HttpError && error.status === 404;
+}
+
+/** Why a document didn't open: a deleted upload says so, anything else is a plain failure. */
+function Failed({ gone, what }: { gone: boolean; what: string }) {
+  return (
+    <p role="alert" className={styles.sourceError}>
+      {gone ? "This upload was deleted, so it can't be opened." : `The ${what} could not be loaded.`}
+    </p>
+  );
 }
 
 /**
@@ -40,8 +60,8 @@ export function SourceViewer({ citation }: { citation: Citation }) {
         getJson<ChunkLocation>(`/api/documents/${doc}/chunks/${encodeURIComponent(citation.chunk_id)}?${span}`),
       ]);
       setSource({ status: "open", document, location });
-    } catch {
-      setSource({ status: "failed" });
+    } catch (error) {
+      setSource({ status: "failed", gone: deletedUpload(citation.doc_id, error) });
     }
   }
 
@@ -52,11 +72,7 @@ export function SourceViewer({ citation }: { citation: Citation }) {
           Open source
         </button>
       )}
-      {source.status === "failed" && (
-        <p role="alert" className={styles.sourceError}>
-          The source could not be loaded.
-        </p>
-      )}
+      {source.status === "failed" && <Failed gone={source.gone} what="source" />}
       {source.status === "open" && (
         <Document
           document={source.document}
@@ -80,8 +96,8 @@ export function DocumentViewer({ docId, label }: { docId: string; label: string 
     try {
       const document = await getJson<DocumentView>(`/api/documents/${encodeURIComponent(docId)}`);
       setSource({ status: "open", document, location: null });
-    } catch {
-      setSource({ status: "failed" });
+    } catch (error) {
+      setSource({ status: "failed", gone: deletedUpload(docId, error) });
     }
   }
 
@@ -92,11 +108,7 @@ export function DocumentViewer({ docId, label }: { docId: string; label: string 
           Open
         </button>
       )}
-      {source.status === "failed" && (
-        <p role="alert" className={styles.sourceError}>
-          The document could not be loaded.
-        </p>
-      )}
+      {source.status === "failed" && <Failed gone={source.gone} what="document" />}
       {source.status === "open" && (
         <Document document={source.document} location={null} onClose={() => setSource({ status: "closed" })} />
       )}
@@ -137,8 +149,8 @@ export function QuoteViewer({
         location = await getJson<ChunkLocation>(`${chunk}?${span}`).catch(() => whole);
       }
       setSource({ status: "open", document, location });
-    } catch {
-      setSource({ status: "failed" });
+    } catch (error) {
+      setSource({ status: "failed", gone: deletedUpload(docId, error) });
     }
   }
 
@@ -149,11 +161,7 @@ export function QuoteViewer({
           Open
         </button>
       )}
-      {source.status === "failed" && (
-        <p role="alert" className={styles.sourceError}>
-          The document could not be loaded.
-        </p>
-      )}
+      {source.status === "failed" && <Failed gone={source.gone} what="document" />}
       {source.status === "open" && (
         <Document
           document={source.document}

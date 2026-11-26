@@ -10,7 +10,8 @@ edits, a letter edit and a rejection, the audit trail), `submissions.json` (the 
 `feedback/*.json` (answer feedback on a data answer and the curator queue it fills) and `categories.json` (the Library's
 document categories after `plg categorise` over the synced corpus) and `audit_report.json` (`GET /audit/reports/latest`
 after `plg audit` over the synced corpus: planted conflicts and duplicates confirmed by a scripted Opus) and `upload.sse`,
-`uploads/*.json`, `documents/upload.json` (#103: a note uploaded, a refused upload, a question with it attached citing it). Streams come from the real API and graph with a scripted
+`uploads/*.json`, `documents/upload.json` (#103: a note uploaded, a refused upload, a question with it attached citing it) and
+`uploads/my_documents.json`, `uploads/thread_removed.json` (#106: Library → My documents, then the cited upload deleted). Streams come from the real API and graph with a scripted
 LLMClient, and the knowledge agent searches the poc-data corpus synced into a temporary index
 (offline hashing embeddings, real cross-encoder), so they match what the BFF receives from `plg serve`.
 """
@@ -785,6 +786,47 @@ def record_upload(search: Searcher, graph: LocalGraphStore | None) -> dict[str, 
     return recorded
 
 
+SECOND_NOTE = (
+    "# Handover checklist\n\n"
+    "Return the unit keys, the meter readings and the reinstatement photographs at the joint inspection.\n"
+)
+
+
+def record_my_documents(search: Searcher, graph: LocalGraphStore | None) -> dict[str, str]:
+    """Library → My documents (#106): two uploads, a question with the site-visit note attached citing it, the My documents
+    list (both uploads, the note used in that conversation, the space used); then the note deleted and the conversation
+    reopened: its citation now says `removed`."""
+    llm = ScriptedLLMClient()
+    upload_turns(llm)
+    recorded: dict[str, str] = {}
+    with tempfile.TemporaryDirectory() as scratch:
+        app = create_app(
+            scratch_settings(Path(scratch)), llm=llm, searcher=search, entities=graph,
+            memory=scratch_memory(Path(scratch) / "memory"), embedder=HashingEmbedder(dim=128),
+        )
+        with TestClient(app) as client:
+            note = client.post("/uploads", params={"filename": UPLOAD_FILENAME}, content=UPLOAD_NOTE.encode(), headers=USER)
+            assert note.status_code == 201, note.text
+            second = client.post("/uploads", params={"filename": "handover-checklist.md"}, content=SECOND_NOTE.encode(),
+                                 headers=USER)
+            assert second.status_code == 201, second.text
+            item = note.json()
+            thread_id = client.post("/threads", headers=USER).json()["thread_id"]
+            body = {"message": UPLOAD_QUESTION, "attachments": [item["upload_id"]]}
+            with client.stream("POST", f"/threads/{thread_id}/runs", json=body, headers=USER) as run:
+                assert run.status_code == 200, run.read()
+                run.read()
+            mine = client.get("/my-documents", headers=USER).json()
+            used = {u["upload_id"]: u["conversations"] for u in mine["uploads"]}
+            assert [c["thread_id"] for c in used[item["upload_id"]]] == [thread_id], mine
+            recorded["uploads/my_documents.json"] = json.dumps(mine, indent=2) + "\n"
+            assert client.delete(f"/uploads/{item['upload_id']}", headers=USER).status_code == 204
+            view = client.get(f"/threads/{thread_id}", headers=USER).json()
+            assert view["turns"][0]["citations"][0]["removed"] is True, view
+            recorded["uploads/thread_removed.json"] = json.dumps(view, indent=2) + "\n"
+    return recorded
+
+
 DOCUMENTS = {
     "pdf": "pdfs/Guidelines_AA_Works_Commercial_Tenants_2025.pdf",
     "docx": "docs/PLG-POL-003_Rental_Arrears_Management_Policy_v2.0.docx",
@@ -864,7 +906,7 @@ def _stream(app: Any, question: str) -> str:
 
 def main(only: list[str]) -> None:
     """Records everything, or only the named streams (`doc_check`) and fixtures (`submissions`, `tasks_api`, `glossary`, `feedback`,
-    `cancelled`, `categories`, `audit`, `upload`)."""
+    `cancelled`, `categories`, `audit`, `upload`, `my_documents`)."""
     OUT.mkdir(parents=True, exist_ok=True)
     if not only or "submissions" in only:
         path = OUT / "submissions.json"
@@ -911,6 +953,12 @@ def main(only: list[str]) -> None:
             (OUT / "uploads").mkdir(exist_ok=True)
             (OUT / "documents").mkdir(exist_ok=True)
             for name, content in record_upload(search, graph).items():
+                path = OUT / name
+                path.write_text(content)
+                print(f"wrote {path.relative_to(REPO_ROOT)}")
+        if not only or "my_documents" in only:
+            (OUT / "uploads").mkdir(exist_ok=True)
+            for name, content in record_my_documents(search, graph).items():
                 path = OUT / name
                 path.write_text(content)
                 print(f"wrote {path.relative_to(REPO_ROOT)}")

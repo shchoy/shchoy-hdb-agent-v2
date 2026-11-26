@@ -6,7 +6,7 @@ import { AskScreen } from "@/app/AskScreen";
 import { server } from "@/test/msw";
 import { documentFixture } from "@/test/documents";
 import { inShell } from "@/test/shell";
-import { feedbackFixture, fixture, sseResponse } from "@/test/sse";
+import { feedbackFixture, fixture, myDocumentsFixture, sseResponse } from "@/test/sse";
 
 // The conversation list is the app shell's sidebar: those tests render the screen in the shell.
 vi.mock("next/navigation", () => ({
@@ -1527,5 +1527,27 @@ describe("Chat layout", () => {
       expect(scrolled).toHaveBeenCalled();
       expect(screen.queryByRole("button", { name: "Jump to latest" })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("A cited upload deleted since (#106)", () => {
+  it("keeps the citation in a reopened answer, marked removed, with no source to open", async () => {
+    const thread = myDocumentsFixture("thread_removed.json");
+    const cited = thread.turns[0].citations[0];
+    sessionStorage.setItem("plg_active_thread", thread.thread_id);
+    server.use(http.get(`/api/threads/${thread.thread_id}`, () => HttpResponse.json(thread)));
+    const user = userEvent.setup();
+    render(<AskScreen />);
+
+    const history = await screen.findByRole("list", { name: "Earlier in this conversation" });
+    await user.click(within(history).getByRole("button", { name: `[1] ${cited.title}, your upload, removed` }));
+
+    const panel = screen.getByRole("complementary", { name: "Sources" });
+    const source = within(panel).getByRole("heading", { level: 3 });
+    expect(source).toHaveTextContent("Your upload");
+    expect(source).toHaveTextContent("Removed");
+    expect(within(panel).getByText("You deleted this upload, so it can't be opened.")).toBeInTheDocument();
+    expect(within(panel).queryByRole("button", { name: "Open source" })).not.toBeInTheDocument();
+    expect(within(panel).getByText(cited.quote)).toBeInTheDocument();
   });
 });

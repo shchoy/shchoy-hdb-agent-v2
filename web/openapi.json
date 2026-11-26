@@ -2368,6 +2368,178 @@
         }
       }
     },
+    "/my-documents": {
+      "get": {
+        "summary": "My Documents",
+        "description": "Library \u2192 My documents (#106): your uploads with the conversations that used them, and your space.",
+        "operationId": "my_documents_my_documents_get",
+        "parameters": [
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyDocuments"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads/{upload_id}": {
+      "patch": {
+        "summary": "Rename Upload",
+        "description": "Rename one of your uploads: My documents, the source viewer and new citations use the new name.",
+        "operationId": "rename_upload_uploads__upload_id__patch",
+        "parameters": [
+          {
+            "name": "upload_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Upload Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadRename"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Upload"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such upload of yours"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Upload",
+        "description": "Delete one of your uploads: it leaves your searches and can't be opened or attached; answers that cited it\nkeep the citation, shown as removed. The conversations that used it are kept.",
+        "operationId": "delete_upload_uploads__upload_id__delete",
+        "parameters": [
+          {
+            "name": "upload_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Upload Id"
+            }
+          },
+          {
+            "name": "x-plg-user",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Staff ID forwarded by the BFF",
+              "title": "X-Plg-User"
+            },
+            "description": "Staff ID forwarded by the BFF"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No such upload of yours"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/drafts/{draft_id}/file": {
       "get": {
         "summary": "Get Draft File",
@@ -3873,6 +4045,109 @@
         "title": "MoveRequest",
         "description": "Which of the officer's groups a conversation goes in; null: none (back to Recent)."
       },
+      "MyDocument": {
+        "properties": {
+          "upload_id": {
+            "type": "string",
+            "title": "Upload Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pdf",
+              "docx",
+              "pptx",
+              "email",
+              "markdown",
+              "text",
+              "image"
+            ],
+            "title": "Kind"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          },
+          "chunks": {
+            "type": "integer",
+            "title": "Chunks"
+          },
+          "injection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InjectionFlag"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "conversations": {
+            "items": {
+              "$ref": "#/components/schemas/UploadUse"
+            },
+            "type": "array",
+            "title": "Conversations",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "upload_id",
+          "filename",
+          "title",
+          "kind",
+          "content_type",
+          "size",
+          "uploaded_at",
+          "chunks"
+        ],
+        "title": "MyDocument",
+        "description": "One of the officer's uploads in Library \u2192 My documents (#106)."
+      },
+      "MyDocuments": {
+        "properties": {
+          "uploads": {
+            "items": {
+              "$ref": "#/components/schemas/MyDocument"
+            },
+            "type": "array",
+            "title": "Uploads"
+          },
+          "used_bytes": {
+            "type": "integer",
+            "title": "Used Bytes"
+          },
+          "quota_bytes": {
+            "type": "integer",
+            "title": "Quota Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uploads",
+          "used_bytes",
+          "quota_bytes"
+        ],
+        "title": "MyDocuments"
+      },
       "NumberedCitation": {
         "properties": {
           "doc_id": {
@@ -3917,6 +4192,11 @@
           "index": {
             "type": "integer",
             "title": "Index"
+          },
+          "removed": {
+            "type": "boolean",
+            "title": "Removed",
+            "default": false
           }
         },
         "type": "object",
@@ -5568,6 +5848,40 @@
         ],
         "title": "Upload"
       },
+      "UploadRename": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "UploadRename"
+      },
+      "UploadUse": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id",
+          "title"
+        ],
+        "title": "UploadUse",
+        "description": "A conversation that used an upload (#106)."
+      },
       "UserCtx": {
         "properties": {
           "staff_id": {
@@ -5870,6 +6184,11 @@
           "index": {
             "title": "Index",
             "type": "integer"
+          },
+          "removed": {
+            "default": false,
+            "title": "Removed",
+            "type": "boolean"
           },
           "type": {
             "const": "citation",

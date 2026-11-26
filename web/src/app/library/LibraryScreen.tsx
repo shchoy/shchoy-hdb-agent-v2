@@ -6,6 +6,7 @@ import { Card, cardListClass } from "../Card";
 import { when } from "../dates";
 import { AuditFindings, Doc } from "./AuditFindings";
 import styles from "./library.module.css";
+import { MyDocuments } from "./MyDocuments";
 
 type Loaded = { status: "loading" } | { status: "failed"; error: string } | { status: "ok"; view: Categorisation };
 
@@ -21,13 +22,14 @@ function count(n: number): string {
 /** A group of documents: a category (with its description and summary) or the uncategorised remainder. */
 type Group = { id: string; name: string; description: string; summary: string | null; documents: CategoryDocument[] };
 
-type View = "categories" | "audit";
+type View = "categories" | "audit" | "mine";
 const VIEWS: { id: View; label: string }[] = [
   { id: "categories", label: "Categories" },
   { id: "audit", label: "Audit findings" },
+  { id: "mine", label: "My documents" },
 ];
 
-/** The Library: its document categories, or the findings of the latest corpus audit, one tab each. */
+/** The Library: its document categories, the findings of the latest corpus audit, or the officer's own uploads (#106), one tab each. */
 export function LibraryScreen() {
   const [view, setView] = useState<View>("categories");
 
@@ -58,7 +60,7 @@ export function LibraryScreen() {
         ))}
       </div>
       <div role="tabpanel" id={`library-panel-${view}`} aria-labelledby={`library-tab-${view}`}>
-        {view === "categories" ? <Categories /> : <AuditFindings />}
+        {view === "categories" ? <Categories /> : view === "audit" ? <AuditFindings /> : <MyDocuments />}
       </div>
     </>
   );

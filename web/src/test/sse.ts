@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { HttpResponse } from "msw";
-import type { AuditReport, Categorisation, Upload } from "@/lib/events";
+import type { AuditReport, Categorisation, MyDocuments, ThreadView, Upload } from "@/lib/events";
 
 /** A recorded plg-api SSE stream (see scripts/record_sse_fixtures.py at the repo root). */
 export function fixture(
@@ -108,4 +108,15 @@ export function uploadRefusedFixture(): { status: number; body: { detail: string
     status: number;
     body: { detail: string };
   };
+}
+
+/**
+ * Recorded Library → My documents responses (#106): `my_documents.json` (GET /my-documents: a handover checklist and
+ * the site-visit note, the note used in one conversation), `thread_removed.json` (GET /threads/{id} of that conversation
+ * once the note was deleted: its citation is `removed`).
+ */
+export function myDocumentsFixture(name: "my_documents.json"): MyDocuments;
+export function myDocumentsFixture(name: "thread_removed.json"): ThreadView;
+export function myDocumentsFixture(name: string): unknown {
+  return JSON.parse(readFileSync(join(process.cwd(), "src/test/fixtures/uploads", name), "utf8"));
 }

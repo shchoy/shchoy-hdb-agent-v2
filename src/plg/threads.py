@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 import uuid
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Callable, Iterable, Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -34,6 +34,13 @@ class ThreadSummary(BaseModel):
     pinned: int | None = None
     """Its place in the officer's Pinned section (#102: lower first, in the order pinned, shared with groups); None:
     not pinned. A pinned conversation keeps its group_id, so unpinning puts it back there."""
+
+
+class UploadUse(BaseModel):
+    """A conversation that used an upload (#106)."""
+
+    thread_id: str
+    title: str
 
 
 class Group(BaseModel):
@@ -81,6 +88,10 @@ class ThreadStore:
                 db.execute("ALTER TABLE plg_groups ADD COLUMN position INTEGER")
             if "pinned" not in {row[1] for row in db.execute("PRAGMA table_info(plg_groups)")}:  # before #102
                 db.execute("ALTER TABLE plg_groups ADD COLUMN pinned INTEGER")
+            db.execute(  # #106: which conversations used which upload (attached to a question or cited)
+                "CREATE TABLE IF NOT EXISTS plg_upload_uses (upload_id TEXT NOT NULL, thread_id TEXT NOT NULL, "
+                "PRIMARY KEY (upload_id, thread_id))"
+            )
             # Groups from before #101 take their creation order.
             db.execute(
                 "UPDATE plg_groups SET position = (SELECT COUNT(*) FROM plg_groups o WHERE o.staff_id = plg_groups.staff_id "
@@ -199,9 +210,35 @@ class ThreadStore:
             db.execute("DELETE FROM plg_groups WHERE group_id = ?", (group_id,))
 
     def delete(self, thread_id: str) -> None:
-        """Forget the thread's owner and title: from now on it is not found, for everyone."""
+        """Forget the thread's owner and title: from now on it is not found, for everyone. Its uploads are kept."""
         with self._db() as db:
             db.execute("DELETE FROM plg_threads WHERE thread_id = ?", (thread_id,))
+            db.execute("DELETE FROM plg_upload_uses WHERE thread_id = ?", (thread_id,))
+
+    def record_uses(self, thread_id: str, upload_ids: Iterable[str]) -> None:
+        """Record that the thread used these uploads (#106): attached to a question, or cited in an answer."""
+        with self._db() as db:
+            db.executemany(
+                "INSERT OR IGNORE INTO plg_upload_uses (upload_id, thread_id) VALUES (?, ?)",
+                [(u, thread_id) for u in dict.fromkeys(upload_ids)],
+            )
+
+    def forget_upload(self, upload_id: str) -> None:
+        with self._db() as db:
+            db.execute("DELETE FROM plg_upload_uses WHERE upload_id = ?", (upload_id,))
+
+    def uses(self, staff_id: str) -> dict[str, list[UploadUse]]:
+        """The officer's own asked conversations that used each upload, most recent first."""
+        with self._db() as db:
+            rows = db.execute(
+                "SELECT u.upload_id, t.thread_id, t.title FROM plg_upload_uses u JOIN plg_threads t USING (thread_id) "
+                "WHERE t.staff_id = ? AND t.title IS NOT NULL ORDER BY t.updated_at DESC, t.rowid DESC",
+                (staff_id,),
+            ).fetchall()
+        found: dict[str, list[UploadUse]] = {}
+        for upload_id, thread_id, title in rows:
+            found.setdefault(upload_id, []).append(UploadUse(thread_id=thread_id, title=title))
+        return found
 
     def all_asked(self) -> list[ThreadSummary]:
         """Every asked thread, whoever owns it: only for finding actions others decide on (glossary curators)."""
@@ -339,9 +376,10 @@ class RunRegistry:
 
     def start(
         self, graph: PLGGraph, thread_id: str, message: str, user: UserCtx, decision: ApprovalDecision | None = None,
-        attachments: list[str] | None = None,
+        attachments: list[str] | None = None, observe: Callable[[RunEvent], None] | None = None,
     ) -> RunBuffer:
-        """Answer `message` (or carry out `decision`, with an empty `message`) in the background."""
+        """Answer `message` (or carry out `decision`, with an empty `message`) in the background; `observe` sees each
+        event as it is buffered."""
         if self.running(thread_id):
             raise RunInProgress
         buffer = self._runs[thread_id] = RunBuffer(message)
@@ -353,6 +391,8 @@ class RunRegistry:
                     graph, thread_id, message, user, decision=decision, tracer=self._tracer, run_id=run_id,
                     attachments=attachments,
                 ):
+                    if observe is not None:
+                        observe(event)
                     await buffer.add(event)
             except asyncio.CancelledError:
                 # Stopped by the officer before merge answered (`cancel` checks), so the checkpoint holds no turn and

@@ -107,6 +107,10 @@ class TranscriptStore:
         partial.write_text(transcript.model_dump_json(indent=2))
         partial.replace(path)
 
+    def remove_digest(self, digest: str) -> None:
+        """Forget the transcript of the file with this SHA-256 hash (its last upload was deleted, #106)."""
+        (self._dir / f"{digest}.json").unlink(missing_ok=True)
+
 
 class SavedScans:
     """Saved transcripts only, never calling Claude: what the source viewer shows for a scan."""

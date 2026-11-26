@@ -19,9 +19,12 @@ export const NO_SOURCES: AnswerSources = { citations: [], stances: [] };
 /** Marks a source from the asker's own uploads (#103), not the shared Library. */
 export const YOUR_UPLOAD = "Your upload";
 
+/** Marks a cited upload the officer has deleted since (#106): the answer keeps the citation, the source is gone. */
+export const REMOVED = "Removed";
+
 /** The accessible name of an `[n]` marker: its visible text, then the source it opens (and whether it is your upload). */
 export function markerLabel(citation: Cited): string {
-  return `[${citation.index}] ${citation.title}${citation.upload ? ", your upload" : ""}`;
+  return `[${citation.index}] ${citation.title}${citation.upload ? ", your upload" : ""}${citation.removed ? ", removed" : ""}`;
 }
 
 /**
@@ -99,6 +102,12 @@ export function SourcesPanel({
                   <Badge>{YOUR_UPLOAD}</Badge>
                 </>
               )}
+              {c.removed && (
+                <>
+                  {" "}
+                  <Badge tone="warning">{REMOVED}</Badge>
+                </>
+              )}
             </h3>
             <p className={styles.location}>
               {c.version && <>Version {c.version} · </>}
@@ -108,7 +117,11 @@ export function SourcesPanel({
               <summary>Quote</summary>
               <blockquote>{c.quote}</blockquote>
             </details>
-            <SourceViewer citation={c} />
+            {c.removed ? (
+              <p className={styles.sourceNote}>You deleted this upload, so it can&apos;t be opened.</p>
+            ) : (
+              <SourceViewer citation={c} />
+            )}
           </li>
         ))}
       </ol>

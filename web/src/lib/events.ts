@@ -33,6 +33,8 @@ export type ThreadSummary = Schemas["ThreadSummary"];
 export type Group = Schemas["Group"];
 export type ThreadView = Schemas["ThreadView"];
 export type Upload = Schemas["Upload"];
+export type MyDocument = Schemas["MyDocument"];
+export type MyDocuments = Schemas["MyDocuments"];
 
 /** A role for display, e.g. "estate_manager" → "estate manager". */
 export function roleLabel(role: UserCtx["role"]): string {
@@ -91,6 +93,8 @@ export const runEventSchema = z.discriminatedUnion("type", [
     span: z.object({ start: z.number().int(), end: z.number().int() }),
     /** From the asker's private library (#103); older streams lack it. */
     upload: z.boolean().default(false),
+    /** The cited upload was deleted since (#106); older streams lack it. */
+    removed: z.boolean().default(false),
   }),
   z.object({
     type: z.literal("sql_trace"),

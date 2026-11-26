@@ -50,7 +50,7 @@ from plg.feedback import curation as curation_rules
 from plg.feedback.curation import Curation
 from plg.feedback.langsmith import LangSmithFeedback
 from plg.feedback.model import AnsweredTurn, Feedback, FeedbackLog, Score
-from plg.events import InterruptEvent, ProposedActionEvent, RunEvent
+from plg.events import CitationEvent, InterruptEvent, ProposedActionEvent, RunEvent
 from plg.data.sqlcheck import SqlRejected
 from plg.data.warehouse import Warehouse
 from plg.graph.build import build_graph
@@ -77,6 +77,7 @@ from plg.threads import (
     ThreadNotFound,
     ThreadStore,
     ThreadSummary,
+    UploadUse,
 )
 from plg.tracing import Tracer, install_tracer, pii_masker
 
@@ -146,6 +147,29 @@ def _tidy(value: object) -> object:
 
 Name = Annotated[str, BeforeValidator(_tidy), Field(min_length=1, max_length=80)]
 """A title or name the officer typed: runs of whitespace become one space; 1 to 80 characters."""
+
+
+UploadTitle = Annotated[str, BeforeValidator(_tidy), Field(min_length=1, max_length=120)]
+"""An upload's name as the officer typed it (#106): tidied like a title; up to 120 characters, as a filename."""
+
+
+class UploadRename(BaseModel):
+    title: UploadTitle
+
+
+class MyDocument(Upload):
+    """One of the officer's uploads in Library → My documents (#106)."""
+
+    conversations: list[UploadUse] = []
+    """The officer's conversations that used it (attached to a question or cited), most recent first."""
+
+
+class MyDocuments(BaseModel):
+    uploads: list[MyDocument]
+    """Newest first."""
+    used_bytes: int
+    quota_bytes: int
+    """The most the officer's uploads may take in all."""
 
 
 class RenameRequest(BaseModel):
@@ -348,8 +372,24 @@ def create_app(
         return ThreadView(
             thread_id=thread_id, title=title, messages=values.get("messages", []), summary=values.get("summary", ""),
             running=latest.question if latest and not latest.finished and latest.question else None,
-            pending=await waiting(thread_id), turns=values.get("turns", []),
+            pending=await waiting(thread_id), turns=await asyncio.to_thread(mark_removed_sources, values.get("turns", []), user),
         )
+
+    def mark_removed_sources(turns: list[AnsweredTurn], user: UserCtx) -> list[AnsweredTurn]:
+        """Citations of uploads the officer has deleted since (#106) say so: the answer stays, the source is gone."""
+        exists: dict[str, bool] = {}
+
+        def gone(doc_id: str) -> bool:
+            if doc_id not in exists:
+                exists[doc_id] = uploads.get(user.staff_id, doc_id) is not None
+            return not exists[doc_id]
+
+        return [
+            t.model_copy(update={"citations": [
+                c.model_copy(update={"removed": True}) if c.upload and gone(c.doc_id) else c for c in t.citations
+            ]})
+            for t in turns
+        ]
 
     @app.patch("/threads/{thread_id}", responses={404: {"description": "Thread not found"}})
     async def rename_thread(thread_id: str, body: RenameRequest, user: User) -> ThreadSummary:
@@ -655,11 +695,21 @@ def create_app(
             raise HTTPException(status_code=422, detail=f"At most {settings.upload_max_files} files can go with one message.")
         if any(uploads.get(user.staff_id, a) is None for a in attached):
             raise HTTPException(status_code=404, detail="Upload not found")
+
+        def cited(event: RunEvent) -> None:
+            """Best-effort: recording that the thread used an upload never fails the run."""
+            if isinstance(event, CitationEvent) and event.upload:
+                try:
+                    threads.record_uses(thread_id, [event.doc_id])
+                except Exception:
+                    logger.exception("could not record that %s cited %s", thread_id, event.doc_id)
+
         try:
-            buffer = runs.start(graph, thread_id, body.message, user, attachments=attached)
+            buffer = runs.start(graph, thread_id, body.message, user, attachments=attached, observe=cited)
         except RunInProgress:
             raise HTTPException(status_code=409, detail="This conversation is still answering") from None
         threads.asked(thread_id, body.message)
+        threads.record_uses(thread_id, attached)
         return sse(buffer)
 
     @app.post(
@@ -827,11 +877,34 @@ def create_app(
         """Your uploads, newest first. Nobody else's are ever listed."""
         return await asyncio.to_thread(uploads.of, user.staff_id)
 
-    @app.delete("/uploads/{upload_id}", status_code=204, responses={404: {"description": "Not one of your uploads"}})
+    upload_missing: dict[int | str, dict[str, Any]] = {404: {"description": "No such upload of yours"}}
+
+    @app.get("/my-documents")
+    async def my_documents(user: User) -> MyDocuments:
+        """Library → My documents (#106): your uploads with the conversations that used them, and your space."""
+        items = await asyncio.to_thread(uploads.of, user.staff_id)
+        used = await asyncio.to_thread(threads.uses, user.staff_id)
+        return MyDocuments(
+            uploads=[MyDocument(**u.model_dump(), conversations=used.get(u.upload_id, [])) for u in items],
+            used_bytes=sum(u.size for u in items), quota_bytes=uploads.quota_bytes,
+        )
+
+    @app.patch("/uploads/{upload_id}", responses=upload_missing)
+    async def rename_upload(upload_id: str, body: UploadRename, user: User) -> Upload:
+        """Rename one of your uploads: My documents, the source viewer and new citations use the new name."""
+        item = await asyncio.to_thread(uploads.rename, user.staff_id, upload_id, body.title)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Upload not found")
+        return item
+
+    @app.delete("/uploads/{upload_id}", status_code=204, responses=upload_missing)
     async def delete_upload(upload_id: str, user: User) -> Response:
-        """Delete one of your uploads: its file, its passages in your searches and, for a workbook, its tables."""
+        """Delete one of your uploads: it leaves your searches (and, a workbook, the data agent's catalog) and can't be
+        opened or attached; answers that cited it keep the citation, shown as removed. The conversations that used it
+        are kept."""
         if not await asyncio.to_thread(uploads.delete, user.staff_id, upload_id):
             raise HTTPException(status_code=404, detail="Upload not found")
+        threads.forget_upload(upload_id)
         return Response(status_code=204)
 
     @app.get(

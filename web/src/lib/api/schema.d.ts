@@ -646,6 +646,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/my-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Documents
+         * @description Library → My documents (#106): your uploads with the conversations that used them, and your space.
+         */
+        get: operations["my_documents_my_documents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/uploads/{upload_id}": {
         parameters: {
             query?: never;
@@ -658,12 +678,18 @@ export interface paths {
         post?: never;
         /**
          * Delete Upload
-         * @description Delete one of your uploads: its file, its passages in your searches and, for a workbook, its tables.
+         * @description Delete one of your uploads: it leaves your searches (and, a workbook, the data agent's catalog) and can't be
+         *     opened or attached; answers that cited it keep the citation, shown as removed. The conversations that used it
+         *     are kept.
          */
         delete: operations["delete_upload_uploads__upload_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Rename Upload
+         * @description Rename one of your uploads: My documents, the source viewer and new citations use the new name.
+         */
+        patch: operations["rename_upload_uploads__upload_id__patch"];
         trace?: never;
     };
     "/drafts/{draft_id}/file": {
@@ -1280,6 +1306,54 @@ export interface components {
             group_id: string | null;
         };
         /**
+         * MyDocument
+         * @description One of the officer's uploads in Library → My documents (#106).
+         */
+        MyDocument: {
+            /** Upload Id */
+            upload_id: string;
+            /** Filename */
+            filename: string;
+            /** Title */
+            title: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image" | "xlsx";
+            /** Content Type */
+            content_type: string;
+            /** Size */
+            size: number;
+            /**
+             * Uploaded At
+             * Format: date-time
+             */
+            uploaded_at: string;
+            /** Chunks */
+            chunks: number;
+            injection?: components["schemas"]["InjectionFlag"] | null;
+            /**
+             * Tables
+             * @default []
+             */
+            tables: string[];
+            /**
+             * Conversations
+             * @default []
+             */
+            conversations: components["schemas"]["UploadUse"][];
+        };
+        /** MyDocuments */
+        MyDocuments: {
+            /** Uploads */
+            uploads: components["schemas"]["MyDocument"][];
+            /** Used Bytes */
+            used_bytes: number;
+            /** Quota Bytes */
+            quota_bytes: number;
+        };
+        /**
          * NumberedCitation
          * @description A source an answer cites; `index` is the number of its `[n]` marker in the answer text (as its `citation` event).
          */
@@ -1304,6 +1378,11 @@ export interface components {
             upload: boolean;
             /** Index */
             index: number;
+            /**
+             * Removed
+             * @default false
+             */
+            removed: boolean;
         };
         /** OutboxItem */
         OutboxItem: {
@@ -1976,6 +2055,21 @@ export interface components {
              */
             tables: string[];
         };
+        /** UploadRename */
+        UploadRename: {
+            /** Title */
+            title: string;
+        };
+        /**
+         * UploadUse
+         * @description A conversation that used an upload (#106).
+         */
+        UploadUse: {
+            /** Thread Id */
+            thread_id: string;
+            /** Title */
+            title: string;
+        };
         /**
          * UserCtx
          * @description The signed-in staff member. Approver roles and memory isolation key off this.
@@ -2113,6 +2207,11 @@ export interface components {
             upload: boolean;
             /** Index */
             index: number;
+            /**
+             * Removed
+             * @default false
+             */
+            removed: boolean;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
@@ -4056,6 +4155,38 @@ export interface operations {
             };
         };
     };
+    my_documents_my_documents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyDocuments"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_upload_uploads__upload_id__delete: {
         parameters: {
             query?: never;
@@ -4077,7 +4208,52 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Not one of your uploads */
+            /** @description No such upload of yours */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rename_upload_uploads__upload_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path: {
+                upload_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadRename"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Upload"];
+                };
+            };
+            /** @description No such upload of yours */
             404: {
                 headers: {
                     [name: string]: unknown;

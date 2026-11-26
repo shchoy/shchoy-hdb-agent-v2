@@ -21,6 +21,7 @@ import {
   signIn,
   sourcesPanel,
   threadId,
+  visit,
 } from "./helpers";
 
 
@@ -104,6 +105,83 @@ test("an officer attaches a site-visit note with the paperclip and the answer ci
   await signIn(other, OTHER_OFFICER);
   expect((await other.request.get(`/api/documents/${id}`)).status()).toBe(404);
   expect(await (await other.request.get("/api/uploads")).json()).toEqual([]);
+});
+
+test("an officer uploads, opens, renames and deletes a document in Library → My documents (#106)", async ({ page }) => {
+  await signIn(page, OFFICER);
+  await visit(page, "/library");
+  await page.getByRole("tab", { name: "My documents" }).click();
+  await expect(page.getByRole("tabpanel")).not.toContainText("Loading");
+
+  const filename = `handover-${Date.now()}.txt`;
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Upload files" }).click();
+  await (await chooser).setFiles({
+    name: filename,
+    mimeType: "text/plain",
+    buffer: Buffer.from("Handover checklist\nReturn the unit keys and the meter readings at the joint inspection.\n"),
+  });
+  const card = page.getByRole("article", { name: filename });
+  await expect(card).toBeVisible(FIRST_OPEN);
+  await expect(card).toContainText("Not used in a conversation yet");
+  await expect(page.getByText(/ of 200 MB used$/)).toBeVisible();
+
+  await card.getByRole("button", { name: `Open ${filename}` }).click();
+  await expect(card.getByRole("region", { name: `Source: ${filename}` })).toContainText("joint inspection", FIRST_OPEN);
+  await card.getByRole("button", { name: "Close document" }).click();
+
+  // Rename by keyboard: Enter saves, focus comes back to Rename.
+  const title = `Handover ${Date.now()}`;
+  await card.getByRole("button", { name: `Rename ${filename}` }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("textbox", { name: "Name" })).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.type(title);
+  await page.keyboard.press("Enter");
+  const renamed = page.getByRole("article", { name: title });
+  await expect(renamed).toBeVisible();
+  await expect(renamed.getByRole("button", { name: `Rename ${title}` })).toBeFocused();
+  const id = ((await (await page.request.get("/api/uploads")).json()) as { upload_id: string; title: string }[]).find(
+    (u) => u.title === title,
+  )!.upload_id;
+
+  // Delete asks first, starting on Cancel.
+  await renamed.getByRole("button", { name: `Delete ${title}` }).click();
+  const confirm = renamed.getByRole("group", { name: `Delete ${title}?` });
+  await expect(confirm.getByRole("button", { name: "Cancel" })).toBeFocused();
+  await confirm.getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByRole("article", { name: title })).toHaveCount(0);
+  expect((await page.request.get(`/api/documents/${id}`)).status()).toBe(404);
+});
+
+test("an answer that cited an upload deleted since shows the source as removed (#106)", async ({ page }) => {
+  await signIn(page, OFFICER);
+  // Only this test's note can be cited: earlier tests' copies are cleared first.
+  for (const { upload_id } of (await (await page.request.get("/api/uploads")).json()) as { upload_id: string }[]) {
+    expect((await page.request.delete(`/api/uploads/${upload_id}`)).status()).toBe(204);
+  }
+  await page.getByRole("button", { name: "New conversation" }).click();
+  await attach(page, UPLOAD_NOTE);
+  await ask(page, UPLOAD_QUESTION);
+  await expect(answer(page).getByRole("button", { name: "[1] site-visit.txt, your upload" })).toBeVisible();
+
+  await visit(page, "/library");
+  await page.getByRole("tab", { name: "My documents" }).click();
+  const card = page.getByRole("article", { name: "site-visit.txt" });
+  await expect(card.getByRole("link", { name: UPLOAD_QUESTION })).toBeVisible();
+  await card.getByRole("button", { name: "Delete site-visit.txt" }).click();
+  await card.getByRole("group", { name: "Delete site-visit.txt?" }).getByRole("button", { name: "Delete" }).click();
+  await expect(card).toHaveCount(0);
+
+  await visit(page, "/"); // the Ask screen reopens the conversation it had open
+  const earlier = page.getByRole("list", { name: "Earlier in this conversation" });
+  await expect(earlier).toContainText(UPLOAD_QUESTION);
+  const cited = page.getByRole("button", { name: "[1] site-visit.txt, your upload, removed" });
+  await cited.click();
+  const source = sourcesPanel(page).getByRole("listitem").first();
+  await expect(source.getByRole("heading")).toContainText("Removed");
+  await expect(source).toContainText("You deleted this upload");
+  await expect(source.getByRole("button", { name: "Open source" })).toHaveCount(0);
 });
 
 test("an officer copies an answer with its sources from the answer's action bar, by keyboard", async ({ page, context }) => {

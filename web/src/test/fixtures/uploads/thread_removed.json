@@ -1,0 +1,49 @@
+{
+  "thread_id": "b5b40f87-db76-4f39-b8cd-d45732b75909",
+  "title": "What did we agree with the kiosk tenant at unit 01-17?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What did we agree with the kiosk tenant at unit 01-17?"
+    },
+    {
+      "role": "assistant",
+      "content": "You agreed a follow-up visit with the tenant on 14 October 2026 [1]."
+    }
+  ],
+  "summary": "",
+  "running": null,
+  "pending": [],
+  "turns": [
+    {
+      "run_id": "e5addb01-6f46-4d2e-97ab-3ea31e6837bc",
+      "started_at": null,
+      "message_index": 1,
+      "question": "What did we agree with the kiosk tenant at unit 01-17?",
+      "intents": [
+        "knowledge"
+      ],
+      "answer": "You agreed a follow-up visit with the tenant on 14 October 2026 [1].",
+      "sql": null,
+      "flagged": false,
+      "citations": [
+        {
+          "doc_id": "upload-cda6bcbb9dc04cf3",
+          "chunk_id": "upload-cda6bcbb9dc04cf3#000",
+          "title": "site-visit.txt",
+          "version": null,
+          "location": "(body)",
+          "quote": "The estate officer agreed a follow-up visit with the tenant on 14 October 2026.",
+          "span": {
+            "start": 140,
+            "end": 219
+          },
+          "upload": true,
+          "index": 1,
+          "removed": true
+        }
+      ],
+      "stances": []
+    }
+  ]
+}

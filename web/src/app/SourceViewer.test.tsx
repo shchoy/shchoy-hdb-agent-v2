@@ -11,7 +11,7 @@ function citationFor({ document, location, start, end }: DocumentFixture): Citat
   return {
     type: "citation", seq: 1, index: 1, doc_id: document.doc_id, chunk_id: location.chunk_id,
     title: document.title, version: document.version, location: location.location,
-    quote: location.quote, span: { start, end }, upload: Boolean(document.upload),
+    quote: location.quote, span: { start, end }, upload: Boolean(document.upload), removed: false,
   };
 }
 

@@ -145,19 +145,6 @@ class UploadLibrary:
         with self._lock:
             return self._catalogs.setdefault(owner, threading.Lock())
 
-    def delete(self, owner: str, upload_id: str) -> bool:
-        """Remove the upload: its file, its passages and (a workbook) its tables. False when it isn't theirs (or is
-        already gone)."""
-        with self._catalog(owner):
-            item = self.get(owner, upload_id)
-            if item is None:
-                return False
-            self.index.remove(upload_id)
-            shutil.rmtree(self._dir(owner, upload_id), ignore_errors=True)
-            if item.tables:
-                self._combine(owner)
-        return True
-
     def _combine(self, owner: str) -> None:
         folders = [self._dir(owner, u.upload_id) for u in reversed(self.of(owner)) if u.tables]
         workbooks.combine(self._dir(owner), folders)
@@ -199,6 +186,54 @@ class UploadLibrary:
             highlights=highlights,
         )
 
+    @property
+    def quota_bytes(self) -> int:
+        return self._quota
+
+    # ------------------------------------------------------------------ managing (#106)
+    def rename(self, owner: str, upload_id: str, title: str) -> Upload | None:
+        """Give the upload the officer's own title: shown in My documents, the source viewer, and the passages new
+        searches and citations carry."""
+        index = self.index  # opened outside the lock: opening takes it
+        with self._lock:
+            item = self.get(owner, upload_id)
+            if item is None:
+                return None
+            item = item.model_copy(update={"title": title})
+            index.retitle(owner, upload_id, title)
+            _write_meta(self._dir(owner, upload_id) / _META, item)
+        return item
+
+    def delete(self, owner: str, upload_id: str) -> bool:
+        """Remove the upload: its passages leave search, its file and metadata go, a workbook's tables leave the
+        officer's catalog (#105), and its transcript goes unless another upload holds the same file. False if the
+        officer has no such upload."""
+        index = self.index
+        with self._catalog(owner), self._lock:  # the catalog lock first, as when a workbook is added
+            item, source = self.get(owner, upload_id), self.file(owner, upload_id)
+            if item is None:
+                return False
+            digest = hashlib.sha256(source.path.read_bytes()).hexdigest() if source is not None else None
+            index.remove(owner, upload_id)  # first: should it fail, the upload is still listed and can be deleted again
+            folder = self._dir(owner, upload_id)
+            (folder / _META).unlink()  # from here on it is not found, so nothing new can attach or open it
+            shutil.rmtree(folder, ignore_errors=True)
+            if item.tables:
+                self._combine(owner)
+            adding = any(self._reserved.values())
+        # An upload still being read may need the transcript, and another may hold the same file: then it stays.
+        if digest is not None and not adding and not self._shared(digest):
+            self._transcripts.remove_digest(digest)
+        return True
+
+    def _shared(self, digest: str) -> bool:
+        """Whether a remaining upload (any officer's) is the file with this hash. Compared here, never shown."""
+        for meta in self._root.glob(f"*/upload-*/{_META}"):
+            other = meta.parent / Upload.model_validate_json(meta.read_text()).filename
+            if other.is_file() and hashlib.sha256(other.read_bytes()).hexdigest() == digest:
+                return True
+        return False
+
     # ------------------------------------------------------------------ adding
     def too_large(self, filename: str) -> str:
         return f"{filename} is larger than {size_label(self.max_bytes)}, the most one file may be."
@@ -229,7 +264,7 @@ class UploadLibrary:
         with self._catalog(owner):
             shutil.rmtree(self._dir(owner, upload_id), ignore_errors=True)
             try:
-                self.index.remove(upload_id)
+                self.index.remove(owner, upload_id)
             finally:
                 self._combine(owner)
 
@@ -362,7 +397,7 @@ class UploadLibrary:
             uploaded_at=datetime.now(UTC), chunks=len(chunks), injection=flag, tables=tables or [],
         )
         self.index.add(owner, chunks)
-        (path.parent / _META).write_text(item.model_dump_json())
+        _write_meta(path.parent / _META, item)
         return item
 
     def _chunks(self, upload_id: str, title: str, filename: str, parsed: ParsedDoc) -> list[Chunk]:
@@ -391,6 +426,12 @@ def _clean(filename: str) -> str:
         name = stem[: 120 - len(suffix)] + suffix
     return name
 
+
+def _write_meta(path: Path, item: Upload) -> None:
+    """Replaced in one step: a reader never sees half of it."""
+    partial = path.with_suffix(f".{uuid.uuid4().hex}.tmp")
+    partial.write_text(item.model_dump_json())
+    partial.replace(path)
 
 
 def _page_count(path: Path) -> int:

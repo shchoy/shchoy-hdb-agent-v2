@@ -2489,7 +2489,7 @@
       },
       "delete": {
         "summary": "Delete Upload",
-        "description": "Delete one of your uploads: it leaves your searches and can't be opened or attached; answers that cited it\nkeep the citation, shown as removed. The conversations that used it are kept.",
+        "description": "Delete one of your uploads: it leaves your searches (and, a workbook, the data agent's catalog) and can't be\nopened or attached; answers that cited it keep the citation, shown as removed. The conversations that used it\nare kept.",
         "operationId": "delete_upload_uploads__upload_id__delete",
         "parameters": [
           {
@@ -3243,7 +3243,8 @@
               "email",
               "markdown",
               "text",
-              "image"
+              "image",
+              "xlsx"
             ],
             "title": "Kind"
           },
@@ -4068,7 +4069,8 @@
               "email",
               "markdown",
               "text",
-              "image"
+              "image",
+              "xlsx"
             ],
             "title": "Kind"
           },
@@ -4098,6 +4100,14 @@
                 "type": "null"
               }
             ]
+          },
+          "tables": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tables",
+            "default": []
           },
           "conversations": {
             "items": {
@@ -5803,7 +5813,8 @@
               "email",
               "markdown",
               "text",
-              "image"
+              "image",
+              "xlsx"
             ],
             "title": "Kind"
           },
@@ -5833,6 +5844,14 @@
                 "type": "null"
               }
             ]
+          },
+          "tables": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tables",
+            "default": []
           }
         },
         "type": "object",

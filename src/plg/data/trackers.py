@@ -250,7 +250,7 @@ def _unique(names: list[str]) -> list[str]:
     return out
 
 
-class _Table:
+class SheetTable:
     """Rows of one or more sheets sharing a header, cleaned into typed columns."""
 
     def __init__(self, name: str, sheets: list[_Sheet]) -> None:
@@ -324,7 +324,7 @@ def _mostly_formulas(sheet: _Sheet) -> str | None:
     return None
 
 
-def read_workbook(path: Path, rel_path: str) -> tuple[Workbook, list[_Table]]:
+def read_workbook(path: Path, rel_path: str) -> tuple[Workbook, list[SheetTable]]:
     wb = openpyxl.load_workbook(path)  # formulas as text: no saved values to read
     stem = slug(path.stem)
     sheets = [_Sheet(ws) for ws in wb.worksheets]
@@ -346,7 +346,7 @@ def read_workbook(path: Path, rel_path: str) -> tuple[Workbook, list[_Table]]:
             continue
         groups.setdefault(tuple(sheet.headers), []).append(sheet)
     tables = [
-        _Table(stem if len(group) > 1 else f"{stem}_{slug(group[0].name)}", group) for group in groups.values()
+        SheetTable(stem if len(group) > 1 else f"{stem}_{slug(group[0].name)}", group) for group in groups.values()
     ]
     workbook = Workbook(
         path=rel_path, titles=titles, notes=notes, tables=[t.model() for t in tables], skipped=skipped,
@@ -355,6 +355,26 @@ def read_workbook(path: Path, rel_path: str) -> tuple[Workbook, list[_Table]]:
 
 
 # ---------------------------------------------------------------- loading
+
+
+def sql_text(value: object) -> str:
+    """`value` as a SQL string literal (for ATTACH paths, which take no parameters)."""
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def create_catalog(con: duckdb.DuckDBPyConnection) -> None:
+    con.execute(f"CREATE TABLE {CATALOG_TABLE} (path VARCHAR PRIMARY KEY, spec JSON)")
+
+
+def write_workbook(con: duckdb.DuckDBPyConnection, workbook: Workbook, tables: Sequence[SheetTable], key: str | None = None) -> None:
+    """Create the workbook's tables and record it in the `_workbooks` catalog (under `key`, else its path)."""
+    for table in tables:
+        columns = ", ".join(f'"{c.name}" {c.type}' for c in table.columns)
+        con.execute(f'CREATE TABLE "{table.name}" ({columns})')
+        if table.rows:
+            marks = ", ".join("?" for _ in table.columns)
+            con.executemany(f'INSERT INTO "{table.name}" VALUES ({marks})', table.rows)
+    con.execute(f"INSERT INTO {CATALOG_TABLE} VALUES (?, ?)", [key or workbook.path, workbook.model_dump_json()])
 
 
 def tracker_files(corpus_dir: Path) -> list[Path]:
@@ -373,7 +393,7 @@ def load_trackers(corpus_dir: Path, db_path: Path) -> list[Workbook]:
     workbooks: list[Workbook] = []
     con = duckdb.connect(str(tmp))
     try:
-        con.execute(f"CREATE TABLE {CATALOG_TABLE} (path VARCHAR PRIMARY KEY, spec JSON)")
+        create_catalog(con)
         names: set[str] = set()
         for path in tracker_files(corpus_dir):
             workbook, tables = read_workbook(path, path.relative_to(corpus_dir).as_posix())
@@ -381,12 +401,7 @@ def load_trackers(corpus_dir: Path, db_path: Path) -> list[Workbook]:
                 if table.name in names:
                     raise ValueError(f"Two trackers load into the table {table.name}")
                 names.add(table.name)
-                columns = ", ".join(f'"{c.name}" {c.type}' for c in table.columns)
-                con.execute(f'CREATE TABLE "{table.name}" ({columns})')
-                if table.rows:
-                    marks = ", ".join("?" for _ in table.columns)
-                    con.executemany(f'INSERT INTO "{table.name}" VALUES ({marks})', table.rows)
-            con.execute(f"INSERT INTO {CATALOG_TABLE} VALUES (?, ?)", [workbook.path, workbook.model_dump_json()])
+            write_workbook(con, workbook, tables)
             workbooks.append(workbook)
     finally:
         con.close()

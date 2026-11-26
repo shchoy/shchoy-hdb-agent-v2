@@ -678,8 +678,9 @@ export interface paths {
         post?: never;
         /**
          * Delete Upload
-         * @description Delete one of your uploads: it leaves your searches and can't be opened or attached; answers that cited it
-         *     keep the citation, shown as removed. The conversations that used it are kept.
+         * @description Delete one of your uploads: it leaves your searches (and, a workbook, the data agent's catalog) and can't be
+         *     opened or attached; answers that cited it keep the citation, shown as removed. The conversations that used it
+         *     are kept.
          */
         delete: operations["delete_upload_uploads__upload_id__delete"];
         options?: never;
@@ -963,7 +964,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image";
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image" | "xlsx";
             /** Filename */
             filename: string;
             /** Content Type */
@@ -1319,7 +1320,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image";
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image" | "xlsx";
             /** Content Type */
             content_type: string;
             /** Size */
@@ -1332,6 +1333,11 @@ export interface components {
             /** Chunks */
             chunks: number;
             injection?: components["schemas"]["InjectionFlag"] | null;
+            /**
+             * Tables
+             * @default []
+             */
+            tables: string[];
             /**
              * Conversations
              * @default []
@@ -2030,7 +2036,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image";
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image" | "xlsx";
             /** Content Type */
             content_type: string;
             /** Size */
@@ -2043,6 +2049,11 @@ export interface components {
             /** Chunks */
             chunks: number;
             injection?: components["schemas"]["InjectionFlag"] | null;
+            /**
+             * Tables
+             * @default []
+             */
+            tables: string[];
         };
         /** UploadRename */
         UploadRename: {

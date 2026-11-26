@@ -899,8 +899,9 @@ def create_app(
 
     @app.delete("/uploads/{upload_id}", status_code=204, responses=upload_missing)
     async def delete_upload(upload_id: str, user: User) -> Response:
-        """Delete one of your uploads: it leaves your searches and can't be opened or attached; answers that cited it
-        keep the citation, shown as removed. The conversations that used it are kept."""
+        """Delete one of your uploads: it leaves your searches (and, a workbook, the data agent's catalog) and can't be
+        opened or attached; answers that cited it keep the citation, shown as removed. The conversations that used it
+        are kept."""
         if not await asyncio.to_thread(uploads.delete, user.staff_id, upload_id):
             raise HTTPException(status_code=404, detail="Upload not found")
         threads.forget_upload(upload_id)

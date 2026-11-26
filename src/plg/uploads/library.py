@@ -9,6 +9,8 @@ Limits: `upload_max_bytes` per file, `upload_quota_bytes` per officer. PDFs, Wor
 PNG/JPEG images. A scanned PDF (no text layer, at most `SCAN_MAX_PAGES` pages) or an image is transcribed by Claude
 (#104) once: the transcript is saved by file hash, so the same file uploaded again, the source viewer and any
 re-indexing reuse it. The transcript is screened and chunked like any text; a scan's chunks are located by page.
+An Excel workbook (#105) is cleaned like the trackers into the officer's own read-only catalog for the data agent
+(`uploads.workbooks`); its description (tables, columns, notes) is what is indexed and shown.
 """
 
 from __future__ import annotations
@@ -35,13 +37,16 @@ from plg.llm import LLMClient
 from plg.search.embed import Embedder
 from plg.search.models import Chunk
 from plg.search.rerank import UploadScope
+from plg.uploads import workbooks
 from plg.uploads.index import LanceUploadIndex
 
-ACCEPTED = (".pdf", ".docx", ".txt", ".md", ".eml", *IMAGE_TYPES)
-"""What can be uploaded: PDFs (text layer or scanned), Word documents, plain text, Markdown, emails and images."""
+WORKBOOK = ".xlsx"
+ACCEPTED = (".pdf", ".docx", ".txt", ".md", ".eml", WORKBOOK, *IMAGE_TYPES)
+"""What can be uploaded: PDFs (text layer or scanned), Word documents, plain text, Markdown, emails, Excel workbooks
+and images."""
 
 UNSUPPORTED = (
-    "Only PDF, Word (.docx), text (.txt, .md), email (.eml) and image (.png, .jpg) files can be uploaded."
+    "Only PDF, Word (.docx), Excel (.xlsx), text (.txt, .md), email (.eml) and image (.png, .jpg) files can be uploaded."
 )
 IMAGE_MAX_BYTES = 5 * 1024 * 1024 * 3 // 4
 """The largest image Claude's vision input takes: 5 MB once base64-encoded."""
@@ -65,6 +70,8 @@ class Upload(BaseModel):
     chunks: int
     injection: InjectionFlag | None = None
     """Set when planted instructions were found and removed from it."""
+    tables: list[str] = []
+    """An Excel workbook's tables, queried by the data agent as `uploads.<table>` (#105)."""
 
 
 class UploadRefused(Exception):
@@ -98,6 +105,8 @@ class UploadLibrary:
         self._lock = threading.Lock()
         self._reserved: dict[str, int] = {}
         """Bytes of each officer's uploads still being read: counted against the space until they are recorded."""
+        self._catalogs: dict[str, threading.Lock] = {}
+        """One lock per officer: naming their workbook tables, rebuilding their catalog and deleting, one at a time."""
 
     @property
     def index(self) -> LanceUploadIndex:
@@ -126,6 +135,19 @@ class UploadLibrary:
             return None
         meta = self._dir(owner, upload_id) / _META
         return Upload.model_validate_json(meta.read_text()) if meta.is_file() else None
+
+    def workbooks_db(self, owner: str) -> Path | None:
+        """The officer's uploaded workbooks as one database (`uploads`), when they have any."""
+        path = self._dir(owner) / workbooks.COMBINED
+        return path if path.is_file() else None
+
+    def _catalog(self, owner: str) -> threading.Lock:
+        with self._lock:
+            return self._catalogs.setdefault(owner, threading.Lock())
+
+    def _combine(self, owner: str) -> None:
+        folders = [self._dir(owner, u.upload_id) for u in reversed(self.of(owner)) if u.tables]
+        workbooks.combine(self._dir(owner), folders)
 
     def scope(self, owner: str, attached: list[str]) -> UploadScope:
         """Searches cover this officer's uploads; the ones attached to the current message are boosted."""
@@ -183,18 +205,21 @@ class UploadLibrary:
         return item
 
     def delete(self, owner: str, upload_id: str) -> bool:
-        """Remove the upload: its passages leave search, its file and metadata go, and so does its transcript unless
-        another upload holds the same file. False if the officer has no such upload."""
+        """Remove the upload: its passages leave search, its file and metadata go, a workbook's tables leave the
+        officer's catalog (#105), and its transcript goes unless another upload holds the same file. False if the
+        officer has no such upload."""
         index = self.index
-        with self._lock:
-            source = self.file(owner, upload_id)
-            if self.get(owner, upload_id) is None:
+        with self._catalog(owner), self._lock:  # the catalog lock first, as when a workbook is added
+            item, source = self.get(owner, upload_id), self.file(owner, upload_id)
+            if item is None:
                 return False
             digest = hashlib.sha256(source.path.read_bytes()).hexdigest() if source is not None else None
             index.remove(owner, upload_id)  # first: should it fail, the upload is still listed and can be deleted again
             folder = self._dir(owner, upload_id)
             (folder / _META).unlink()  # from here on it is not found, so nothing new can attach or open it
             shutil.rmtree(folder, ignore_errors=True)
+            if item.tables:
+                self._combine(owner)
             adding = any(self._reserved.values())
         # An upload still being read may need the transcript, and another may hold the same file: then it stays.
         if digest is not None and not adding and not self._shared(digest):
@@ -227,12 +252,21 @@ class UploadLibrary:
         try:
             item = await self._ingest(owner, upload_id, path, len(data))
         except BaseException:
-            shutil.rmtree(folder, ignore_errors=True)
+            await asyncio.to_thread(self._discard, owner, upload_id)
             raise
         finally:  # recorded (its upload.json now counts) or removed
             with self._lock:
                 self._reserved[owner] -= len(data)
         return item
+
+    def _discard(self, owner: str, upload_id: str) -> None:
+        """Undo a failed upload: its folder, any passages indexed and (a workbook) the catalog without it."""
+        with self._catalog(owner):
+            shutil.rmtree(self._dir(owner, upload_id), ignore_errors=True)
+            try:
+                self.index.remove(owner, upload_id)
+            finally:
+                self._combine(owner)
 
     def _store(self, owner: str, path: Path, data: bytes) -> Path:
         """Write the file, if the officer's space allows it (off the event loop: the lock is a thread lock)."""
@@ -252,8 +286,27 @@ class UploadLibrary:
         return path
 
     async def _ingest(self, owner: str, upload_id: str, path: Path, size: int) -> Upload:
+        if path.suffix.lower() == WORKBOOK:
+            return await asyncio.to_thread(self._add_workbook, owner, upload_id, path, size)
         parsed = await self._read(path)
         return await asyncio.to_thread(self._index_parsed, owner, upload_id, path, size, parsed)
+
+    def _add_workbook(self, owner: str, upload_id: str, path: Path, size: int) -> Upload:
+        """Clean the workbook into its tables, named apart from the officer's other workbooks, then rebuild their
+        catalog. Indexed (and shown) as its description."""
+        with self._catalog(owner):
+            taken = [t for u in self.of(owner) for t in u.tables]
+            try:
+                workbook, tables, removed = workbooks.read(path, taken)
+            except Exception:
+                raise UploadRefused(422, f"{path.name} could not be read. Is it a valid .xlsx workbook?") from None
+            workbooks.save(path.parent, upload_id, workbook, tables)
+            item = self._index_parsed(
+                owner, upload_id, path, size, workbooks.parsed(workbook), removed=removed,
+                tables=[t.name for t in tables],
+            )
+            self._combine(owner)
+            return item
 
     async def _read(self, path: Path) -> ParsedDoc:
         """The file's text: extracted, or Claude's transcript for a scan or an image."""
@@ -313,6 +366,10 @@ class UploadLibrary:
         """The upload's blocks as indexed: screened, so planted instructions show as the marker and spans line up.
         A scan or image shows its saved transcript (Claude is never called here)."""
         suffix = path.suffix.lower()
+        if suffix == WORKBOOK:
+            spec = workbooks.spec(path.parent)
+            parsed = workbooks.parsed(spec) if spec else ParsedDoc([])
+            return [DocumentBlock(text=b.text, level=b.level, page=b.page) for b in parsed.blocks]
         parsed = extract(path) if suffix not in IMAGE_TYPES else ParsedDoc([])
         if not parsed.blocks and (suffix == ".pdf" or suffix in IMAGE_TYPES):
             saved = self._transcripts.get(path)
@@ -320,19 +377,24 @@ class UploadLibrary:
         parsed, _ = screened(parsed)
         return [DocumentBlock(text=b.text, level=b.level, page=b.page) for b in parsed.blocks]
 
-    def _index_parsed(self, owner: str, upload_id: str, path: Path, size: int, parsed: ParsedDoc) -> Upload:
-        parsed, flagged = screened(parsed)
+    def _index_parsed(
+        self, owner: str, upload_id: str, path: Path, size: int, parsed: ParsedDoc, *,
+        removed: frozenset[str] = frozenset(), tables: list[str] | None = None,
+    ) -> Upload:
+        """`removed`: rules that flagged text screened before (a workbook's cells)."""
+        parsed, found = screened(parsed)
+        flagged = found or bool(removed)
         kind, content_type = KINDS[path.suffix.lower()]
         title = parsed.title or path.name
         chunks = self._chunks(upload_id, title, path.name, parsed)
         flag = None
         if flagged:
-            found = {r for c in chunks for r in flags_in(c.text) or []}
-            rules = [r for r in RULES if r in found]
+            hit = {r for c in chunks for r in flags_in(c.text) or []} | removed
+            rules = [r for r in RULES if r in hit]
             flag = InjectionFlag(source="document", rules=rules, doc_id=upload_id, title=title)
         item = Upload(
             upload_id=upload_id, filename=path.name, title=title, kind=kind, content_type=content_type, size=size,
-            uploaded_at=datetime.now(UTC), chunks=len(chunks), injection=flag,
+            uploaded_at=datetime.now(UTC), chunks=len(chunks), injection=flag, tables=tables or [],
         )
         self.index.add(owner, chunks)
         _write_meta(path.parent / _META, item)

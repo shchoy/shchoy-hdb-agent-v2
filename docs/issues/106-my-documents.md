@@ -17,7 +17,7 @@ Library now has a third tab, **My documents**, where officers manage their priva
   - removes its saved scan transcript, unless another upload is the same file.
 - Answers that cited a deleted upload keep the citation, marked **Removed**, and have no "Open source" button.
 - Deleting a conversation keeps its uploads. The conversation simply drops out of the upload's "Used in" list.
-- The per-officer data catalog (#105, Excel uploads) does not exist yet. Delete has nothing to remove there until it does.
+- An Excel workbook's tables (#105) leave the officer's data catalog when it is deleted.
 
 ## How it fits the project
 
@@ -62,6 +62,5 @@ Reopen conversation ──GET /threads/{id}──▶ turns' upload citations who
 
 ## Next steps
 
-- #105 (Excel uploads → per-officer catalog): `UploadLibrary.delete` must also drop the officer's tables.
 - Uses are recorded only from now on. Uploads attached or cited before this change show no conversations.
 - An answer already on screen when its upload is deleted in another tab is not re-marked. Opening it shows the "deleted" message.

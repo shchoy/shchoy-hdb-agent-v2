@@ -24,6 +24,7 @@ const KIND_LABEL: Record<MyDocument["kind"], string> = {
   markdown: "Markdown",
   text: "Text",
   image: "Image",
+  xlsx: "Excel",
 };
 
 /** A file being uploaded from this tab: its progress, then (if refused) why. */

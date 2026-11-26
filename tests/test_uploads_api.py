@@ -116,7 +116,7 @@ def test_markdown_is_read_with_its_headings(uploads_api: Api) -> None:
 
 
 def test_unsupported_types_are_refused(uploads_api: Api) -> None:
-    for name in ("budget.xlsx", "tool.exe", "noextension", "picture.gif"):
+    for name in ("tool.exe", "noextension", "picture.gif"):
         response = upload(uploads_api, name, b"PK\x03\x04 not a text document")
         assert response.status_code == 415, name
         assert "PDF" in response.json()["detail"]

@@ -91,8 +91,8 @@ You route questions from officers of the Properties & Land Group (PLG) to specia
 - knowledge: anything answered from PLG's documents and records, including what is known about a tenant, unit or tenancy: policies, SOPs, circulars, procedures, \
 rules, limits, deadlines, what a PLG term means, precedents (past cases and decisions), audit findings, incidents, letters, emails and notes.
 - data: numeric questions answered by querying PLG Records and the Excel trackers (vacancy report, arrears ageing, \
-rent roll, renewals pipeline, inspection and officer task trackers, trade mix, feedback statistics): counts, totals, \
-rates and lists of units, tenancies, arrears, invoices, inspections, feedback, tickets and tasks; and why two \
+rent roll, renewals pipeline, inspection and officer task trackers, trade mix, feedback statistics) and the \
+officer's own uploaded Excel spreadsheets: counts, totals, rates and lists of units, tenancies, arrears, invoices, inspections, feedback, tickets and tasks; and why two \
 reported figures differ.
 - drafting: the officer asks for a standard letter or notice to be drafted: an arrears reminder, a missing-documents \
 notice, or an update reply to someone who gave feedback.
@@ -314,6 +314,13 @@ def build_graph(
         notes = await asyncio.to_thread(memory.context, user, state["question"]) if memory and user else ""
         return {"memory": notes}
 
+    def attached_intents(user: UserCtx | None, attached: list[str]) -> list[Intent]:
+        """Who reads the attached files: the data agent queries workbooks (#105), the knowledge agent the rest."""
+        found = [uploads.get(user.staff_id, a) for a in attached] if uploads is not None and user is not None else []
+        sheets = [u for u in found if u is not None and u.tables]
+        wanted: list[Intent] = ["data"] if sheets else []
+        return wanted + ["knowledge"] if len(sheets) < len(attached) else wanted
+
     async def route(state: PLGState) -> PLGState:
         reply = await llm.complete(
             node=ROUTE,
@@ -326,9 +333,10 @@ def build_graph(
         call = next(b for b in reply.content if b["type"] == "tool_use")
         decision = RouteDecision.model_validate(call["input"])
         threshold = settings.route_min_confidence
-        if state.get("attachments"):  # files sent with the question: the knowledge agent reads them, whatever else
-            intents = decision.confident(threshold)
-            routed: list[Intent] = intents if "knowledge" in intents else [*intents, "knowledge"]
+        if attached := state.get("attachments"):  # files sent with the question are read, whatever else
+            routed: list[Intent] = decision.confident(threshold)
+            for intent in await asyncio.to_thread(attached_intents, state.get("user"), attached):
+                routed = routed if intent in routed else [*routed, intent]
             return {"intents": routed, "clarification": "", "findings": []}
         if decision.needs_clarification(threshold):
             return {"intents": [], "clarification": decision.clarifying_question.strip() or CLARIFY, "findings": []}
@@ -392,10 +400,17 @@ def build_graph(
 
     async def data_node(state: PLGState) -> PLGState:
         verified = await asyncio.to_thread(verified_examples, state["question"])
-        result = await data.answer(
-            llm, warehouse, live_glossary(), changes.layer(base_layer), vocab, agent_conversation(state), state["question"],
-            verified,
-        )
+        user = state.get("user")
+        mine = uploads.workbooks_db(user.staff_id) if uploads is not None and user is not None else None
+        scoped = warehouse.scoped(mine)  # the asker's own workbooks, in this run only
+        try:
+            result = await data.answer(
+                llm, scoped, live_glossary(), changes.layer(base_layer), vocab, agent_conversation(state),
+                state["question"], verified,
+            )
+        finally:
+            if scoped is not warehouse:
+                await asyncio.to_thread(scoped.close)
         write = get_stream_writer()
         for trace in result.traces:
             write({"sql_trace": trace.model_dump(mode="json")})

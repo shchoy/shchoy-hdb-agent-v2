@@ -16,7 +16,7 @@ from plg.ingest.extract import ScanSource, extract
 from plg.search.models import Chunk
 from plg.search.store import SearchStore
 
-DocumentKind = Literal["pdf", "docx", "pptx", "email", "markdown", "text", "image"]
+DocumentKind = Literal["pdf", "docx", "pptx", "email", "markdown", "text", "image", "xlsx"]
 
 KINDS: dict[str, tuple[DocumentKind, str]] = {
     ".pdf": ("pdf", "application/pdf"),
@@ -28,6 +28,7 @@ KINDS: dict[str, tuple[DocumentKind, str]] = {
     ".png": ("image", "image/png"),
     ".jpg": ("image", "image/jpeg"),
     ".jpeg": ("image", "image/jpeg"),
+    ".xlsx": ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
 }
 
 

@@ -1,7 +1,7 @@
 """Validation of agent-written SQL, before anything runs.
 
-Only a single SELECT is accepted, reading only tables of PLG Records that the data agent may see, and the Excel
-trackers (`trackers.<table>`). DuckDB parses
+Only a single SELECT is accepted, reading only tables of PLG Records that the data agent may see, the Excel
+trackers (`trackers.<table>`) and the asking officer's own uploaded workbooks (`uploads.<table>`). DuckDB parses
 the statement (`json_serialize_sql` accepts SELECT statements alone, which rejects writes, PRAGMA, COPY, ATTACH
 and the like); the parsed tree is then walked for every table it reads.
 """
@@ -18,6 +18,12 @@ CATALOG = "rec"
 
 TRACKERS = "trackers"
 """Where the trackers database is attached. Its tables are named `trackers.<table>` in the allowed set."""
+
+UPLOADS = "uploads"
+"""Where the asking officer's uploaded workbooks are attached (#105): `uploads.<table>`, in that officer's runs only."""
+
+SCHEMAS = (TRACKERS, UPLOADS)
+"""Attached databases whose tables are named `<schema>.<table>` in the allowed set."""
 
 BLOCKED_TABLES = frozenset({"staff"})
 """Tables of PLG Records the data agent may not read (staff contact details are not for analysis)."""
@@ -70,8 +76,10 @@ def _check_table(node: dict[str, Any], tables: frozenset[str], read: set[str], c
     if not catalog and not schema and name in ctes:
         return
     shown = ".".join(p for p in (catalog, schema, name) if p)
-    if (not catalog and schema == TRACKERS) or (catalog == TRACKERS and schema in ("", "main")):
-        name = f"{TRACKERS}.{name}"
+    if not catalog and schema in SCHEMAS:
+        name = f"{schema}.{name}"
+    elif catalog in SCHEMAS and schema in ("", "main"):
+        name = f"{catalog}.{name}"
     elif catalog not in ("", CATALOG) or schema not in ("", "main"):
         raise SqlRejected(f"Table {shown} is not available.")
     if name in BLOCKED_TABLES or name not in tables:

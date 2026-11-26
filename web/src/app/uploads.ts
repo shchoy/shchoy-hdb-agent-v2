@@ -2,7 +2,7 @@
 import type { Upload } from "@/lib/events";
 
 /** What the file picker offers; plg-api decides what it accepts (and says why it refuses). */
-export const ACCEPT = ".pdf,.docx,.txt,.md,.eml,.png,.jpg,.jpeg";
+export const ACCEPT = ".pdf,.docx,.xlsx,.txt,.md,.eml,.png,.jpg,.jpeg";
 
 /** At most this many files go with one question (plg-api enforces it too). */
 export const MAX_ATTACHMENTS = 5;

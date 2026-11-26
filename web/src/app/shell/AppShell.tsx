@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { roleLabel, type Group, type ThreadSummary, type UserCtx } from "@/lib/events";
+import { roleLabel, type ConversationHit, type Group, type ThreadSummary, type UserCtx } from "@/lib/events";
 import type { Theme } from "@/lib/theme";
-import { ACTIVE_THREAD } from "../runClient";
+import { ACTIVE_THREAD, ACTIVE_TURN } from "../runClient";
 import { collapsedSnapshot, parseCollapsed, saveCollapsed, subscribeCollapsed } from "./collapsedGroups";
 import { SignOutButton } from "../SignOutButton";
 import {
@@ -17,11 +17,13 @@ import {
   MemoryIcon,
   MenuIcon,
   PlusIcon,
+  SearchIcon,
   TasksIcon,
 } from "./icons";
 import { ConversationItem } from "./ConversationItem";
 import { GroupSection, NewGroup } from "./GroupSection";
 import { DRAG_TYPE, moveThread, refusalDetail, type DragHandle, type DropZone } from "./menu";
+import { SearchDialog } from "./SearchDialog";
 import { ShellProvider, type ConversationControl, type Shell } from "./ShellContext";
 import styles from "./shell.module.css";
 import { ThemeToggle } from "./ThemeToggle";
@@ -70,6 +72,11 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   const [active, setActive] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  /** The search dialog (#107) is open; focus goes back to `searchOpener` when it closes. */
+  const [searching, setSearching] = useState(false);
+  const searchOpener = useRef<HTMLElement | null>(null);
+  /** A conversation opened from search: its sidebar row is scrolled into view once shown. */
+  const [revealing, setRevealing] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   /** What is being dragged (#101; a browser's drag data can't be read until the drop) and the drop zone it is over. */
   const [dragged, setDragged] = useState<Dragged | null>(null);
@@ -169,13 +176,74 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
     }
   }
 
-  /** Opens a conversation on the Ask screen: at once if it is shown, else by going there (it reopens the handed-over one). */
-  function pick(threadId: string) {
+  /** Opens a conversation on the Ask screen (at `turn`, else its end): at once if it is shown, else by going there
+   * (it reopens the handed-over one). */
+  function pick(threadId: string, turn?: number | null) {
     closeDrawer(false);
-    if (control.current) return control.current.open(threadId);
+    if (control.current) return control.current.open(threadId, turn);
     sessionStorage.setItem(ACTIVE_THREAD, threadId);
+    if (turn != null) sessionStorage.setItem(ACTIVE_TURN, String(turn));
+    else sessionStorage.removeItem(ACTIVE_TURN);
     router.push("/");
   }
+
+  const openSearch = useCallback(() => {
+    if (searching) return; // Ctrl/⌘K again: already open, its focus stays put
+    // From the phone drawer: it closes, and focus returns to its Menu button.
+    const from = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    searchOpener.current = drawer.current?.contains(from) && drawerOpen ? menuButton.current : from;
+    if (drawerOpen) closeDrawer(false);
+    setSearching(true);
+  }, [searching, drawerOpen, closeDrawer]);
+
+  function closeSearch() {
+    setSearching(false);
+  }
+
+  // Closed (Escape, Close, the backdrop): focus back where it was, once the shell is no longer inert. Not after a
+  // result opened: the Ask screen moves focus to the matching turn.
+  useEffect(() => {
+    if (searching || !searchOpener.current) return;
+    const opener = searchOpener.current;
+    searchOpener.current = null;
+    if (opener.isConnected) opener.focus();
+  }, [searching]);
+
+  /** A search result: its conversation opens at the matching turn, shown (group expanded) and current in the sidebar. */
+  function found(hit: ConversationHit) {
+    setSearching(false);
+    if (busy && onAsk) {
+      // The open conversation is answering: the sidebar can't switch now (focus goes back to the opener).
+      setAnnouncement("Wait for the answer to finish, then open the conversation.");
+      return;
+    }
+    searchOpener.current = null;
+    const thread = threads.find((t) => t.thread_id === hit.thread_id);
+    const group = thread ? groupOf(thread) : null;
+    if (group && thread?.pinned == null) expand(group);
+    setRevealing(hit.thread_id);
+    pick(hit.thread_id, hit.message_index);
+  }
+
+  // Ctrl/⌘K opens the search dialog from anywhere in the app.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        openSearch();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openSearch]);
+
+  useEffect(() => {
+    if (!revealing) return;
+    const row = drawer.current?.querySelector(`[data-thread-id="${CSS.escape(revealing)}"]`);
+    if (!row) return;
+    row.scrollIntoView?.({ block: "nearest" });
+    setRevealing(null);
+  }, [revealing, threads, collapsed]);
 
   function startNew() {
     closeDrawer(false);
@@ -330,6 +398,12 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   }
 
   const onAsk = pathname === "/";
+  /** The shortcut's hint: ⌘K on a Mac (read after hydration, so the server's Ctrl K paints first). */
+  const mac = useSyncExternalStore(
+    () => () => {},
+    () => /Mac|iPhone|iPad/.test(navigator.platform),
+    () => false,
+  );
   const known = new Set(groups.map((g) => g.group_id));
   /** A conversation whose group is unknown here (e.g. deleted in another browser) is shown under Recent. */
   const groupOf = (t: ThreadSummary) => (t.group_id && known.has(t.group_id) ? t.group_id : null);
@@ -392,7 +466,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
         <a href="#content" className={styles.skip}>
           Skip to content
         </a>
-        <header className={styles.topbar} inert={drawerOpen || undefined}>
+        <header className={styles.topbar} inert={drawerOpen || searching || undefined}>
           <button
             ref={menuButton}
             type="button"
@@ -414,6 +488,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
           ref={drawer}
           className={styles.sidebar}
           data-open={drawerOpen || undefined}
+          inert={searching || undefined}
           onKeyDown={onDrawerKey}
           {...(drawerOpen ? { role: "dialog", "aria-modal": true, "aria-label": "Menu" } : {})}
         >
@@ -426,6 +501,12 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
               </button>
             )}
           </div>
+
+          <button type="button" className={styles.searchBox} onClick={openSearch} aria-keyshortcuts="Control+K Meta+K">
+            <SearchIcon />
+            <span>Search conversations</span>
+            <kbd aria-hidden="true">{mac ? "⌘K" : "Ctrl K"}</kbd>
+          </button>
 
           <button type="button" className={styles.newConversation} onClick={startNew} disabled={busy && onAsk}>
             <PlusIcon />
@@ -514,9 +595,11 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
           </div>
         </div>
 
-        <main id="content" className={styles.content} tabIndex={-1} inert={drawerOpen || undefined}>
+        <main id="content" className={styles.content} tabIndex={-1} inert={drawerOpen || searching || undefined}>
           {children}
         </main>
+
+        {searching && <SearchDialog onClose={closeSearch} onOpen={found} />}
       </div>
     </ShellProvider>
   );

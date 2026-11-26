@@ -437,6 +437,27 @@ export interface paths {
         patch: operations["edit_memory_memory__memory_id__patch"];
         trace?: never;
     };
+    "/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search
+         * @description Keyword search (no model called): the officer's own conversations by title, question and answer, matching
+         *     every word as a prefix, so results come as they type. Each conversation once, best match first.
+         */
+        get: operations["search_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/threads/{thread_id}/runs": {
         parameters: {
             query?: never;
@@ -922,6 +943,33 @@ export interface components {
             prevails?: ("a" | "b") | null;
             /** Found By */
             found_by: ("similarity" | "lineage" | "records")[];
+        };
+        /**
+         * ConversationHit
+         * @description One of the officer's conversations matching a search, at its best-matching place.
+         */
+        ConversationHit: {
+            /** Thread Id */
+            thread_id: string;
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at: string;
+            /** Group Id */
+            group_id?: string | null;
+            /** Group Name */
+            group_name?: string | null;
+            /** Pinned */
+            pinned?: number | null;
+            /**
+             * Matched
+             * @enum {string}
+             */
+            matched: "title" | "question" | "answer";
+            /** Message Index */
+            message_index?: number | null;
+            /** Snippet */
+            snippet: components["schemas"]["SnippetPart"][];
         };
         /**
          * DocRef
@@ -1688,6 +1736,14 @@ export interface components {
             attachments?: string[];
         };
         /**
+         * SearchResults
+         * @description What GET /search found, by type (#107: the officer's conversations).
+         */
+        SearchResults: {
+            /** Conversations */
+            conversations: components["schemas"]["ConversationHit"][];
+        };
+        /**
          * Side
          * @description One side of a conflict, cited: a span of a document chunk, or of a PLG Records row (`doc_id` None,
          *     `chunk_id` `record:<id>`).
@@ -1705,6 +1761,16 @@ export interface components {
             version?: string | null;
             /** Quote */
             quote: string;
+        };
+        /** SnippetPart */
+        SnippetPart: {
+            /** Text */
+            text: string;
+            /**
+             * Match
+             * @default false
+             */
+            match: boolean;
         };
         /**
          * Span
@@ -3718,6 +3784,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MemoryView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_search_get: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: {
+                /** @description Staff ID forwarded by the BFF */
+                "x-plg-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResults"];
                 };
             };
             /** @description Validation Error */

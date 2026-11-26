@@ -311,6 +311,14 @@ export async function listApprovals(staffId: string): Promise<{ status: number; 
   return { status: response.status, body: data ?? error };
 }
 
+/** Keyword search over the officer's own conversations (#107). */
+export async function search(staffId: string, q: string): Promise<{ status: number; body: unknown }> {
+  const { data, error, response } = await client().GET("/search", {
+    params: { query: { q }, header: { "x-plg-user": staffId } },
+  });
+  return { status: response.status, body: data ?? error };
+}
+
 /** Applications with a submission bundle, newest first, for the Document check screen. */
 export async function listSubmissions(staffId: string): Promise<{ status: number; body: unknown }> {
   const { data, error, response } = await client().GET("/submissions", {

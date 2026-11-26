@@ -10,18 +10,21 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 import uuid
-from collections.abc import AsyncIterator, Callable, Iterable, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import BaseModel
 
+from plg import thread_search
 from plg.actions.model import ApprovalDecision
+from plg.feedback.model import AnsweredTurn
 from plg.events import CancelledEvent, DoneEvent, ErrorEvent, NodeEvent, RunEvent
 from plg.graph.state import PLGGraph
 from plg.identity import UserCtx
 from plg.runs import stream_run
+from plg.thread_search import ConversationHit
 from plg.tracing import Tracer
 
 
@@ -92,6 +95,8 @@ class ThreadStore:
                 "CREATE TABLE IF NOT EXISTS plg_upload_uses (upload_id TEXT NOT NULL, thread_id TEXT NOT NULL, "
                 "PRIMARY KEY (upload_id, thread_id))"
             )
+            self.unindexed = thread_search.create_schema(db)
+            """Created now in an older file (before #107): its conversations' turns still need indexing (index_turns)."""
             # Groups from before #101 take their creation order.
             db.execute(
                 "UPDATE plg_groups SET position = (SELECT COUNT(*) FROM plg_groups o WHERE o.staff_id = plg_groups.staff_id "
@@ -124,11 +129,13 @@ class ThreadStore:
                 "UPDATE plg_threads SET title = COALESCE(title, ?), updated_at = ? WHERE thread_id = ?",
                 (title, _now(), thread_id),
             )
+            thread_search.set_title(db, thread_id)
 
     def rename(self, thread_id: str, title: str) -> ThreadSummary:
         """The officer's own title: later questions keep it (`asked` only fills a missing title)."""
         with self._db() as db:
             db.execute("UPDATE plg_threads SET title = ? WHERE thread_id = ?", (title, thread_id))
+            thread_search.set_title(db, thread_id)
         return self._summary(thread_id)
 
     def move(self, thread_id: str, staff_id: str, group_id: str | None) -> ThreadSummary:
@@ -214,6 +221,19 @@ class ThreadStore:
         with self._db() as db:
             db.execute("DELETE FROM plg_threads WHERE thread_id = ?", (thread_id,))
             db.execute("DELETE FROM plg_upload_uses WHERE thread_id = ?", (thread_id,))
+            thread_search.drop(db, thread_id)
+
+    def index_turns(self, thread_id: str, turns: Iterable[AnsweredTurn]) -> None:
+        """Makes the conversation's answered turns (all of them, from its checkpoint) searchable (#107). A thread
+        deleted meanwhile stays out of the index."""
+        with self._db() as db:
+            if db.execute("SELECT 1 FROM plg_threads WHERE thread_id = ?", (thread_id,)).fetchone():
+                thread_search.set_turns(db, thread_id, turns)
+
+    def search(self, staff_id: str, q: str) -> list[ConversationHit]:
+        """The officer's own conversations matching `q` by keyword (#107)."""
+        with self._db() as db:
+            return thread_search.search(db, staff_id, q)
 
     def record_uses(self, thread_id: str, upload_ids: Iterable[str]) -> None:
         """Record that the thread used these uploads (#106): attached to a question, or cited in an answer."""
@@ -376,10 +396,10 @@ class RunRegistry:
 
     def start(
         self, graph: PLGGraph, thread_id: str, message: str, user: UserCtx, decision: ApprovalDecision | None = None,
-        attachments: list[str] | None = None, observe: Callable[[RunEvent], None] | None = None,
+        attachments: list[str] | None = None, observe: Callable[[RunEvent], Awaitable[None]] | None = None,
     ) -> RunBuffer:
         """Answer `message` (or carry out `decision`, with an empty `message`) in the background; `observe` sees each
-        event as it is buffered."""
+        event before it is buffered (so followers see `done` only once it has handled it)."""
         if self.running(thread_id):
             raise RunInProgress
         buffer = self._runs[thread_id] = RunBuffer(message)
@@ -392,7 +412,7 @@ class RunRegistry:
                     attachments=attachments,
                 ):
                     if observe is not None:
-                        observe(event)
+                        await observe(event)
                     await buffer.add(event)
             except asyncio.CancelledError:
                 # Stopped by the officer before merge answered (`cancel` checks), so the checkpoint holds no turn and

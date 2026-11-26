@@ -32,3 +32,5 @@ export function startRun(threadId: string, message: string, attachments: string[
 
 /** The conversation the Ask screen reopens on load (sessionStorage key), so another screen can hand one over. */
 export const ACTIVE_THREAD = "plg_active_thread";
+/** The turn of ACTIVE_THREAD to open at once it is reopened (#107: a search result's), as its question's message index. */
+export const ACTIVE_TURN = "plg_active_turn";

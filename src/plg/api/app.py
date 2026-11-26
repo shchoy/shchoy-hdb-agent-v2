@@ -50,7 +50,7 @@ from plg.feedback import curation as curation_rules
 from plg.feedback.curation import Curation
 from plg.feedback.langsmith import LangSmithFeedback
 from plg.feedback.model import AnsweredTurn, Feedback, FeedbackLog, Score
-from plg.events import CitationEvent, InterruptEvent, ProposedActionEvent, RunEvent
+from plg.events import CitationEvent, DoneEvent, InterruptEvent, ProposedActionEvent, RunEvent
 from plg.data.sqlcheck import SqlRejected
 from plg.data.warehouse import Warehouse
 from plg.graph.build import build_graph
@@ -79,6 +79,7 @@ from plg.threads import (
     ThreadSummary,
     UploadUse,
 )
+from plg.thread_search import ConversationHit
 from plg.tracing import Tracer, install_tracer, pii_masker
 
 
@@ -104,6 +105,12 @@ class ThreadView(BaseModel):
     """Actions waiting for the officer's decision (POST /threads/{id}/resume)."""
     turns: list[AnsweredTurn] = []
     """The answered turns and their run IDs (`message_index` = the answer's index in `messages`), for feedback."""
+
+
+class SearchResults(BaseModel):
+    """What GET /search found, by type (#107: the officer's conversations)."""
+
+    conversations: list[ConversationHit]
 
 
 class TraceLink(BaseModel):
@@ -323,6 +330,10 @@ def create_app(
         # Checkpoints live beside thread ownership, so conversations survive a restart.
         async with AsyncSqliteSaver.from_conn_string(str(settings.threads_db)) as saver:
             graph.checkpointer = saver
+            if threads.unindexed:  # a threads.sqlite from before #107: its answers become searchable
+                for t in threads.all_asked():
+                    await index_thread(t.thread_id)
+                threads.unindexed = False
             yield
             await learner.drain()
 
@@ -680,6 +691,26 @@ def create_app(
 
         return EventSourceResponse(frames(), ping=settings.heartbeat_seconds)
 
+    async def index_thread(thread_id: str) -> None:
+        """Makes the thread's answered turns, as checkpointed, searchable (#107)."""
+        values = (await graph.aget_state({"configurable": {"thread_id": thread_id}})).values
+        await asyncio.to_thread(threads.index_turns, thread_id, values.get("turns", []))
+
+    async def index_on_done(thread_id: str, event: RunEvent) -> None:
+        """At the end of a run, before the client sees `done`: so a search right after finds the new answer.
+        Best-effort: indexing never fails the run."""
+        if isinstance(event, DoneEvent):
+            try:
+                await index_thread(thread_id)
+            except Exception:
+                logger.exception("could not index %s for search", thread_id)
+
+    @app.get("/search")
+    async def search(user: User, q: str = "") -> SearchResults:
+        """Keyword search (no model called): the officer's own conversations by title, question and answer, matching
+        every word as a prefix, so results come as they type. Each conversation once, best match first."""
+        return SearchResults(conversations=await asyncio.to_thread(threads.search, user.staff_id, q))
+
     run_stream_docs: dict[int | str, dict[str, Any]] = {
         200: {
             "description": "Server-Sent Events; each frame's data is one RunEvent.",
@@ -696,16 +727,17 @@ def create_app(
         if any(uploads.get(user.staff_id, a) is None for a in attached):
             raise HTTPException(status_code=404, detail="Upload not found")
 
-        def cited(event: RunEvent) -> None:
+        async def observe(event: RunEvent) -> None:
             """Best-effort: recording that the thread used an upload never fails the run."""
             if isinstance(event, CitationEvent) and event.upload:
                 try:
                     threads.record_uses(thread_id, [event.doc_id])
                 except Exception:
                     logger.exception("could not record that %s cited %s", thread_id, event.doc_id)
+            await index_on_done(thread_id, event)
 
         try:
-            buffer = runs.start(graph, thread_id, body.message, user, attachments=attached, observe=cited)
+            buffer = runs.start(graph, thread_id, body.message, user, attachments=attached, observe=observe)
         except RunInProgress:
             raise HTTPException(status_code=409, detail="This conversation is still answering") from None
         threads.asked(thread_id, body.message)
@@ -753,7 +785,7 @@ def create_app(
             raise HTTPException(status_code=422, detail="; ".join(errors))
         decision = ApprovalDecision(**body.model_dump(), approver=user.staff_id, approver_role=user.role)
         try:
-            buffer = runs.start(graph, thread_id, "", user, decision)
+            buffer = runs.start(graph, thread_id, "", user, decision, observe=lambda event: index_on_done(thread_id, event))
         except RunInProgress:
             raise HTTPException(status_code=409, detail="This conversation is still answering") from None
         if threads.owns(thread_id, user.staff_id):

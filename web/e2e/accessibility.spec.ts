@@ -49,6 +49,28 @@ for (const colorScheme of ["light", "dark"] as const) {
       expect(await seriousViolations(page)).toEqual([]);
     });
 
+    test("search dialog with results, also from the phone drawer (#107)", async ({ page }) => {
+      await signIn(page, OFFICER);
+      await askInNewConversation(page, QUESTION);
+      await page.keyboard.press("Control+K");
+      const dialog = page.getByRole("dialog", { name: "Search conversations" });
+      await page.keyboard.type("letter");
+      await expect(dialog.getByRole("option").first()).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.getByRole("button", { name: "Menu" }).click();
+      await page.getByRole("button", { name: "Search conversations" }).click();
+      await expect(dialog.getByRole("combobox")).toBeFocused();
+      await page.keyboard.type("letter");
+      await expect(dialog.getByRole("option").first()).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+      expect(await seriousViolations(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("button", { name: "Menu" })).toBeFocused();
+    });
+
     test("ask screen: the composer with attached files, one refused (#103)", async ({ page }) => {
       await signIn(page, OFFICER);
       await page.getByRole("button", { name: "New conversation" }).click();

@@ -1,6 +1,6 @@
 {
   "status": 415,
   "body": {
-    "detail": "Only PDF (with a text layer), Word (.docx), text (.txt, .md) and email (.eml) files can be uploaded."
+    "detail": "Only PDF, Word (.docx), text (.txt, .md), email (.eml) and image (.png, .jpg) files can be uploaded."
   }
 }

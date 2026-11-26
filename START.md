@@ -64,7 +64,7 @@ Optional `PLG_*` overrides (defaults shown):
 | `PLG_TRACKERS_DB` | `.plg/trackers.duckdb` | The Excel trackers (`poc-data/sheets/*.xlsx`), cleaned into DuckDB tables by `plg sync`; the data agent queries them as `trackers.<table>` |
 | `PLG_THREADS_DB` | `.plg/threads.sqlite` | Conversations: LangGraph checkpoints and thread owners; they survive a `plg-api` restart (so do pending approvals) |
 | `PLG_OUTBOX_DIR` | `.plg/outbox` | Local Outbox: one JSON file per approved letter (nothing is delivered) |
-| `PLG_UPLOADS_DIR` | `.plg/uploads` | Officers' private libraries: uploaded files, their metadata and their own search index (never the shared Library index) |
+| `PLG_UPLOADS_DIR` | `.plg/uploads` | Officers' private libraries: uploaded files, their metadata, their own search index (never the shared Library index) and `transcripts/` (Claude's transcripts of uploaded scans and images, one per file hash, so each is read once; needs `ANTHROPIC_API_KEY`) |
 | `PLG_UPLOAD_MAX_BYTES` | `20971520` (20 MB) | Largest file an officer may upload |
 | `PLG_UPLOAD_MAX_FILES` | `5` | Most files attached to one question |
 | `PLG_UPLOAD_QUOTA_BYTES` | `209715200` (200 MB) | Space each officer's uploads may take in all |

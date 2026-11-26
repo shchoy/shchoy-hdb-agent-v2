@@ -918,7 +918,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text";
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image";
             /** Filename */
             filename: string;
             /** Content Type */
@@ -1937,7 +1937,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text";
+            kind: "pdf" | "docx" | "pptx" | "email" | "markdown" | "text" | "image";
             /** Content Type */
             content_type: string;
             /** Size */
@@ -4022,7 +4022,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description The file can't be read (or is a scan without a text layer) */
+            /** @description The file can't be read (a scan Claude couldn't read, or over 100 pages) */
             422: {
                 headers: {
                     [name: string]: unknown;

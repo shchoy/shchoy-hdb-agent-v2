@@ -98,6 +98,22 @@ describe("Source viewer", () => {
     expect(link).toHaveAttribute("href", `/api/documents/${fixture.document.doc_id}/file#page=${page}`);
   });
 
+  it("opens an uploaded image (#104) in a new tab beside its transcript", async () => {
+    const upload = documentFixture("upload");
+    const fixture = {
+      ...upload,
+      document: { ...upload.document, kind: "image" as const, filename: "whiteboard.png", content_type: "image/png" },
+    };
+    serve(fixture);
+
+    const { viewer } = await open(fixture);
+
+    const link = within(viewer).getByRole("link", { name: "Open original image" });
+    expect(link).toHaveAttribute("href", `/api/documents/${fixture.document.doc_id}/file`);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(flat(viewer.querySelector("mark")!.textContent)).toBe(flat(fixture.location.quote));
+  });
+
   it("offers other file types as a download, not inline", async () => {
     const fixture = documentFixture("email");
     serve(fixture);

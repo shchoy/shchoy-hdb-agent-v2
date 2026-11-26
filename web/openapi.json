@@ -2301,7 +2301,7 @@
             "description": "Not a type that can be uploaded"
           },
           "422": {
-            "description": "The file can't be read (or is a scan without a text layer)"
+            "description": "The file can't be read (a scan Claude couldn't read, or over 100 pages)"
           }
         },
         "requestBody": {
@@ -3070,7 +3070,8 @@
               "pptx",
               "email",
               "markdown",
-              "text"
+              "text",
+              "image"
             ],
             "title": "Kind"
           },
@@ -5521,7 +5522,8 @@
               "pptx",
               "email",
               "markdown",
-              "text"
+              "text",
+              "image"
             ],
             "title": "Kind"
           },

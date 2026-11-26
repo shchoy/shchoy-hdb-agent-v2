@@ -260,7 +260,7 @@ def create_app(
     memory = memory or MemoryStore(lambda: _open_store(settings), embedder)
     uploads = UploadLibrary(
         settings.uploads_dir, embedder, max_bytes=settings.upload_max_bytes, quota_bytes=settings.upload_quota_bytes,
-        vector_weight=settings.vector_weight,
+        vector_weight=settings.vector_weight, llm=llm,
     )
     link_work = None
     if isinstance(entities, LazyGraph):
@@ -804,7 +804,7 @@ def create_app(
             "schema": {"type": "string", "format": "binary"}}}}},
         responses={413: {"description": "The file is too large, or your uploads would exceed your space"},
                    415: {"description": "Not a type that can be uploaded"},
-                   422: {"description": "The file can't be read (or is a scan without a text layer)"}},
+                   422: {"description": "The file can't be read (a scan Claude couldn't read, or over 100 pages)"}},
     )
     async def create_upload(
         request: Request, user: User,
@@ -818,7 +818,7 @@ def create_app(
             if len(received) > uploads.max_bytes:
                 raise HTTPException(status_code=413, detail=uploads.too_large(filename))
         try:
-            return await asyncio.to_thread(uploads.add, user.staff_id, filename, bytes(received))
+            return await uploads.add(user.staff_id, filename, bytes(received))
         except UploadRefused as refused:
             raise HTTPException(status_code=refused.status, detail=refused.detail) from None
 

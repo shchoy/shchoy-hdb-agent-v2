@@ -614,3 +614,44 @@ test("an officer pins a conversation and a group by keyboard, sees them pinned i
   await conversations.getByRole("group", { name: `Delete group ${name}?` }).getByRole("button", { name: "Delete group" }).click();
   await expect(updates).toHaveText(`Deleted group ${name}. Its conversations are back in Recent.`);
 });
+
+test("an officer finds an earlier answer with Ctrl+K and opens the conversation at that turn, by keyboard (#107)", async ({
+  page,
+}) => {
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, QUESTION);
+  await ask(page, FOLLOW_UP);
+  const title = `Searchable ${Date.now()}`;
+  const renamed = await page.request.patch(`/api/threads/${await threadId(page, QUESTION)}`, { data: { title } });
+  expect(renamed.status()).toBe(200);
+  await page.getByRole("button", { name: "New conversation" }).click();
+  await visit(page, "/library");
+
+  await page.keyboard.press("Control+K");
+  const dialog = page.getByRole("dialog", { name: "Search conversations" });
+  const field = dialog.getByRole("combobox", { name: "Search conversations" });
+  await expect(field).toBeFocused();
+  await page.keyboard.type("deadli"); // a word of the follow-up's answer, as a prefix
+  const ours = dialog.getByRole("option").filter({ hasText: title });
+  await expect(ours).toBeVisible();
+  await expect(ours.locator("mark")).toHaveText("deadline");
+  await expect(ours).toContainText("In Recent");
+  // Other runs on this server answered the same: arrow down to this conversation (the newest, so first by default).
+  for (let i = 0; i < 20 && (await ours.getAttribute("aria-selected")) !== "true"; i++) await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+
+  await expect(page).toHaveURL(/\/$/);
+  const history = page.getByRole("list", { name: "Earlier in this conversation" });
+  const turn = history.getByRole("listitem").filter({ has: page.locator("p", { hasText: `You asked: ${FOLLOW_UP}` }) });
+  await expect(turn).toBeFocused();
+  await expect(turn).toHaveAttribute("data-found", "");
+  const conversations = page.getByRole("navigation", { name: "Conversations" });
+  await expect(conversations.getByRole("button", { name: title, exact: true })).toHaveAttribute("aria-current", "true");
+
+  // Escape returns focus to where search was opened from.
+  await page.getByRole("button", { name: "Search conversations" }).click();
+  await expect(field).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("button", { name: "Search conversations" })).toBeFocused();
+});

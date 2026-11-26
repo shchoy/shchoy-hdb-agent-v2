@@ -30,7 +30,7 @@ import { NO_SOURCES, SourcesPanel, type AnswerSources } from "./SourcesPanel";
 import { TaskList } from "./TaskList";
 import { Welcome } from "./Welcome";
 import styles from "./ask.module.css";
-import { ACTIVE_THREAD, createThread, failureFor, RunFailed, startRun } from "./runClient";
+import { ACTIVE_THREAD, ACTIVE_TURN, createThread, failureFor, RunFailed, startRun } from "./runClient";
 import { ACCEPT, MAX_ATTACHMENTS } from "./uploads";
 import { useConversationControl, useShell } from "./shell/ShellContext";
 
@@ -147,6 +147,11 @@ export function AskScreen({
   /** The actions a reopened conversation is paused on: shown in its last answer. */
   const [pending, setPending] = useState<Approvable[]>([]);
   const [panel, setPanel] = useState<Panel | null>(null);
+  /** The turn a search result opened (#107: its question's index in `history`): highlighted, scrolled to, focused. */
+  const [foundTurn, setFoundTurn] = useState<number | null>(null);
+  const turns = useRef<HTMLOListElement>(null);
+  /** The found turn already scrolled to and focused (it stays highlighted). */
+  const focusedFound = useRef<number | null>(null);
   const shell = useShell();
   const threadId = useRef<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -354,6 +359,7 @@ export function AskScreen({
 
   /** Asks `text` with the officer's uploads in `attached` (#103). */
   async function ask(text: string, attached: Attached[] = []) {
+    setFoundTurn(null); // the conversation follows its new answer
     if (run.status === "done") {
       const { runId } = run;
       if (runId) setAnsweredBy((by) => ({ ...by, [history.length + 1]: runId }));
@@ -387,20 +393,27 @@ export function AskScreen({
     await follow(text, () => startRun(id, text, uploads), emptyAnswer(text, attached));
   }
 
-  /** Opens a past conversation; if its last question is still being answered, picks that answer up. */
-  async function open(id: string) {
+  /** Opens a past conversation (at `turn`: a search result's, #107); if its last question is still being answered, picks
+   * that answer up. */
+  async function open(id: string, turn: number | null = null) {
     const response = await fetch(
       `/api/threads/${encodeURIComponent(id)}`,
     ).catch(() => null);
     if (!response?.ok) {
       sessionStorage.removeItem(ACTIVE_THREAD);
+      sessionStorage.removeItem(ACTIVE_TURN);
       return;
     }
     const thread = (await response.json()) as ThreadView;
+    sessionStorage.removeItem(ACTIVE_TURN); // once only: a later refresh reopens at the end
     if (id !== threadId.current) setPanel(null); // re-reading the same conversation keeps its open panel
     threadId.current = id;
     setActive(id);
     sessionStorage.setItem(ACTIVE_THREAD, id);
+    const at = turn != null && thread.messages[turn] ? turn : null;
+    if (at != null) setFollowing(false); // stay at the turn, not the end
+    setFoundTurn(at);
+    focusedFound.current = null;
     setHistory(thread.messages);
     setPending((thread.pending ?? []).map((action) => approvable(id, action)));
     setAnsweredBy(Object.fromEntries((thread.turns ?? []).map((t) => [t.message_index, t.run_id])));
@@ -429,16 +442,29 @@ export function AskScreen({
     setSourcesOf({});
     setPending([]);
     setPanel(null);
+    setFoundTurn(null);
     setRun({ status: "idle" });
   }
 
+  // A turn opened from search: shown and focused, so it is read out first.
+  useEffect(() => {
+    if (foundTurn == null || focusedFound.current === foundTurn) return;
+    const item = turns.current?.children[foundTurn];
+    if (!(item instanceof HTMLElement)) return;
+    item.scrollIntoView?.({ block: "start" });
+    item.focus({ preventScroll: true });
+    // Once: a later reload of the same conversation (e.g. after a decision) mustn't pull the view back here.
+    focusedFound.current = foundTurn;
+  }, [foundTurn, history]);
+
   // The sidebar's conversation list and New conversation act on this screen while it is shown.
-  useConversationControl({ open: (id) => void open(id), startNew }, active, running);
+  useConversationControl({ open: (id, turn) => void open(id, turn), startNew }, active, running);
 
   useEffect(() => {
     const active = sessionStorage.getItem(ACTIVE_THREAD);
+    const turn = sessionStorage.getItem(ACTIVE_TURN); // a search result opened from another screen (open clears it)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (active) void open(active).finally(() => setRestoreChecked(true));
+    if (active) void open(active, turn ? Number(turn) : null).finally(() => setRestoreChecked(true));
     else setRestoreChecked(true);
     // Runs once on load: a refresh returns to the conversation (and answer) it interrupted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -501,11 +527,23 @@ export function AskScreen({
           <Welcome user={user} onAsk={(text) => void ask(text)} />
         )}
         {history.length > 0 && (
-          <ol aria-label="Earlier in this conversation" className={styles.history}>
+          <ol ref={turns} aria-label="Earlier in this conversation" className={styles.history}>
             {history.map((m, i) => {
               const sources = sourcesOf[i] ?? NO_SOURCES;
+              const found = foundTurn === i;
               return (
-              <li key={i} data-role={m.role}>
+              <li
+                key={i}
+                data-role={m.role}
+                data-found={found ? "" : undefined}
+                tabIndex={found ? -1 : undefined}
+                aria-describedby={found ? "found-turn" : undefined}
+              >
+                {found && (
+                  <span id="found-turn" className={styles.foundLabel}>
+                    Search match
+                  </span>
+                )}
                 {m.role === "user" ? (
                   <Bubble text={m.content} />
                 ) : (

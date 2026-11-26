@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useRef } from "react";
 
 /** What the Ask screen lets the sidebar do with its conversation, while it is shown. */
-export type ConversationControl = { open(threadId: string): void; startNew(): void };
+/** `turn`: open at that turn (its question's index in the history: a search result's, #107) instead of the end. */
+export type ConversationControl = { open(threadId: string, turn?: number | null): void; startNew(): void };
 
 /** What the screens tell the app shell's sidebar. Stable: the shell provides one object for its lifetime. */
 export type Shell = {
@@ -35,7 +36,7 @@ export function useConversationControl(control: ConversationControl, active: str
   });
   useEffect(() => {
     shell.attach({
-      open: (id) => latest.current.open(id),
+      open: (id, turn) => latest.current.open(id, turn),
       startNew: () => latest.current.startNew(),
     });
     return () => shell.attach(null);

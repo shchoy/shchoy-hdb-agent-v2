@@ -205,7 +205,7 @@ export function ConversationItem({
     );
 
   return (
-    <li className={styles.conversation}>
+    <li className={styles.conversation} data-thread-id={thread.thread_id}>
       {/* The row, not its button, is dragged: browsers don't reliably start a drag from a button. */}
       <div className={styles.row} draggable={drag && !disabled ? true : undefined} {...(drag && !disabled ? drag : {})}>
         <button

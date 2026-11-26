@@ -100,3 +100,10 @@ export const ChevronIcon = () => (
     <polyline points="9 6 15 12 9 18" />
   </Icon>
 );
+
+export const SearchIcon = () => (
+  <Icon>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </Icon>
+);

@@ -19,7 +19,8 @@ import pytest
 from plg.llm import ScriptedLLMClient, text, tool_call, turn
 from plg.search.lance import LanceSearchStore
 from plg.search.rerank import Searcher
-from tests.conftest import CORPUS, USER, Api, LangSmithApi, SseStream, route
+from plg.ingest.scans import IMAGE_PROMPT, SCAN_NODE, SCAN_PROMPT
+from tests.conftest import CORPUS, HENG_ANN_SCAN, USER, Api, LangSmithApi, SseStream, route
 from tests.test_knowledge_api import answer_citing, search_results
 
 OTHER = {"X-PLG-User": "S04"}
@@ -115,20 +116,11 @@ def test_markdown_is_read_with_its_headings(uploads_api: Api) -> None:
 
 
 def test_unsupported_types_are_refused(uploads_api: Api) -> None:
-    for name in ("budget.xlsx", "photo.png", "tool.exe", "noextension"):
+    for name in ("budget.xlsx", "tool.exe", "noextension", "picture.gif"):
         response = upload(uploads_api, name, b"PK\x03\x04 not a text document")
         assert response.status_code == 415, name
         assert "PDF" in response.json()["detail"]
     assert uploads_api.client.get("/uploads", headers=USER).json() == []
-
-
-def test_a_pdf_without_a_text_layer_is_refused(uploads_api: Api) -> None:
-    scan = CORPUS / "pdfs/Scan_TA_TA-2024-00451_HengAnn.pdf"
-
-    response = upload(uploads_api, scan.name, scan.read_bytes())
-
-    assert response.status_code == 422
-    assert "text layer" in response.json()["detail"]
 
 
 def test_a_file_over_the_size_limit_is_refused(make_api: Callable[..., Api], searcher: Searcher) -> None:
@@ -316,3 +308,205 @@ def test_uploads_sent_at_once_cannot_overrun_the_space(make_api: Callable[..., A
 
     assert sorted(statuses) == [201, 201, 413, 413]
     assert len(api.client.get("/uploads", headers=USER).json()) == 2
+
+
+# ---------------------------------------------------------------- scans and images (#104)
+
+SCAN = CORPUS / HENG_ANN_SCAN
+SCAN_PAGES = [
+    {"page": 1, "text": "TENANCY AGREEMENT\nTA-2024-00451\nBetween the Housing & Estates Board and Heng Ann Confectionery."},
+    {"page": 2, "text": "2. Rent\nThe monthly rent is S$4,580, paid at the Bukit Panjang branch office by the seventh."},
+]
+PNG = (  # a 1x1 PNG: Claude (scripted here) reads it
+    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89"
+    b"\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82"
+)
+WHITEBOARD = "Site meeting 3 Oct 2026\nKiosk 01-17: replace the jammed shutter by 20 October 2026."
+
+
+def script_scan(llm: ScriptedLLMClient, *pages: dict[str, Any], title: str = "Tenancy Agreement TA-2024-00451") -> None:
+    llm.script_turns(SCAN_NODE, SCAN_PROMPT, turn(tool_call("record_transcript", title=title, pages=list(pages))))
+
+
+def script_image(llm: ScriptedLLMClient, content: str, title: str = "Whiteboard photo") -> None:
+    llm.script_turns(
+        SCAN_NODE, IMAGE_PROMPT,
+        turn(tool_call("record_transcript", title=title, pages=[{"page": 1, "text": content}])),
+    )
+
+
+def scan_calls(llm: ScriptedLLMClient) -> int:
+    return sum(
+        1 for messages in llm.sent for m in messages if isinstance(m["content"], list)
+        for b in m["content"] if b.get("type") in ("document", "image")
+    )
+
+
+def test_a_scanned_pdf_is_transcribed_and_located_by_page(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    script_scan(llm, *SCAN_PAGES)
+
+    item = uploaded(uploads_api, SCAN.name, SCAN.read_bytes())
+
+    assert (item["kind"], item["title"], item["chunks"]) == ("pdf", "Tenancy Agreement TA-2024-00451", 2)
+    (sent,) = llm.sent
+    blocks = sent[0]["content"]
+    assert isinstance(blocks, list)
+    assert blocks[0]["type"] == "document"
+    assert blocks[0]["source"]["media_type"] == "application/pdf"
+    view = uploads_api.client.get(f"/documents/{item['upload_id']}", headers=USER).json()
+    assert {"text": "The monthly rent is S$4,580, paid at the Bukit Panjang branch office by the seventh.",
+            "level": 0, "page": 2} in view["blocks"]
+    assert scan_calls(llm) == 1
+
+
+def test_a_scan_is_transcribed_once(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    script_scan(llm, *SCAN_PAGES)  # one reply only: a second Claude call would fail the upload
+    first = uploaded(uploads_api, SCAN.name, SCAN.read_bytes())
+
+    again = uploaded(uploads_api, "copy-of-scan.pdf", SCAN.read_bytes())
+    uploads_api.client.get(f"/documents/{first['upload_id']}", headers=USER)
+    uploads_api.client.get(f"/documents/{first['upload_id']}/chunks/{first['upload_id']}%23000", headers=USER)
+
+    assert again["chunks"] == first["chunks"]
+    assert scan_calls(llm) == 1
+
+
+def test_the_same_scan_uploaded_twice_at_once_is_transcribed_once(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    script_scan(llm, *SCAN_PAGES)  # one reply only
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        statuses = list(pool.map(lambda n: upload(uploads_api, f"scan-{n}.pdf", SCAN.read_bytes()).status_code, range(2)))
+
+    assert statuses == [201, 201]
+    assert scan_calls(llm) == 1
+
+
+def test_a_broken_pdf_is_refused_not_a_server_error(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    response = upload(uploads_api, "broken.pdf", b"%PDF-1.4 truncated")
+
+    assert response.status_code == 422
+    assert "broken.pdf" in response.json()["detail"]
+    assert llm.sent == []
+
+
+def test_answers_cite_a_scan_by_page(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    script_scan(llm, *SCAN_PAGES)
+    item = uploaded(uploads_api, SCAN.name, SCAN.read_bytes())
+    question = "What is the monthly rent in the Heng Ann agreement I uploaded?"
+    script_search(llm, question, "Heng Ann monthly rent branch office", "Bukit Panjang branch", "S$4,580 a month.")
+
+    stream = ask(uploads_api, uploads_api.create_thread(), question, [item["upload_id"]])
+
+    assert isinstance(stream, SseStream)
+    (citation,) = stream.of_type("citation")
+    assert citation["doc_id"] == item["upload_id"]
+    assert citation["upload"] is True
+    assert "p. 2" in str(citation["location"])
+    located = uploads_api.client.get(
+        f"/documents/{item['upload_id']}/chunks/{quote(str(citation['chunk_id']), safe='')}",
+        params={"start": citation["span"]["start"], "end": citation["span"]["end"]}, headers=USER,
+    ).json()
+    assert located["page"] == 2
+    assert located["highlights"]
+
+
+def test_an_image_is_transcribed_and_searchable(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    script_image(llm, WHITEBOARD)
+
+    item = uploaded(uploads_api, "whiteboard.png", PNG)
+
+    assert (item["kind"], item["content_type"], item["title"]) == ("image", "image/png", "Whiteboard photo")
+    blocks = llm.sent[0][0]["content"]
+    assert isinstance(blocks, list)
+    assert blocks[0]["type"] == "image"
+    assert blocks[0]["source"]["media_type"] == "image/png"
+    view = uploads_api.client.get(f"/documents/{item['upload_id']}", headers=USER).json()
+    assert [b["text"] for b in view["blocks"]] == WHITEBOARD.splitlines()
+    assert all(b["page"] is None for b in view["blocks"])  # a photo has no pages
+    assert uploads_api.client.get(f"/documents/{item['upload_id']}/file", headers=USER).content == PNG
+    question = "When is the kiosk shutter being replaced?"
+    script_search(llm, question, "kiosk shutter replace", "jammed shutter", "By 20 October 2026.")
+
+    stream = ask(uploads_api, uploads_api.create_thread(), question, [item["upload_id"]])
+
+    assert isinstance(stream, SseStream)
+    assert [c["doc_id"] for c in stream.of_type("citation")] == [item["upload_id"]]
+
+
+def test_jpeg_photos_can_be_uploaded(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    script_image(llm, WHITEBOARD)
+
+    item = uploaded(uploads_api, "IMG_0042.JPG", b"\xff\xd8\xff\xe0" + b"\x00" * 64 + b"\xff\xd9")
+
+    assert (item["kind"], item["content_type"]) == ("image", "image/jpeg")
+    assert llm.sent[0][0]["content"][0]["source"]["media_type"] == "image/jpeg"
+
+
+def test_a_file_that_is_not_really_an_image_is_refused_without_claude(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    response = upload(uploads_api, "photo.png", b"PK\x03\x04 not an image")
+
+    assert response.status_code == 422
+    assert "photo.png" in response.json()["detail"]
+    assert llm.sent == []
+
+
+def test_an_image_too_large_for_claude_is_refused_before_claude(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    response = upload(uploads_api, "huge.png", PNG + b"\x00" * (4 * 1024 * 1024))
+
+    assert response.status_code == 413
+    assert "huge.png" in response.json()["detail"]
+    assert llm.sent == []
+
+
+def test_a_scan_over_100_pages_is_refused_before_claude(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    from io import BytesIO
+
+    from pypdf import PdfWriter
+
+    writer = PdfWriter()
+    for _ in range(101):
+        writer.add_blank_page(width=595, height=842)
+    data = BytesIO()
+    writer.write(data)
+
+    response = upload(uploads_api, "long-scan.pdf", data.getvalue())
+
+    assert response.status_code == 422
+    assert "100 pages" in response.json()["detail"]
+    assert llm.sent == []
+    assert uploads_api.client.get("/uploads", headers=USER).json() == []
+
+
+def test_a_scan_claude_cannot_read_is_refused_with_a_reason(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    llm.script_turns(SCAN_NODE, SCAN_PROMPT, turn(text("I can't make out this page.")))
+
+    response = upload(uploads_api, SCAN.name, SCAN.read_bytes())
+
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert SCAN.name in detail and "could not be read" in detail
+    assert uploads_api.client.get("/uploads", headers=USER).json() == []
+
+
+def test_an_illegible_image_is_refused_with_a_reason(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    script_image(llm, "   ")
+
+    response = upload(uploads_api, "blurry.png", PNG)
+
+    assert response.status_code == 422
+    assert "blurry.png" in response.json()["detail"]
+
+
+def test_a_transcript_is_screened_for_injection(uploads_api: Api, llm: ScriptedLLMClient) -> None:
+    script_image(llm, PLANTED, title="Refund request")
+
+    item = uploaded(uploads_api, "refund.png", PNG)
+
+    assert item["injection"] is not None
+    assert item["injection"]["doc_id"] == item["upload_id"]
+    view = uploads_api.client.get(f"/documents/{item['upload_id']}", headers=USER).json()
+    shown = " ".join(b["text"] for b in view["blocks"])
+    assert "Ignore all previous instructions" not in shown
+    assert "[Removed at ingestion" in shown

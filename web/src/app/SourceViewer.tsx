@@ -196,6 +196,10 @@ function Document({
           <a href={`${file}#page=${location?.page ?? 1}`} target="_blank" rel="noopener noreferrer">
             Open original PDF{location?.page ? ` (page ${location.page})` : ""}
           </a>
+        ) : document.kind === "image" ? (
+          <a href={file} target="_blank" rel="noopener noreferrer">
+            Open original image
+          </a>
         ) : (
           <a href={file} download={document.filename}>
             Download original ({document.filename})

@@ -88,7 +88,7 @@ describe("Attaching files to a question (#103)", () => {
     const { user, picker } = renderAsk();
 
     expect(screen.getByRole("button", { name: "Attach files" })).toBeVisible();
-    expect(picker).toHaveAttribute("accept", ".pdf,.docx,.txt,.md,.eml");
+    expect(picker).toHaveAttribute("accept", ".pdf,.docx,.txt,.md,.eml,.png,.jpg,.jpeg");
     expect(picker).toHaveAttribute("multiple");
     await user.upload(picker, note());
 

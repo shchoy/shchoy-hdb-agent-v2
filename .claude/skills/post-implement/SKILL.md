@@ -6,7 +6,6 @@ Write a summary of
 - what's been build 
 - how does the new features contribute to the overall functionality of the project
 - module breakdown table with paths, new or modified and role. 
-- how it works
 - workflow map of how the new or modified modules interact with other components.
 
 Save it as .md file referencing this issue in /docs/issues folder.

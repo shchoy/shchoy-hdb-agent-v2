@@ -475,3 +475,39 @@ describe("Approvals inbox", () => {
     });
   });
 });
+
+describe("Opened from search (#109)", () => {
+  it("opens a pending action's detail, highlighted and focused", async () => {
+    plgApi();
+    render(<ApprovalsScreen role="officer" staffId="S05" found={REMINDER.action_id} />);
+
+    const item = await screen.findByRole("article", { name: REMINDER.title });
+    const found = item.closest("li")!;
+    await waitFor(() => expect(found).toHaveFocus());
+    expect(found).toHaveAttribute("data-found");
+    expect(found).toHaveAccessibleDescription("Search match");
+    expect(within(item).getByRole("button", { name: REMINDER.title })).toHaveAttribute("aria-expanded", "true");
+    expect(card(FEEDBACK.title).closest("li")).not.toHaveAttribute("data-found");
+
+    await userEvent.click(within(item).getByRole("button", { name: REMINDER.title }));
+    expect(within(item).getByRole("button", { name: REMINDER.title })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("opens at a decision in the audit trail", async () => {
+    plgApi([], AUDIT);
+    const decided = REJECTED as { action_id: string; title: string };
+    render(<ApprovalsScreen role="officer" staffId="S05" found={decided.action_id} />);
+
+    const trail = await screen.findByRole("list", { name: "Audit trail" });
+    const found = within(trail).getByRole("article", { name: decided.title }).closest("li")!;
+    await waitFor(() => expect(found).toHaveFocus());
+    expect(within(found).getByText("Search match")).toBeInTheDocument();
+  });
+
+  it("says when the item is no longer there", async () => {
+    plgApi([], []);
+    render(<ApprovalsScreen role="officer" staffId="S05" found="gone-1" />);
+
+    expect(await screen.findByRole("status")).toHaveTextContent("That approval is no longer here");
+  });
+});

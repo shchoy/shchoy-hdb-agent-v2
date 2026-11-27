@@ -8,7 +8,7 @@ import uuid
 from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from datetime import UTC, datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, TypeVar
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse
@@ -80,13 +80,18 @@ from plg.threads import (
     UploadUse,
 )
 from plg.thread_search import ConversationHit
-from plg.search.keyword import DocumentHit
+from plg.search import items as item_search
+from plg.search.items import ApprovalHit, DecisionHit, MemoryHit
+from plg.search.keyword import DocumentHit, words
 from plg.tracing import Tracer, install_tracer, pii_masker
 
 
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 logger = logging.getLogger(__name__)
+
+H = TypeVar("H", bound=BaseModel)
+"""A search result model."""
 
 
 class ThreadCreated(BaseModel):
@@ -117,6 +122,12 @@ class SearchResults(BaseModel):
     """Library documents, current versions first (superseded ones carry status `superseded`)."""
     uploads: list[DocumentHit] = []
     """The officer's own uploads only."""
+    approvals: list[ApprovalHit] = []
+    """Pending actions the officer may decide, as their Approvals inbox lists them (#109)."""
+    decisions: list[DecisionHit] = []
+    """The officer's own past decisions (their audit trail)."""
+    memories: list[MemoryHit] = []
+    """The officer's own memories."""
 
 
 class TraceLink(BaseModel):
@@ -511,13 +522,17 @@ def create_app(
         """The actions waiting for the officer's decision, oldest first: their own, across all their conversations,
         and, for a curator (a glossary term's owner), the changes to their terms proposed in anyone's."""
         found = [
-            PendingApproval(
-                **action.model_dump(), thread_id=t.thread_id,
-                thread_title=t.title if action.proposed_by == user.staff_id else f"Proposed by {action.proposed_by}",
-            )
-            for t in threads.all_asked() for action in await waiting(t.thread_id) if action.may_decide(user.staff_id)
+            PendingApproval(**action.model_dump(), thread_id=thread_id, thread_title=title)
+            for action, thread_id, title in await decidable(user)
         ]
         return sorted(found, key=lambda a: a.proposed_at)
+
+    async def decidable(user: UserCtx) -> list[tuple[ProposedAction, str, str]]:
+        """Each pending action the officer may decide, with its thread ID and the title their inbox shows for it."""
+        return [
+            (action, t.thread_id, t.title if action.proposed_by == user.staff_id else f"Proposed by {action.proposed_by}")
+            for t in threads.all_asked() for action in await waiting(t.thread_id) if action.may_decide(user.staff_id)
+        ]
 
     @app.get(
         "/threads/{thread_id}/runs/{run_id}/trace",
@@ -716,15 +731,35 @@ def create_app(
         """Keyword search (no model called): the officer's own conversations by title, question and answer, Library
         documents and their own uploads by title and content, matching every word as a prefix, so results come as they
         type. Each conversation or document once, best match first (current documents before superseded ones)."""
-        conversations, documents, own = await asyncio.gather(
+        conversations, documents, own, approvals, decisions, memories = await asyncio.gather(
             asyncio.to_thread(threads.search, user.staff_id, q),
             asyncio.to_thread(best_effort, "the Library", lambda: index().keyword_search(q)),
             asyncio.to_thread(best_effort, "uploads", lambda: uploads.index.keyword_search(user.staff_id, q)),
+            search_approvals(user, q),
+            asyncio.to_thread(
+                best_effort, "decisions", lambda: item_search.decisions(q, audit.decided_by(user.staff_id)),
+            ),
+            asyncio.to_thread(
+                best_effort, "memories",
+                lambda: item_search.memories(q, (view(i) for i in memory.items(user.staff_id))),
+            ),
         )
-        return SearchResults(conversations=conversations, documents=documents, uploads=own)
+        return SearchResults(
+            conversations=conversations, documents=documents, uploads=own, approvals=approvals, decisions=decisions,
+            memories=memories,
+        )
 
-    def best_effort(what: str, find: Callable[[], list[DocumentHit]]) -> list[DocumentHit]:
-        """A document search that fails (e.g. no index yet) leaves the other results standing."""
+    async def search_approvals(user: UserCtx, q: str) -> list[ApprovalHit]:
+        if not words(q):
+            return []  # nothing to match: no checkpoint read
+        try:
+            return item_search.approvals(q, await decidable(user))
+        except Exception:
+            logger.exception("could not search approvals")
+            return []
+
+    def best_effort(what: str, find: Callable[[], list[H]]) -> list[H]:
+        """A search that fails (e.g. no Library index yet) leaves the other results standing."""
         try:
             return find()
         except Exception:

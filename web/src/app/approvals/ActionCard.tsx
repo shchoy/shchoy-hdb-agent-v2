@@ -8,6 +8,8 @@ import { ago, day, period, when } from "../dates";
 import { LetterFrame } from "../LetterFrame";
 import styles from "./approvals.module.css";
 
+type ActionType = components["schemas"]["ProposedAction"]["action_type"];
+
 /** A pending action and the conversation it waits in (the chat leaves the conversation's title out: it is that one). */
 export type Approvable = components["schemas"]["ProposedAction"] & { thread_id: string; thread_title?: string };
 type Decision = "approve" | "edit" | "reject";
@@ -54,6 +56,25 @@ export const KIND_LABEL: Record<Kind, string> = {
   team_fact: "Team fact",
   example: "Corrected answer",
   sql_example: "SQL example",
+};
+
+/** What a decision did, by action type (the audit trail's badge). */
+export const DECIDED_LABEL: Record<ActionType, Record<"approve" | "edit" | "reject", string>> = {
+  send_letter: { approve: "Approved and sent", edit: "Sent with edits", reject: "Rejected" },
+  raise_ticket: { approve: "Approved and raised", edit: "Raised with edits", reject: "Rejected" },
+  approve_glossary_term: { approve: "Approved and adopted", edit: "Adopted with edits", reject: "Rejected" },
+  approve_team_fact: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
+  approve_example: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
+  approve_sql_example: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
+};
+/** An action type's label. */
+export const ACTION_KIND: Record<ActionType, string> = {
+  send_letter: KIND_LABEL.letter,
+  raise_ticket: KIND_LABEL.ticket,
+  approve_glossary_term: KIND_LABEL.glossary,
+  approve_team_fact: KIND_LABEL.team_fact,
+  approve_example: KIND_LABEL.example,
+  approve_sql_example: KIND_LABEL.sql_example,
 };
 
 /** Who proposed an action and how long ago (the exact time on hover). */

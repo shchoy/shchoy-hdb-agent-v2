@@ -224,6 +224,23 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
     setSearching(false);
   }
 
+  /**
+   * An approval, decision or memory result (#109): its screen opens at the item, which takes focus. Already there
+   * (the same item again): the item is focused again.
+   */
+  function openScreen(href: string) {
+    setSearching(false);
+    searchOpener.current = null;
+    closeDrawer(false);
+    if (`${window.location.pathname}${window.location.search}` !== href) return router.push(href);
+    // Once the shell is no longer inert.
+    setTimeout(() => {
+      const item = document.querySelector<HTMLElement>("main [data-found]");
+      item?.scrollIntoView?.({ block: "start" });
+      item?.focus();
+    });
+  }
+
   /** A search result: its conversation opens at the matching turn, shown (group expanded) and current in the sidebar. */
   function found(hit: ConversationHit) {
     setSearching(false);
@@ -614,7 +631,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
           {children}
         </main>
 
-        {searching && <SearchDialog onClose={closeSearch} onOpen={found} onOpenDocument={read} />}
+        {searching && <SearchDialog onClose={closeSearch} onOpen={found} onOpenDocument={read} onOpenScreen={openScreen} />}
         {reading && <SourceDialog hit={reading} onClose={() => setReading(null)} />}
       </div>
     </ShellProvider>

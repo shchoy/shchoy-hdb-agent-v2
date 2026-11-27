@@ -222,3 +222,19 @@
     padding-right: var(--space-3);
   }
 }
+
+/* The item a search result opened a screen at (#109): outlined, labelled, scrolled to and focused. */
+.found {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
+  border-radius: var(--radius-md);
+  scroll-margin-top: var(--space-6);
+}
+
+.foundLabel {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-primary-hover);
+}

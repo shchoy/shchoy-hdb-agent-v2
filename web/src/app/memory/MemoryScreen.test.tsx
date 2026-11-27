@@ -70,3 +70,24 @@ describe("Memory screen", () => {
     await waitFor(() => expect(sent).toEqual([{ text: "Prefers lists" }]));
   });
 });
+
+describe("Opened from search (#109)", () => {
+  it("highlights and focuses the memory", async () => {
+    server.use(http.get("/api/memory", () => HttpResponse.json([NOTE, { ...NOTE, id: "p2", text: "Covers Bedok" }])));
+    render(<MemoryScreen found="p2" />);
+
+    const list = await screen.findByRole("list", { name: "Memories" });
+    const [first, second] = within(list).getAllByRole("listitem");
+    await waitFor(() => expect(second).toHaveFocus());
+    expect(second).toHaveAccessibleDescription("Search match");
+    expect(second).toHaveTextContent("Covers Bedok");
+    expect(first).not.toHaveAttribute("data-found");
+  });
+
+  it("says when the memory was forgotten since", async () => {
+    server.use(http.get("/api/memory", () => HttpResponse.json([NOTE])));
+    render(<MemoryScreen found="p2" />);
+
+    expect(await screen.findByRole("status")).toHaveTextContent("That memory is no longer here");
+  });
+});

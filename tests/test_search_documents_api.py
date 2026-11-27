@@ -119,7 +119,7 @@ def test_a_renamed_upload_is_found_by_its_new_title_and_a_deleted_one_not_at_all
 def test_no_model_is_called_and_odd_queries_are_plain_words(docs_api: Api, llm: ScriptedLLMClient) -> None:
     for q in ["", "  ", "-", "inspection OR", '"unsafe', "NEAR(a b)", "*", "a"]:
         results = found(docs_api, q)
-        assert set(results) == {"conversations", "documents", "uploads"}, q
+        assert set(results) == {"conversations", "documents", "uploads", "approvals", "decisions", "memories"}, q
     assert found(docs_api, "")["documents"] == []
     assert llm.sent == []
 

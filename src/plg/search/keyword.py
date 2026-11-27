@@ -110,7 +110,7 @@ def search(table: Table, q: str, *, where: str | None = None, upload: bool = Fal
         kept = best.get(hit.doc_id)
         if kept is None or rank > kept[0]:
             best[hit.doc_id] = (rank, hit)
-    titled = {h.doc_id for _, h in best.values() if all(_starts(w).search(h.title) for w in wanted)}
+    titled = {h.doc_id for _, h in best.values() if all(starts(w).search(h.title) for w in wanted)}
     # Current documents first; then a title naming every word; then the full-text score.
     ordered = sorted(
         (hit for _, hit in best.values()),
@@ -127,14 +127,14 @@ def _match(word: str, column: str) -> MatchQuery:
     )
 
 
-def _starts(word: str) -> re.Pattern[str]:
+def starts(word: str) -> re.Pattern[str]:
     return re.compile(rf"(?<!\w){re.escape(word)}\w*", re.IGNORECASE)
 
 
 def _hit(row: dict[str, Any], wanted: Sequence[str], upload: bool) -> tuple[DocumentHit, int] | None:
     """The row as a hit, with how many of the words its text holds; None if a word is in neither title nor text."""
     title, text = str(row["title"]), str(row["text"])
-    patterns = [_starts(w) for w in wanted]
+    patterns = [starts(w) for w in wanted]
     in_text = [p for p in patterns if p.search(text)]
     in_title = [p for p in patterns if p.search(title)]
     if any(p not in in_text and p not in in_title for p in patterns):
@@ -144,8 +144,15 @@ def _hit(row: dict[str, Any], wanted: Sequence[str], upload: bool) -> tuple[Docu
         "version": row["version"], "status": row["status"], "location": row["location"], "upload": upload,
     }
     if not in_text:
-        return DocumentHit(**common, matched="title", snippet=_snippet(title, patterns, 0, len(title))), 0
-    matches = sorted((m.start(), m.end()) for p in in_text for m in p.finditer(text))
+        return DocumentHit(**common, matched="title", snippet=whole(title, patterns)), 0
+    snippet, span = excerpt(text, in_text)
+    return DocumentHit(**common, matched="content", snippet=snippet, span=span), len(in_text)
+
+
+def excerpt(text: str, patterns: Sequence[re.Pattern[str]]) -> tuple[list[SnippetPart], MatchSpan]:
+    """The passage of `text` around its first match (each pattern matching in it), the matches marked, and the span
+    of the matches shown."""
+    matches = sorted((m.start(), m.end()) for p in patterns for m in p.finditer(text))
     anchor = matches[0][0]
     start = 0 if anchor <= _BEFORE else text.find(" ", anchor - _BEFORE, anchor) + 1 or anchor - _BEFORE
     end = len(text)
@@ -162,7 +169,12 @@ def _hit(row: dict[str, Any], wanted: Sequence[str], upload: bool) -> tuple[Docu
         snippet.insert(0, SnippetPart(text="…"))
     if end < len(text):
         snippet.append(SnippetPart(text="…"))
-    return DocumentHit(**common, matched="content", snippet=snippet, span=span), len(in_text)
+    return snippet, span
+
+
+def whole(text: str, patterns: Sequence[re.Pattern[str]]) -> list[SnippetPart]:
+    """All of a short text (a title), its matches marked."""
+    return _snippet(text, patterns, 0, len(text))
 
 
 def _snippet(text: str, patterns: Sequence[re.Pattern[str]], start: int, end: int) -> list[SnippetPart]:

@@ -15,6 +15,8 @@ from lancedb.index import FTS
 from lancedb.query import LanceHybridQueryBuilder
 from lancedb.rerankers import LinearCombinationReranker
 
+from plg.search import keyword
+from plg.search.keyword import DocumentHit
 from plg.search.lance import _chunk_schema, _q, _where
 from plg.search.models import Chunk, SearchFilter, SearchHit
 
@@ -33,13 +35,13 @@ class LanceUploadIndex:
             return
         with self._writing:
             self._table.add([{**c.model_dump(), "fts_text": c.fts_text, "owner": owner} for c in chunks])
-            self._table.create_index("fts_text", config=FTS(), replace=True)
+            self._reindex()
 
     def remove(self, owner: str, doc_id: str) -> None:
         with self._writing:
             self._table.delete(f"owner = {_q(owner)} AND doc_id = {_q(doc_id)}")
             if self._table.count_rows() > 0:
-                self._table.create_index("fts_text", config=FTS(), replace=True)
+                self._reindex()
 
     def retitle(self, owner: str, doc_id: str, title: str) -> None:
         """The title its passages (and so new citations) carry, in their contextual header (full-text search) too.
@@ -56,7 +58,11 @@ class LanceUploadIndex:
             ]
             self._table.delete(where)
             self._table.add([{**c.model_dump(), "fts_text": c.fts_text, "owner": owner} for c in renamed])
-            self._table.create_index("fts_text", config=FTS(), replace=True)
+            self._reindex()
+
+    def _reindex(self) -> None:
+        self._table.create_index("fts_text", config=FTS(), replace=True)
+        keyword.build_indexes(self._table)
 
     def _rows(self, where: str) -> list[Chunk]:
         rows = self._table.search().where(where).limit(None).to_arrow().to_pylist()
@@ -79,3 +85,11 @@ class LanceUploadIndex:
         query = hybrid.vector(list(vector)).text(text).distance_type("cosine").where(where, prefilter=True)
         rows = query.rerank(LinearCombinationReranker(weight=self._vector_weight)).limit(limit).to_arrow().to_pylist()
         return [SearchHit(chunk=Chunk.model_validate(r), score=r["_relevance_score"]) for r in rows]
+
+    def keyword_search(self, owner: str, q: str, *, limit: int = keyword.LIMIT) -> list[DocumentHit]:
+        """The officer's own uploads matching `q` by keyword (the search dialog, #108)."""
+        if self._table.count_rows() > 0 and not keyword.indexed(self._table):
+            with self._writing:  # an uploads table from before #108: its keyword indexes are built once
+                if not keyword.indexed(self._table):
+                    keyword.build_indexes(self._table)
+        return keyword.search(self._table, q, where=f"owner = {_q(owner)}", upload=True, limit=limit)

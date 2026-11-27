@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
@@ -80,6 +80,7 @@ from plg.threads import (
     UploadUse,
 )
 from plg.thread_search import ConversationHit
+from plg.search.keyword import DocumentHit
 from plg.tracing import Tracer, install_tracer, pii_masker
 
 
@@ -108,9 +109,14 @@ class ThreadView(BaseModel):
 
 
 class SearchResults(BaseModel):
-    """What GET /search found, by type (#107: the officer's conversations)."""
+    """What GET /search found, by type: the officer's conversations (#107), Library documents and their own uploads
+    (#108)."""
 
     conversations: list[ConversationHit]
+    documents: list[DocumentHit] = []
+    """Library documents, current versions first (superseded ones carry status `superseded`)."""
+    uploads: list[DocumentHit] = []
+    """The officer's own uploads only."""
 
 
 class TraceLink(BaseModel):
@@ -707,9 +713,23 @@ def create_app(
 
     @app.get("/search")
     async def search(user: User, q: str = "") -> SearchResults:
-        """Keyword search (no model called): the officer's own conversations by title, question and answer, matching
-        every word as a prefix, so results come as they type. Each conversation once, best match first."""
-        return SearchResults(conversations=await asyncio.to_thread(threads.search, user.staff_id, q))
+        """Keyword search (no model called): the officer's own conversations by title, question and answer, Library
+        documents and their own uploads by title and content, matching every word as a prefix, so results come as they
+        type. Each conversation or document once, best match first (current documents before superseded ones)."""
+        conversations, documents, own = await asyncio.gather(
+            asyncio.to_thread(threads.search, user.staff_id, q),
+            asyncio.to_thread(best_effort, "the Library", lambda: index().keyword_search(q)),
+            asyncio.to_thread(best_effort, "uploads", lambda: uploads.index.keyword_search(user.staff_id, q)),
+        )
+        return SearchResults(conversations=conversations, documents=documents, uploads=own)
+
+    def best_effort(what: str, find: Callable[[], list[DocumentHit]]) -> list[DocumentHit]:
+        """A document search that fails (e.g. no index yet) leaves the other results standing."""
+        try:
+            return find()
+        except Exception:
+            logger.exception("could not search %s", what)
+            return []
 
     run_stream_docs: dict[int | str, dict[str, Any]] = {
         200: {

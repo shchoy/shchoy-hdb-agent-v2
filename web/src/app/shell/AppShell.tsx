@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { roleLabel, type ConversationHit, type Group, type ThreadSummary, type UserCtx } from "@/lib/events";
+import { roleLabel, type ConversationHit, type DocumentHit, type Group, type ThreadSummary, type UserCtx } from "@/lib/events";
 import type { Theme } from "@/lib/theme";
 import { ACTIVE_THREAD, ACTIVE_TURN } from "../runClient";
 import { collapsedSnapshot, parseCollapsed, saveCollapsed, subscribeCollapsed } from "./collapsedGroups";
@@ -24,6 +24,7 @@ import { ConversationItem } from "./ConversationItem";
 import { GroupSection, NewGroup } from "./GroupSection";
 import { DRAG_TYPE, moveThread, refusalDetail, type DragHandle, type DropZone } from "./menu";
 import { SearchDialog } from "./SearchDialog";
+import { SourceDialog } from "./SourceDialog";
 import { ShellProvider, type ConversationControl, type Shell } from "./ShellContext";
 import styles from "./shell.module.css";
 import { ThemeToggle } from "./ThemeToggle";
@@ -75,6 +76,8 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
   /** The search dialog (#107) is open; focus goes back to `searchOpener` when it closes. */
   const [searching, setSearching] = useState(false);
   const searchOpener = useRef<HTMLElement | null>(null);
+  /** A document search result (#108) open in the source viewer; focus goes back to `searchOpener` when it closes. */
+  const [reading, setReading] = useState<DocumentHit | null>(null);
   /** A conversation opened from search: its sidebar row is scrolled into view once shown. */
   const [revealing, setRevealing] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -189,25 +192,37 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
 
   const openSearch = useCallback(() => {
     if (searching) return; // Ctrl/⌘K again: already open, its focus stays put
+    if (reading) {
+      // From a search result's document: back to search, focus later back where search was first opened from.
+      setReading(null);
+      setSearching(true);
+      return;
+    }
     // From the phone drawer: it closes, and focus returns to its Menu button.
     const from = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     searchOpener.current = drawer.current?.contains(from) && drawerOpen ? menuButton.current : from;
     if (drawerOpen) closeDrawer(false);
     setSearching(true);
-  }, [searching, drawerOpen, closeDrawer]);
+  }, [searching, reading, drawerOpen, closeDrawer]);
 
   function closeSearch() {
     setSearching(false);
   }
 
-  // Closed (Escape, Close, the backdrop): focus back where it was, once the shell is no longer inert. Not after a
-  // result opened: the Ask screen moves focus to the matching turn.
+  // Closed (Escape, Close, the backdrop), or a document opened from it closed: focus back where it was, once the shell
+  // is no longer inert. Not after a conversation opened: the Ask screen moves focus to the matching turn.
   useEffect(() => {
-    if (searching || !searchOpener.current) return;
+    if (searching || reading || !searchOpener.current) return;
     const opener = searchOpener.current;
     searchOpener.current = null;
     if (opener.isConnected) opener.focus();
-  }, [searching]);
+  }, [searching, reading]);
+
+  /** A document result (#108): opened over the screen in the source viewer, at the match. */
+  function read(hit: DocumentHit) {
+    setReading(hit);
+    setSearching(false);
+  }
 
   /** A search result: its conversation opens at the matching turn, shown (group expanded) and current in the sidebar. */
   function found(hit: ConversationHit) {
@@ -466,7 +481,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
         <a href="#content" className={styles.skip}>
           Skip to content
         </a>
-        <header className={styles.topbar} inert={drawerOpen || searching || undefined}>
+        <header className={styles.topbar} inert={drawerOpen || searching || reading != null || undefined}>
           <button
             ref={menuButton}
             type="button"
@@ -488,7 +503,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
           ref={drawer}
           className={styles.sidebar}
           data-open={drawerOpen || undefined}
-          inert={searching || undefined}
+          inert={searching || reading != null || undefined}
           onKeyDown={onDrawerKey}
           {...(drawerOpen ? { role: "dialog", "aria-modal": true, "aria-label": "Menu" } : {})}
         >
@@ -504,7 +519,7 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
 
           <button type="button" className={styles.searchBox} onClick={openSearch} aria-keyshortcuts="Control+K Meta+K">
             <SearchIcon />
-            <span>Search conversations</span>
+            <span>Search</span>
             <kbd aria-hidden="true">{mac ? "⌘K" : "Ctrl K"}</kbd>
           </button>
 
@@ -595,11 +610,12 @@ export function AppShell({ user, theme, children }: { user: UserCtx; theme?: The
           </div>
         </div>
 
-        <main id="content" className={styles.content} tabIndex={-1} inert={drawerOpen || searching || undefined}>
+        <main id="content" className={styles.content} tabIndex={-1} inert={drawerOpen || searching || reading != null || undefined}>
           {children}
         </main>
 
-        {searching && <SearchDialog onClose={closeSearch} onOpen={found} />}
+        {searching && <SearchDialog onClose={closeSearch} onOpen={found} onOpenDocument={read} />}
+        {reading && <SourceDialog hit={reading} onClose={() => setReading(null)} />}
       </div>
     </ShellProvider>
   );

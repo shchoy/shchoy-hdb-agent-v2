@@ -628,8 +628,8 @@ test("an officer finds an earlier answer with Ctrl+K and opens the conversation 
   await visit(page, "/library");
 
   await page.keyboard.press("Control+K");
-  const dialog = page.getByRole("dialog", { name: "Search conversations" });
-  const field = dialog.getByRole("combobox", { name: "Search conversations" });
+  const dialog = page.getByRole("dialog", { name: "Search", exact: true });
+  const field = dialog.getByRole("combobox", { name: "Search", exact: true });
   await expect(field).toBeFocused();
   await page.keyboard.type("deadli"); // a word of the follow-up's answer, as a prefix
   const ours = dialog.getByRole("option").filter({ hasText: title });
@@ -649,9 +649,63 @@ test("an officer finds an earlier answer with Ctrl+K and opens the conversation 
   await expect(conversations.getByRole("button", { name: title, exact: true })).toHaveAttribute("aria-current", "true");
 
   // Escape returns focus to where search was opened from.
-  await page.getByRole("button", { name: "Search conversations" }).click();
+  await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(field).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
-  await expect(page.getByRole("button", { name: "Search conversations" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Search", exact: true })).toBeFocused();
+});
+
+test("an officer finds a Library policy and their own upload with Ctrl+K and opens each at the match (#108)", async ({
+  page,
+  browser,
+}) => {
+  await signIn(page, OFFICER);
+  const note = `kiosk-${Date.now()}.txt`;
+  const uploaded = await page.request.post(`/api/uploads?filename=${note}`, {
+    data: "Site visit.\n\nThe roller shutter at the kiosk is jammed half-way.\n",
+    headers: { "Content-Type": "application/octet-stream" },
+  });
+  expect(uploaded.status()).toBe(201);
+  const { upload_id: uploadId } = (await uploaded.json()) as { upload_id: string };
+  await visit(page, "/library");
+
+  await page.keyboard.press("Control+K");
+  const dialog = page.getByRole("dialog", { name: "Search", exact: true });
+  await page.keyboard.type("structurally unsaf");
+  const documents = dialog.getByRole("group", { name: "Documents" }).getByRole("option");
+  const sop = documents.filter({ hasText: "Commercial Unit Inspection SOP" });
+  await expect(sop).toHaveCount(2);
+  await expect(sop.first()).not.toContainText("Superseded"); // the current version first
+  await expect(sop.last()).toContainText("Superseded");
+  await expect(sop.first().locator("mark")).toHaveText(["structurally", "unsafe"]);
+  for (let i = 0; i < 20 && (await sop.first().getAttribute("aria-selected")) !== "true"; i++) {
+    await page.keyboard.press("ArrowDown");
+  }
+  await page.keyboard.press("Enter");
+
+  const viewer = page.getByRole("region", { name: /^Source: PLG-SOP-011 Commercial Unit Inspection SOP/ });
+  await expect(viewer.locator("mark")).toHaveText(/structurally unsafe/i);
+  await expect(viewer.locator("mark")).toBeInViewport();
+  expect(await seriousViolations(page)).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(viewer).toBeHidden();
+
+  // Their own upload, under My uploads; another officer never finds it.
+  await page.keyboard.press("Control+K");
+  await page.keyboard.type("roller shutt");
+  const mine = dialog.getByRole("group", { name: "My uploads" }).getByRole("option").filter({ hasText: note });
+  await expect(mine).toBeVisible();
+  await mine.click();
+  const upload = page.getByRole("region", { name: `Source: ${note}` });
+  await expect(upload.getByText("Your upload")).toBeVisible();
+  await expect(upload.locator("mark")).toHaveText(/roller shutter/i);
+  await page.keyboard.press("Escape");
+
+  const other = await browser.newPage(); // its own session cookie
+  await signIn(other, OTHER_OFFICER);
+  const theirs = await other.request.get(`/api/search?q=${encodeURIComponent("roller shutt")}`);
+  expect(JSON.stringify(await theirs.json())).not.toContain(uploadId);
+  await other.close();
+  await page.request.delete(`/api/uploads/${uploadId}`);
 });

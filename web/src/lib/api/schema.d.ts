@@ -446,8 +446,9 @@ export interface paths {
         };
         /**
          * Search
-         * @description Keyword search (no model called): the officer's own conversations by title, question and answer, matching
-         *     every word as a prefix, so results come as they type. Each conversation once, best match first.
+         * @description Keyword search (no model called): the officer's own conversations by title, question and answer, Library
+         *     documents and their own uploads by title and content, matching every word as a prefix, so results come as they
+         *     type. Each conversation or document once, best match first (current documents before superseded ones).
          */
         get: operations["search_search_get"];
         put?: never;
@@ -1000,6 +1001,43 @@ export interface components {
             /** Page */
             page: number | null;
         };
+        /**
+         * DocumentHit
+         * @description A document (a Library document or one of the officer's uploads) matching a keyword search.
+         */
+        DocumentHit: {
+            /** Doc Id */
+            doc_id: string;
+            /** Chunk Id */
+            chunk_id: string;
+            /** Title */
+            title: string;
+            /** Doc Type */
+            doc_type: string;
+            /** Version */
+            version?: string | null;
+            /**
+             * Status
+             * @default current
+             * @enum {string}
+             */
+            status: "current" | "superseded";
+            /** Location */
+            location: string;
+            /**
+             * Upload
+             * @default false
+             */
+            upload: boolean;
+            /**
+             * Matched
+             * @enum {string}
+             */
+            matched: "title" | "content";
+            /** Snippet */
+            snippet: components["schemas"]["SnippetPart"][];
+            span?: components["schemas"]["MatchSpan"] | null;
+        };
         /** DocumentView */
         DocumentView: {
             /** Doc Id */
@@ -1291,6 +1329,16 @@ export interface components {
             unfilled: components["schemas"]["UnfilledSlot"][];
             /** Pii */
             pii: components["schemas"]["PiiFinding"][];
+        };
+        /**
+         * MatchSpan
+         * @description Offsets of the match in the chunk's text (as a citation's span).
+         */
+        MatchSpan: {
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
         };
         /** MemoryEdit */
         MemoryEdit: {
@@ -1737,11 +1785,22 @@ export interface components {
         };
         /**
          * SearchResults
-         * @description What GET /search found, by type (#107: the officer's conversations).
+         * @description What GET /search found, by type: the officer's conversations (#107), Library documents and their own uploads
+         *     (#108).
          */
         SearchResults: {
             /** Conversations */
             conversations: components["schemas"]["ConversationHit"][];
+            /**
+             * Documents
+             * @default []
+             */
+            documents: components["schemas"]["DocumentHit"][];
+            /**
+             * Uploads
+             * @default []
+             */
+            uploads: components["schemas"]["DocumentHit"][];
         };
         /**
          * Side

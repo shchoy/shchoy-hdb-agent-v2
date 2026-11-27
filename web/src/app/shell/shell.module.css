@@ -682,3 +682,45 @@
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
+
+/* Search results grouped by type (#108): Conversations, Documents, My uploads. */
+.searchGroup {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.searchGroup .groupHeading {
+  background: var(--color-surface-raised);
+  margin: var(--space-2) 0 0;
+}
+
+.searchVersion {
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+}
+
+/* A document search result opened in the source viewer (#108). */
+.sourceDialog {
+  position: fixed;
+  z-index: 41;
+  top: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(56rem, calc(100vw - 2 * var(--space-3)));
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-3);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.sourceDialog:focus-visible {
+  outline: 2px solid var(--color-focus, var(--color-primary));
+  outline-offset: 2px;
+}

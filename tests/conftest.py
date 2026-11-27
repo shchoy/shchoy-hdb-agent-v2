@@ -178,6 +178,7 @@ def make_api(llm: ScriptedLLMClient, tmp_path: Path) -> Iterator[Callable[..., A
         settings.setdefault("question_log", tmp_path / "questions.jsonl")  # answered questions (the audit's gaps)
         settings.setdefault("audit_reports_dir", tmp_path / "audit-reports")
         settings.setdefault("uploads_dir", tmp_path / "uploads")  # officers' private libraries
+        settings.setdefault("search_db", tmp_path / "search-index")  # without a store: an empty Library, never .plg/
         embedder = HashingEmbedder(dim=128)
         memory = memory or MemoryStore(LanceSearchStore(tmp_path / "memory-index", dim=embedder.dim), embedder)
         app = create_app(  # type: ignore[arg-type]

@@ -33,6 +33,7 @@ export type ThreadSummary = Schemas["ThreadSummary"];
 export type Group = Schemas["Group"];
 export type ConversationHit = Schemas["ConversationHit"];
 export type SearchResults = Schemas["SearchResults"];
+export type DocumentHit = Schemas["DocumentHit"];
 export type ThreadView = Schemas["ThreadView"];
 export type Upload = Schemas["Upload"];
 export type MyDocument = Schemas["MyDocument"];

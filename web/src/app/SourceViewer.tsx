@@ -173,6 +173,54 @@ export function QuoteViewer({
   );
 }
 
+/**
+ * A document opened at once (no button), e.g. from a search result (#108): at `chunkId` with `span` of its text
+ * highlighted, or from the top when there is no span (a title match).
+ */
+export function OpenedSource({
+  docId,
+  chunkId,
+  span,
+  onClose,
+}: {
+  docId: string;
+  chunkId: string;
+  span: { start: number; end: number } | null;
+  onClose: () => void;
+}) {
+  const [source, setSource] = useState<Source>({ status: "loading" });
+
+  useEffect(() => {
+    let live = true;
+    const doc = encodeURIComponent(docId);
+    const at = span && new URLSearchParams({ start: String(span.start), end: String(span.end) });
+    Promise.all([
+      getJson<DocumentView>(`/api/documents/${doc}`),
+      at ? getJson<ChunkLocation>(`/api/documents/${doc}/chunks/${encodeURIComponent(chunkId)}?${at}`) : null,
+    ])
+      .then(([document, location]) => live && setSource({ status: "open", document, location }))
+      .catch((error: unknown) => live && setSource({ status: "failed", gone: deletedUpload(docId, error) }));
+    return () => {
+      live = false;
+    };
+  }, [docId, chunkId, span]);
+
+  if (source.status === "open") {
+    return <Document document={source.document} location={source.location} onClose={onClose} />;
+  }
+  return (
+    <>
+      {source.status === "loading" && <p role="status">Opening the document…</p>}
+      {source.status === "failed" && <Failed gone={source.gone} what="document" />}
+      {source.status === "failed" && (
+        <button type="button" onClick={onClose}>
+          Close document
+        </button>
+      )}
+    </>
+  );
+}
+
 function Document({
   document,
   location,

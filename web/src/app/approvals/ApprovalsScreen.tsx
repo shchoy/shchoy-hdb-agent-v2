@@ -5,27 +5,41 @@ import type { components } from "@/lib/api/schema";
 import { roleLabel, type UserCtx } from "@/lib/events";
 import { Badge, Card, cardListClass, fieldsClass } from "../Card";
 import { day, when } from "../dates";
+import { FoundLabel, useFound } from "../found";
 import { LetterFrame } from "../LetterFrame";
 import { useShell } from "../shell/ShellContext";
-import { ActionCard, describe, KIND_LABEL, Proposed, type Outcome } from "./ActionCard";
+import { ACTION_KIND, ActionCard, DECIDED_LABEL, describe, KIND_LABEL, Proposed, type Outcome } from "./ActionCard";
 import styles from "./approvals.module.css";
 
 type PendingApproval = components["schemas"]["PendingApproval"];
 
 type AuditRecord = components["schemas"]["AuditRecord"];
 type Ticket = components["schemas"]["Ticket"];
-type Decision = "approve" | "edit" | "reject";
 
-/** The officer's pending actions across conversations, with decision controls, then the decisions already made. */
-export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staffId: string }) {
+/**
+ * The officer's pending actions across conversations, with decision controls, then the decisions already made.
+ * `found` (#109): the action ID a search result opened the screen at: that item (pending: opened) is highlighted,
+ * scrolled to and focused.
+ */
+export function ApprovalsScreen({
+  role,
+  staffId,
+  found = null,
+}: {
+  role: UserCtx["role"];
+  staffId: string;
+  found?: string | null;
+}) {
   const [pending, setPending] = useState<PendingApproval[] | null>(null);
   const [audit, setAudit] = useState<AuditRecord[]>([]);
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
-  // Which items show their detail view: kept by action ID across reloads after a decision.
+  // Which items show their detail view: kept by action ID across reloads after a decision. The found one starts open
+  // (it is in the set once closed).
   const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
   const shell = useShell();
+  const foundProps = useFound<HTMLLIElement>(found);
   const failed = version === 0 ? "Could not load your approvals." : "Could not reload your approvals.";
 
   useEffect(() => {
@@ -61,10 +75,12 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
   }
 
   if (!pending) return error ? <p role="alert">{error}</p> : <p>Loading…</p>;
+  const gone = found != null && !pending.some((a) => a.action_id === found) && !audit.some((e) => e.action_id === found);
 
   return (
     <>
       {error && <p role="alert">{error}</p>}
+      {gone && <p role="status">That approval is no longer here: it may have been withdrawn.</p>}
       {outcomes.length > 0 && (
         <div role="status" aria-label="Results">
           {outcomes.map((outcome) => (
@@ -79,10 +95,11 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
         ) : (
           <ul aria-label="Pending approvals" className={cardListClass}>
             {pending.map((action) => (
-              <li key={`${action.action_id}-v${action.version}`}>
+              <li key={`${action.action_id}-v${action.version}`} {...foundProps(action.action_id)}>
+                <FoundLabel found={action.action_id === found} />
                 <PendingItem
                   action={action}
-                  open={opened.has(action.action_id)}
+                  open={opened.has(action.action_id) !== (action.action_id === found)}
                   onToggle={() => toggle(action.action_id)}
                   role={role}
                   staffId={staffId}
@@ -95,7 +112,11 @@ export function ApprovalsScreen({ role, staffId }: { role: UserCtx["role"]; staf
       </section>
       <section aria-labelledby="audit-heading">
         <h2 id="audit-heading">Decided</h2>
-        {audit.length === 0 ? <p>No decisions yet.</p> : <AuditTrail entries={audit} />}
+        {audit.length === 0 ? (
+          <p>No decisions yet.</p>
+        ) : (
+          <AuditTrail entries={audit} found={found} foundProps={foundProps} />
+        )}
       </section>
     </>
   );
@@ -145,14 +166,6 @@ function PendingItem({
   );
 }
 
-const DECIDED: Record<AuditRecord["action_type"], Record<Decision, string>> = {
-  send_letter: { approve: "Approved and sent", edit: "Sent with edits", reject: "Rejected" },
-  raise_ticket: { approve: "Approved and raised", edit: "Raised with edits", reject: "Rejected" },
-  approve_glossary_term: { approve: "Approved and adopted", edit: "Adopted with edits", reject: "Rejected" },
-  approve_team_fact: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
-  approve_example: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
-  approve_sql_example: { approve: "Approved", edit: "Approved with edits", reject: "Rejected" },
-};
 const NOTHING_DONE: Record<AuditRecord["action_type"], string> = {
   send_letter: "Nothing was sent.",
   raise_ticket: "Nothing was raised.",
@@ -162,36 +175,36 @@ const NOTHING_DONE: Record<AuditRecord["action_type"], string> = {
   approve_sql_example: "Nothing was taught to the team.",
 };
 
-const KIND_OF: Record<AuditRecord["action_type"], string> = {
-  send_letter: KIND_LABEL.letter,
-  raise_ticket: KIND_LABEL.ticket,
-  approve_glossary_term: KIND_LABEL.glossary,
-  approve_team_fact: KIND_LABEL.team_fact,
-  approve_example: KIND_LABEL.example,
-  approve_sql_example: KIND_LABEL.sql_example,
-};
-
 const CURATED = new Set<AuditRecord["action_type"]>(["approve_team_fact", "approve_example", "approve_sql_example"]);
 
 /** Every decision the officer made: who, when, why, what changed, what went to the outbox and the run's trace. */
-function AuditTrail({ entries }: { entries: AuditRecord[] }) {
+function AuditTrail({
+  entries,
+  found,
+  foundProps,
+}: {
+  entries: AuditRecord[];
+  found: string | null;
+  foundProps: ReturnType<typeof useFound<HTMLLIElement>>;
+}) {
   return (
     <ul aria-label="Audit trail" className={cardListClass}>
       {entries.map((e) => {
         return (
-          <li key={e.action_id}>
+          <li key={e.action_id} {...foundProps(e.action_id)}>
+            <FoundLabel found={e.action_id === found} />
             <Card
               as="article"
               heading={e.title || e.action_id}
               badges={
                 <>
-                  <Badge>{KIND_OF[e.action_type]}</Badge>
-                  <Badge tone={e.decision === "reject" ? "neutral" : "success"}>{DECIDED[e.action_type][e.decision]}</Badge>
+                  <Badge>{ACTION_KIND[e.action_type]}</Badge>
+                  <Badge tone={e.decision === "reject" ? "neutral" : "success"}>{DECIDED_LABEL[e.action_type][e.decision]}</Badge>
                 </>
               }
             >
               <p>
-                {DECIDED[e.action_type][e.decision]} by {e.approver} ({roleLabel(e.approver_role)}) on {when(e.at)}, deciding on
+                {DECIDED_LABEL[e.action_type][e.decision]} by {e.approver} ({roleLabel(e.approver_role)}) on {when(e.at)}, deciding on
                 version {e.version}.
               </p>
               {e.reason && <p>Reason: {e.reason}</p>}

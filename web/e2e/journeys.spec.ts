@@ -709,3 +709,89 @@ test("an officer finds a Library policy and their own upload with Ctrl+K and ope
   await other.close();
   await page.request.delete(`/api/uploads/${uploadId}`);
 });
+
+test("an officer finds a waiting letter, their decision on it and a memory with Ctrl+K and opens each at the item (#109)", async ({
+  page,
+  browser,
+}) => {
+  await signIn(page, OFFICER);
+  await askInNewConversation(page, REMINDER_HOMETOWN);
+  await expect(answer(page)).toContainText("It waits for your approval.");
+  const thread = await threadId(page, REMINDER_HOMETOWN);
+  type Pending = { action_id: string; thread_id: string };
+  const waiting = (await (await page.request.get("/api/approvals?status=pending")).json()) as Pending[];
+  const actionId = waiting.find((p) => p.thread_id === thread)?.action_id;
+  if (!actionId) throw new Error("No letter waiting in this conversation");
+  await visit(page, "/library");
+
+  // A word of the letter's address (in its preview, not its title): the approval, newest first.
+  await page.keyboard.press("Control+K");
+  const dialog = page.getByRole("dialog", { name: "Search", exact: true });
+  await page.keyboard.type("46022");
+  const approval = dialog.getByRole("group", { name: "Approvals" }).getByRole("option").first();
+  await expect(approval).toContainText("Send Arrears Reminder Letter to Hometown Minimart Pte Ltd");
+  await expect(approval.locator("mark")).toHaveText("460229");
+  await expect(approval).toContainText("Found in the preview");
+  for (let i = 0; i < 20 && (await approval.getAttribute("aria-selected")) !== "true"; i++) {
+    await page.keyboard.press("ArrowDown");
+  }
+  await page.keyboard.press("Enter");
+
+  await expect(page).toHaveURL(`/approvals?item=${actionId}`);
+  const item = page.getByRole("list", { name: "Pending approvals" }).locator("li[data-found]");
+  await expect(item).toBeFocused();
+  await expect(item).toHaveAccessibleDescription("Search match");
+  await expect(item).toBeInViewport();
+  // Its detail is open: reject it with a reason to find later.
+  const receipt = `R${Date.now()}`;
+  await item.getByRole("button", { name: "Reject…" }).click();
+  await item.getByLabel("Reason for rejecting").fill(`Paid at the branch, receipt ${receipt}.`);
+  await item.getByRole("button", { name: "Reject", exact: true }).click();
+  await expect(page.getByRole("status", { name: "Results" })).toContainText(
+    "Hometown Minimart Pte Ltd: rejected; nothing was sent.",
+    DECISION,
+  );
+  await visit(page, "/library");
+
+  // The decision, by a word of the reason: opened in the audit trail.
+  await page.keyboard.press("Control+K");
+  await page.keyboard.type(receipt.toLowerCase());
+  const decision = dialog.getByRole("group", { name: "Decisions" }).getByRole("option");
+  await expect(decision).toHaveCount(1);
+  await expect(decision).toContainText("Rejected on");
+  await expect(decision.locator("mark")).toHaveText(receipt);
+  await decision.click();
+  await expect(page).toHaveURL(`/approvals?item=${actionId}`);
+  const decided = page.getByRole("list", { name: "Audit trail" }).locator("li[data-found]");
+  await expect(decided).toBeFocused();
+  await expect(decided).toContainText(receipt);
+  await expect(page.getByRole("list", { name: "Pending approvals" }).locator("li[data-found]")).toHaveCount(0);
+
+  // A memory: the profile the Memory screen seeds on the first look.
+  await visit(page, "/memory");
+  await expect(page.getByRole("list", { name: "Memories" })).toContainText(`${OFFICER} is a`);
+  await visit(page, "/library");
+  await page.keyboard.press("Control+K");
+  await page.keyboard.type("aishah yuso");
+  const memory = dialog.getByRole("group", { name: "Memories" }).getByRole("option").first();
+  await expect(memory).toContainText("Profile");
+  await memory.click();
+  await expect(page).toHaveURL(/\/memory\?item=/);
+  const remembered = page.getByRole("list", { name: "Memories" }).locator("li[data-found]");
+  await expect(remembered).toBeFocused();
+  await expect(remembered).toContainText(`${OFFICER} is a`);
+  expect(await seriousViolations(page)).toEqual([]);
+
+  // Another officer finds none of them.
+  const other = await browser.newPage(); // its own session cookie
+  await signIn(other, OTHER_OFFICER);
+  for (const q of ["460229", receipt, "aishah yuso"]) {
+    const theirs = (await (await other.request.get(`/api/search?q=${encodeURIComponent(q)}`)).json()) as {
+      approvals: unknown[];
+      decisions: unknown[];
+      memories: unknown[];
+    };
+    expect(theirs).toMatchObject({ approvals: [], decisions: [], memories: [] });
+  }
+  await other.close();
+});

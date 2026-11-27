@@ -1,8 +1,18 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { ACTION_KIND, DECIDED_LABEL } from "@/app/approvals/ActionCard";
 import { Badge } from "@/app/Card";
-import type { ConversationHit, DocumentHit, SearchResults } from "@/lib/events";
+import { dateOf, when } from "@/app/dates";
+import { foundHref } from "@/app/foundParam";
+import type {
+  ApprovalHit,
+  ConversationHit,
+  DecisionHit,
+  DocumentHit,
+  MemoryHit,
+  SearchResults,
+} from "@/lib/events";
 import { CloseIcon, SearchIcon } from "./icons";
 import styles from "./shell.module.css";
 
@@ -14,15 +24,26 @@ type Found =
   | { status: "done"; q: string; results: Result[] }
   | { status: "failed" };
 
-/** One option of the results listbox: a conversation, a Library document or one of the officer's uploads. */
+/**
+ * One option of the results listbox: a conversation, a Library document, one of the officer's uploads, a pending
+ * approval, one of their decisions or one of their memories (#109).
+ */
 type Result =
   | { kind: "conversation"; key: string; hit: ConversationHit }
-  | { kind: "document" | "upload"; key: string; hit: DocumentHit };
+  | { kind: "document" | "upload"; key: string; hit: DocumentHit }
+  | { kind: "approval"; key: string; hit: ApprovalHit }
+  | { kind: "decision"; key: string; hit: DecisionHit }
+  | { kind: "memory"; key: string; hit: MemoryHit };
+
+const MEMORY_KIND: Record<MemoryHit["kind"], string> = { profile: "Profile", preference: "Preference", episode: "Past work" };
 
 const GROUPS = [
   { kind: "conversation", label: "Conversations", one: "conversation", many: "conversations" },
   { kind: "document", label: "Documents", one: "document", many: "documents" },
   { kind: "upload", label: "My uploads", one: "upload", many: "uploads" },
+  { kind: "approval", label: "Approvals", one: "approval", many: "approvals" },
+  { kind: "decision", label: "Decisions", one: "decision", many: "decisions" },
+  { kind: "memory", label: "Memories", one: "memory", many: "memories" },
 ] as const;
 
 function resultsOf(body: SearchResults): Result[] {
@@ -30,6 +51,9 @@ function resultsOf(body: SearchResults): Result[] {
     ...body.conversations.map((hit) => ({ kind: "conversation" as const, key: `c:${hit.thread_id}`, hit })),
     ...(body.documents ?? []).map((hit) => ({ kind: "document" as const, key: `d:${hit.doc_id}`, hit })),
     ...(body.uploads ?? []).map((hit) => ({ kind: "upload" as const, key: `u:${hit.doc_id}`, hit })),
+    ...(body.approvals ?? []).map((hit) => ({ kind: "approval" as const, key: `a:${hit.action_id}`, hit })),
+    ...(body.decisions ?? []).map((hit) => ({ kind: "decision" as const, key: `e:${hit.action_id}`, hit })),
+    ...(body.memories ?? []).map((hit) => ({ kind: "memory" as const, key: `m:${hit.id}`, hit })),
   ];
 }
 
@@ -52,7 +76,8 @@ function Snippet({ parts }: { parts: ConversationHit["snippet"] }) {
 
 /**
  * The search dialog (#107, opened by the sidebar's search box or Ctrl/⌘K): the officer's own conversations, Library
- * documents and their own uploads (#108) by keyword, as they type, grouped by type. A combobox over one listbox of
+ * documents and their own uploads (#108), the approvals waiting for them, their decisions and their memories (#109) by
+ * keyword, as they type, grouped by type. An approval or decision opens Approvals at it, a memory the Memory screen. A combobox over one listbox of
  * results: arrows move through all of them (wrapping, across groups), Enter opens the selected one, Escape (or Close)
  * closes it. Focus stays in the dialog; the shell returns it to where it was.
  */
@@ -60,10 +85,13 @@ export function SearchDialog({
   onClose,
   onOpen,
   onOpenDocument,
+  onOpenScreen,
 }: {
   onClose(): void;
   onOpen(hit: ConversationHit): void;
   onOpenDocument(hit: DocumentHit): void;
+  /** A screen at an item: `/approvals?item=<action ID>`, `/memory?item=<memory ID>`. */
+  onOpenScreen(href: string): void;
 }) {
   const [q, setQ] = useState("");
   const [found, setFound] = useState<Found>({ status: "idle" });
@@ -101,6 +129,9 @@ export function SearchDialog({
 
   function open(result: Result) {
     if (result.kind === "conversation") onOpen(result.hit);
+    else if (result.kind === "approval" || result.kind === "decision")
+      onOpenScreen(foundHref("/approvals", result.hit.action_id));
+    else if (result.kind === "memory") onOpenScreen(foundHref("/memory", result.hit.id));
     else onOpenDocument(result.hit);
   }
 
@@ -154,6 +185,57 @@ export function SearchDialog({
                 : `In ${hit.group_name ?? "Recent"}`}
             </span>
             <span> · Found in the {hit.matched}</span>
+          </span>
+        </li>
+      );
+    }
+    if (result.kind === "approval") {
+      const hit = result.hit;
+      // A curator's inbox titles someone else's conversation "Proposed by <ID>".
+      const from = hit.thread_title.startsWith("Proposed by ") ? hit.thread_title : `In ${hit.thread_title}`;
+      return (
+        <li key={result.key} {...props}>
+          <span className={styles.searchTitle}>{hit.title}</span>
+          <Snippet parts={hit.snippet} />
+          <span className={styles.searchMeta}>
+            <span>{ACTION_KIND[hit.action_type]} waiting for a decision</span>
+            <span> · {from}</span>
+            <span> · Found in the {hit.matched === "content" ? "preview" : "title"}</span>
+          </span>
+        </li>
+      );
+    }
+    if (result.kind === "decision") {
+      const hit = result.hit;
+      return (
+        <li key={result.key} {...props}>
+          <span className={styles.searchTitle}>{hit.title || hit.action_id}</span>
+          <Snippet parts={hit.snippet} />
+          <span className={styles.searchMeta}>
+            <span>
+              {DECIDED_LABEL[hit.action_type][hit.decision]} on {when(hit.at)}
+            </span>
+            <span> · Found in the {hit.matched}</span>
+          </span>
+        </li>
+      );
+    }
+    if (result.kind === "memory") {
+      const hit = result.hit;
+      return (
+        <li key={result.key} {...props}>
+          <span className={styles.searchTitle}>
+            {MEMORY_KIND[hit.kind]}
+            {hit.status === "pending_review" && (
+              <>
+                {" "}
+                <Badge tone="warning">Not in use</Badge>
+              </>
+            )}
+          </span>
+          <Snippet parts={hit.snippet} />
+          <span className={styles.searchMeta}>
+            <span>Memory · updated {dateOf(hit.updated_at)}</span>
           </span>
         </li>
       );
@@ -212,7 +294,7 @@ export function SearchDialog({
             aria-controls={`${id}-results`}
             aria-autocomplete="list"
             aria-activedescendant={results.length ? optionId(current) : undefined}
-            placeholder="Search conversations and documents"
+            placeholder="Search conversations, documents, approvals, memories"
             autoComplete="off"
             spellCheck={false}
             value={q}

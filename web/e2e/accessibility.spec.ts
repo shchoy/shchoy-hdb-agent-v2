@@ -71,6 +71,20 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(page.getByRole("button", { name: "Menu" })).toBeFocused();
     });
 
+    test("search dialog with an approval result, then Approvals opened at it (#109)", async ({ page }) => {
+      await signIn(page, OFFICER);
+      await askInNewConversation(page, REMINDER_GOLDEN_LEAF);
+      await page.keyboard.press("Control+K");
+      const dialog = page.getByRole("dialog", { name: "Search", exact: true });
+      await page.keyboard.type("bayshore");
+      const approval = dialog.getByRole("group", { name: "Approvals" }).getByRole("option").first();
+      await expect(approval).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+      await approval.click();
+      await expect(page.locator("li[data-found]")).toBeFocused();
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
     test("ask screen: the composer with attached files, one refused (#103)", async ({ page }) => {
       await signIn(page, OFFICER);
       await page.getByRole("button", { name: "New conversation" }).click();

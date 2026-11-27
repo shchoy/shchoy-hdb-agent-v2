@@ -774,6 +774,38 @@ export interface components {
             stances: components["schemas"]["PolicyLineage"][];
         };
         /**
+         * ApprovalHit
+         * @description A pending action the officer may decide (as GET /approvals lists it), matching a search.
+         */
+        ApprovalHit: {
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Action Type
+             * @enum {string}
+             */
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term" | "approve_team_fact" | "approve_example" | "approve_sql_example";
+            /** Title */
+            title: string;
+            /** Thread Id */
+            thread_id: string;
+            /** Thread Title */
+            thread_title: string;
+            /** Proposed By */
+            proposed_by: string;
+            /** Proposed At */
+            proposed_at: string;
+            /**
+             * Matched
+             * @enum {string}
+             */
+            matched: "title" | "content";
+            /** Snippet */
+            snippet: components["schemas"]["SnippetPart"][];
+        };
+        /**
          * AuditRecord
          * @description A decision from the audit log and, unless it was a rejection, the outbox item it sent or the i-EMS ticket it
          *     raised.
@@ -969,6 +1001,37 @@ export interface components {
             matched: "title" | "question" | "answer";
             /** Message Index */
             message_index?: number | null;
+            /** Snippet */
+            snippet: components["schemas"]["SnippetPart"][];
+        };
+        /**
+         * DecisionHit
+         * @description One of the officer's own decisions (an entry of GET /audit), matching a search.
+         */
+        DecisionHit: {
+            /** Action Id */
+            action_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Action Type
+             * @enum {string}
+             */
+            action_type: "send_letter" | "raise_ticket" | "approve_glossary_term" | "approve_team_fact" | "approve_example" | "approve_sql_example";
+            /** Title */
+            title: string;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "edit" | "reject";
+            /** At */
+            at: string;
+            /**
+             * Matched
+             * @enum {string}
+             */
+            matched: "title" | "reason" | "edits" | "reference";
             /** Snippet */
             snippet: components["schemas"]["SnippetPart"][];
         };
@@ -1346,6 +1409,31 @@ export interface components {
             text?: string | null;
             /** Status */
             status?: ("active" | "retired") | null;
+        };
+        /**
+         * MemoryHit
+         * @description One of the officer's own memories (as GET /memory lists it), matching a search.
+         */
+        MemoryHit: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "profile" | "preference" | "episode";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "pending_review" | "retired";
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Snippet */
+            snippet: components["schemas"]["SnippetPart"][];
         };
         /**
          * MemoryView
@@ -1801,6 +1889,21 @@ export interface components {
              * @default []
              */
             uploads: components["schemas"]["DocumentHit"][];
+            /**
+             * Approvals
+             * @default []
+             */
+            approvals: components["schemas"]["ApprovalHit"][];
+            /**
+             * Decisions
+             * @default []
+             */
+            decisions: components["schemas"]["DecisionHit"][];
+            /**
+             * Memories
+             * @default []
+             */
+            memories: components["schemas"]["MemoryHit"][];
         };
         /**
          * Side

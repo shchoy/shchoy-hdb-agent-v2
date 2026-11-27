@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AskScreen } from "@/app/AskScreen";
-import type { ConversationHit, DocumentHit } from "@/lib/events";
+import type { ApprovalHit, ConversationHit, DecisionHit, DocumentHit, MemoryHit } from "@/lib/events";
 import { documentFixture } from "@/test/documents";
 import { server } from "@/test/msw";
 import { inShell } from "@/test/shell";
@@ -323,5 +323,110 @@ describe("Search documents and uploads (#108)", () => {
     const viewer = await screen.findByRole("region", { name: `Source: ${POLICY.title}` });
     expect(viewer.querySelector("mark")).toBeNull();
     expect(located).toEqual([]);
+  });
+});
+
+const LETTER: ApprovalHit = {
+  action_id: "act-1",
+  version: 2,
+  action_type: "send_letter",
+  title: "Send Arrears Reminder Letter to Golden Leaf Minimart Pte Ltd",
+  thread_id: "t1",
+  thread_title: "Lucky Star arrears",
+  proposed_by: "S05",
+  proposed_at: "2026-11-20T01:00:00+00:00",
+  matched: "content",
+  snippet: [{ text: "…Blk 214 ", match: false }, { text: "Bayshore", match: true }, { text: " Vale Drive…", match: false }],
+};
+const CHANGE: ApprovalHit = {
+  ...LETTER,
+  action_id: "act-2",
+  action_type: "approve_glossary_term",
+  title: "Change Vacant unit",
+  thread_title: "Proposed by S02",
+  matched: "title",
+  snippet: [{ text: "Change ", match: false }, { text: "Vacant", match: true }, { text: " unit", match: false }],
+};
+const REJECTED: DecisionHit = {
+  action_id: "act-0",
+  version: 1,
+  action_type: "send_letter",
+  title: "Send First Reminder to Hometown",
+  decision: "reject",
+  at: "2026-11-18T02:00:00+00:00",
+  matched: "reason",
+  snippet: [{ text: "The tenant ", match: false }, { text: "paid", match: true }, { text: " yesterday.", match: false }],
+};
+const MEMORY: MemoryHit = {
+  id: "preference-1",
+  kind: "preference",
+  status: "pending_review",
+  updated_at: "2026-11-07T00:00:00Z",
+  snippet: [{ text: "Prefers ", match: false }, { text: "tables", match: true }],
+};
+
+/** plg-api's search finding only approvals, decisions and memories. */
+function itemsApi() {
+  api([]);
+  server.use(
+    http.get("/api/search", () =>
+      HttpResponse.json({
+        conversations: [],
+        documents: [],
+        uploads: [],
+        approvals: [LETTER, CHANGE],
+        decisions: [REJECTED],
+        memories: [MEMORY],
+      }),
+    ),
+  );
+}
+
+describe("Search approvals, decisions and memories (#109)", () => {
+  it("lists each in its own group, with what it is and where it matched", async () => {
+    itemsApi();
+    const user = userEvent.setup();
+    render(inShell(<p>screen</p>));
+
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(field(), "ba");
+    await options();
+
+    const [letter, change] = group("Approvals");
+    expect(letter).toHaveTextContent(LETTER.title);
+    expect(letter.querySelector("mark")).toHaveTextContent("Bayshore");
+    expect(letter).toHaveTextContent("Letter waiting for a decision · In Lucky Star arrears · Found in the preview");
+    expect(change).toHaveTextContent("Glossary change waiting for a decision · Proposed by S02 · Found in the title");
+    const [decision] = group("Decisions");
+    expect(decision).toHaveTextContent(REJECTED.title);
+    expect(decision).toHaveTextContent(/Rejected on .* · Found in the reason/);
+    const [memory] = group("Memories");
+    expect(memory).toHaveTextContent("Preference");
+    expect(within(memory).getByText("Not in use")).toHaveAttribute("data-tone", "warning");
+    expect(within(dialog()).getByRole("status")).toHaveTextContent("2 approvals, 1 decision and 1 memory found");
+  });
+
+  it("opens Approvals at an approval or a decision, and Memory at a memory", async () => {
+    itemsApi();
+    const user = userEvent.setup();
+    render(inShell(<p>screen</p>));
+
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(field(), "ba");
+    await options();
+    await user.keyboard("{Enter}");
+    expect(navigation.push).toHaveBeenLastCalledWith("/approvals?item=act-1");
+    expect(screen.queryByRole("dialog", { name: "Search" })).toBeNull();
+
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(field(), "ba");
+    await options();
+    await user.click(group("Decisions")[0]);
+    expect(navigation.push).toHaveBeenLastCalledWith("/approvals?item=act-0");
+
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(field(), "ba");
+    await user.click((await options()).at(-1)!);
+    expect(navigation.push).toHaveBeenLastCalledWith("/memory?item=preference-1");
   });
 });

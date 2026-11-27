@@ -2736,6 +2736,80 @@
         "title": "AnsweredTurn",
         "description": "One answered turn of a thread, kept in graph state so feedback can name it by its run ID."
       },
+      "ApprovalHit": {
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "title": "Action Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "send_letter",
+              "raise_ticket",
+              "approve_glossary_term",
+              "approve_team_fact",
+              "approve_example",
+              "approve_sql_example"
+            ],
+            "title": "Action Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "thread_title": {
+            "type": "string",
+            "title": "Thread Title"
+          },
+          "proposed_by": {
+            "type": "string",
+            "title": "Proposed By"
+          },
+          "proposed_at": {
+            "type": "string",
+            "title": "Proposed At"
+          },
+          "matched": {
+            "type": "string",
+            "enum": [
+              "title",
+              "content"
+            ],
+            "title": "Matched"
+          },
+          "snippet": {
+            "items": {
+              "$ref": "#/components/schemas/SnippetPart"
+            },
+            "type": "array",
+            "title": "Snippet"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_id",
+          "version",
+          "action_type",
+          "title",
+          "thread_id",
+          "thread_title",
+          "proposed_by",
+          "proposed_at",
+          "matched",
+          "snippet"
+        ],
+        "title": "ApprovalHit",
+        "description": "A pending action the officer may decide (as GET /approvals lists it), matching a search."
+      },
       "AuditRecord": {
         "properties": {
           "action_id": {
@@ -3283,6 +3357,77 @@
         ],
         "title": "ConversationHit",
         "description": "One of the officer's conversations matching a search, at its best-matching place."
+      },
+      "DecisionHit": {
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "title": "Action Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "send_letter",
+              "raise_ticket",
+              "approve_glossary_term",
+              "approve_team_fact",
+              "approve_example",
+              "approve_sql_example"
+            ],
+            "title": "Action Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "edit",
+              "reject"
+            ],
+            "title": "Decision"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "matched": {
+            "type": "string",
+            "enum": [
+              "title",
+              "reason",
+              "edits",
+              "reference"
+            ],
+            "title": "Matched"
+          },
+          "snippet": {
+            "items": {
+              "$ref": "#/components/schemas/SnippetPart"
+            },
+            "type": "array",
+            "title": "Snippet"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_id",
+          "version",
+          "action_type",
+          "title",
+          "decision",
+          "at",
+          "matched",
+          "snippet"
+        ],
+        "title": "DecisionHit",
+        "description": "One of the officer's own decisions (an entry of GET /audit), matching a search."
       },
       "DocRef": {
         "properties": {
@@ -4179,6 +4324,54 @@
         },
         "type": "object",
         "title": "MemoryEdit"
+      },
+      "MemoryHit": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "profile",
+              "preference",
+              "episode"
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "pending_review",
+              "retired"
+            ],
+            "title": "Status"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "snippet": {
+            "items": {
+              "$ref": "#/components/schemas/SnippetPart"
+            },
+            "type": "array",
+            "title": "Snippet"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "updated_at",
+          "snippet"
+        ],
+        "title": "MemoryHit",
+        "description": "One of the officer's own memories (as GET /memory lists it), matching a search."
       },
       "MemoryView": {
         "properties": {
@@ -5252,6 +5445,30 @@
             },
             "type": "array",
             "title": "Uploads",
+            "default": []
+          },
+          "approvals": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalHit"
+            },
+            "type": "array",
+            "title": "Approvals",
+            "default": []
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionHit"
+            },
+            "type": "array",
+            "title": "Decisions",
+            "default": []
+          },
+          "memories": {
+            "items": {
+              "$ref": "#/components/schemas/MemoryHit"
+            },
+            "type": "array",
+            "title": "Memories",
             "default": []
           }
         },

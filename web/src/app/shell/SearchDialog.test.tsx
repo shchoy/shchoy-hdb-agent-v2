@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AskScreen } from "@/app/AskScreen";
-import type { ConversationHit } from "@/lib/events";
+import type { ConversationHit, DocumentHit } from "@/lib/events";
+import { documentFixture } from "@/test/documents";
 import { server } from "@/test/msw";
 import { inShell } from "@/test/shell";
 
@@ -38,7 +39,7 @@ const LICENCE: ConversationHit = {
 };
 
 /** plg-api's search (records each query) and a sidebar holding both conversations. */
-function api(hits: ConversationHit[] = [ARREARS, LICENCE]) {
+function api(hits: ConversationHit[] = [ARREARS, LICENCE], documents: DocumentHit[] = [], uploads: DocumentHit[] = []) {
   const queries: string[] = [];
   server.use(
     http.get("/api/threads", () =>
@@ -52,17 +53,22 @@ function api(hits: ConversationHit[] = [ARREARS, LICENCE]) {
     http.get("/api/search", ({ request }) => {
       const q = new URL(request.url).searchParams.get("q") ?? "";
       queries.push(q);
-      return HttpResponse.json({ conversations: q.trim() ? hits : [] });
+      return HttpResponse.json(
+        q.trim() ? { conversations: hits, documents, uploads } : { conversations: [], documents: [], uploads: [] },
+      );
     }),
   );
   return queries;
 }
 
-const dialog = () => screen.getByRole("dialog", { name: "Search conversations" });
-const field = () => within(dialog()).getByRole("combobox", { name: "Search conversations" });
-/** The results once shown. */
+const dialog = () => screen.getByRole("dialog", { name: "Search" });
+const field = () => within(dialog()).getByRole("combobox", { name: "Search" });
+/** The results once shown (all groups, in order). */
 const options = async () =>
-  within(await within(dialog()).findByRole("listbox", { name: "Conversations" })).getAllByRole("option");
+  within(await within(dialog()).findByRole("listbox", { name: "Search results" })).getAllByRole("option");
+/** One group's results. */
+const group = (name: string) =>
+  within(within(dialog()).getByRole("group", { name })).getAllByRole("option");
 
 beforeEach(() => {
   sessionStorage.clear();
@@ -77,7 +83,7 @@ describe("Search conversations (#107)", () => {
     const user = userEvent.setup();
     render(inShell(<p>screen</p>));
 
-    await user.click(screen.getByRole("button", { name: /Search conversations/ }));
+    await user.click(screen.getByRole("button", { name: /^Search/ }));
     expect(field()).toHaveFocus();
     await user.type(field(), "arrears");
 
@@ -102,7 +108,7 @@ describe("Search conversations (#107)", () => {
     expect(field()).toHaveFocus();
     await user.keyboard("{Control>}k{/Control}"); // again while open: still where it was opened from
     await user.keyboard("{Escape}");
-    expect(screen.queryByRole("dialog", { name: "Search conversations" })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Search" })).toBeNull();
     expect(somewhere).toHaveFocus();
 
     await user.keyboard("{Meta>}k{/Meta}");
@@ -127,7 +133,7 @@ describe("Search conversations (#107)", () => {
     expect(field()).toHaveAttribute("aria-activedescendant", second.id);
     await user.keyboard("{ArrowUp}{Enter}");
 
-    expect(screen.queryByRole("dialog", { name: "Search conversations" })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Search" })).toBeNull();
     expect(sessionStorage.getItem("plg_active_thread")).toBe("t1");
     expect(sessionStorage.getItem("plg_active_turn")).toBe("2");
     expect(navigation.push).toHaveBeenCalledWith("/");
@@ -139,7 +145,7 @@ describe("Search conversations (#107)", () => {
     render(inShell(<p>screen</p>));
     await user.keyboard("{Control>}k{/Control}");
     await user.type(field(), "zebra");
-    await waitFor(() => expect(within(dialog()).getByRole("status")).toHaveTextContent("No conversations match"));
+    await waitFor(() => expect(within(dialog()).getByRole("status")).toHaveTextContent("Nothing matches “zebra”"));
 
     server.use(http.get("/api/search", () => HttpResponse.json({ detail: "down" }, { status: 503 })));
     await user.type(field(), "s");
@@ -181,5 +187,141 @@ describe("Search conversations (#107)", () => {
     expect(turn.closest("li")).toHaveAttribute("data-found");
     const sidebar = screen.getByRole("navigation", { name: "Conversations" });
     expect(within(sidebar).getByRole("button", { name: ARREARS.title })).toHaveAttribute("aria-current", "true");
+  });
+});
+
+const DOCX = documentFixture("docx");
+const UPLOAD = documentFixture("upload");
+
+/** A Library document's content match, at the recorded docx fixture's span. */
+const POLICY: DocumentHit = {
+  doc_id: DOCX.document.doc_id,
+  chunk_id: DOCX.location.chunk_id,
+  title: DOCX.document.title,
+  doc_type: "policy",
+  version: "2.1",
+  status: "current",
+  location: DOCX.location.location,
+  upload: false,
+  matched: "content",
+  snippet: [{ text: "…on renewal, the ", match: false }, { text: "deposit", match: true }, { text: " is…", match: false }],
+  span: { start: DOCX.start, end: DOCX.end },
+};
+
+const OLD_POLICY: DocumentHit = {
+  ...POLICY,
+  doc_id: "SP-old",
+  chunk_id: "SP-old#000",
+  version: "2.0",
+  status: "superseded",
+};
+
+const NOTE: DocumentHit = {
+  doc_id: UPLOAD.document.doc_id,
+  chunk_id: UPLOAD.location.chunk_id,
+  title: UPLOAD.document.title,
+  doc_type: "upload",
+  version: null,
+  status: "current",
+  location: UPLOAD.location.location,
+  upload: true,
+  matched: "content",
+  snippet: [{ text: "the ", match: false }, { text: "deposit", match: true }],
+  span: { start: UPLOAD.start, end: UPLOAD.end },
+};
+
+/** plg-api's source documents for the docx and upload fixtures. */
+function documents() {
+  const located: string[] = [];
+  server.use(
+    http.get("/api/documents/:id", ({ params }) =>
+      HttpResponse.json(params.id === NOTE.doc_id ? UPLOAD.document : DOCX.document),
+    ),
+    http.get("/api/documents/:id/chunks/:chunk", ({ params, request }) => {
+      located.push(`${String(params.chunk)}?${new URL(request.url).searchParams}`);
+      return HttpResponse.json(params.id === NOTE.doc_id ? UPLOAD.location : DOCX.location);
+    }),
+  );
+  return located;
+}
+
+describe("Search documents and uploads (#108)", () => {
+  it("groups results by type: conversations, documents (superseded badged), then the officer's uploads", async () => {
+    api([ARREARS], [POLICY, OLD_POLICY], [NOTE]);
+    const user = userEvent.setup();
+    render(inShell(<p>screen</p>));
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(field(), "deposit");
+    await options();
+
+    expect(group("Conversations")).toHaveLength(1);
+    const [current, old] = group("Documents");
+    expect(current).toHaveTextContent(`${POLICY.title} v2.1`);
+    expect(current.querySelector("mark")).toHaveTextContent("deposit");
+    expect(within(current).queryByText("Superseded")).toBeNull();
+    expect(within(old).getByText("Superseded")).toBeInTheDocument();
+    const [note] = group("My uploads");
+    expect(note).toHaveTextContent(NOTE.title);
+    expect(note).toHaveTextContent("Your upload");
+    expect(within(dialog()).getByRole("status")).toHaveTextContent("1 conversation, 2 documents and 1 upload found");
+  });
+
+  it("arrows move across groups, and Enter opens a document in the source viewer with the match highlighted", async () => {
+    api([ARREARS], [POLICY], [NOTE]);
+    const located = documents();
+    const user = userEvent.setup();
+    render(inShell(<button type="button">Somewhere</button>));
+    const somewhere = screen.getByRole("button", { name: "Somewhere" });
+    somewhere.focus();
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(field(), "deposit");
+    const [, policy] = await options();
+
+    await user.keyboard("{ArrowDown}");
+    expect(field()).toHaveAttribute("aria-activedescendant", policy.id);
+    await user.keyboard("{Enter}");
+
+    expect(screen.queryByRole("dialog", { name: "Search" })).toBeNull();
+    const viewer = await screen.findByRole("region", { name: `Source: ${POLICY.title}` });
+    expect(viewer.querySelector("mark")).toHaveTextContent(DOCX.location.quote.slice(0, 20));
+    expect(located).toEqual([`${POLICY.chunk_id}?start=${DOCX.start}&end=${DOCX.end}`]);
+    expect(screen.getByRole("dialog", { name: `Search result: ${POLICY.title}` })).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("region", { name: `Source: ${POLICY.title}` })).toBeNull();
+    expect(somewhere).toHaveFocus();
+  });
+
+  it("opens the officer's own upload by click, badged as theirs", async () => {
+    api([], [], [NOTE]);
+    documents();
+    const user = userEvent.setup();
+    render(inShell(<p>screen</p>));
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(field(), "deposit");
+    const [note] = await options();
+
+    await user.click(note);
+
+    const viewer = await screen.findByRole("region", { name: `Source: ${NOTE.title}` });
+    expect(within(viewer).getByText("Your upload")).toBeInTheDocument();
+    expect(viewer.querySelector("mark")).not.toBeNull();
+    await user.click(within(viewer).getByRole("button", { name: "Close source" }));
+    expect(screen.queryByRole("region", { name: `Source: ${NOTE.title}` })).toBeNull();
+  });
+
+  it("opens a title match from the top, with nothing highlighted", async () => {
+    api([], [{ ...POLICY, matched: "title", span: null, snippet: [{ text: POLICY.title, match: true }] }]);
+    const located = documents();
+    const user = userEvent.setup();
+    render(inShell(<p>screen</p>));
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(field(), "tenancy");
+    await options();
+    await user.keyboard("{Enter}");
+
+    const viewer = await screen.findByRole("region", { name: `Source: ${POLICY.title}` });
+    expect(viewer.querySelector("mark")).toBeNull();
+    expect(located).toEqual([]);
   });
 });

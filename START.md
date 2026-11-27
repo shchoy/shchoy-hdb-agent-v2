@@ -102,6 +102,8 @@ uv run plg search "letter of demand" # check what was indexed
 
 This reads `poc-data/` through the SharePoint and Lotus Notes mocks into `.plg/lancedb`. Image-only scanned PDFs are transcribed by Claude (needs `ANTHROPIC_API_KEY`) the first time; the transcript is saved in `.plg/lancedb-transcripts/` and reused, so re-syncs and `--full` don't call Claude again for them. Delete that folder to force a re-read. With `PLG_RERANK_BACKEND=local`, the first search downloads the local cross-encoder into `.plg/models`.
 
+The sync also builds the keyword indexes behind the search dialog's **Documents** group (Ctrl/⌘K, issue #108). An index synced before #108 has none, so the dialog finds no Library documents until you run `plg sync` once more. plg-api never builds them itself, and nothing needs re-embedding. Officers' uploads are indexed for keyword search as they are added.
+
 `plg sync` also loads the Excel trackers into `.plg/trackers.duckdb`, rebuilt from scratch on every run, which needs no API key. Their formulas have no saved values, so formula columns and summary sheets are not loaded; the data agent computes those figures in SQL. Restart `plg-api` after a sync to query the new tables.
 
 ### Scheduled sync (issue #28)

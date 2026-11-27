@@ -15,6 +15,8 @@ from lancedb.query import LanceHybridQueryBuilder, LanceVectorQueryBuilder
 from lancedb.rerankers import LinearCombinationReranker
 from lancedb.table import Table
 
+from plg.search import keyword
+from plg.search.keyword import DocumentHit
 from plg.search.models import Chunk, DocStatus, DocumentMeta, EntityRecord, MemoryItem, SearchFilter, SearchHit
 
 _STRINGS = pa.list_(pa.string())
@@ -116,6 +118,8 @@ class LanceSearchStore:
         """Fold rows written since the last build into the indexes. Optional: search works without it."""
         for table in (self._chunks, self._entities):
             table.create_index("fts_text", config=FTS(), replace=True)
+        if self._chunks.count_rows() > 0:
+            keyword.build_indexes(self._chunks)
 
     # ------------------------------------------------------------------ chunks
     def replace_document(self, doc_id: str, chunks: Sequence[Chunk]) -> None:
@@ -167,6 +171,9 @@ class LanceSearchStore:
             query.rerank(LinearCombinationReranker(weight=self._vector_weight)).limit(limit).to_arrow().to_pylist()
         )
         return [SearchHit(chunk=Chunk.model_validate(r), score=r["_relevance_score"]) for r in rows]
+
+    def keyword_search(self, q: str, *, limit: int = keyword.LIMIT) -> list[DocumentHit]:
+        return keyword.search(self._chunks, q, limit=limit)
 
     # ------------------------------------------------------------------ entities
     def replace_entities(self, entities: Sequence[EntityRecord]) -> None:

@@ -53,7 +53,7 @@ for (const colorScheme of ["light", "dark"] as const) {
       await signIn(page, OFFICER);
       await askInNewConversation(page, QUESTION);
       await page.keyboard.press("Control+K");
-      const dialog = page.getByRole("dialog", { name: "Search conversations" });
+      const dialog = page.getByRole("dialog", { name: "Search", exact: true });
       await page.keyboard.type("letter");
       await expect(dialog.getByRole("option").first()).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
@@ -61,7 +61,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 
       await page.setViewportSize({ width: 390, height: 844 });
       await page.getByRole("button", { name: "Menu" }).click();
-      await page.getByRole("button", { name: "Search conversations" }).click();
+      await page.getByRole("button", { name: "Search", exact: true }).click();
       await expect(dialog.getByRole("combobox")).toBeFocused();
       await page.keyboard.type("letter");
       await expect(dialog.getByRole("option").first()).toBeVisible();

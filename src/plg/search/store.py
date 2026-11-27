@@ -6,6 +6,8 @@ from collections.abc import Sequence
 from datetime import date, datetime
 from typing import Protocol
 
+from plg.search import keyword
+from plg.search.keyword import DocumentHit
 from plg.search.models import Chunk, DocStatus, DocumentMeta, EntityRecord, MemoryItem, SearchFilter, SearchHit
 
 
@@ -37,6 +39,12 @@ class SearchStore(Protocol):
         self, text: str, vector: Sequence[float], *, filters: SearchFilter | None = None, limit: int = 50
     ) -> list[SearchHit]:
         """Hybrid search: full-text and vector scores combined linearly, over pre-filtered chunks."""
+        ...
+
+    def keyword_search(self, q: str, *, limit: int = keyword.LIMIT) -> list[DocumentHit]:
+        """Documents matching every word of `q` as a word prefix, by title or content (no embedding): current
+        documents first, each once at its best chunk (the search dialog, #108). Read-only: an index without keyword
+        indexes (synced before #108) finds nothing until the next `plg sync` builds them."""
         ...
 
     # ------------------------------------------------------------------ entities

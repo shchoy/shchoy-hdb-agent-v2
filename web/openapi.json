@@ -1667,7 +1667,7 @@
     "/search": {
       "get": {
         "summary": "Search",
-        "description": "Keyword search (no model called): the officer's own conversations by title, question and answer, matching\nevery word as a prefix, so results come as they type. Each conversation once, best match first.",
+        "description": "Keyword search (no model called): the officer's own conversations by title, question and answer, Library\ndocuments and their own uploads by title and content, matching every word as a prefix, so results come as they\ntype. Each conversation or document once, best match first (current documents before superseded ones).",
         "operationId": "search_search_get",
         "parameters": [
           {
@@ -3358,6 +3358,92 @@
         ],
         "title": "DocumentBlock"
       },
+      "DocumentHit": {
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "title": "Doc Id"
+          },
+          "chunk_id": {
+            "type": "string",
+            "title": "Chunk Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "title": "Status",
+            "default": "current"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "upload": {
+            "type": "boolean",
+            "title": "Upload",
+            "default": false
+          },
+          "matched": {
+            "type": "string",
+            "enum": [
+              "title",
+              "content"
+            ],
+            "title": "Matched"
+          },
+          "snippet": {
+            "items": {
+              "$ref": "#/components/schemas/SnippetPart"
+            },
+            "type": "array",
+            "title": "Snippet"
+          },
+          "span": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MatchSpan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_id",
+          "chunk_id",
+          "title",
+          "doc_type",
+          "location",
+          "matched",
+          "snippet"
+        ],
+        "title": "DocumentHit",
+        "description": "A document (a Library document or one of the officer's uploads) matching a keyword search."
+      },
       "DocumentView": {
         "properties": {
           "doc_id": {
@@ -4042,6 +4128,25 @@
         ],
         "title": "LetterPayload",
         "type": "object"
+      },
+      "MatchSpan": {
+        "properties": {
+          "start": {
+            "type": "integer",
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "title": "End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "MatchSpan",
+        "description": "Offsets of the match in the chunk's text (as a citation's span)."
       },
       "MemoryEdit": {
         "properties": {
@@ -5132,6 +5237,22 @@
             },
             "type": "array",
             "title": "Conversations"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentHit"
+            },
+            "type": "array",
+            "title": "Documents",
+            "default": []
+          },
+          "uploads": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentHit"
+            },
+            "type": "array",
+            "title": "Uploads",
+            "default": []
           }
         },
         "type": "object",
@@ -5139,7 +5260,7 @@
           "conversations"
         ],
         "title": "SearchResults",
-        "description": "What GET /search found, by type (#107: the officer's conversations)."
+        "description": "What GET /search found, by type: the officer's conversations (#107), Library documents and their own uploads\n(#108)."
       },
       "Side": {
         "properties": {

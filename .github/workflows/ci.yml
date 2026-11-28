@@ -1,12 +1,40 @@
 name: CI
 
 on:
+  # A feature branch is checked once, by its pull request (which tests the merge into main); main is checked again
+  # after each merge. Pushing a branch with no PR runs nothing: use "Run workflow" (workflow_dispatch) for that.
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # A new push to a PR cancels that PR's run still in progress; runs on main are never cancelled.
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  api:
+  api-checks:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - name: Regenerate ontology artefacts
+        run: make ontology
+      - name: Fail if the generated ontology artefacts drifted from ontology/
+        run: git diff --exit-code -- src/plg/ontology/generated
+      - run: uv run mypy
+
+  api:
+    # pytest in 3 parallel groups of about equal duration (pytest-split, timed by the committed .test_durations;
+    # tests missing from it count as the average). Refresh it with `uv run pytest --store-durations`.
+    name: api (${{ matrix.group }}/3)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -16,17 +44,12 @@ jobs:
         with:
           path: .plg/models
           key: rerank-models-${{ hashFiles('src/plg/config.py') }}
-      - name: Regenerate ontology artefacts
-        run: make ontology
-      - name: Fail if the generated ontology artefacts drifted from ontology/
-        run: git diff --exit-code -- src/plg/ontology/generated
-      - run: uv run mypy
-      - run: uv run pytest
+      - run: uv run pytest --splits 3 --group ${{ matrix.group }}
 
   evals:
     # Quality regression gate (#31): the golden datasets' gate subset with real Claude, logged to LangSmith's
     # plg-quality-gate test suite. Skipped (every case) when the repository has no ANTHROPIC_API_KEY secret.
-    needs: api  # real Claude only once the offline suite is green
+    needs: [api-checks, api]  # real Claude only once the offline suite is green
     runs-on: ubuntu-latest
     env:
       PLG_EVALS: "1"
@@ -72,8 +95,14 @@ jobs:
 
   e2e:
     # Browser end-to-end and accessibility checks (#32): Playwright drives the web dev server against one plg-api
-    # process with a scripted LLMClient (scripts/e2e_server.py; no API keys, no Docker).
+    # process with a scripted LLMClient (scripts/e2e_server.py; no API keys, no Docker). Two shards, each with its own
+    # servers; Playwright shards by spec file: accessibility.spec.ts | journeys.spec.ts + theme.spec.ts.
+    name: e2e (${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     defaults:
       run:
         working-directory: web
@@ -94,12 +123,12 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run e2e
+      - run: npm run e2e -- --shard=${{ matrix.shard }}/2
       - name: Keep the Playwright report of a failed run
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             web/playwright-report
             web/test-results

@@ -508,8 +508,10 @@ web/                 Next.js App Router app (presentation only) + BFF route hand
                      phone bottom sheet), approve / reject letters from the chat's approval cards (#83; then none left in /api/approvals), Copy from the answer action bar by keyboard (clipboard text + "Copied"), follow-up, approve /
                      reject letters (+ /api/audit), injection email as inert text, cross-user thread 404s. accessibility.spec.ts: every screen (the search dialog with an approval result and Approvals opened at it (#109); the search dialog with results, also from the phone drawer (#107); the Pinned section with a pinned conversation and group, also in the drawer (#102); conversation groups' new group field, group menu, rename, delete confirmation and Move to group…, also in the drawer (#100); a conversation's Options menu, rename field and delete confirmation, also in the phone drawer; approvals with a letter opened; the inbox + opened letter in edit mode and /memory fit a phone; Library (category opened, audit tab), Tasks and Document check fit a phone).
 .github/workflows/ci.yml
-                     api job (make ontology + fail on generated/ drift, mypy, pytest), evals job (needs api; PLG_EVALS=1 + ANTHROPIC/LANGSMITH secrets → tests/evals; skipped without the key) and web job (regen OpenAPI types, fail on drift, typecheck,
-                     lint, test, build, bundle credential check) and e2e job (#32: Playwright chromium, `npm run e2e`; report artefact on failure).
+                     Runs on pull requests and pushes to main (feature-branch pushes run nothing; workflow_dispatch by hand); a newer push cancels its PR's run.
+                     api-checks job (make ontology + fail on generated/ drift, mypy), api job (pytest in 3 parallel groups via pytest-split, balanced by the
+                     committed .test_durations), evals job (needs both; PLG_EVALS=1 + ANTHROPIC/LANGSMITH secrets → tests/evals; skipped without the key) and web job (regen OpenAPI types, fail on drift, typecheck,
+                     lint, test, build, bundle credential check) and e2e job (#32: Playwright chromium, `npm run e2e -- --shard=n/2` in 2 parallel shards, each with its own servers; split by spec file; report artefact per shard on failure).
 poc-data/            Synthetic corpus, plg_records.db and _master ground truth (tests/evals only).
 .claude/skills/      Project skills (implement, tdd, code-review, post-implement, ...).
 ```
@@ -520,6 +522,7 @@ Flow: browser → BFF `/api/threads/{id}/runs` (adds X-PLG-User from the cookie)
 
 - Install: `uv sync`
 - Tests: `uv run pytest` (single file: `uv run pytest tests/test_runs_api.py`)
+- After adding or reshaping slow tests: `uv run pytest --store-durations` and commit `.test_durations` (balances CI's 3 pytest groups).
 - Typecheck: `uv run mypy` (strict)
 - Index the corpus (needs VOYAGE_API_KEY): `uv run plg sync [--full]` · check it: `uv run plg search "<query>"`
 - Categorise the Library (after a sync; needs ANTHROPIC_API_KEY): `uv run plg categorise`
